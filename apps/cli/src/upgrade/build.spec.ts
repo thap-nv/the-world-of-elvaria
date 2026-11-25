@@ -2,7 +2,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import type * as RunnerCore from '@elvaria/runner-core';
 
-import { testIo } from '../../test/cli.ts';
+import { testIo } from '../__fixtures__/cli.ts';
 import { runProcess } from '../process/run-process.ts';
 import { gitRun } from './build.ts';
 

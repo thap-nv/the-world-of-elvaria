@@ -14,14 +14,14 @@ import type { AgentRunner } from '@elvaria/runner-core';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { ACCEPT, CLAUDE, DRAFTED, seedAmendments } from '../../test/amend.ts';
-import { foundKingdom, tempDir, testIo } from '../../test/cli.ts';
-import { QUIET_VIEW } from '../../test/job-view.ts';
+import { ACCEPT, CLAUDE, DRAFTED, seedAmendments } from '../__fixtures__/amend.ts';
+import { foundKingdom, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { QUIET_VIEW } from '../__fixtures__/job-view.ts';
 import { amendmentJob } from '../amend/job.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { triageCommand } from '../triage/triage.ts';
 import { sayCommand } from './say.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 const SPLIT = path.join(
   import.meta.dirname,

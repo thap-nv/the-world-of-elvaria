@@ -3,11 +3,11 @@
 // ten cells with the reminder mark, then the sentence that it measures the way to the cut, not the work left.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import { QUEST_ID, plantQuests, questFixture } from '../../test/quest.ts';
-import { ended, journal, moved, notch, started } from '../../test/stamina.ts';
+import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { QUEST_ID, plantQuests, questFixture } from '../__fixtures__/quest.ts';
+import { ended, journal, moved, notch, started } from '../__fixtures__/stamina.ts';
 import { barText } from './stamina-view.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const AT = '2026-11-06T08:30:00+07:00';
 const LEGEND = 'Stamina measures how far the session is from being cut, not how much work is left.';

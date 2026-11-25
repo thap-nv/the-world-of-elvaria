@@ -9,9 +9,9 @@ import { openEventLog } from '@elvaria/eventlog';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import { OTHER_QUEST_ID, QUEST_ID, plantQuests, questFixture } from '../../test/quest.ts';
-import type { TempDir } from '../../test/cli.ts';
+import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { OTHER_QUEST_ID, QUEST_ID, plantQuests, questFixture } from '../__fixtures__/quest.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const REF = 'L_20261106_4k2pqz';
 const SENTENCE = 'Keep the README in step with the code.';

@@ -9,15 +9,15 @@ import { pathToFileURL } from 'node:url';
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
+import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import {
   FAKE_LANTERN,
   LANTERN_ADAPTER,
   editKingdom,
   installLantern,
   kingdomJson,
-} from '../../test/lantern.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+} from '../__fixtures__/lantern.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 type Tribes = { id: string; enabled: boolean; tool?: Record<string, unknown> }[];
 

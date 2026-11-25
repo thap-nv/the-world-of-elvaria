@@ -5,10 +5,10 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { writePin } from '../../test/builds.ts';
-import { foundKingdom, git, gitRepo, tempDir, testIo } from '../../test/cli.ts';
+import { writePin } from '../__fixtures__/builds.ts';
+import { foundKingdom, git, gitRepo, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { upgradeOffer } from './offer.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 describe('the newer build the digest offers', () => {
   let dir: TempDir;

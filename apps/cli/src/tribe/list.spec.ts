@@ -8,7 +8,7 @@ import { pathToFileURL } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
+import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import {
   FAKE_LANTERN,
   LANTERN_ADAPTER,
@@ -16,8 +16,8 @@ import {
   installLantern,
   kingdomJson,
   writeAdapter,
-} from '../../test/lantern.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+} from '../__fixtures__/lantern.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
   let dir: TempDir;

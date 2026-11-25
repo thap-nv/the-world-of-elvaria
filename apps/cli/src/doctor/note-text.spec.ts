@@ -20,11 +20,11 @@ import {
   run,
   tempDir,
   testIo,
-} from '../../test/cli.ts';
+} from '../__fixtures__/cli.ts';
 import { minimalEnv } from '../process/minimal-env.ts';
 import { loginFindingsOf } from './check-tribe.ts';
 import { DOCTOR_NOTE_KEYS, infoText } from './note-text.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 import type { MessageKey } from '@elvaria/i18n';
 
 describe('doctor note keys', () => {

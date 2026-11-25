@@ -9,7 +9,7 @@ import path from 'node:path';
 import { EVENT_VERSION } from '@elvaria/domain';
 
 import { git } from './cli.ts';
-import type { Launch } from '../src/process/launch.ts';
+import type { Launch } from '../process/launch.ts';
 
 /** What the stub does; a field left out is the happy path. */
 export interface Behavior {

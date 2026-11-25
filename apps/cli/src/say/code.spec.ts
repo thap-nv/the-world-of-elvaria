@@ -11,10 +11,10 @@ import type { Territory } from '@elvaria/domain';
 import type { CodeGraphs, Git, ProgramRun } from '@elvaria/runner-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { git, gitRepo, tempDir, testIo } from '../../test/cli.ts';
+import { git, gitRepo, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { processHostOf } from '../run/plots.ts';
 import { codeOf } from './code.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const TIP = '43566818d835f9acb3c24e8b2acffbfe90133284';
 const ORDERS = 'export const LIMIT = 5;\nexport function orders() {\n  return LIMIT;\n}\n';

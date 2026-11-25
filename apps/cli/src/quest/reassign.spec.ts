@@ -1,9 +1,9 @@
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import { OTHER_QUEST_ID, QUEST_ID, plantQuests, questFixture } from '../../test/quest.ts';
-import type { TempDir } from '../../test/cli.ts';
+import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { OTHER_QUEST_ID, QUEST_ID, plantQuests, questFixture } from '../__fixtures__/quest.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 import type { CharacterId } from '@elvaria/domain';
 
 /** What a quest someone works on, or was returned to, carries on top. */

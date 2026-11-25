@@ -5,9 +5,9 @@ import { KingdomSchema } from '@elvaria/domain';
 import { registryFiles } from '@elvaria/registry-default';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { TZ, foundKingdom, printed, run, tempDir, testIo } from '../test/cli.ts';
+import { TZ, foundKingdom, printed, run, tempDir, testIo } from './__fixtures__/cli.ts';
 import { DEFAULT_TRIBES, newKingdom } from './init.ts';
-import type { TempDir } from '../test/cli.ts';
+import type { TempDir } from './__fixtures__/cli.ts';
 
 const readKingdom = async (kingdom: string) =>
   KingdomSchema.parse(JSON.parse(await readFile(path.join(kingdom, 'kingdom.json'), 'utf8')));

@@ -7,10 +7,10 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SHA_A, SHA_B, calls, placeBuild, real, writePin } from '../../test/builds.ts';
-import { baseEnv, foundKingdom, printed, tempDir, testIo } from '../../test/cli.ts';
+import { SHA_A, SHA_B, calls, placeBuild, real, writePin } from '../__fixtures__/builds.ts';
+import { baseEnv, foundKingdom, printed, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { elvaria } from './entry.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 describe('elvaria on a kingdom that pins a build', () => {
   let dir: TempDir;

@@ -4,12 +4,12 @@ import process from 'node:process';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { fakeTool, tempDir } from '../../test/cli.ts';
+import { fakeTool, tempDir } from '../__fixtures__/cli.ts';
 import { findExecutable } from './find-executable.ts';
 import { launchOf, shimTarget } from './launch.ts';
 import { minimalEnv } from './minimal-env.ts';
 import { runProcess } from './run-process.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 describe('minimalEnv', () => {
   it('passes the toolchain variables and nothing else (ADR 0013)', () => {

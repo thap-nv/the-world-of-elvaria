@@ -3,8 +3,8 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { baseEnv, isolatedPath, pathWithoutGit, testIo } from '../../test/cli.ts';
-import { GITHUB_REMOTE } from '../../test/credential.ts';
+import { baseEnv, isolatedPath, pathWithoutGit, testIo } from '../__fixtures__/cli.ts';
+import { GITHUB_REMOTE } from '../__fixtures__/credential.ts';
 import { forgesOf } from './forges.ts';
 
 describe('forgesOf', () => {

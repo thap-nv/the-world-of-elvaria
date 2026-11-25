@@ -15,10 +15,10 @@ import {
   run,
   tempDir,
   testIo,
-} from '../../test/cli.ts';
+} from '../__fixtures__/cli.ts';
 import { slugOf } from './add.ts';
 import { withoutCredentials } from './git-info.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 describe('slugOf', () => {
   it.each([

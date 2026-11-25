@@ -17,11 +17,17 @@ import {
   run,
   tempDir,
   testIo,
-} from '../../test/cli.ts';
-import { FAKE_TOKEN, FAKE_USER, GITHUB_REMOTE, filesHolding, useFakeHelper } from '../../test/credential.ts';
+} from '../__fixtures__/cli.ts';
+import {
+  FAKE_TOKEN,
+  FAKE_USER,
+  GITHUB_REMOTE,
+  filesHolding,
+  useFakeHelper,
+} from '../__fixtures__/credential.ts';
 import { accessFinding, credentialFinding } from './check-delivery.ts';
-import type { TempDir } from '../../test/cli.ts';
-import type { HelperAnswer } from '../../test/credential.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
+import type { HelperAnswer } from '../__fixtures__/credential.ts';
 import type { Fetch } from '../io.ts';
 
 const pushes: Fetch = () => Promise.resolve(Response.json({ permissions: { push: true } }));

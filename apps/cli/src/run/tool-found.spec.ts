@@ -8,10 +8,10 @@ import type { Kingdom } from '@elvaria/domain';
 import { createFakeRunner } from '@elvaria/runner-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { fakeTool, foundKingdom, tempDir, testIo } from '../../test/cli.ts';
-import { kingdomJson } from '../../test/lantern.ts';
+import { fakeTool, foundKingdom, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { kingdomJson } from '../__fixtures__/lantern.ts';
 import { toolFoundOf, tribeHoldsOf } from './tool-found.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const CLAUDE = TribeIdSchema.parse('claude');
 const GEMINI = TribeIdSchema.parse('gemini');

@@ -17,8 +17,8 @@ import {
   run,
   tempDir,
   testIo,
-} from '../../test/cli.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+} from '../__fixtures__/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 import type { Kingdom } from '@elvaria/domain';
 
 describe('elvaria doctor: tribe options and class prompts (P1-15)', () => {

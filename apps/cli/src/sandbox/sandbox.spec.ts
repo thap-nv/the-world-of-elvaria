@@ -5,8 +5,8 @@ import { ok } from '@elvaria/domain';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 const DATE = '2026-11-06';
 const dayFile = (kingdom: string, date = DATE) => path.join(kingdom, 'events', 'sandbox', `${date}.jsonl`);

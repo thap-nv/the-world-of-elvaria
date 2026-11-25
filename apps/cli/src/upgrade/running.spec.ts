@@ -6,11 +6,11 @@ import path from 'node:path';
 import { translator } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SHA_A, SHA_B, placeBuild, writePin } from '../../test/builds.ts';
-import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
+import { SHA_A, SHA_B, placeBuild, writePin } from '../__fixtures__/builds.ts';
+import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { checkBuild, runningLine } from './running.ts';
 import { SELF_ROOT } from './self.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const t = translator('en');
 

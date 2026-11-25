@@ -6,8 +6,8 @@ import type { InboxCommand } from '@elvaria/domain';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, git, gitRepo, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import type { TempDir } from '../../test/cli.ts';
+import { foundKingdom, git, gitRepo, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 describe('territory enqueue', () => {
   let dir: TempDir;

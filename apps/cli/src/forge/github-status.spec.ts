@@ -3,10 +3,10 @@
 import { err } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
-import { FAKE_TOKEN } from '../../test/credential.ts';
-import { HEAD, REPO, at, fixedToken, forgeOver } from '../../test/github.ts';
+import { FAKE_TOKEN } from '../__fixtures__/credential.ts';
+import { HEAD, REPO, at, fixedToken, forgeOver } from '../__fixtures__/github.ts';
 import { githubForge } from './github-forge.ts';
-import type { Reply, Routes } from '../../test/github.ts';
+import type { Reply, Routes } from '../__fixtures__/github.ts';
 import type { Fetch } from '../io.ts';
 
 const PR = 7;

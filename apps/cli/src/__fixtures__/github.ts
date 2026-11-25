@@ -3,10 +3,10 @@
 import { ok } from '@elvaria/domain';
 import type { ForgeRepo } from '@elvaria/steward';
 
-import { GITHUB_API } from '../src/forge/github.ts';
-import { githubForge } from '../src/forge/github-forge.ts';
-import type { Fetch } from '../src/io.ts';
-import type { TokenSource } from '../src/forge/github-forge.ts';
+import { GITHUB_API } from '../forge/github.ts';
+import { githubForge } from '../forge/github-forge.ts';
+import type { Fetch } from '../io.ts';
+import type { TokenSource } from '../forge/github-forge.ts';
 
 export const REPO: ForgeRepo = { owner: 'elvaria-specs', name: 'kingdom-repo', cwd: 'C:/lãnh thổ' };
 export const HEAD = 'a'.repeat(40);

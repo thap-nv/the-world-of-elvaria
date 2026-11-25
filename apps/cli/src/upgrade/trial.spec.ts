@@ -8,13 +8,13 @@ import { TribeSchema } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { MIGRATED_MARK, SHA_A, calls, placeBuild, real } from '../../test/builds.ts';
-import { baseEnv, tempDir, testIo } from '../../test/cli.ts';
+import { MIGRATED_MARK, SHA_A, calls, placeBuild, real } from '../__fixtures__/builds.ts';
+import { baseEnv, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { findExecutable } from '../process/find-executable.ts';
 import { mirrorKingdom } from './mirror.ts';
 import { buildTrial } from './trial.ts';
-import type { Behavior } from '../../test/builds.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { Behavior } from '../__fixtures__/builds.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 import type { Tools } from './build.ts';
 import type { TrialPlace } from './trial.ts';
 

@@ -4,10 +4,10 @@ import path from 'node:path';
 import { translator } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, gitRepo, run, tempDir, testIo } from '../../test/cli.ts';
+import { foundKingdom, gitRepo, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { checkScripture } from '../doctor/check-scripture.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 const TOKEN = `ghp_${'a'.repeat(36)}`;
 const RULES = Array.from({ length: 40 }, (_, index) => `- {fail_kind=style} Rule ${index + 1}.`);

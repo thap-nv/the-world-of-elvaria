@@ -11,10 +11,10 @@ import { openEventLog } from '@elvaria/eventlog';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import { FAKE_FLINT, FLINT_ADAPTER, installFlint } from '../../test/flint.ts';
-import { editKingdom } from '../../test/lantern.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { FAKE_FLINT, FLINT_ADAPTER, installFlint } from '../__fixtures__/flint.ts';
+import { editKingdom } from '../__fixtures__/lantern.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 const TITLE = 'Rework the release pipeline';
 /** A few Node starts per session and per hook call, one tick a second. */

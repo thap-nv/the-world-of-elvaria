@@ -11,7 +11,7 @@ import process from 'node:process';
 
 import { HOOK_SCRIPT } from '@elvaria/hooks';
 
-const PACKAGES = path.join(import.meta.dirname, '..', '..', '..', 'packages');
+const PACKAGES = path.join(import.meta.dirname, '..', '..', '..', '..', 'packages');
 
 const newest = (folder: string): number =>
   Math.max(

@@ -6,10 +6,10 @@ import { openEventLog } from '@elvaria/eventlog';
 import { translator } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import { QUEST_ID } from '../../test/quest.ts';
+import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { QUEST_ID } from '../__fixtures__/quest.ts';
 import { lineOf } from '../run/bell.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const SHA = 'abcdef1234567890abcdef1234567890abcdef12';
 let serial = 0;

@@ -10,11 +10,11 @@ import type { AttentionItem, QuestId } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
+import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { digestMarkdown } from '../digest/markdown.ts';
 import { unsealedSection } from '../metrics/view-delegation.ts';
 import { sealText } from './seal-view.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const t = translator('en');
 const Q = 'q_20261118_aaaaa1' as QuestId;

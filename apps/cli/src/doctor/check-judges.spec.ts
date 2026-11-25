@@ -2,10 +2,10 @@
 // (b) of P1-56): the pure part and the line `doctor` prints.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { baseEnv, foundKingdom, isolatedPath, printed, run, tempDir, testIo } from '../../test/cli.ts';
+import { baseEnv, foundKingdom, isolatedPath, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 
 import { onePoolJudgesOf } from './check-judges.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 // Ids are branded in the registry; the plain strings here are what the function reads.
 const classes = [

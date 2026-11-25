@@ -4,10 +4,10 @@ import path from 'node:path';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import { QUEST_ID, plantQuests, questFixture } from '../../test/quest.ts';
+import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { QUEST_ID, plantQuests, questFixture } from '../__fixtures__/quest.ts';
 import { CharacterIdSchema } from '@elvaria/domain';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 import type { InboxCommand } from '@elvaria/domain';
 
 describe('elvaria quest add', () => {

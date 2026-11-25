@@ -1,15 +1,15 @@
 // The checks of `elvaria run` in a narrow run (CM-01, ADR 0032): the Steward asks `Plots.check` for a narrow run, and
 // each check runs its narrow command with the plot's base (PlotManager.checkBase) in ELVARIA_CHECK_BASE.
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { TerritorySchema } from '@elvaria/domain';
 import type { PlotManager } from '@elvaria/runner-core';
+import { tempDir } from '@elvaria/testkit';
 import { describe, expect, it } from 'vitest';
 
-import { RM_TEMP, testIo } from '../../test/cli.ts';
-import { questFixture } from '../../test/quest.ts';
+import { testIo } from '../__fixtures__/cli.ts';
+import { questFixture } from '../__fixtures__/quest.ts';
 import { plotsOver, processHostOf } from './plots.ts';
 
 const unused = () => Promise.reject(new Error('unused'));
@@ -44,7 +44,8 @@ const managerOf = (checkBase?: PlotManager['checkBase']): PlotManager => ({
 describe("plots' checks in a narrow run (CM-01)", () => {
   it('run the narrow command with the base in its env, and in full `run` without it, as before CM-01', async () => {
     const quest = questFixture('open');
-    const dir = await mkdtemp(path.join(os.tmpdir(), 'elvaria narrow plots '));
+    const temp = await tempDir('narrow plots');
+    const dir = temp.root;
     try {
       const folder = { type: 'folder' as const, path: `quests/${quest.id}/work` };
       const work = path.join(dir, 'quests', quest.id, 'work');
@@ -91,7 +92,7 @@ describe("plots' checks in a narrow run (CM-01)", () => {
       });
       expect(await logOf(3)).toContain('changed from no base');
     } finally {
-      await rm(dir, RM_TEMP);
+      await temp.remove();
     }
   });
 });

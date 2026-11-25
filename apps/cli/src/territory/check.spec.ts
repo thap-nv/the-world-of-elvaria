@@ -8,7 +8,7 @@ import { SCORECARD_ITEMS, SCORECARD_REASONS } from '@elvaria/domain';
 import { isMessageKey } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, git, printed, run, tempDir, testIo } from '../../test/cli.ts';
+import { foundKingdom, git, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import {
   FULL,
   attachDemo,
@@ -17,10 +17,10 @@ import {
   patientIo,
   seedLedger,
   writeGazetteer,
-} from '../../test/trial.ts';
+} from '../__fixtures__/trial.ts';
 import { itemKeyOf, reasonKeyOf } from './check-view.ts';
 import { readTrialRecord } from './trial-record.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 describe('elvaria territory check', () => {
   let dir: TempDir;

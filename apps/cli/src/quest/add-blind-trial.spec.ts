@@ -5,8 +5,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import type { TempDir } from '../../test/cli.ts';
+import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const NOTE =
   'Note: a single quest never has a blind trial, though territory do-an holds one for parties of rank B and above. To have one, open the work as a party: --contract (kind plan).';

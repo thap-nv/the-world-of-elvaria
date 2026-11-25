@@ -18,11 +18,11 @@ import {
   run,
   tempDir,
   testIo,
-} from '../../test/cli.ts';
+} from '../__fixtures__/cli.ts';
 import { toolPaths } from './doctor.ts';
 import { locateTool } from './locate-tool.ts';
 import { parseVersion } from './tool-version.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 import type { Kingdom } from '@elvaria/domain';
 
 /** An owner adapter file whose CLI runs only with a paid key: doctor pins auth = api_key from its declaration. */

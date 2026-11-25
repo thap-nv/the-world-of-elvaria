@@ -4,9 +4,9 @@
 // sibling rows a hand edit got wrong.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { baseEnv, foundKingdom, isolatedPath, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import { editKingdom, kingdomJson } from '../../test/lantern.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import { baseEnv, foundKingdom, isolatedPath, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { editKingdom, kingdomJson } from '../__fixtures__/lantern.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 interface Row {
   readonly id: string;

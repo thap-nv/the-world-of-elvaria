@@ -7,10 +7,10 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { baseEnv, foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import { editKingdom, kingdomJson } from '../../test/lantern.ts';
+import { baseEnv, foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { editKingdom, kingdomJson } from '../__fixtures__/lantern.ts';
 import { SELF_ROOT } from '../upgrade/self.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const FAKE_CODEX = path.join(SELF_ROOT, 'packages', 'runner-codex', 'fixtures', 'fake-codex.mjs');
 

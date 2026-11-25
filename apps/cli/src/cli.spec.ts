@@ -10,11 +10,11 @@ import { fileURLToPath } from 'node:url';
 import { InboxCommandSchema } from '@elvaria/domain';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { SHA_A, calls, placeBuild, real, writePin } from '../test/builds.ts';
-import { baseEnv, fakeTool, gitRepo, isolatedPath, tempDir } from '../test/cli.ts';
-import { OTHER_QUEST_ID, QUEST_ID, plantQuests, questFixture } from '../test/quest.ts';
+import { SHA_A, calls, placeBuild, real, writePin } from './__fixtures__/builds.ts';
+import { baseEnv, fakeTool, gitRepo, isolatedPath, tempDir } from './__fixtures__/cli.ts';
+import { OTHER_QUEST_ID, QUEST_ID, plantQuests, questFixture } from './__fixtures__/quest.ts';
 import type { Env } from './io.ts';
-import type { TempDir } from '../test/cli.ts';
+import type { TempDir } from './__fixtures__/cli.ts';
 
 const CLI = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
 /** The fake day of the sandbox specs: a fixed date keeps its file name the same on every run. */

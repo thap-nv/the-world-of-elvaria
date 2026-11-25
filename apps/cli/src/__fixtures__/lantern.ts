@@ -3,7 +3,7 @@
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-const FIXTURES = path.join(import.meta.dirname, '..', 'fixtures');
+const FIXTURES = path.join(import.meta.dirname, '..', '..', 'fixtures');
 
 /** The fake lantern CLI: a Node script, which the adapter starts with Elvaria's own Node. */
 export const FAKE_LANTERN = path.join(FIXTURES, 'fake-lantern.mjs');

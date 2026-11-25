@@ -7,9 +7,9 @@ import { acquireLock, inKingdom, openKingdom } from '@elvaria/store';
 import type { HeldLock } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import { QUEST_ID, plantQuests, questFixture } from '../../test/quest.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { QUEST_ID, plantQuests, questFixture } from '../__fixtures__/quest.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 describe('the answer the CLI waits for', () => {
   let dir: TempDir;

@@ -4,7 +4,7 @@ import { EVENT_VERSION, EventSchema, questViewOf } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
 
-import { QUEST_ID, questFixture } from '../../test/quest.ts';
+import { QUEST_ID, questFixture } from '../__fixtures__/quest.ts';
 import { timeline } from './timeline.ts';
 
 const SICK = questFixture('infirmary', QUEST_ID);

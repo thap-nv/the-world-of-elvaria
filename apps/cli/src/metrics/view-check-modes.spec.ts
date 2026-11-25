@@ -2,7 +2,7 @@ import { metricsOf } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
 
-import { OTHER_QUEST_ID, QUEST_ID, questFixture } from '../../test/quest.ts';
+import { OTHER_QUEST_ID, QUEST_ID, questFixture } from '../__fixtures__/quest.ts';
 import { attributedLog, checkLog, lateJudgements } from './__fixtures__/check-log.ts';
 import { metricsSections } from './view.ts';
 import { checkModesSection } from './view-check-modes.ts';

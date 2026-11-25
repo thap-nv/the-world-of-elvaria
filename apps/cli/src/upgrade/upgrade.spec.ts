@@ -20,15 +20,15 @@ import {
   sourceRepo,
   stubPnpm,
   writePin,
-} from '../../test/builds.ts';
-import { baseEnv, foundKingdom, git, printed, run, tempDir, testIo } from '../../test/cli.ts';
+} from '../__fixtures__/builds.ts';
+import { baseEnv, foundKingdom, git, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { findExecutable } from '../process/find-executable.ts';
 import { cliEntryOf, hasCli } from './pointer.ts';
 import { rollbackKingdom } from './rollback.ts';
 import { upgradeKingdom } from './upgrade.ts';
-import type { Behavior, SourceRepo } from '../../test/builds.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import type { Behavior, SourceRepo } from '../__fixtures__/builds.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { UpgradeDeps } from './upgrade.ts';
 import type { Trial, TrialPlace } from './trial.ts';

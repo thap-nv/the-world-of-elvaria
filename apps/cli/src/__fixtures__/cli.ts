@@ -2,16 +2,21 @@
 // folders. Folder names have a space and a Vietnamese letter on purpose: real kingdoms live in paths like
 // `D:\Dummy\Tool - Personal\…` and owners name folders in Vietnamese.
 import { execFileSync } from 'node:child_process';
-import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
 import { InstantSchema, fixedClock } from '@elvaria/domain';
+import { tempDir as testkitTempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 
-import { findExecutable } from '../src/process/find-executable.ts';
-import { runCli } from '../src/run-cli.ts';
-import type { CliIo, Env } from '../src/io.ts';
+export { RM_TEMP } from '@elvaria/testkit';
+export type { TempDir } from '@elvaria/testkit';
+
+import { findExecutable } from '../process/find-executable.ts';
+import { runCli } from '../run-cli.ts';
+import type { CliIo, Env } from '../io.ts';
 
 /** 2026-11-06T09:00:00+07:00, the day the plan was written. */
 export const NOW = InstantSchema.parse(Date.parse('2026-11-06T02:00:00Z'));
@@ -84,18 +89,8 @@ export const run = (io: TestIo, ...argv: string[]): Promise<number> => runCli(ar
 /** Everything printed so far, both streams, one string: for `toContain` checks. */
 export const printed = (io: TestIo): string => [...io.printed.out, ...io.printed.err].join('\n');
 
-// On Windows a child that just ended, or the indexer, may hold a temp folder a moment (EBUSY, EPERM): rm retries,
-// back-off up to 5.5 s (P1-39).
-export const RM_TEMP = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 } as const;
-
-export interface TempDir {
-  readonly root: string;
-  remove(): Promise<void>;
-}
-
-export async function tempDir(): Promise<TempDir> {
-  const root = await mkdtemp(path.join(tmpdir(), 'elvaria cli ạ '));
-  return { root, remove: () => rm(root, RM_TEMP) };
+export function tempDir(): Promise<TempDir> {
+  return testkitTempDir('cli ạ');
 }
 
 /** A kingdom founded through the CLI itself, at `<dir>/kingdom`. */

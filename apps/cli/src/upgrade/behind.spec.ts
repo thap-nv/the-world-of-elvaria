@@ -3,12 +3,12 @@
 import { translator } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { sourceRepo, stubPnpm } from '../../test/builds.ts';
-import { baseEnv, git, tempDir, testIo } from '../../test/cli.ts';
+import { sourceRepo, stubPnpm } from '../__fixtures__/builds.ts';
+import { baseEnv, git, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { findExecutable } from '../process/find-executable.ts';
 import { behindOf, warnIfBehind } from './behind.ts';
-import type { SourceRepo } from '../../test/builds.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { SourceRepo } from '../__fixtures__/builds.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 import type { Tools } from './build.ts';
 
 const t = translator('en');

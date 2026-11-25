@@ -13,13 +13,20 @@ import { translator } from '@elvaria/i18n';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, tempDir, testIo } from '../../test/cli.ts';
-import { FAILED, LETTER_REPLY, addMonk, monkRunner, stageFailures, templeRanOf } from '../../test/temple.ts';
+import { foundKingdom, tempDir, testIo } from '../__fixtures__/cli.ts';
+import {
+  FAILED,
+  LETTER_REPLY,
+  addMonk,
+  monkRunner,
+  stageFailures,
+  templeRanOf,
+} from '../__fixtures__/temple.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { evidenceHashOf } from './evidence-hash.ts';
 import { reportTemple } from './report.ts';
 import { runTemple } from './run-temple.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 describe('scheduled Temple evidence', () => {
   let dir: TempDir;

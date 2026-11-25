@@ -4,9 +4,9 @@ import { EVENT_VERSION, EventSchema, questViewOf } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import { QUEST_ID, plantQuests, questFixture } from '../../test/quest.ts';
-import type { TempDir } from '../../test/cli.ts';
+import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { QUEST_ID, plantQuests, questFixture } from '../__fixtures__/quest.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 import type { Quest } from '@elvaria/domain';
 
 const SICK = questFixture('infirmary', QUEST_ID, { attempts: 3 });

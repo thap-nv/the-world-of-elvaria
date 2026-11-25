@@ -5,9 +5,9 @@ import { EVENT_VERSION, EventSchema, questViewOf } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import { QUEST_ID, plantQuests, questFixture } from '../../test/quest.ts';
-import type { TempDir } from '../../test/cli.ts';
+import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { QUEST_ID, plantQuests, questFixture } from '../__fixtures__/quest.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const REF = 'L_20261119_4k2pqz';
 const GONE = 'T_0123456789';

@@ -1,7 +1,7 @@
 // What GitHub says of a repo under the owner's credential (PS-08): read against a fake fetch, never the network.
 import { describe, expect, it } from 'vitest';
 
-import { FAKE_TOKEN } from '../../test/credential.ts';
+import { FAKE_TOKEN } from '../__fixtures__/credential.ts';
 import { GITHUB_API, repoAccessOf } from './github.ts';
 import type { Fetch } from '../io.ts';
 import type { ForgeRepo } from './remote.ts';

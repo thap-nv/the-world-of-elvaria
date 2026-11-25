@@ -13,9 +13,9 @@ vi.mock('node:fs/promises', async (importOriginal) => {
   return { ...actual, rm: vi.fn(actual.rm) };
 });
 
-import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import { FAKE_LANTERN, LANTERN_ADAPTER, installLantern } from '../../test/lantern.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { FAKE_LANTERN, LANTERN_ADAPTER, installLantern } from '../__fixtures__/lantern.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 const { rm: realRm } = await vi.importActual<typeof FsPromises>('node:fs/promises');
 

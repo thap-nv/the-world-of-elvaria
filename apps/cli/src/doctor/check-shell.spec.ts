@@ -13,10 +13,10 @@ import {
   run,
   tempDir,
   testIo,
-} from '../../test/cli.ts';
-import { FAKE_LANTERN, LANTERN_ADAPTER, installLantern, writeAdapter } from '../../test/lantern.ts';
+} from '../__fixtures__/cli.ts';
+import { FAKE_LANTERN, LANTERN_ADAPTER, installLantern, writeAdapter } from '../__fixtures__/lantern.ts';
 import { policyFinding, readExecutionPolicy, runsWindowsPowerShell } from './check-shell.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const t = translator('en');
 

@@ -5,7 +5,7 @@
 import { copyFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
-const FIXTURES = path.join(import.meta.dirname, '..', 'fixtures');
+const FIXTURES = path.join(import.meta.dirname, '..', '..', 'fixtures');
 
 /** The fake flint CLI: a Node script, which the adapter starts with Elvaria's own Node. */
 export const FAKE_FLINT = path.join(FIXTURES, 'fake-flint.mjs');

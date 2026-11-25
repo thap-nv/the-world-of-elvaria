@@ -6,10 +6,10 @@ import path from 'node:path';
 import { translator } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, gitRepo, run, tempDir, testIo } from '../../test/cli.ts';
+import { foundKingdom, gitRepo, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { checkScripture } from '../doctor/check-scripture.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const KEPT = 'L_20261119_4k2pqz';
 const GONE = 'L_20261118_9tw3hx';

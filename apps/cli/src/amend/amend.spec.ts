@@ -24,13 +24,13 @@ import {
   author,
   questOf,
   seedAmendments,
-} from '../../test/amend.ts';
-import { foundKingdom, tempDir, testIo } from '../../test/cli.ts';
-import { QUIET_VIEW } from '../../test/job-view.ts';
-import { REFUSAL, refusing } from '../../test/refusing.ts';
+} from '../__fixtures__/amend.ts';
+import { foundKingdom, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { QUIET_VIEW } from '../__fixtures__/job-view.ts';
+import { REFUSAL, refusing } from '../__fixtures__/refusing.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { amendmentJob } from './job.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 describe("an amendment's author, on call (PS-22b)", () => {
   let dir: TempDir;

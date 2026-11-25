@@ -8,9 +8,9 @@ import path from 'node:path';
 import { TribeSchema } from '@elvaria/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { baseEnv, isolatedPath, tempDir, testIo } from '../../test/cli.ts';
+import { baseEnv, isolatedPath, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { codexRunner } from './codex.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const FAKE_CODEX = path.resolve(
   import.meta.dirname,

@@ -5,7 +5,7 @@ import type { Event } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
 
-import { QUEST_ID } from '../../test/quest.ts';
+import { QUEST_ID } from '../__fixtures__/quest.ts';
 import { metricsSections } from './view.ts';
 import { amendmentsSection, memosSection, objectionsSection } from './view-memos.ts';
 

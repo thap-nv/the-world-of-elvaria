@@ -8,9 +8,7 @@
     "packages/runner-core/src/plot": 31
   },
   "root_spec": {},
-  "test_dir": {
-    "apps/cli/test": 1
-  },
+  "test_dir": {},
   "name_pair": {
     "apps/cli/src/command + commands": 1,
     "packages/domain/src/character/transition + transitions": 1,

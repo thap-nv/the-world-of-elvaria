@@ -21,8 +21,8 @@ import {
   run,
   tempDir,
   testIo,
-} from '../../test/cli.ts';
-import type { TempDir } from '../../test/cli.ts';
+} from '../__fixtures__/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 describe('elvaria doctor: what the quests of a territory need of the machine (P1-56)', () => {
   let dir: TempDir;

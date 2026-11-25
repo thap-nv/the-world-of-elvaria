@@ -6,10 +6,10 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { baseEnv, foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import { editKingdom, kingdomJson } from '../../test/lantern.ts';
+import { baseEnv, foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { editKingdom, kingdomJson } from '../__fixtures__/lantern.ts';
 import { SELF_ROOT } from '../upgrade/self.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 const FAKE_CLAUDE = path.join(SELF_ROOT, 'packages', 'runner-claude', 'fixtures', 'fake-claude.mjs');
 const portable = (file: string) => file.replaceAll('\\', '/');
