@@ -209,6 +209,18 @@ describe('sessionStaminaOf', () => {
     expect(sessionStaminaOf([...early, ...opened('s1')]).get(Q)).toMatchObject({ role: 'assignee' });
   });
 
+  it("gives a healer's session its seat as a doer, the healer's and not the assignee's (ADR 0034)", () => {
+    const view = { ...QUEST_VIEW, status: 'healing', assignee: THORN, verifier: null } as const;
+    const healing = line('quest.healing', { session: 'h1' }, { healer: WREN, quest: view });
+    const bar = sessionStaminaOf([healing, notch('h1', 1)]).get(Q);
+    expect(bar).toMatchObject({ session: 'h1', role: 'assignee', character: WREN });
+    // A later line of the quest in healing keeps the seat; one that names no healer leaves it unknown.
+    expect(sessionStaminaOf([healing, moved('quest.edited', 'healing')]).get(Q)?.character).toBe(WREN);
+    const unnamed = moved('quest.edited', 'healing', { session: 'h2' });
+    expect(sessionStaminaOf([unnamed]).get(Q)).toMatchObject({ role: 'assignee', character: undefined });
+    expect(sessionStaminaOf([healing, moved('quest.submitted', 'review')]).size).toBe(0);
+  });
+
   it("opens a bar from a notch or a reminder when the reader missed the start, as a journal's tail does", () => {
     expect(sessionStaminaOf([notch('s1', 300_000)]).get(Q)).toMatchObject({
       session: 's1',

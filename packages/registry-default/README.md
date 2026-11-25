@@ -6,7 +6,9 @@
   11 kinds, 12 classes (the last, `healer`, `is_healer`, HL-03, ADR 0034), 12 rituals, 6 catalog scripts, 8 tags, 4 memo kinds (`proposal`, routed to the Chancellor,
   PS-02; `objection`, routed to a second judge, PS-22; `amendment`, routed to the quest's author, PS-22b; `advisory`,
   routed to the quests at work, the one the Steward writes as a quest reaches its base branch, PS-09c; `memos.json`,
-  ADR 0024), and one prompt per class. The package root is laid
+  ADR 0024), 17 disruption kinds (`disruptions.json`, LL-01, ADR 0036: what `disruptionsOf` reads from the event
+  log, read apart from the six files of `parseRegistry` so a broken file drops only that reading), and one prompt
+  per class. The package root is laid
   out like that folder.
 - Holds the catalog scripts of the script tier (ADR 0017): `link-check`, `run-check`, `count-files`,
   `diff-stat`, `compare-numbers`, `todo-scan`, plus `scripts/common.mjs`. Each runs as
@@ -54,4 +56,6 @@ pnpm --filter @elvaria/registry-default test
 ```
 
 Script tests build throwaway plots in a temp folder (`scripts/test-plot.ts`); `diff-stat` gets a real git repo
-isolated from the machine's git config. Each script is also run once as a separate process.
+isolated from the machine's git config. Each script is also run once as a separate process. `disruptions.json` is
+tested in the domain (`src/disruption/suite.spec.ts`, which `vitest.config.mjs` hands this file): every kind matches
+one chain and misses the one beside it, and the 30 cases of the test suite are counted.

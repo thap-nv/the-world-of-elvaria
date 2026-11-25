@@ -34,6 +34,8 @@ const GUARD_TEXT: Readonly<Record<QuestGuard, string>> = {
   stalled_review:
     '`REVIEW_BREAKS_MAX` người chấm của lượt đã rời đi không ra verdict (cầu dao cắt, `crash` hoặc `no_session`), hoặc `REVIEW_PARTIALS_MAX` người nộp verdict `partial` (`reviewStalled`)',
   no_stalled_review: 'không phải `reviewStalled`',
+  awaits_heal:
+    'lượt đang chờ chữa: mục cuối là mục `heal: "due"`, hay phiên của một Y sư kết thúc mà chưa chữa (`awaitsHeal`, ADR 0034)',
   heal_due:
     'trip `commit` có `reason` thuộc `HEALABLE_REASONS` (`breaker:commit`, `breaker:commit_errors`), bậc session có `assignee`, lượt `n` chưa có lần chữa (`healCallOf`, ADR 0034)',
   cut_goes_on:
@@ -121,7 +123,18 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
     'phiên người chấm kết thúc trong lúc không có Nhiếp chính nào chạy: người chấm rời đi, lượt kết thúc `cancelled`, không đếm vào `reviewBreaksOf` (P1-44)',
   'review.suspend.has_verifier': 'như trên, khi người dùng đình chỉ người chấm',
   'returned.redispatch':
-    '`attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes; sau một lần cắt đi tiếp (`working.breaker.cut_goes_on`) thì `attempts` không đổi, cùng lượt `n`, phiên mới đọc handover (ADR 0030); sau `working.breaker.heal_due` cũng vậy, mục mới ghi `heal: "session"` (phiên chữa: trần `kingdom.heal`, không có phiên tiếp, ADR 0034)',
+    '`attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes; sau một lần cắt đi tiếp (`working.breaker.cut_goes_on`) thì `attempts` không đổi, cùng lượt `n`, phiên mới đọc handover (ADR 0030); sau `working.breaker.heal_due`, hay sau phiên Y sư kết thúc mà chưa chữa (`awaitsHeal`), cũng vậy, mục mới ghi `heal: "session"` (phiên chữa: trần `kingdom.heal`, không có phiên tiếp, ADR 0034)',
+  'returned.heal.awaits_heal':
+    'Nhiếp chính mở phiên của Y sư mà `selectHealer` chọn (`planTick.heals`): mục attempt mới vai `assignee` của Y sư, cùng lượt `n`, `heal: "session"`, thư mục `.runs/<quest>-<n>/heal`; `attempts` và `assignee` không đổi; Y sư là người làm hiện tại hay từng chấm quest thì bị từ chối; dòng sổ `quest.healing` (ADR 0034)',
+  'healing.submit':
+    'Nhiếp chính đo phần Y sư đổi (`heal.patch`, trong giới hạn `kingdom.heal`) rồi commit qua hook của lãnh thổ; lượt kết thúc `submitted`; dòng `quest.submitted` mang `heal`; check máy rồi người chấm như mọi lần nộp, Y sư không chấm được (ADR 0008)',
+  'healing.breaker':
+    'hook từ chối lần hai (`breaker:commit`, `breaker:commit_errors`), phần đổi vượt giới hạn hay ra ngoài phần việc (`heal:*`), trần `kingdom.heal` cắt, đường cấm; chuông, kèm thư của Y sư',
+  'healing.crash': 'CLI của Y sư hỏng hay phiên mất: chuông (`heal:session_ended`); lượt kết thúc `crash`',
+  'healing.mana_out':
+    'lần chữa không tính: lượt kết thúc `paused`, `attempts` không đổi; nhịp sau `selectHealer` chọn lại (Y sư khác, chờ, hay người làm tự chữa cùng lượt)',
+  'healing.release':
+    'phiên Y sư kết thúc trong lúc không có Nhiếp chính nào chạy (như P1-44): lượt kết thúc `cancelled`, `attempts` không đổi (phiên chữa không lấy lượt thử); nhịp sau chọn lại như hàng trên',
   'returned.breaker': 'trip `secrets` hay `no_session` (phiên làm lại không mở được), như `claimed`',
   'awaiting_seal.seal': '`seal`, verdict `by_human = true` (nặng ×3)',
   'awaiting_seal.return.by_character': 'lệnh `return` kèm ghi chú; bỏ `verifier`',

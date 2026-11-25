@@ -53,11 +53,14 @@ Lỗ hổng theo loại, kèm số đo trên sổ thật:
 File registry mới `disruptions.json` (bản mặc định ở `packages/registry-default/`), mỗi dòng một loại, theo một trong hai khuôn (ADR 0016: lõi không `switch` theo loại, chỉ biết hai khuôn):
 
 - `event`: một event thuộc `type` thỏa các điều kiện `where`.
-- `sequence`: event `first` rồi event `then` trên cùng đối tượng (`same`: `quest`, `territory`, `session` hay `attempt`), cách nhau không quá `within_seconds` hoặc ít nhất `after_minutes`; tùy chọn `unless`, một event xen giữa làm luật không khớp.
+- `sequence`: event `first` rồi event `then` trên cùng đối tượng (`same`: danh sách đường dẫn mà hai event cùng có và cùng giá trị, như `quest`, `territory`, `session`, `attempt` hay `data.pr`; LL-01: event của làn khách chỉ mang số PR trong `data`), cách nhau không quá `within_seconds` hoặc ít nhất `after_minutes` (đúng một trong hai); tùy chọn `unless`, một event cùng giá trị xen giữa làm luật không khớp.
+- `cause` (tùy chọn) là đường dẫn tới mã nguyên nhân: trên event của khuôn `event`; với `sequence` thì bắt đầu bằng `first.` hay `then.` (LL-01).
 
 Điều kiện là một đường dẫn có chấm vào dòng event (`data.reason.code`, `actor.kind`) cùng đúng một phép: `in` (danh sách giá trị), `gte` (số) hay `exists`. Không biểu thức, không regex trên chữ tự do: sự cố chỉ nhận ra được bằng đọc chữ là dấu hiệu sổ event còn thiếu mã, và được sửa ở sổ event (mục 4).
 
-Các loại mặc định của đợt đầu, chỉ dùng event đang có: `session_cut_then_submitted` (L31), `edit_killed_session` (L02), `edited_after_start` (L42), `retry_changed_assignee` (L01), `guest_waited` (L43, `after_minutes` 30), `commit_refused` (`breaker:commit`, `breaker:commit_errors`), `setup_failed` (`breaker:setup`, `patrol.ran` có `setup.pass` sai), `delivery_refused` (`delivery.failed`), `checks_stopped`, `unclaimable` (L30, L32), `many_rounds` (L17: ba `verdict.fail` trên một quest). Các loại dùng event mới thêm vào ở task dựng event đó.
+Các loại mặc định của đợt đầu, chỉ dùng event đang có (LL-01 dựng 17 loại): `session_cut_then_submitted` (L31), `edit_killed_session` (L02), `edited_after_start` (L42), `retry_dropped_assignee` (L01; kế hoạch gọi `retry_changed_assignee`, nhưng ba phép so không so được người làm của hai event, nên luật chỉ nói lần thử lại bỏ người làm), `guest_waited` (L43, `after_minutes` 30, `unless` `delivery.guest_refused`), `commit_refused` (`breaker:commit`, `breaker:commit_errors`), `setup_failed` (`breaker:setup`) và `patrol_setup_failed` (`patrol.ran` có `setup.pass` sai; một loại một khuôn nên tách đôi), `delivery_refused` (`delivery.failed`), `guest_refused` (`delivery.guest_refused`, L48), `checks_stopped`, `unclaimable` (L30, L32), `many_rounds` (L17: `verdict.fail` có `attempt` từ 3, vì không phép so nào đếm), cùng bốn loại LL-01 thêm cho các ca chấm "đủ" hay "một phần" mà danh sách chưa có: `out_of_scope` (L33), `pass_overturned` (L38, `character.judged` vai `judge`), `graph_failed` (L40), `tribe_check_failed` (L03). L38 và L40 là cách LL-01 đọc mô tả ngắn của bảng chấm, chờ chủ nhân xác nhận. Các loại dùng event mới thêm vào ở task dựng event đó.
+
+LL-01: `disruptions.json` được đọc riêng (`parseDisruptionKinds`), không nằm trong sáu file của `parseRegistry`, để file lỗi chỉ bỏ phần sự cố (mục 7); `elvaria init` và `elvaria migrate` vẫn chép nó (`registryFiles()`), còn store chưa đọc nó (LL-02 đọc).
 
 File `disruptions.json` nằm trong đường bảo vệ như phần còn lại của registry (ADR 0026): Thầy tu chỉ đề xuất đổi luật bằng thư.
 
@@ -147,7 +150,7 @@ Phiên điều phối ở ngoài Elvaria; quan sát của nó vào vương quố
 | Sự cố của bộ thử nhận ra kèm nguyên nhân (trên 30) | 7 (23 %), chấm tay | 9 (30 %) | 15 (50 %) | 22 (73 %) |
 | Sự cố của bộ thử thấy được triệu chứng | 24 (80 %), chấm tay | 24 | 28 | 28 |
 
-Các cột sau là dự tính theo từng ca; spec của LL-01 thay số chấm tay bằng số máy đếm. Ngưỡng đề xuất (VH10): từ 70 % kèm nguyên nhân sau LL-05. Tám ca còn lại (L03, L04, L06, L08, L39, L46, L48, AH-08b) để ngoài có chủ ý.
+Các cột sau là dự tính theo từng ca; spec của LL-01 thay số chấm tay bằng số máy đếm. Máy đếm sau LL-01 (`packages/domain/src/disruption/suite.spec.ts`): **9** kèm nguyên nhân (bảy ca "đủ" cùng L17 và L02, mà bảng chấm tay để "một phần") và **18** thấy triệu chứng, không phải 24: triệu chứng của L06, L36, L37, L41, AH-08b là một check đỏ, của L46 là một câu hỏi, và luật trên đó khớp cả mọi bài làm sai, nên sáu ca này đứng "thiếu" tới khi LL-05 có mã nguyên nhân (L46 để ngoài, VH12). Ngưỡng đề xuất (VH10): từ 70 % kèm nguyên nhân sau LL-05. Tám ca còn lại (L03, L04, L06, L08, L39, L46, L48, AH-08b) để ngoài có chủ ý.
 
 Với lượt Thầy tu vận hành, sau bốn tuần bật: số thư gửi, số được nhận (`accepted` hay `handled`), số bị bác; với thư đã làm, tỉ lệ của loại sự cố trước và sau; số lời báo tay và số lần sót. Đạt khi quá nửa số thư được nhận và ít nhất một loại sự cố giảm tỉ lệ sau thư của nó; không đạt thì tắt lịch và xem lại gói bằng chứng trước khi tốn thêm mana.
 

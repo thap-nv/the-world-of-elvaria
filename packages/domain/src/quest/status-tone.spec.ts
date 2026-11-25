@@ -25,7 +25,7 @@ describe('statusToneOf', () => {
     expect(STATUS_TONES.filter((tone) => !used.has(tone))).toEqual([]);
   });
 
-  it('maps the twelve statuses as the plan and the glossary say (§2.7, glossary §7.1)', () => {
+  it('maps the thirteen statuses as the plan and the glossary say (§2.7, glossary §7.1)', () => {
     expect(Object.fromEntries(QUEST_STATUSES.map((status) => [status, statusToneOf(status)]))).toEqual({
       draft: 'open',
       open: 'open',
@@ -33,6 +33,7 @@ describe('statusToneOf', () => {
       working: 'working',
       review: 'review',
       returned: 'returned',
+      healing: 'infirmary',
       awaiting_seal: 'seal',
       done: 'done',
       blocked: 'open',

@@ -115,6 +115,7 @@
         "working",
         "review",
         "returned",
+        "healing",
         "awaiting_seal",
         "done",
         "blocked",
@@ -704,6 +705,7 @@
               "working",
               "review",
               "returned",
+              "healing",
               "awaiting_seal",
               "paused_mana"
             ]

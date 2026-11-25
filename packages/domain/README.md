@@ -149,7 +149,10 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   `selectHealer` (HL-03, ADR 0034) chooses who mends a work the territory's hooks refused: a free character of an
   `is_healer` class whose model family is among the quest's doers (`workedOn`), the higher level first; one that
   stands by busy is waited for; with none, the doer heals its own work. Never the assignee itself, nor a character
-  the party's bars keep from the quest (`partyBarsOf`).
+  the party's bars keep from the quest (`partyBarsOf`). `planTick` (HL-04) asks it for each returned quest whose run
+  awaits its heal (`awaitsHeal`, `src/dispatch/returns.ts`): a healer that stands by as a claimant does (its tribe
+  may take the quest on its territory, its pool open) and is free takes it (`heals`, then `returned.heal` into the
+  status `healing`, a doer's entry of the same run); a busy one is waited for; the doer goes through `redispatches`.
 - Keeps quests whose files meet apart (`src/dispatch/scope.ts`, implementation-plan §3.16.5, ADR 0028, PS-05):
   `quest.scope_paths` is optional; `scopesMeet` compares the literal text of the globs, a doubt is an overlap, and
   entries inside `territory.shared_paths` do not count. A session-tier quest holds its scope from its first run until
@@ -322,6 +325,14 @@ count}` counted in the list's order, never stored: `siblingRootOf`, `siblingsOf`
   attempt_log does not keep. `mana.exhausted` may name the reset it waits for
   (`resets_at`), and `mana.level` may read one model's own cap (`model`), which the reducer leaves out of the
   pool's band, as it does that cap's sleep (P1-32).
+- Reads operational disruptions from the event log (`src/disruption/`, LL-01, ADR 0036): `disruptionsOf(events,
+kinds, window)` returns each time the kingdom's machinery slowed or spoiled work that was not wrong, with its kind,
+  place, times, wait minutes, cause code and the ids of the events that prove it; nothing is stored. Kinds are data
+  (`registry/disruptions.json`, schema `src/schema/disruption/disruption-kind.ts`) in two shapes, `event` and
+  `sequence` (`same` values, `within_seconds` or `after_minutes`, `unless`), with conditions `in`, `gte`, `exists` on
+  one coded field. `parseDisruptionKinds` reads that file apart from `parseRegistry` and refuses repeated ids and
+  event types outside the catalog. The test suite of plans/learning-loop.md (30 cases, `src/disruption/__fixtures__/`)
+  runs against the default file of `@elvaria/registry-default`.
 - Keeps the metrics ledger, read side (`src/metrics/`, implementation-plan §3.16.1, ADR 0027, PS-01): `metricsOf(input,
 window)` over quests, verdicts, the event log and the handled inbox commands counts the runs of a window, the
   rework (every character session beyond one assignee and one verifier per quest, `reworkOf`) with its cause, the
