@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { tempDir } from '../test/temp.ts';
+import { tempDir } from './__fixtures__/temp.ts';
 import { DAY_1, DAY_2, idsOf, makeEvent, makeEvents } from './__fixtures__/events.ts';
 import { openEventLog } from './event-log.ts';
-import type { TempDir } from '../test/temp.ts';
+import type { TempDir } from './__fixtures__/temp.ts';
 import type { EventLog } from './event-log.ts';
 import type { EventBatch } from './read-log.ts';
 import type { Event } from '@elvaria/domain';

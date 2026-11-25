@@ -4,11 +4,11 @@ import path from 'node:path';
 import { EventSchema } from '@elvaria/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { linesOf, plantText, tempDir } from '../test/temp.ts';
+import { linesOf, plantText, tempDir } from './__fixtures__/temp.ts';
 import { DAY_1, DAY_2, idsOf, makeEvent, makeEvents, plus } from './__fixtures__/events.ts';
 import { appendByDay, appendEvents, serializeEvent } from './append.ts';
 import { MAX_LINE_BYTES } from './constants.ts';
-import type { TempDir } from '../test/temp.ts';
+import type { TempDir } from './__fixtures__/temp.ts';
 
 const parseLines = async (file: string) =>
   (await linesOf(file)).map((line) => EventSchema.parse(JSON.parse(line)));

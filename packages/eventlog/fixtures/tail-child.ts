@@ -1,5 +1,5 @@
 // A consumer for crash.spec.ts that gets killed mid-run, run by Node's type stripping:
-//   node test/tail-child.ts <kingdom> <state.json>
+//   node fixtures/tail-child.ts <kingdom> <state.json>
 // It tails the log and, after each batch, saves what it processed together with the cursor in one atomic
 // rename: the pattern a real consumer uses, so its state and its cursor can never disagree.
 import { readFile, rename, writeFile } from 'node:fs/promises';

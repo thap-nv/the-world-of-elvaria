@@ -1,5 +1,5 @@
 // One appending process for concurrency.spec.ts, run by Node's type stripping:
-//   node test/append-child.ts <kingdom> <label> <count>
+//   node fixtures/append-child.ts <kingdom> <label> <count>
 // Appends <count> events one call at a time, to the log and to the quest's journal, as a hook does.
 import process from 'node:process';
 

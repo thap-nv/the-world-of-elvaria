@@ -9,8 +9,7 @@
   },
   "root_spec": {},
   "test_dir": {
-    "apps/cli/test": 1,
-    "packages/eventlog/test": 1
+    "apps/cli/test": 1
   },
   "name_pair": {
     "apps/cli/src/command + commands": 1,
