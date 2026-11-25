@@ -1,11 +1,11 @@
 // Throwaway kingdoms in the OS temp folder. The name has a space on purpose: real kingdoms live in paths like
 // `D:\Dummy\Tool - Personal\…`.
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { openEventLog, openJournal } from '@elvaria/eventlog';
 import type { EventBatch } from '@elvaria/eventlog';
+import { tempDir } from '@elvaria/testkit';
 
 import { CHARACTER, QUEST } from './claude-payloads.ts';
 import type { HookEnv } from '../context.ts';
@@ -24,7 +24,8 @@ export interface TempKingdom {
 }
 
 export async function tempKingdom(): Promise<TempKingdom> {
-  const root = await mkdtemp(path.join(tmpdir(), 'elvaria hooks '));
+  const temp = await tempDir('hooks');
+  const root = temp.root;
   const runDir = path.join(root, '.runs', `${QUEST}-1`);
   await mkdir(runDir, { recursive: true });
   return {
@@ -46,7 +47,6 @@ export async function tempKingdom(): Promise<TempKingdom> {
       await mkdir(path.join(root, 'quests', QUEST), { recursive: true });
       await writeFile(path.join(root, 'quests', QUEST, 'handover.md'), text, 'utf8');
     },
-    // On Windows a hook child that just ended, or the indexer, may hold the folder a moment (EBUSY): retry (P1-39).
-    remove: () => rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }),
+    remove: () => temp.remove(),
   };
 }

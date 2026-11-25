@@ -1,9 +1,11 @@
-import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 
 import { doctorNoteOf } from '@elvaria/runner-core';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
@@ -14,7 +16,6 @@ import {
   fakeRunner,
   minimalEnv,
 } from './__fixtures__/harness.ts';
-import { RM_TEMP } from './__fixtures__/temp.ts';
 import { NOT_FOUND, signInEnding, versionOf } from './doctor.ts';
 import { launchOf } from './launch.ts';
 import { claudeCandidates, locateClaude } from './locate.ts';
@@ -124,7 +125,8 @@ describe('doctor', () => {
 
   // Windows throws EFTYPE from spawn itself for a file that is no program; doctor must answer, not throw.
   it.runIf(process.platform === 'win32')('answers for a broken executable', async () => {
-    const broken = path.join(await mkdtemp(path.join(tmpdir(), 'elvaria broken ')), 'claude.exe');
+    const temp = await tempDir('broken');
+    const broken = path.join(temp.root, 'claude.exe');
     await writeFile(broken, '');
     const info = await fakeRunner({ executable: broken }).doctor();
     expect(info).toMatchObject({ path: broken, version: '', auth_ok: false });
@@ -133,7 +135,7 @@ describe('doctor', () => {
       ['doctor:command_not_started', `${broken} --version`],
       ['doctor:command_not_started', 'claude auth status --json'],
     ]);
-    await rm(path.dirname(broken), RM_TEMP);
+    await temp.remove();
   });
 
   it('says `claude auth status` ran out of time, and how long it had, never that the owner is logged out', async () => {
@@ -201,11 +203,13 @@ describe('forget', () => {
 });
 
 describe('where Claude Code is', () => {
+  let temp: TempDir;
   let home: string;
   beforeAll(async () => {
-    home = await mkdtemp(path.join(tmpdir(), 'elvaria home '));
+    temp = await tempDir('home');
+    home = temp.root;
   });
-  afterAll(() => rm(home, RM_TEMP));
+  afterAll(() => temp.remove());
 
   const binary = process.platform === 'win32' ? 'claude.exe' : 'claude';
   const homeEnv = () => (process.platform === 'win32' ? { USERPROFILE: home } : { HOME: home });
