@@ -34,10 +34,12 @@ const GUARD_TEXT: Readonly<Record<QuestGuard, string>> = {
   stalled_review:
     '`REVIEW_BREAKS_MAX` người chấm của lượt đã rời đi không ra verdict (cầu dao cắt, `crash` hoặc `no_session`), hoặc `REVIEW_PARTIALS_MAX` người nộp verdict `partial` (`reviewStalled`)',
   no_stalled_review: 'không phải `reviewStalled`',
+  heal_due:
+    'trip `commit` có `reason` thuộc `HEALABLE_REASONS` (`breaker:commit`, `breaker:commit_errors`), bậc session có `assignee`, lượt `n` chưa có lần chữa (`healCallOf`, ADR 0034)',
   cut_goes_on:
     'trip `time`, `tokens` hay `turns` có `progress`, bậc session có `assignee`, và lần cắt không là lần thứ hai liền không tiến triển trong lượt `n` (`cutCallOf`)',
   cut_stops:
-    'mọi trường hợp còn lại (trip khác, không có `progress`, bậc script, hai lần cắt liền không tiến triển)',
+    'mọi trường hợp còn lại (trip khác, không có `progress` hay `reason`, bậc script, hai lần cắt liền không tiến triển, lần hook từ chối thứ hai trong lượt, phiên chữa bị cắt)',
   assignee_last:
     '`tier = session`, có `assignee`, mục cuối của `attempt_log` là của người làm (không phải người chấm)',
 };
@@ -68,10 +70,12 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
     'phiên của nhân vật kết thúc trong lúc không có Nhiếp chính nào chạy (Nhiếp chính dừng hay bị giết): lượt kết thúc `cancelled`, `attempts` trả lại một (lần `redispatch` ngay sau lấy lại nó), cùng nhân vật làm tiếp ở phiên mới từ handover (P1-44)',
   'working.ask': 'ghi `blocked.question`; lượt kết thúc `blocked`',
   'working.mana_out.by_character': 'giữ `assignee`; lượt kết thúc `paused`',
+  'working.breaker.heal_due':
+    'hook của lãnh thổ từ chối commit nộp lần đầu trong lượt: không chuông, mục attempt của phiên vừa xong ghi `heal: "due"` (lượt kết thúc `breaker`), việc vẫn nằm đã stage trong đất; giữ `assignee`, `attempts` không đổi; `redispatch` ngay sau mở phiên chữa cùng lượt `n`; Nhiếp chính chỉ ghi `reason` khi `kingdom.heal.enabled` bật; dòng sổ `quest.heal_due` (ADR 0034)',
   'working.breaker.cut_goes_on':
     'kill tree; lượt kết thúc `timeout` (thời gian) hoặc `breaker` (token, lượt), ghi `progress`; giữ `assignee`, `attempts` không đổi; `redispatch` ngay sau mở phiên mới đọc handover, cùng lượt `n`, `continuation.reason = revive`; không có trần số lần đi tiếp, lần cắt có tiến triển luôn đi tiếp (ADR 0030)',
   'working.breaker.cut_stops':
-    'kill tree, event `quest.infirmary` kèm lý do; lượt `timeout` (thời gian) hoặc `breaker` (token, lượt, hook từ chối commit lúc nộp); nhân vật → swamp rồi idle; trip `time`/`tokens`/`turns` chỉ tới đây sau hai lần cắt liền không tiến triển (`breaker:no_progress`); trip `commit`, `secrets`, `forbidden_paths`, `no_session` luôn tới đây, bỏ qua `progress`',
+    'kill tree, event `quest.infirmary` kèm lý do; lượt `timeout` (thời gian) hoặc `breaker` (token, lượt, hook từ chối commit lúc nộp); nhân vật → swamp rồi idle; trip `time`/`tokens`/`turns` chỉ tới đây sau hai lần cắt liền không tiến triển (`breaker:no_progress`); trip `commit`, `secrets`, `forbidden_paths`, `no_session` tới đây, bỏ qua `progress`, trừ lần hook từ chối đầu của lượt được chữa (`heal_due`); phiên chữa bị trần cắt hay bị từ chối lần nữa luôn tới đây (ADR 0034)',
   'working.crash.can_retry': 'outcome `crash`, cùng nhân vật thử lại',
   'working.crash.out_of_retries':
     'bậc script: lỗi script vào thẳng trạm quân y (lỗi của Elvaria hoặc dữ liệu)',
@@ -117,7 +121,7 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
     'phiên người chấm kết thúc trong lúc không có Nhiếp chính nào chạy: người chấm rời đi, lượt kết thúc `cancelled`, không đếm vào `reviewBreaksOf` (P1-44)',
   'review.suspend.has_verifier': 'như trên, khi người dùng đình chỉ người chấm',
   'returned.redispatch':
-    '`attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes; sau một lần cắt đi tiếp (`working.breaker.cut_goes_on`) thì `attempts` không đổi, cùng lượt `n`, phiên mới đọc handover (ADR 0030)',
+    '`attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes; sau một lần cắt đi tiếp (`working.breaker.cut_goes_on`) thì `attempts` không đổi, cùng lượt `n`, phiên mới đọc handover (ADR 0030); sau `working.breaker.heal_due` cũng vậy, mục mới ghi `heal: "session"` (phiên chữa: trần `kingdom.heal`, không có phiên tiếp, ADR 0034)',
   'returned.breaker': 'trip `secrets` hay `no_session` (phiên làm lại không mở được), như `claimed`',
   'awaiting_seal.seal': '`seal`, verdict `by_human = true` (nặng ×3)',
   'awaiting_seal.return.by_character': 'lệnh `return` kèm ghi chú; bỏ `verifier`',

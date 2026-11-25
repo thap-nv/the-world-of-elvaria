@@ -105,6 +105,8 @@ describe('replaying a fake day', () => {
     // The owner's edits and the Steward's notices (P1-03), moves of the temple and of the owner's discipline;
     // reduce.spec.ts applies them one by one. A patch the Steward applied (P1-28), its merge of a party's parts (P1-21) and a plot it put back after a judge (P1-44) change no state the world keeps, nor does the build the kingdom runs (PS-04b), nor a territory's code graph (PS-21), nor a scheduled job (PS-03), nor a delivery to the forge (PS-08: no writer before PS-08c) or a guest entry of its merge queue (CM-07), nor a patrol (PS-26: its territory.health line is what the world keeps), nor a tribe check's tokens (the mana estimate reads them, run (221) (b)), nor a session of the Chancellor's office (the same, fix/run-221-followups), nor the breaker of the seal delegation and the owner's report of an escaped defect (PS-08g: the digest reads them from the log). The fake day files no memo (reduce.spec.ts applies the memo lines, PS-03). A line of scripture the Steward added, retired or refused (PS-12c) changes no state the world keeps either: the temple is drawn from the lines, and the scriptures hold the text.
     expect(unused).toEqual([
+      // A refused commit sent back for a heal (ADR 0034): no writer before HL-02, and the fake day refuses no commit.
+      'quest.heal_due',
       'quest.edited',
       'quest.unclaimable',
       'mana.warning',

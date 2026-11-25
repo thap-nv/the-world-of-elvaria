@@ -2,7 +2,7 @@
 // The clock of a session is its own attempt_log entry: a session revived after mana or an answer is a fresh
 // context (principle 13) with a fresh clock, and its tokens are the ones its own stream reported.
 import { parseInstant } from '../core/clock.ts';
-import { BREAKER_DEFAULTS } from '../constants.ts';
+import { BREAKER_DEFAULTS, HEAL_DEFAULTS } from '../constants.ts';
 import { CONTEXT_BUDGETS_BY_RANK } from '../dispatch/constants.ts';
 import { evaluateBreakers } from './evaluate.ts';
 import { staminaOf } from './stamina.ts';
@@ -45,6 +45,8 @@ export type SessionRules = Pick<Kingdom['breakers'], 'max_turns' | 'verifier_tok
     readonly mana_multiplier?: number;
     readonly characters?: ReadonlyMap<string, Pick<Character, 'tribe'>>;
     readonly tribes?: readonly Pick<Kingdom['tribes'][number], 'id' | 'max_turns'>[];
+    /** A heal session's ceilings (ADR 0034); HEAL_DEFAULTS when absent. */
+    readonly heal?: Pick<Kingdom['heal'], 'tokens' | 'minutes'>;
   };
 
 /** The tribe of the character holding `role` on the quest; none for an empty seat or a character not in `rules`. */
@@ -114,6 +116,27 @@ export const tokenCeilingOf = (
   return role === 'verifier' ? Math.round(tokens * rules.verifier_tokens_multiplier) : tokens;
 };
 
+/**
+ * A session's time and token ceilings: the quest's, or for a heal session kingdom.heal's (ADR 0034), small and the
+ * same for every quest, so a heal that runs long stops at once instead of redoing the work. Turns keep the tribe's.
+ */
+function ceilingsOf(
+  quest: Quest,
+  role: Role,
+  heals: boolean,
+  rules: SessionRules,
+  calibration: TribeCalibration | undefined,
+): { readonly max_minutes: number; readonly max_tokens: number } {
+  if (heals) {
+    const heal = rules.heal ?? HEAL_DEFAULTS;
+    return { max_minutes: heal.minutes, max_tokens: heal.tokens };
+  }
+  return {
+    max_minutes: quest.budget.max_minutes,
+    max_tokens: tokenCeilingOf(quest, role, rules, calibration),
+  };
+}
+
 /** What the breakers of a session on `quest` in `role` measure: its holder's tribe's (tribeLimitsOf, §3.14). */
 export type BreakerMeasure = (quest: Quest, role: Role) => TribeLimits['breakers'];
 
@@ -161,8 +184,7 @@ export function sessionReadingsOf(
     const tribe = holderTribeOf(quest, session.role, rules);
     const calibrated = tribe === undefined ? undefined : calibration?.get(tribe);
     const limits = {
-      max_minutes: quest.budget.max_minutes,
-      max_tokens: tokenCeilingOf(quest, session.role, rules, calibrated),
+      ...ceilingsOf(quest, session.role, entry?.heal === 'session', rules, calibrated),
       max_turns: turnCeilingOf(quest, session.role, rules, calibrated),
       ...(rules.soft_pct === undefined ? {} : { soft_pct: rules.soft_pct }),
       ...(rules.hard_pct === undefined ? {} : { hard_pct: rules.hard_pct }),

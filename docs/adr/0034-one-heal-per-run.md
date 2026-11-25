@@ -1,7 +1,7 @@
 # ADR 0034 · One heal per run: a commit the hooks refuse goes back once, to its doer or to a healer
 
-- Status: proposed · 2026-11-25
-- Amends (once accepted): [ADR 0030](0030-cut-session-with-progress-goes-on.md) (the `commit` trip no longer always stops), [ADR 0016](0016-registry-data-not-code.md) (class flag `is_healer`)
+- Status: accepted · 2026-11-25 (HL-01; proposed the same day, settled by the owner, K1–K12 of the plan)
+- Amends: [ADR 0030](0030-cut-session-with-progress-goes-on.md) (the `commit` trip no longer always stops), [ADR 0016](0016-registry-data-not-code.md) (class flag `is_healer`)
 - Related: [plans/healer.md](../plans/healer.md); [ADR 0008](0008-separation-of-duties.md), [ADR 0017](0017-one-quest-one-context-three-tiers.md); rule (F) of [plans/phase-2-plan.md](../plans/phase-2-plan.md); owner's (513) and (515), implementation-plan §11 (2026-11-25)
 
 ## Context
@@ -10,7 +10,7 @@ A finished session whose submit commit the territory's hooks refuse sends its qu
 
 ## Decision
 
-- **One heal per run.** `healCallOf` (domain, pure) lets a refusal go back when its reason is in `HEALABLE_REASONS` (`breaker:commit`, `breaker:commit_errors`), the quest is a character's, `kingdom.heal.enabled` holds and the run `n` has had no heal. The quest moves `working.breaker.heal_due` to `returned` with no bell; the doer's entry keeps `heal: "due"`. A second refusal in the run goes to the infirmary.
+- **One heal per run.** `healCallOf` (domain, pure) lets a refusal go back when its reason is in `HEALABLE_REASONS` (`breaker:commit`, `breaker:commit_errors`), the quest is a character's, `kingdom.heal.enabled` holds and the run `n` has had no heal. The quest moves `working.breaker.heal_due` to `returned` with no bell; the doer's entry keeps `heal: "due"`. A second refusal in the run goes to the infirmary. (Amended 2026-11-25, HL-01: the guard reads the `reason` of the `breaker` event, which the Steward names only while `kingdom.heal.enabled` holds, so the machine reads no setting; every assignee session of the run after the `due` one, a wake after mana or an answer included, is marked `heal: "session"`.)
 - **Who heals** is `selectHealer`'s call from the roster: an idle character of a class with `is_healer` whose model family is already among the quest's doers; one that is busy is waited for; with none, the doer heals its own work in a fresh session of the same run (`returned.redispatch`, `attempts` unchanged).
 - **A heal session has ceilings of its own** (`kingdom.heal.tokens`, `minutes`), never the quest's, and no continuation: cut by a ceiling or refused again, the quest goes to the infirmary with the bell. So does a healer's session that crashes; the doer's own keeps the rows of `working` (a crash is a new attempt, mana a pause).
 - **The healer works in a new status, `healing`**, in the quest's plot, as a session of role `assignee` of the same run, marked `heal: "session"`; `quest.assignee` does not change. So it is a doer of the quest by the letter of ADR 0008: rule 1 keeps it from judging the quest and its party, with no change in `verify/`.

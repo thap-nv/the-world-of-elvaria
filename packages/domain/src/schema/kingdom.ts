@@ -15,6 +15,7 @@ import {
 import { AmendmentsSchema } from './amendments.ts';
 import { CouncilSchema } from './council.ts';
 import { DelegationSchema } from './delegation.ts';
+import { HealSchema } from './kingdom-heal.ts';
 import { ProgramsSchema } from './program.ts';
 import { ScheduleSchema } from './kingdom-schedule.ts';
 import { TribeSchema } from './tribe.ts';
@@ -202,6 +203,7 @@ export const KingdomSchema = z
     programs: ProgramsSchema,
     mana: ManaSchema,
     breakers: BreakersSchema,
+    heal: HealSchema,
     schedule: ScheduleSchema,
     dispatch: DispatchSchema,
     delegation: DelegationSchema,

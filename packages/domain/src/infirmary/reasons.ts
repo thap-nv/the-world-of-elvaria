@@ -81,6 +81,17 @@ export const INFIRMARY_REASON_PARAMS: Readonly<Record<InfirmaryReasonCode, reado
   legacy: ['text'],
 };
 
+/**
+ * The refusals one heal per run may send back instead of to the infirmary (ADR 0034): the territory's hooks refused
+ * the commit of a finished session, and their log names what to fix. A constant, not a setting: it says what a fresh
+ * session can mend by committing again. A failed setup and a refused patch wait for a case to measure; secrets,
+ * forbidden paths and a session that could not open are never healed, the machine's reason says it all (ADR 0017).
+ */
+export const HEALABLE_REASONS = [
+  'breaker:commit',
+  'breaker:commit_errors',
+] as const satisfies readonly InfirmaryReasonCode[];
+
 export const infirmaryReasonOf = (
   code: InfirmaryReasonCode,
   params: InfirmaryParams = {},

@@ -193,6 +193,19 @@ export const QuestInfirmaryDataSchema = z.strictObject({
   ...QUEST_CHANGE,
 });
 
+/**
+ * A submit commit the territory's hooks refused, sent back for a heal instead of to the infirmary (ADR 0034): the
+ * move working → returned, with no bell. The reason is the one quest.infirmary would have carried.
+ */
+export const QuestHealDueDataSchema = z.strictObject({
+  reason: InfirmaryReasonSchema.meta(
+    describe(
+      "The refusal's reason code and parameters, as quest.infirmary would carry them (breaker:commit or breaker:commit_errors); `log` names the pre-commit log the heal session reads.",
+    ),
+  ),
+  ...QUEST_CHANGE,
+});
+
 export type InfirmaryDetail = z.infer<typeof InfirmaryDetailSchema>;
 
 /**
