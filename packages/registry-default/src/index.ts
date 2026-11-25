@@ -25,7 +25,13 @@ export function loadDefaultRegistry(): Result<Registry, RegistryIssue[]> {
 }
 
 /**
- * What `elvaria init` copies, relative to REGISTRY_ROOT with `/`: the six data files, the catalog scripts with
+ * registry/disruptions.json (LL-01) is read on its own (parseDisruptionKinds of @elvaria/domain), not with the six
+ * files of parseRegistry: a broken file of kinds drops the disruption reading, never the kingdom's registry.
+ */
+const READ_APART = ['disruptions.json'];
+
+/**
+ * What `elvaria init` copies, relative to REGISTRY_ROOT with `/`: the data files, the catalog scripts with
  * their shared module, and the role prompts. Tests and fixtures stay in the package. `root` is this package in
  * another build (`elvaria upgrade` compares the registry of the build it pins, fix/kingdom-upkeep).
  */
@@ -33,6 +39,7 @@ export function registryFiles(root: string = REGISTRY_ROOT): string[] {
   const code = globSync(['scripts/*.mjs', 'prompts/*.md'], { cwd: root });
   return [
     ...REGISTRY_FILES.map((file) => `${file}.json`),
+    ...READ_APART,
     ...code.map((file) => file.split(path.sep).join('/')),
   ].sort();
 }

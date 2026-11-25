@@ -11,6 +11,7 @@ import { partyOf, workedOn } from '../verify/past-assignees-of.ts';
 import { judgeWaitOf } from './judge-waits.ts';
 import type { JudgeWait, GaugeSource } from './judge-waits.ts';
 import type { Roster } from './roster.ts';
+import type { HealerClass } from './select-healer.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, QuestId, TerritoryId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
@@ -65,9 +66,10 @@ export interface ReviewSource {
   readonly kingdom: Pick<Kingdom, 'dispatch'>;
   /**
    * Kinds and rituals tell a trial in a scratch plot from other checks (background-room.ts, P1-54), and a quest whose
-   * judge must see from the others (judgedByEye, PS-11). Absent: neither.
+   * judge must see from the others (judgedByEye, PS-11). Absent: neither. The heals of the same step read the classes
+   * too (`is_healer`, returns.ts, ADR 0034).
    */
-  readonly registry: { readonly classes: readonly VerifierClass[] } & Partial<
+  readonly registry: { readonly classes: readonly (VerifierClass & HealerClass)[] } & Partial<
     Pick<Registry, 'kinds' | 'rituals'>
   >;
   readonly quests: readonly Quest[];

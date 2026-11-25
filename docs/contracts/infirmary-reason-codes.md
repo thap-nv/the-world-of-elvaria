@@ -69,6 +69,11 @@ Khóa i18n của mã `<nhóm>:<tên>` là `cli.quest.infirmary.reason.<nhóm>.<t
 | `breaker:treasury_unreadable` | cầu dao secret | `error` | không đọc được kho bảo vật; `error` nguyên văn |
 | `breaker:no_session` | không mở được phiên người làm (trip `no_session`) | `error` | plot, request hay spawn ném lỗi; `error` là dòng đầu, tối đa 300 ký tự (thêm lúc giao hàng PS-07, khi merge fix/review-no-session) |
 | `breaker:no_progress` | cầu dao (assignee), hai lần cắt liền không tiến triển | `trip`, `run` | phiên của người làm bị trần `trip` (`time`, `tokens` hay `turns`) cắt hai lần liền trong lượt `run` mà không có commit mới (ADR 0030); một lần cắt có tiến triển thì quest đi tiếp, không vào trạm quân y |
+| `heal:over_limit` | phiên Y sư (ADR 0034, HL-04) | `files`, `lines` | phần Y sư đổi vượt `kingdom.heal.max_files` hay `max_lines`: `files` file, `lines` dòng thêm và bớt; đất trở lại đúng cây người làm đã stage |
+| `heal:out_of_work` | phiên Y sư | `count` | Y sư đổi `count` file ngoài phần việc người làm đã stage (danh sách ở `detail.paths`); đất trở lại như trên |
+| `heal:unchanged` | phiên Y sư | (không) | Y sư không sửa gì; thư bàn giao của nó nói vì sao (K11: không trả tiếp cho người làm) |
+| `heal:cut` | cầu dao (phiên Y sư) | `trip` | trần `kingdom.heal` cắt phiên Y sư (`trip` là `time`, `tokens` hay `turns`); phiên chữa không có phiên tiếp. Hook từ chối lần hai dùng lại `breaker:commit`, `breaker:commit_errors`, `log` trỏ vào log ở `.runs/<quest>-<n>/heal/` |
+| `heal:session_ended` | phiên Y sư | `outcome` | phiên Y sư kết thúc `outcome` (giá trị `RunResult.outcome`, như `judge:session_ended`) mà không nộp: CLI hỏng hay phiên mất |
 | `judge:time` | cầu dao người chấm | `stopped`, `run` | `stopped` người chấm của lượt `run` bị cầu dao thời gian cắt |
 | `judge:tokens` | như trên | `stopped`, `run` | … cầu dao token |
 | `judge:turns` | như trên | `stopped`, `run` | … cầu dao lượt |

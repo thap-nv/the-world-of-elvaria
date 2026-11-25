@@ -7,6 +7,7 @@
     "quest.status.claimed": "Claimed",
     "quest.status.done": "Done",
     "quest.status.draft": "Draft",
+    "quest.status.healing": "Healing",
     "quest.status.infirmary": "Infirmary",
     "quest.status.open": "Open",
     "quest.status.paused_mana": "Paused (out of mana)",

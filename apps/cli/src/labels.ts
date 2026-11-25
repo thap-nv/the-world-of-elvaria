@@ -21,6 +21,7 @@ export const QUEST_STATUS_LABEL: Readonly<Record<QuestStatus, MessageKey>> = {
   working: 'quest.status.working',
   review: 'quest.status.review',
   returned: 'quest.status.returned',
+  healing: 'quest.status.healing',
   awaiting_seal: 'quest.status.awaiting_seal',
   done: 'quest.status.done',
   blocked: 'quest.status.blocked',

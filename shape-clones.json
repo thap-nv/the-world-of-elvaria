@@ -561,6 +561,20 @@
       "status": "unreviewed"
     },
     {
+      "a": "packages/domain/src/schema/disruption/disruption-kind.ts",
+      "b": "packages/domain/src/schema/memo/memo-kind.ts",
+      "tokens": 77,
+      "status": "kept",
+      "reason": "LL-01: the root of a registry file (version 1, one non-empty list, a title, a description and the generated note), as memos.json and the five files of registry-entries.ts each spell it; the entries differ. Gathering the roots into one helper changes those files too, which is outside LL-01 (AH-14 rather than one pair apart)."
+    },
+    {
+      "a": "packages/domain/src/schema/disruption/disruption-kind.ts",
+      "b": "packages/domain/src/schema/registry-entries.ts",
+      "tokens": 98,
+      "status": "kept",
+      "reason": "LL-01: the root of a registry file (version 1, one non-empty list, a title, a description and the generated note), as memos.json and the five files of registry-entries.ts each spell it; the entries differ. Gathering the roots into one helper changes those files too, which is outside LL-01 (AH-14 rather than one pair apart)."
+    },
+    {
       "a": "packages/hooks/src/antigravity/tools.ts",
       "b": "packages/hooks/src/neutral/translate.ts",
       "tokens": 69,

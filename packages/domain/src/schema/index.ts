@@ -10,6 +10,7 @@ export * from './amendments.ts';
 export * from './council.ts';
 export * from './delegation.ts';
 export * from './delegation-seal.ts';
+export * from './disruption/disruption-kind.ts';
 export * from './event/chancellor-data.ts';
 export * from './event/delegation-data.ts';
 export * from './event/delivery-data.ts';
@@ -19,6 +20,7 @@ export { CHECK_CAUSES, CheckAttributedDataSchema, PROBE_SOURCES } from './event/
 export type { CheckAttributedData, CheckCause, ProbeSource } from './event/check-data.ts';
 export * from './event/event-data.ts';
 export * from './event/event-types.ts';
+export * from './event/heal-data.ts';
 export * from './event/event.ts';
 export * from './event/load-trace.ts';
 export * from './event/schedule-data.ts';

@@ -13,6 +13,10 @@ const CSS_SOURCES = ['../ui-kit/src/elvaria.css', '../../design/project/elvaria.
 const cssPath = CSS_SOURCES.find((path) => existsSync(path));
 if (cssPath === undefined) throw new Error(`elvaria.css not found; looked in ${CSS_SOURCES.join(', ')}`);
 
+// The default kinds of disruption (LL-01): the suite of plans/learning-loop.md §3.4 runs disruptionsOf with the file
+// a kingdom is given, so a change to it moves the measured count in the same commit.
+const disruptionsPath = fileURLToPath(new URL('../registry-default/disruptions.json', import.meta.url));
+
 // Plain .mjs, outside tsconfig.json on purpose: vitest/config pulls in Vite's types, which reference
 // @types/node, and one such file would make `process` and `node:fs` type-check everywhere in the domain.
 export default defineConfig({
@@ -22,7 +26,10 @@ export default defineConfig({
     // the property specs try 340 000 transitions per pass, 2.5 s under coverage on a quiet machine and over the
     // default 5 s when several `pnpm check` run at once (fix/busy-machine). 60 s still stops a loop that never ends.
     testTimeout: 60_000,
-    provide: { designCss: { path: cssPath, text: readFileSync(cssPath, 'utf8') } },
+    provide: {
+      designCss: { path: cssPath, text: readFileSync(cssPath, 'utf8') },
+      defaultDisruptions: readFileSync(disruptionsPath, 'utf8'),
+    },
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
