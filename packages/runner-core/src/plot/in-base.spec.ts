@@ -1,26 +1,28 @@
 // Whether a done quest's branch reached the base branch (PS-08d, (E) of the PS-08 plan): merged locally or on the
 // forge (origin fetched once per look, the owner's checkout never moved), and never a branch without a commit of its
 // own, which sits on the base branch from the start.
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { toPortable } from '@elvaria/store';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { createPlotManager } from './plot-manager.ts';
 import type { Territory } from '@elvaria/domain';
 
 let root = '';
 let kingdom = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria in base '));
+  temp = await tempDir('in base');
+  root = temp.root;
   kingdom = path.join(root, 'my kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const plots = () => createPlotManager({ kingdom, host: TEST_HOST });
 

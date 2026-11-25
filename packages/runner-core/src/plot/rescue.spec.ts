@@ -1,21 +1,23 @@
-import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { chmod, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { fromPortable, pathExists } from '@elvaria/store';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { plotCommitMessage } from './commit-message.ts';
 import { createPlotManager } from './plot-manager.ts';
 import { SET_ASIDE_DIR, WIP_PATCH_FILE, isScratchFile } from './rescue.ts';
 
 let root = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria plot rescue '));
+  temp = await tempDir('plot rescue');
+  root = temp.root;
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const plots = () => createPlotManager({ kingdom: path.join(root, 'kingdom'), host: TEST_HOST });
 const runDir = (name: string) => path.join(root, 'kingdom', '.runs', name);

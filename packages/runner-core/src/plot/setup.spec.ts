@@ -1,27 +1,29 @@
 // fix/plot-setup-on-lockfile: commands.setup runs again in a quest's plot once a file of commands.setup_when differs
 // from what its last success read, before the Steward commits (refreshSetup) and at the next prepare. Real git: the
 // files setup reads are what `git ls-files` lists, ignored ones aside.
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { fromPortable } from '@elvaria/store';
 import type { Plot, QuestId } from '@elvaria/domain';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { createPlotManager } from './plot-manager.ts';
 import { setupLogOf } from './setup.ts';
 
 let root = '';
 let kingdom = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria setup when '));
+  temp = await tempDir('setup when');
+  root = temp.root;
   kingdom = path.join(root, 'my kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const SETUP = [
   "import { appendFileSync, existsSync } from 'node:fs';",

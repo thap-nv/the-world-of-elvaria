@@ -1,16 +1,16 @@
 // The territory's trial (PS-25) on a real git repo whose path has spaces: commands.setup then every check on a
 // detached worktree at the default branch's head, and nothing left behind but the logs.
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { Territory } from '@elvaria/domain';
 
 import { TEST_HOST, commitFile, git, gitRepo, territoryAt } from '../__fixtures__/git-repo.ts';
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { commitsSinceStamp, trialIdOf, tryTerritory } from './territory-trial.ts';
 
 const SCRIPTS: Record<string, string> = {
@@ -30,8 +30,10 @@ let repo = '';
 let kingdom = '';
 let first = '';
 let head = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria territory trial '));
+  temp = await tempDir('territory trial');
+  root = temp.root;
   repo = await gitRepo(path.join(root, 'Tool - Demo'));
   first = git(repo, 'rev-parse', 'HEAD');
   for (const [file, text] of Object.entries(SCRIPTS)) await commitFile(repo, file, text);
@@ -39,7 +41,7 @@ beforeAll(async () => {
   kingdom = path.join(root, 'the kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const check = (id: string, run: string | string[], fields: Record<string, unknown> = {}) => ({
   id,

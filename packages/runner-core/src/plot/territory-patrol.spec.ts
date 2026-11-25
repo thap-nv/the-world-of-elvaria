@@ -2,28 +2,30 @@
 // plot name `patrol-<territory>`, its logs in `.runs/patrol-<territory>/`, a step in the plot before it goes, and a
 // `territory check` running at the same time keeps its own plot.
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { TEST_HOST, commitFile, gitRepo, territoryAt } from '../__fixtures__/git-repo.ts';
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { patrolIdOf, trialIdOf, tryTerritory } from './territory-trial.ts';
 
 let root = '';
 let repo = '';
 let kingdom = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria territory patrol '));
+  temp = await tempDir('territory patrol');
+  root = temp.root;
   repo = await gitRepo(path.join(root, 'Tool - Demo'));
   await commitFile(repo, 'slow.mjs', 'setTimeout(() => console.log("ok"), 1500);\n');
   await commitFile(repo, 'docs/a.md', '# A\n');
   kingdom = path.join(root, 'the kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const checks = [{ id: 'slow', run: 'node slow.mjs', when: ['**'], timeout_minutes: 1 }];
 const folderOf = (name: string) => path.join(repo, '.elvaria', 'worktrees', name);

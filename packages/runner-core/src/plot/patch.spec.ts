@@ -1,21 +1,23 @@
 // The Steward applies an assignee's patch for laws.patch_paths before the submit commit (P1-28), on real git repos.
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { fromPortable, pathExists } from '@elvaria/store';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { PATCH_FILE } from './patch.ts';
 import { createPlotManager } from './plot-manager.ts';
 
 let root = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria plot patch '));
+  temp = await tempDir('plot patch');
+  root = temp.root;
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const plots = () => createPlotManager({ kingdom: path.join(root, 'kingdom'), host: TEST_HOST });
 const HUSKY = ['.husky/**'];

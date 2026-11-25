@@ -1,14 +1,14 @@
 // A quest's dependencies merged into its plot before each session (fix/council-run-gaps (d), owner (155)): a plot
 // starts from one branch, so a quest waiting for two parts that ran side by side gets the other one merged in, and the
 // plot counts from there: what the judge reads, the files out of scope and the protected changes stay its own work.
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { fromPortable } from '@elvaria/store';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { createPlotManager } from './plot-manager.ts';
 import { PLOT_RECORD_FILE } from './plot-record.ts';
@@ -16,12 +16,14 @@ import type { Plot, QuestId } from '@elvaria/domain';
 
 let root = '';
 let kingdom = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria dependencies '));
+  temp = await tempDir('dependencies');
+  root = temp.root;
   kingdom = path.join(root, 'my kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const plots = () => createPlotManager({ kingdom, host: TEST_HOST });
 const branchOf = (id: QuestId): string => `quest/${id}`;

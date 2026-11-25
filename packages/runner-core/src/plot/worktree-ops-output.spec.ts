@@ -1,18 +1,20 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { commitWorktree } from './worktree-ops.ts';
 import type { Git } from './git.ts';
 
 let root = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria hook output '));
+  temp = await tempDir('hook output');
+  root = temp.root;
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 /** Git's captured streams, without starting a shell: persistence is tested independently of hook execution. */
 function refusedGit(stderr: string, stdout: string): Git {

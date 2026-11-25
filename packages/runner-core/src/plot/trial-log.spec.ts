@@ -1,11 +1,7 @@
 // The failure a trial step's log tells (PS-25): the command of its last `$` header and the first line saying why.
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
-
+import { tempDir } from '@elvaria/testkit';
 import { describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TRIAL_TEST_FAILURE, TRIAL_TEST_LOG } from '../__fixtures__/trial-test-log.ts';
 import { failureInLog, failureInLogFile } from './trial-log.ts';
 
@@ -70,11 +66,12 @@ describe('failureInLog', () => {
 
 describe('failureInLogFile', () => {
   it('reads nothing from a log that is not there', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'elvaria trial log '));
+    const temp = await tempDir('trial log');
+    const root = temp.root;
     try {
       expect(await failureInLogFile(root, '.runs/none.log')).toEqual({});
     } finally {
-      await rm(root, RM_TEMP);
+      await temp.remove();
     }
   });
 });

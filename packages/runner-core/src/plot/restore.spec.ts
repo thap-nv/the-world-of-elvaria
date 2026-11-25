@@ -1,23 +1,25 @@
 // PlotManager.restore (P1-44, P1-37 (f)): after a judge outside a scratch plot, the plot goes back to its commit.
 // What the judge's commands changed there (a generator, a formatter) is dropped, tracked or not; what git ignores
 // and the runner files the plot excludes stay. A real git repo in a temp folder with a space in its name.
-import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { fromPortable, pathExists } from '@elvaria/store';
 import type { Plot } from '@elvaria/domain';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { createPlotManager } from './plot-manager.ts';
 
 let root = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria plot restore '));
+  temp = await tempDir('plot restore');
+  root = temp.root;
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const plots = () => createPlotManager({ kingdom: path.join(root, 'kingdom'), host: TEST_HOST });
 

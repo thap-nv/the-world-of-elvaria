@@ -1,23 +1,25 @@
 // The territory's generators run by the machine after the merge queue's update (PS-09): the hot files they rewrite
 // committed by the Steward, any other file they touch given back, a failure said with the end of their log.
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git } from '../__fixtures__/git-repo.ts';
 import { addSource, head, indexOf, queueRepo } from '../__fixtures__/queue-repo.ts';
 import { createPlotManager } from './plot-manager.ts';
 
 let root = '';
 let kingdom = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria generate '));
+  temp = await tempDir('generate');
+  root = temp.root;
   kingdom = path.join(root, 'my kingdom');
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const plots = () => createPlotManager({ kingdom, host: TEST_HOST });
 const STRAY = [
