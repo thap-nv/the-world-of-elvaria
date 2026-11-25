@@ -1,12 +1,12 @@
-import { mkdir, mkdtemp, open, readFile, rm, stat, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, open, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { TerritorySchema } from '@elvaria/domain';
 import { inKingdom } from '@elvaria/store';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST } from '../__fixtures__/git-repo.ts';
 import { maskLogFile, maskedOnClose } from './masked-log.ts';
 import { runCheck } from './run-checks.ts';
@@ -16,10 +16,12 @@ const TOKEN = ['gh', 'p_', 'abcdefghijklmnopqrstuvwxyz0123456789'].join('');
 const KNOWN = ['plain', '-FAKE-', 'treasury-value-77'].join('');
 
 let root = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria masked log '));
+  temp = await tempDir('masked log');
+  root = temp.root;
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 describe('the log of a check', () => {
   it('keeps what the command printed, its secrets masked (ADR 0013)', async () => {

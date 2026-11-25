@@ -1,8 +1,9 @@
-import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { inKingdom } from '@elvaria/store';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { TEST_HOST } from '../__fixtures__/git-repo.ts';
@@ -23,14 +24,16 @@ const SH_HOST: ProcessHost = {
 let root = '';
 let kingdom = '';
 let plot = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria logged run '));
+  temp = await tempDir('logged run');
+  root = temp.root;
   kingdom = path.join(root, 'my kingdom');
   plot = path.join(root, 'plot');
   await mkdir(plot, { recursive: true });
   await writeFile(path.join(plot, 'say.mjs'), 'console.log(`said ${process.argv[2]}`);\n');
 });
-afterAll(() => rm(root, { recursive: true, force: true, maxRetries: 5 }));
+afterAll(() => temp.remove());
 
 /** Runs `lines` into a new log and gives the run with the log's text. */
 async function logged(lines: string[], host: ProcessHost, name: string) {
