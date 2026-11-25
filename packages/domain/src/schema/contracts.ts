@@ -2,6 +2,7 @@
 // writes docs/schemas/<name>.schema.json from these zod sources (ADR 0003); adding a contract is one line here.
 import { CampaignSchema } from './campaign/campaign.ts';
 import { CharacterSchema } from './character/character.ts';
+import { DisruptionsFileSchema } from './disruption/disruption-kind.ts';
 import { InboxCommandSchema } from './command/inbox-command.ts';
 import { EventSchema } from './event/event.ts';
 import { KingdomSchema } from './kingdom.ts';
@@ -46,6 +47,7 @@ export const CONTRACTS = {
   script: ScriptsFileSchema,
   tag: TagsFileSchema,
   'memo-kind': MemosFileSchema,
+  'disruption-kind': DisruptionsFileSchema,
   skill: SkillSchema,
   'quest-draft': QuestDraftFileSchema,
   'memo-triage': MemoTriageFileSchema,
