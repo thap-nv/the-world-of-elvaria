@@ -20,6 +20,8 @@ export const EVENT_TYPES = [
   'quest.infirmary',
   // ADR 0034: a refused submit commit sent back for a heal (working → returned, no bell).
   'quest.heal_due',
+  // ADR 0034: a healer's session opens on the quest (returned → healing).
+  'quest.healing',
   'quest.delivered',
   'quest.edited',
   'quest.unclaimable',

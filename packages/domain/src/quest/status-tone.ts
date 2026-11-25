@@ -1,5 +1,5 @@
 // The design system colours a quest by one of 8 tones (`data-status` in elvaria.css, implementation-plan §2.7);
-// the domain has 12 statuses. The mapping is data here, so either side can change without renaming the other.
+// the domain has 13 statuses. The mapping is data here, so either side can change without renaming the other.
 import type { QuestStatus } from '../schema/quest/shared.ts';
 
 /** The `data-status` values of elvaria.css; the spec reads them from the current CSS source. */
@@ -29,6 +29,8 @@ const TONE_OF: Readonly<Record<QuestStatus, StatusTone>> = {
   done: 'done',
   paused_mana: 'sleep',
   infirmary: 'infirmary',
+  // A healer mends a refused commit (ADR 0034): the infirmary's work, done before the quest stops there.
+  healing: 'infirmary',
 };
 
 export const statusToneOf = (status: QuestStatus): StatusTone => TONE_OF[status];

@@ -49,9 +49,19 @@ export type SessionRules = Pick<Kingdom['breakers'], 'max_turns' | 'verifier_tok
     readonly heal?: Pick<Kingdom['heal'], 'tokens' | 'minutes'> | undefined;
   };
 
+/**
+ * Who holds the session of `role`: the quest's assignee or verifier, but a heal session's own character, since a
+ * healer's is a doer of the quest that is not its assignee (ADR 0034).
+ */
+function holderOf(quest: Quest, role: Role): string | null | undefined {
+  if (role === 'verifier') return quest.verifier;
+  const entry = openEntryOf(quest, role);
+  return entry?.heal === 'session' ? entry.character : quest.assignee;
+}
+
 /** The tribe of the character holding `role` on the quest; none for an empty seat or a character not in `rules`. */
 export const holderTribeOf = (quest: Quest, role: Role, rules: SessionRules): string | undefined => {
-  const holder = role === 'assignee' ? quest.assignee : quest.verifier;
+  const holder = holderOf(quest, role);
   return typeof holder === 'string' ? rules.characters?.get(holder)?.tribe : undefined;
 };
 
@@ -150,7 +160,7 @@ export const measureOf =
     limits: RosterSource['limits'],
   ): BreakerMeasure =>
   (quest, role) => {
-    const holder = role === 'assignee' ? quest.assignee : quest.verifier;
+    const holder = holderOf(quest, role);
     const tribe = typeof holder === 'string' ? characters.get(holder)?.tribe : undefined;
     return (tribe === undefined ? undefined : limits[tribe]?.breakers) ?? 'tokens_and_minutes';
   };

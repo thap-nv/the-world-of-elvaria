@@ -194,3 +194,42 @@ describe('measureOf', () => {
     expect(measureOf(new Map([['sable', sable]]), {})(judged, 'verifier')).toBe('tokens_and_minutes');
   });
 });
+
+describe("a healer's session (ADR 0034)", () => {
+  /** Thorn's refused commit went back, and sable, a healer of the lantern tribe, took the heal. */
+  const healing = moved(workingBy(quest(Q1), 'thorn', 10), 20, [
+    'breaker',
+    'steward',
+    { trip: 'commit', reason: 'breaker:commit_errors' },
+  ]);
+  const healed = moved(healing, 110, ['heal', 'steward', { healer: 'sable' }]);
+  const sable = character('sable', { cls: 'healer', tribe: 'lantern' });
+
+  it('is measured as its healer tribe allows, not as its assignee tribe', () => {
+    const measure = measureOf(
+      new Map([
+        ['sable', sable],
+        ['thorn', character('thorn')],
+      ]),
+      {
+        [sable.tribe]: tribeLimitsOf({ ...EVERY, usage: false }),
+      },
+    );
+    expect(measure(healed, 'assignee')).toBe('minutes_only');
+    expect(measure(workingBy(quest(Q2), 'thorn'), 'assignee')).toBe('tokens_and_minutes');
+  });
+
+  it("takes its healer tribe's turns and kingdom.heal's ceilings", () => {
+    const rules = {
+      ...RULES,
+      characters: new Map([['sable', sable]]),
+      tribes: [{ id: 'lantern', max_turns: 5 }],
+    };
+    const stopped = breakersOf([healed], [held(Q1, 'assignee', 10, 8)], rules as never, NOW);
+    // Cut at 150 % of its tribe's 5 turns (soft and hard percentages of (F)).
+    expect(stopped).toMatchObject([{ quest: Q1, role: 'assignee', trip: 'turns' }]);
+    expect(breakersOf([healed], [held(Q1, 'assignee', 225_001)], RULES, NOW)).toMatchObject([
+      { quest: Q1, trip: 'tokens' },
+    ]);
+  });
+});

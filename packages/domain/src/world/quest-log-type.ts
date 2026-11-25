@@ -58,6 +58,8 @@ const BY_EVENT: Readonly<Record<QuestEventType, QuestLogType>> = {
   answer: 'quest.unblocked',
   unblock: 'quest.unblocked',
   breaker: 'quest.infirmary',
+  // A healer's session opens on the quest (ADR 0034).
+  heal: 'quest.healing',
   crash: 'quest.returned',
   suspend: 'quest.returned',
   verdict_pass: 'quest.done',

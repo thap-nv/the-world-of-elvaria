@@ -2,7 +2,7 @@
 // table, and transition() refuses anything else. The table in the plan is rendered from these rows
 // (renderQuestTransitionTable), so the document cannot drift from the code. Read before changing: CLAUDE.md.
 import { cutCallOf, isCapTrip } from '../breaker/continue.ts';
-import { healCallOf } from '../breaker/heal.ts';
+import { awaitsHeal, healCallOf } from '../breaker/heal.ts';
 import { reviewStalled } from '../breaker/review.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { QuestStatus } from '../schema/quest/shared.ts';
@@ -28,6 +28,7 @@ export type QuestGuard =
   | 'stalled_review'
   | 'no_stalled_review'
   | 'heal_due'
+  | 'awaits_heal'
   | 'cut_goes_on'
   | 'cut_stops'
   | 'assignee_last';
@@ -103,6 +104,8 @@ export const QUEST_GUARDS: Readonly<Record<QuestGuard, (quest: Quest, event?: Qu
   stalled_review: reviewStalled,
   no_stalled_review: (quest) => !reviewStalled(quest),
   heal_due: healDue,
+  // A healer takes only a run whose refused commit went back and is not healed yet (ADR 0034).
+  awaits_heal: awaitsHeal,
   cut_goes_on: cutGoesOn,
   cut_stops: (quest, event) => !healDue(quest, event) && !cutGoesOn(quest, event),
   assignee_last: assigneeLast,
@@ -206,6 +209,17 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'returned', event: 'reassign', actors: U, to: 'claimed' },
   { from: 'returned', event: 'cancel', actors: U, to: 'archived' },
   { from: 'returned', event: 'breaker', actors: S, to: 'infirmary' },
+  // A healer's session mends the refused work of the run (ADR 0034): a doer of the quest, the same run, no attempt.
+  { from: 'returned', event: 'heal', actors: S, guard: 'awaits_heal', to: 'healing' },
+  // The Steward commits through the territory's hooks once it measured what the healer changed (plans/healer.md 4.4).
+  { from: 'healing', event: 'submit', actors: S, to: 'review' },
+  // Refused again, past its limits or ceilings, or a forbidden path: one heal per run, so the owner decides.
+  { from: 'healing', event: 'breaker', actors: S, to: 'infirmary' },
+  { from: 'healing', event: 'crash', actors: S, to: 'infirmary' },
+  // A heal that did not happen does not count: the next tick chooses who heals again.
+  { from: 'healing', event: 'mana_out', actors: M, to: 'returned' },
+  { from: 'healing', event: 'release', actors: S, to: 'returned' },
+  { from: 'healing', event: 'cancel', actors: U, to: 'archived' },
   { from: 'awaiting_seal', event: 'seal', actors: U, to: 'done' },
   { from: 'awaiting_seal', event: 'return', actors: U, guard: 'by_character', to: 'returned' },
   // The owner returns the machine's merge of the parts: a knight takes the next run, reading the owner's verdict (P1-18).

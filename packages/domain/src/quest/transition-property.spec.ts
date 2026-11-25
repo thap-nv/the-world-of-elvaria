@@ -4,6 +4,7 @@ import { QuestSchema } from '../schema/quest/quest.ts';
 import {
   BRANN,
   ELLA,
+  MIRA,
   THORN,
   VARIANTS,
   at,
@@ -61,7 +62,9 @@ const attempt = (quest: Quest, event: QuestEvent, actor: QuestActor) => transiti
 /** The attempt log mirrors the status: a running session is an open entry, and only then. */
 function expectLogMatchesStatus(quest: Quest): void {
   const open = (role: string) => quest.attempt_log.filter((e) => e.role === role && e.ended_at === undefined);
-  expect(open('assignee')).toHaveLength(quest.status === 'working' ? 1 : 0);
+  // A healer's session is an assignee's entry of the quest (ADR 0034).
+  const working = quest.status === 'working' || quest.status === 'healing';
+  expect(open('assignee')).toHaveLength(working ? 1 : 0);
   expect(open('verifier')).toHaveLength(quest.status === 'review' && quest.verifier ? 1 : 0);
   let latest = 0;
   for (const entry of quest.attempt_log) {
@@ -76,8 +79,8 @@ function expectLogMatchesStatus(quest: Quest): void {
 }
 
 describe('the quest state machine, over every state it reaches', () => {
-  it('explores a state space that covers all twelve statuses and both tiers', () => {
-    expect(new Set(SAMPLES.map((quest) => quest.status)).size).toBe(12);
+  it('explores a state space that covers all thirteen statuses and both tiers', () => {
+    expect(new Set(SAMPLES.map((quest) => quest.status)).size).toBe(13);
     expect(new Set(SAMPLES.map((quest) => quest.tier)).size).toBe(2);
   });
 
@@ -142,6 +145,8 @@ function randomEvent(random: () => number, type: QuestEventType, quest: Quest, m
   if (event.type === 'reassign')
     return { ...event, assignee: pick(random, PEOPLE), level: pick(random, LEVELS) };
   if (event.type === 'assign_verifier') return { ...event, verifier: pick(random, PEOPLE) };
+  // The healer may be the doer or a judge, which the machine refuses (ADR 0034).
+  if (event.type === 'heal') return { ...event, healer: pick(random, [...PEOPLE, MIRA]) };
   if (event.type === 'breaker') {
     const progress = pick(random, [{}, { progress: true }, { progress: false }]);
     const reason = pick(random, [{}, { reason: 'breaker:commit' }, { reason: 'breaker:patch' }] as const);

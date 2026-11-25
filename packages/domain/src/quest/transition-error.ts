@@ -9,7 +9,11 @@ export type InvalidEventReason =
   /** A session-tier quest is claimed by a character, a script-tier quest by nobody (the Steward runs it). */
   | 'assignee_for_tier'
   /** The doer never judges (ADR 0008): not the assignee, not anyone who worked an attempt of this quest. */
-  | 'verifier_worked';
+  | 'verifier_worked'
+  /** The doer heals its own work through `redispatch`, not as a healer (ADR 0034). */
+  | 'healer_is_assignee'
+  /** Whoever judged the quest never becomes a doer of it, a healer included (ADR 0008, 0034). */
+  | 'healer_judged';
 
 export type QuestTransitionError =
   /** The quest breaks an invariant that only the state machine keeps; `issues` are English, for logs. */
