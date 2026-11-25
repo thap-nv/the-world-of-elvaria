@@ -1,10 +1,10 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { LETTER } from '../__fixtures__/world.ts';
 import { PROMPTS_DIR } from '../prompt/templates.ts';
 import { HANDOVER_SECTIONS, memosOf, questionOf, readQuestion, sectionOf } from './handover.ts';
@@ -96,10 +96,12 @@ describe('memosOf (PS-02)', () => {
 
 describe('readQuestion', () => {
   let dir = '';
+  let temp: TempDir;
   beforeAll(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), 'elvaria handover '));
+    temp = await tempDir('handover');
+    dir = temp.root;
   });
-  afterAll(() => rm(dir, RM_TEMP));
+  afterAll(() => temp.remove());
 
   it('reads the letter after the session', async () => {
     const file = path.join(dir, 'handover.md');

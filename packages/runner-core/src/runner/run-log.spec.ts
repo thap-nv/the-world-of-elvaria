@@ -1,11 +1,11 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { openEventLog, openJournal } from '@elvaria/eventlog';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { QUEST_ID, THORN } from '../__fixtures__/world.ts';
 import { openRunLog } from './run-log.ts';
 import { NOTE_PREFIX, STDERR_FILE, STDOUT_FILE, openRunOutput } from './run-output.ts';
@@ -17,10 +17,12 @@ const SECRET = `sk-ant-api03-${'x'.repeat(40)}`;
 const NOW = Date.parse('2026-11-07T02:00:00Z');
 
 let root: string;
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria run log '));
+  temp = await tempDir('run log');
+  root = temp.root;
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const contextIn = async (fields: Partial<RunContext> = {}): Promise<RunContext> => ({
   kingdom: await mkdtemp(path.join(root, 'kingdom ')),

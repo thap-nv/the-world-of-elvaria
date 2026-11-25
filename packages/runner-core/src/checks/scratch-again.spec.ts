@@ -1,11 +1,11 @@
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { acquireLock, inKingdom, pathExists } from '@elvaria/store';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { createPlotManager } from '../plot/plot-manager.ts';
 import { scratchIdOf } from '../plot/scratch.ts';
@@ -16,12 +16,14 @@ import { scratchAgain, scratchResetLogOf } from './scratch-again.ts';
 // P1-42): the second judge meets a clean database, not the one the first judge's breaks left.
 let root = '';
 let kingdom = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria scratch again '));
+  temp = await tempDir('scratch again');
+  root = temp.root;
   kingdom = path.join(root, 'my kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 /** Appends one line to `reset.txt` in its cwd: how many times reset ran in this plot. */
 const COUNTING_RESET = "node -e \"require('node:fs').appendFileSync('reset.txt', 'reset\\n')\"";

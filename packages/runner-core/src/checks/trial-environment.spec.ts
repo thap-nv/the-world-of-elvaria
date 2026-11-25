@@ -1,12 +1,12 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { FLAKE_RUNS, TerritorySchema } from '@elvaria/domain';
 import { acquireLock, inKingdom } from '@elvaria/store';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST } from '../__fixtures__/git-repo.ts';
 import { exclusiveLockOf, lockBusyLine } from './exclusive-lock.ts';
 import { runTrial } from './trial.ts';
@@ -16,12 +16,14 @@ import type { TrialRequest } from './trial.ts';
 // environment failed is no flake, and flake_check runs again only the checks that may flake, on the specs touched.
 let root = '';
 let kingdom = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria trial environment '));
+  temp = await tempDir('trial environment');
+  root = temp.root;
   kingdom = path.join(root, 'my kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 /**
  * Counts its runs per name in `../counts`, writes `name n args…` to `../trace.txt`, and on a run listed in FAIL_<NAME>

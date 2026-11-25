@@ -1,11 +1,11 @@
 // The sweep of workspaces a killed conformance turn left behind, and openWorkspace calling it.
-import { access, mkdir, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { access, mkdir, utimes, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { STALE_AFTER_MS, WORKSPACE_PREFIX, sweepStaleWorkspaces } from './sweep.ts';
 import { openWorkspace } from './workspace.ts';
 
@@ -18,10 +18,12 @@ const exists = (p: string) =>
 
 describe('sweepStaleWorkspaces', () => {
   let tmp: string;
+  let temp: TempDir;
   beforeEach(async () => {
-    tmp = await mkdtemp(path.join(tmpdir(), 'elvaria sweep '));
+    temp = await tempDir('sweep');
+    tmp = temp.root;
   });
-  afterEach(() => rm(tmp, { ...RM_TEMP }));
+  afterEach(() => temp.remove());
 
   /** A workspace folder (with a file inside, as a real one has) last touched `ageMs` before NOW. */
   const made = async (name: string, ageMs: number) => {

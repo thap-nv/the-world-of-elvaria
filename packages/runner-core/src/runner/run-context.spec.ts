@@ -1,10 +1,10 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { QUEST, REGISTRY, TERRITORY, THORN } from '../__fixtures__/world.ts';
 import { toolPolicyOf } from '../policy/tool-policy.ts';
 import { POLICY_FILE, policyFileOf, writePolicyFile } from './policy-file.ts';
@@ -77,10 +77,12 @@ describe('runContextOf', () => {
 
 describe('policy.json', () => {
   let dir: string;
+  let temp: TempDir;
   beforeAll(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), 'elvaria policy '));
+    temp = await tempDir('policy');
+    dir = temp.root;
   });
-  afterAll(() => rm(dir, RM_TEMP));
+  afterAll(() => temp.remove());
 
   it('is the v1 contract the hook reads: version, context, secret names, tools, laws', () => {
     const withSecrets = { ...request(STEWARD_ENV), quest: { ...QUEST, secrets_required: ['npm_token'] } };

@@ -1,11 +1,11 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { TribeIdSchema } from '@elvaria/domain';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { REGISTRY, TERRITORY, THORN } from '../__fixtures__/world.ts';
 import { FAKE_FORBIDDEN_COMMAND, FAKE_QUESTION, FAKE_SCENARIO_ENV } from '../conformance/scenarios.ts';
 import { toolPolicyOf } from '../policy/tool-policy.ts';
@@ -14,10 +14,12 @@ import type { FakeScenario } from '../conformance/scenarios.ts';
 import type { RunnerSignal, SpawnRequest } from './types.ts';
 
 let dir = '';
+let temp: TempDir;
 beforeAll(async () => {
-  dir = await mkdtemp(path.join(tmpdir(), 'elvaria fake runner '));
+  temp = await tempDir('fake runner');
+  dir = temp.root;
 });
-afterAll(() => rm(dir, RM_TEMP));
+afterAll(() => temp.remove());
 
 const knight = REGISTRY.classes.find((entry) => entry.id === 'knight')!;
 const request = (scenario?: FakeScenario, fields: Partial<SpawnRequest> = {}): SpawnRequest => ({

@@ -1,22 +1,24 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { TERRITORY_DEFAULTS } from '@elvaria/domain';
 import type { CheckId } from '@elvaria/domain';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { lastLinesOf, logEndOf, withEnvironment } from './environment.ts';
 import type { CheckRun } from './run-checks.ts';
 
 // The end of a failing check's log against the territory's environment_errors (P1-54).
 let kingdom = '';
+let temp: TempDir;
 beforeAll(async () => {
-  kingdom = await mkdtemp(path.join(tmpdir(), 'elvaria environment '));
+  temp = await tempDir('environment');
+  kingdom = temp.root;
   await mkdir(path.join(kingdom, '.runs'));
 });
-afterAll(() => rm(kingdom, RM_TEMP));
+afterAll(() => temp.remove());
 
 const failed = (logPath: string): CheckRun => ({
   id: 'e2e' as CheckId,

@@ -1,13 +1,13 @@
 // The search every adapter declares (AH-09): PATH, a folder under the home, npm's on Windows, then a VS Code
 // extension's binary, newest version first; `*` in the binary's folder is every subfolder (Codex's `bin/<os-arch>`).
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { locateTool, toolCandidates } from './locate.ts';
 import type { ToolSearch } from './locate.ts';
 
@@ -19,10 +19,12 @@ const FIXED: ToolSearch = {
 const PER_ARCH: ToolSearch = { program: 'tool', extension: { id: 'maker.tool', binary_dir: ['bin', '*'] } };
 
 let home: string;
+let temp: TempDir;
 beforeEach(async () => {
-  home = await mkdtemp(path.join(tmpdir(), 'elvaria tool home '));
+  temp = await tempDir('tool home');
+  home = temp.root;
 });
-afterEach(() => rm(home, RM_TEMP));
+afterEach(() => temp.remove());
 
 /** An empty file at `parts` under the home; its path as the search on this machine names it. */
 async function file(...parts: string[]): Promise<string> {

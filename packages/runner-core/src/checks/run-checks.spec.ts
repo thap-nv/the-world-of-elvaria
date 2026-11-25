@@ -1,12 +1,12 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { TerritorySchema } from '@elvaria/domain';
 import { acquireLock, inKingdom } from '@elvaria/store';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST } from '../__fixtures__/git-repo.ts';
 import { exclusiveLockOf, runCheck, runChecks, toVerdictCheck } from './run-checks.ts';
 import type { ChecksRequest } from './run-checks.ts';
@@ -14,8 +14,10 @@ import type { ChecksRequest } from './run-checks.ts';
 let root = '';
 let kingdom = '';
 let plot = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria checks '));
+  temp = await tempDir('checks');
+  root = temp.root;
   kingdom = path.join(root, 'my kingdom');
   plot = path.join(root, 'Tool - DC1', 'plot');
   await mkdir(plot, { recursive: true });
@@ -34,7 +36,7 @@ beforeAll(async () => {
     ].join('\n'),
   );
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const territoryWith = (checks: unknown[]) =>
   TerritorySchema.parse({

@@ -1,14 +1,14 @@
 // A narrow run of the checks (CM-01, ADR 0032): each check runs its narrow command where it has one, every command gets
 // the diff's base in ELVARIA_CHECK_BASE (in its env, never in argv), and a full run is the run before CM-01.
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { TerritorySchema } from '@elvaria/domain';
 import { inKingdom } from '@elvaria/store';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST } from '../__fixtures__/git-repo.ts';
 import { runChecks } from './run-checks.ts';
 import type { ChecksRequest } from './run-checks.ts';
@@ -17,8 +17,10 @@ const BASE = '3f2a9c1e5b7d4a6c8e0f1a2b3c4d5e6f7a8b9c0d';
 let root = '';
 let kingdom = '';
 let plot = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria narrow checks '));
+  temp = await tempDir('narrow checks');
+  root = temp.root;
   kingdom = path.join(root, 'my kingdom');
   plot = path.join(root, 'Tool - Personal', 'plot');
   await mkdir(plot, { recursive: true });
@@ -28,7 +30,7 @@ beforeAll(async () => {
     "console.log(`${process.argv[2]} base=${process.env.ELVARIA_CHECK_BASE ?? 'none'}`);",
   );
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const request = (more: Partial<ChecksRequest> = {}): ChecksRequest => ({
   kingdom,

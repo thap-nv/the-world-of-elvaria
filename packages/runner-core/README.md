@@ -429,6 +429,7 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   `writeFileAtomic`, `acquireLock`, kingdom paths). No third-party package; git is the territory's own, found
   by the host.
 - `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
+- `@elvaria/testkit` (dev only: temporary folders for specs).
 
 ## How to test
 

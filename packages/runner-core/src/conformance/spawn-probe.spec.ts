@@ -1,11 +1,9 @@
 // The spawn probe of the conformance suite (P1-12e): the script a session's shell runs, and how fakes run it.
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import {
   SPAWN_PROBE_COMMAND,
   SPAWN_PROBE_OK,
@@ -17,10 +15,12 @@ import {
 
 describe('the spawn probe', () => {
   let plot: string;
+  let temp: TempDir;
   beforeEach(async () => {
-    plot = await mkdtemp(path.join(tmpdir(), 'elvaria spawn probe '));
+    temp = await tempDir('spawn probe');
+    plot = temp.root;
   });
-  afterEach(() => rm(plot, RM_TEMP));
+  afterEach(() => temp.remove());
 
   it('leaves nothing until it runs', async () => {
     await writeSpawnProbe(plot);

@@ -1,9 +1,10 @@
 // territory.context_files in the prompt (implementation-plan §3.14 `context: prompt`, P1-33): the files the globs name
 // in the plot, in order, each once, cut at the size agy embeds; their block in the system part.
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { QUEST, REGISTRY, SABLE, TERRITORY, THORN } from '../__fixtures__/world.ts';
@@ -19,8 +20,10 @@ import { loadPromptTemplates } from './templates.ts';
 const templates = await loadPromptTemplates();
 
 let plot: string;
+let temp: TempDir;
 beforeEach(async () => {
-  plot = await mkdtemp(path.join(tmpdir(), 'elvaria context '));
+  temp = await tempDir('context');
+  plot = temp.root;
   await mkdir(path.join(plot, '.claude', 'rules'), { recursive: true });
   await mkdir(path.join(plot, 'node_modules', 'x'), { recursive: true });
   await writeFile(path.join(plot, 'CLAUDE.md'), '# Law\n\nNo push.\n');
@@ -30,7 +33,7 @@ beforeEach(async () => {
   await writeFile(path.join(plot, '.claude', 'rules', 'empty.md'), '  \n');
   await writeFile(path.join(plot, 'node_modules', 'x', 'CLAUDE.md'), 'not ours');
 });
-afterEach(() => rm(plot, { recursive: true, force: true, maxRetries: 5 }));
+afterEach(() => temp.remove());
 
 describe('context files (§3.14 context: prompt)', () => {
   it('names the files the globs match in the plot, in the globs’ order, once each', async () => {

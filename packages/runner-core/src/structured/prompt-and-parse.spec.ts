@@ -1,10 +1,11 @@
 // spawnParsed (implementation-plan §3.14 `structured_output: prompt_and_parse`, P1-33): the schema in the system part,
 // the JSON of the last text as the structured output, and one retry in `<run_dir>/retry/` told what was wrong,
 // continuing the first session when the tribe can resume. The caller sees one session throughout.
-import { mkdtemp, rm, stat } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { stat } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { replyRequest, replyRunner, resultCheck } from '../__fixtures__/replies.ts';
@@ -14,10 +15,12 @@ import type { Reply } from '../__fixtures__/replies.ts';
 import type { RunnerSignal, RunningSession } from '../runner/types.ts';
 
 let dir: string;
+let temp: TempDir;
 beforeEach(async () => {
-  dir = await mkdtemp(path.join(tmpdir(), 'elvaria parsed '));
+  temp = await tempDir('parsed');
+  dir = temp.root;
 });
-afterEach(() => rm(dir, { recursive: true, force: true, maxRetries: 5 }));
+afterEach(() => temp.remove());
 
 async function play(replies: readonly Reply[], resume = true) {
   const runner = replyRunner(replies);

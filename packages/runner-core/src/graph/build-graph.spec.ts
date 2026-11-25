@@ -3,14 +3,14 @@
 // build holds the territory. graphify is a fake here (a node script): what it does is graphify's, what reaches it is
 // Elvaria's.
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { acquireLock, inKingdom, kingdomLayout } from '@elvaria/store';
+import { RM_TEMP, tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git, gitRepo, minimalEnv } from '../__fixtures__/git-repo.ts';
 import { gitOf } from '../plot/git.ts';
 import { FAKE_GRAPHIFY } from '../__fixtures__/fake-graphify.ts';
@@ -42,8 +42,10 @@ const options = (commit: string): GraphBuildOptions => ({
 });
 const head = (): string => git(repo, 'rev-parse', 'HEAD');
 
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria code graph '));
+  temp = await tempDir('code graph');
+  root = temp.root;
   kingdom = path.join(root, 'the kingdom');
   repo = await gitRepo(path.join(root, 'territory repo'));
   const fake = path.join(root, 'fake graphify.mjs');
@@ -53,7 +55,7 @@ beforeAll(async () => {
   if (found === undefined) throw new Error('git not found');
   runGit = found;
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 describe('buildGraph', () => {
   it('builds the graph of a commit in the kingdom, from its own worktree, with graphify fixed env', async () => {

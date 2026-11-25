@@ -1,14 +1,15 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { fakeImageAnswer, fakeImageOf, fakeImagePath, writeFakeImage } from './image-probe.ts';
 import { COLORS, randomColors, stripesOf, stripesPng } from './stripes.ts';
 
-const temp = await mkdtemp(path.join(tmpdir(), 'elvaria image probe '));
-afterAll(() => rm(temp, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
+const folder = await tempDir('image probe');
+const temp = folder.root;
+afterAll(() => folder.remove());
 
 describe('the stripes of the vision spike (§7)', () => {
   it('draws four of the seven colours, each once', () => {

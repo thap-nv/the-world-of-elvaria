@@ -1,10 +1,10 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { graphLinksOf, readGraphLinks } from './graph-links.ts';
 
 /** graphify's node-link data, as `graph.json` holds it (0.9.106): file nodes, symbol nodes and their links. */
@@ -50,14 +50,14 @@ describe('graphLinksOf (PS-21b)', () => {
 });
 
 describe('readGraphLinks', () => {
-  const made: string[] = [];
+  const made: TempDir[] = [];
   afterAll(async () => {
-    await Promise.all(made.map((dir) => rm(dir, RM_TEMP)));
+    await Promise.all(made.map((temp) => temp.remove()));
   });
   const folder = async (): Promise<string> => {
-    const dir = await mkdtemp(path.join(tmpdir(), 'elvaria graph links '));
-    made.push(dir);
-    return dir;
+    const temp = await tempDir('graph links');
+    made.push(temp);
+    return temp.root;
   };
 
   it("reads the graph's file, and says nothing of a graph missing or broken", async () => {
