@@ -97,10 +97,10 @@ it('rejects missing and unknown groups and documents the uncovered exit code', (
   expect(parseArgs(['--only=lint'])).toEqual({ base: 'origin/main', dryRun: false, only: 'lint' });
   const output: string[] = [];
   expect(main(['--help'], dir, (line) => output.push(line))).toBe(0);
-  expect(output.join('\n')).toContain('Uncovered paths exit 3');
+  expect(output.join('\n')).toContain('exit 3\n(run full checks) without it');
 });
 
-it('keeps legacy defaults but refuses uncovered paths in narrow mode, even for --only', async () => {
+it('keeps legacy defaults, runs the whole group for --only and refuses uncovered paths without it', async () => {
   await writeFile(path.join(dir, 'unknown.txt'), 'text');
   const output: string[] = [];
   const out = (line: string): void => {
@@ -108,8 +108,11 @@ it('keeps legacy defaults but refuses uncovered paths in narrow mode, even for -
   };
   expect(main(['--base', 'main', '--dry-run'], dir, out)).toBe(0);
   expect(output.join('\n')).not.toContain('pnpm exec prettier');
-  expect(main(['--base', 'main', '--only', 'test', '--dry-run'], dir, out)).toBe(3);
+  expect(main(['--base', 'main', '--only', 'test', '--dry-run'], dir, out)).toBe(0);
+  expect(output.join('\n')).toContain('uncovered paths: the whole test group runs\nchecks:\n  pnpm test');
   vi.stubEnv('ELVARIA_CHECK_BASE', git('rev-parse', 'HEAD'));
+  expect(main(['--only', 'docs', '--dry-run'], dir, out)).toBe(0);
+  expect(output.join('\n')).toContain('  pnpm docs:gen --check\n  pnpm docs:check');
   expect(main(['--dry-run'], dir, out)).toBe(3);
   expect(output.join('\n')).toContain('no rule for unknown.txt');
 });
@@ -144,6 +147,27 @@ appendFileSync(${JSON.stringify(log)}, JSON.stringify(process.argv.slice(2)) + '
     );
     await writeFile(runner, `${record}\nprocess.exitCode = 3;`);
     expect(main(['--only', 'docs'], dir, () => undefined)).toBe(1);
+  } finally {
+    await toolsTemp.remove();
+  }
+});
+
+it('runs the full command of the group for a path no rule covers, and fails when it fails', async () => {
+  const toolsTemp = await tempDir('full group');
+  const log = path.join(toolsTemp.root, 'commands.jsonl');
+  const runner = path.join(toolsTemp.root, 'pnpm.mjs');
+  const record = `import { appendFileSync } from 'node:fs';
+appendFileSync(${JSON.stringify(log)}, JSON.stringify(process.argv.slice(2)) + '\\n');`;
+  try {
+    await writeFile(runner, record);
+    vi.stubEnv('npm_execpath', runner);
+    vi.stubEnv('ELVARIA_CHECK_BASE', git('rev-parse', 'HEAD'));
+    await writeFile(path.join(dir, 'eslint-suppressions.json'), '{}');
+    expect(main(['--only', 'lint'], dir, () => undefined)).toBe(0);
+    expect(await readFile(log, 'utf8')).toBe('["lint"]\n');
+    await writeFile(runner, `${record}\nprocess.exitCode = 1;`);
+    expect(main(['--only', 'format'], dir, () => undefined)).toBe(1);
+    expect(await readFile(log, 'utf8')).toBe('["lint"]\n["format:check"]\n');
   } finally {
     await toolsTemp.remove();
   }
