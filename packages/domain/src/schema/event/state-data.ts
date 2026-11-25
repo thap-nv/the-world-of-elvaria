@@ -119,7 +119,7 @@ export const InfirmaryDetailSchema = z
       .optional()
       .meta(
         describe(
-          "trip forbidden_paths: the paths of laws.forbidden_paths the session left changed, added or deleted in the quest's plot, relative to it with `/` (P1-49). Nothing was committed: the work stays in the plot.",
+          "trip forbidden_paths: the paths of laws.forbidden_paths the session left changed, added or deleted in the quest's plot, relative to it with `/` (P1-49). Nothing was committed: the work stays in the plot. Reason heal:out_of_work (ADR 0034): the files the healer changed outside the work the doer staged, the plot put back.",
         ),
       ),
     apprentice_left: z
@@ -190,19 +190,6 @@ export const QuestInfirmaryDataSchema = z.strictObject({
       ),
     ),
   detail: InfirmaryDetailSchema.optional(),
-  ...QUEST_CHANGE,
-});
-
-/**
- * A submit commit the territory's hooks refused, sent back for a heal instead of to the infirmary (ADR 0034): the
- * move working → returned, with no bell. The reason is the one quest.infirmary would have carried.
- */
-export const QuestHealDueDataSchema = z.strictObject({
-  reason: InfirmaryReasonSchema.meta(
-    describe(
-      "The refusal's reason code and parameters, as quest.infirmary would carry them (breaker:commit or breaker:commit_errors); `log` names the pre-commit log the heal session reads.",
-    ),
-  ),
   ...QUEST_CHANGE,
 });
 

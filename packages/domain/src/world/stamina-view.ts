@@ -4,7 +4,7 @@
 // `agent.session.start` opens a full bar, `agent.session.usage` sets it, `agent.session.wrap_up` marks it reminded and
 // `agent.session.end` closes it. The Steward's quest lines name whose seat a session holds (a start line does not), and
 // say when the seat is empty, which closes a bar whose end line never came (§2.5: an open entry exists only while the
-// quest is `working`, or in `review` with a judge).
+// quest is `working` or `healing`, or in `review` with a judge).
 import { barOf } from '../breaker/stamina.ts';
 import { isEventOf, isTypedEvent } from '../schema/event/event.ts';
 import type { Stamina, StaminaZone } from '../breaker/stamina.ts';
@@ -90,8 +90,13 @@ function questViewOf(event: Event): QuestView | undefined {
   return typeof quest === 'object' ? quest : undefined;
 }
 
-const seatOf = (view: QuestView): { role: Role; character: CharacterId | null } | undefined => {
+/** `healer`: the one a `quest.healing` line names, a doer of the quest that is not its assignee (ADR 0034). */
+const seatOf = (
+  view: QuestView,
+  healer?: CharacterId,
+): { role: Role; character: CharacterId | null } | undefined => {
   if (view.status === 'working') return { role: 'assignee', character: view.assignee };
+  if (view.status === 'healing') return { role: 'assignee', character: healer ?? null };
   if (view.status === 'review' && view.verifier !== null)
     return { role: 'verifier', character: view.verifier };
   return undefined;
@@ -99,7 +104,7 @@ const seatOf = (view: QuestView): { role: Role; character: CharacterId | null } 
 
 function seatGone(bar: Bar, view: QuestView): boolean {
   if (bar.role === 'verifier') return view.status !== 'review' || view.verifier === null;
-  if (bar.role === 'assignee') return view.status !== 'working';
+  if (bar.role === 'assignee') return view.status !== 'working' && view.status !== 'healing';
   return seatOf(view) === undefined;
 }
 
@@ -128,7 +133,7 @@ function questLine(fold: Fold, event: Event & { readonly quest: QuestId }, view:
   if (bar !== undefined && seatGone(bar, view)) fold.open.delete(event.quest);
   const ended = fold.ended.get(event.quest);
   if (ended !== undefined && event.type === 'quest.returned') ended.returned = true;
-  const seat = seatOf(view);
+  const seat = seatOf(view, isEventOf(event, 'quest.healing') ? event.data.healer : undefined);
   if (event.session === undefined || seat === undefined) return;
   const opened = openBar(fold, { quest: event.quest, session: event.session }, event.attempt);
   opened.role = seat.role;

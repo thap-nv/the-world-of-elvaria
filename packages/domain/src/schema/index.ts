@@ -19,6 +19,7 @@ export { CHECK_CAUSES, CheckAttributedDataSchema, PROBE_SOURCES } from './event/
 export type { CheckAttributedData, CheckCause, ProbeSource } from './event/check-data.ts';
 export * from './event/event-data.ts';
 export * from './event/event-types.ts';
+export * from './event/heal-data.ts';
 export * from './event/event.ts';
 export * from './event/load-trace.ts';
 export * from './event/schedule-data.ts';

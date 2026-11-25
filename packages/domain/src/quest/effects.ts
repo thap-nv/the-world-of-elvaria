@@ -2,7 +2,7 @@
 // counter, the attempt log, the question, the seal, the delivery. One effect per event type; the row of
 // QUEST_TRANSITIONS has already been chosen, and `to` is its target status.
 import { endedInCut, isCapTrip } from '../breaker/continue.ts';
-import { endedInHealDue, healCallOf, healDueIn } from '../breaker/heal.ts';
+import { awaitsHeal, healCallOf, healDueIn } from '../breaker/heal.ts';
 import { aboveCeiling } from '../character/level.ts';
 import { err, ok } from '../core/result.ts';
 import { machineMergeDue, machineRun } from '../party/machine-merge.ts';
@@ -26,8 +26,12 @@ type Effect<T extends QuestEventType> = (
 
 const same = (quest: Quest): Result<Quest, never> => ok(quest);
 
-/** Whose session holds the quest in a status: the assignee's while working, the verifier's in review. */
-const HOLDER: Partial<Record<QuestStatus, Role>> = { working: 'assignee', review: 'verifier' };
+/** Whose session holds the quest: an assignee's while working or healing (ADR 0034), a judge's in review. */
+const HOLDER: Partial<Record<QuestStatus, Role>> = {
+  working: 'assignee',
+  healing: 'assignee',
+  review: 'verifier',
+};
 
 /** Ends the session holding the quest, if one is open. */
 function endRun(quest: Quest, event: RunEnd & { readonly at: string }, outcome: Outcome): Quest {
@@ -75,11 +79,11 @@ function startAttempt(quest: Quest, event: QuestEventOf<'start' | 'redispatch'>)
 
 /**
  * The redispatch of a quest a ceiling cut and let go on (ADR 0030), or whose refused commit went back for a heal
- * (ADR 0034), opens a fresh session of the same run: no new attempt, no new run number. Any other redispatch is a new
- * attempt.
+ * (ADR 0034), opens a fresh session of the same run: no new attempt, no new run number; so does one after a healer's
+ * session that ended without the heal (awaitsHeal). Any other redispatch is a new attempt.
  */
 function redispatch(quest: Quest, event: QuestEventOf<'redispatch'>): Result<Quest, never> {
-  return endedInCut(quest.attempt_log) || endedInHealDue(quest.attempt_log)
+  return endedInCut(quest.attempt_log) || awaitsHeal(quest)
     ? ok(resume(quest, event.at, event.session_id))
     : startAttempt(quest, event);
 }
@@ -128,6 +132,8 @@ function resume(quest: Quest, at: string, session_id: string | undefined): Quest
  */
 function release(quest: Quest, event: QuestEventOf<'release'>, to: QuestStatus): Quest {
   const ended = endRun(quest, event, 'cancelled');
+  // A healer's session took no attempt, so it gives none back (ADR 0034).
+  if (to === 'returned' && quest.status === 'healing') return ended;
   if (to === 'returned') return { ...ended, attempts: Math.max(0, quest.attempts - 1) };
   return to === 'review' ? withoutVerifier(ended) : { ...ended, assignee: null };
 }
@@ -207,6 +213,23 @@ function noSession(quest: Quest, event: QuestEventOf<'no_session'>): Result<Ques
   return ok({ ...quest, attempt_log: [...quest.attempt_log, ended] });
 }
 
+/**
+ * A healer's session opens on the quest (ADR 0034): an entry of role `assignee`, the healer's, in the run whose
+ * refused commit went back, marked `heal: "session"`, in the run's `heal/` folder (plans/healer.md 4.4). No new
+ * attempt, and `quest.assignee` stays the doer's. The doer heals through `redispatch`, and nobody who judged the
+ * quest becomes a doer of it (ADR 0008).
+ */
+function heal(quest: Quest, event: QuestEventOf<'heal'>): Result<Quest, QuestTransitionError> {
+  const { healer } = event;
+  if (healer === quest.assignee) return err({ code: 'invalid_event', reason: 'healer_is_assignee' });
+  if (quest.attempt_log.some((entry) => entry.role === 'verifier' && entry.character === healer))
+    return err({ code: 'invalid_event', reason: 'healer_judged' });
+  const run = { n: currentRun(quest), role: 'assignee', character: healer, at: event.at } as const;
+  const entry = entryOf(quest, { ...run, session_id: event.session_id });
+  const healing: Attempt = { ...entry, run_dir: `${entry.run_dir}/heal`, heal: 'session' };
+  return ok({ ...quest, attempt_log: [...quest.attempt_log, healing] });
+}
+
 const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
   confirm: same,
   discard: same,
@@ -242,6 +265,7 @@ const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
       ? ok({ ...quest, assignee: null })
       : ending(quest.status === 'working' ? 'returned' : 'cancelled')(quest, event),
   mana_restored: (quest, event) => ok(resume(quest, event.at, event.session_id)),
+  heal,
   answer,
   assign_verifier: assignVerifier,
   no_session: noSession,

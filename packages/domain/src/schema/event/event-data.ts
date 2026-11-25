@@ -10,11 +10,11 @@ import {
   ManaExhaustedDataSchema,
   ManaPoolDataSchema,
   QuestChangeDataSchema,
-  QuestHealDueDataSchema,
   QuestInfirmaryDataSchema,
   QuestUnclaimableDataSchema,
   TerritoryChangeDataSchema,
 } from './state-data.ts';
+import { QuestHealDueDataSchema, QuestHealingDataSchema, QuestSubmittedDataSchema } from './heal-data.ts';
 import { GraphBuiltDataSchema, GraphFailedDataSchema } from './graph-data.ts';
 import { PlotMergedDataSchema, PlotPatchedDataSchema, PlotRestoredDataSchema } from './plot-data.ts';
 import { CommandResultDataSchema } from './command-data.ts';
@@ -189,7 +189,7 @@ export const EVENT_DATA_SCHEMAS = {
   'quest.claimed': QuestChangeDataSchema,
   'quest.released': QuestChangeDataSchema,
   'quest.started': QuestChangeDataSchema,
-  'quest.submitted': QuestChangeDataSchema,
+  'quest.submitted': QuestSubmittedDataSchema,
   'quest.returned': QuestChangeDataSchema,
   'quest.verdict': QuestChangeDataSchema,
   'quest.done': QuestChangeDataSchema,
@@ -201,6 +201,7 @@ export const EVENT_DATA_SCHEMAS = {
   'quest.resumed': QuestChangeDataSchema,
   'quest.infirmary': QuestInfirmaryDataSchema,
   'quest.heal_due': QuestHealDueDataSchema,
+  'quest.healing': QuestHealingDataSchema,
   'quest.delivered': QuestChangeDataSchema,
   'quest.edited': QuestChangeDataSchema,
   'quest.unclaimable': QuestUnclaimableDataSchema,

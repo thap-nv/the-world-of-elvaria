@@ -101,6 +101,9 @@ export interface Roster {
   readonly take: (character: Character, quest: Quest | null) => void;
 }
 
+/** A quest whose session works in its plot, a healer's included (ADR 0034): territory.max_concurrent counts them. */
+const atWork = ({ status }: Quest): boolean => status === 'working' || status === 'healing';
+
 const count = <K>(keys: readonly K[]): Map<K, number> =>
   keys.reduce((map, key) => map.set(key, (map.get(key) ?? 0) + 1), new Map<K, number>());
 
@@ -230,7 +233,7 @@ export function rosterOf(source: RosterSource, now: Instant): Roster {
   const inSession = count(
     source.characters.filter(({ status }) => IN_SESSION.includes(status)).map(({ tribe }) => tribe),
   );
-  const running = count(source.quests.filter(({ status }) => status === 'working').map((q) => q.territory));
+  const running = count(source.quests.filter(atWork).map((q) => q.territory));
   const territories = new Map(source.territories.map((territory) => [territory.id, territory]));
   // The scope rules (PS-05), kept up to date with the quests started in this tick.
   const scopes = scopeBookOf(source.quests);

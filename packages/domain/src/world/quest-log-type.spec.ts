@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { QUEST_ACTORS, QUEST_EVENT_TYPES } from '../quest/events.ts';
-import { at, eventOf, reachable } from '../quest/__fixtures__/quests.ts';
+import { MIRA, at, eventOf, reachable } from '../quest/__fixtures__/quests.ts';
 import { transition } from '../quest/transition.ts';
 import { QUEST_TRANSITIONS } from '../quest/transitions.ts';
 import { hasDataSchema } from '../schema/event/event-data.ts';
@@ -60,6 +60,11 @@ describe('questLogTypeOf', () => {
     ['return', 'awaiting_seal', 'returned', 'quest.returned'],
     ['deliver', 'done', 'done', 'quest.delivered'],
     ['cancel', 'working', 'archived', 'quest.archived'],
+    // A healer's session opens, and one that ends without the heal leaves the quest returned (ADR 0034).
+    ['heal', 'returned', 'healing', 'quest.healing'],
+    ['mana_out', 'healing', 'returned', 'quest.returned'],
+    ['breaker', 'healing', 'infirmary', 'quest.infirmary'],
+    ['submit', 'healing', 'review', 'quest.submitted'],
   ] as const)('%s from %s to %s is %s', (event, from, to, type) => {
     expect(questLogTypeOf(event, from, to)).toBe(type);
   });
@@ -95,6 +100,7 @@ describe('a quest line for every move the machine makes', () => {
           ...(logType === 'quest.infirmary'
             ? { reason: { code: 'legacy', params: { text: 'max_attempts' } } }
             : {}),
+          ...(logType === 'quest.healing' ? { healer: MIRA } : {}),
           quest: questViewOf(after),
         },
       });

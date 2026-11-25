@@ -102,6 +102,7 @@ export const QUEST_EVENT_TYPES = [
   'block',
   'ask',
   'breaker',
+  'heal',
   'answer',
   'assign_verifier',
   'no_session',
@@ -179,6 +180,11 @@ export type QuestEvent =
         readonly reason?: InfirmaryReasonCode;
       }
     >
+  /**
+   * A healer's session opens on a quest whose refused commit went back (ADR 0034): it mends the run's work as a doer
+   * of the quest, in the same run, while `quest.assignee` stays the doer's.
+   */
+  | Shaped<'heal', SessionStart & { readonly healer: CharacterId }>
   | Shaped<'answer', SessionStart & { readonly answer: string }>
   | Shaped<'assign_verifier', SessionStart & { readonly verifier: CharacterId }>
   /** The judge the Steward chose, whose session could not open (fix/review-no-session): no session id to give. */

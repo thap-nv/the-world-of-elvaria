@@ -29,7 +29,10 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'quest.claimed': QUEST_CHANGE,
   'quest.released': QUEST_CHANGE,
   'quest.started': QUEST_CHANGE,
-  'quest.submitted': QUEST_CHANGE,
+  'quest.submitted': {
+    ...QUEST_CHANGE,
+    heal: { by: 'mira', files: 1, lines: 2, patch: '.runs/q_20261106_7k3m2a-1/heal/heal.patch' },
+  },
   'quest.returned': QUEST_CHANGE,
   'quest.verdict': QUEST_CHANGE,
   'quest.done': QUEST_CHANGE,
@@ -55,6 +58,7 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
     },
     ...QUEST_CHANGE,
   },
+  'quest.healing': { healer: 'mira', ...QUEST_CHANGE },
   'quest.delivered': QUEST_CHANGE,
   'quest.edited': { quest: QUEST_VIEW },
   'quest.unclaimable': {
