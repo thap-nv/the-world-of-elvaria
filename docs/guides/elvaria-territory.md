@@ -174,6 +174,8 @@ Lãnh thổ Elvaria giao `manual` cho tới khi chủ nhân bật khác: quest `
 - `merge_method` để `merge`: repo merge PR bằng merge commit (CLAUDE.md bước 5), và lần dò nhánh gốc nhận ra các phần của một đội đã vào `main` nhờ tổ tiên mà merge commit giữ lại.
 - Lùi về một bản ghim trước PS-08 (`elvaria upgrade --rollback`): bỏ khóa `delivery` khỏi `territories/elvaria/territory.json` trước, vì bản cũ không đọc được nó.
 
+Nhiếp chính đặt `ELVARIA_CHECKED_HEAD=<sha đầy đủ của HEAD>` trong env riêng của lệnh push khi lượt kiểm trên đầu đó xanh, có ít nhất một check và không gạt check nào vì môi trường (RC-02). Sau cập nhật nhánh, nguồn là lượt kiểm hàng đợi vừa chạy; nhánh đã giữ nhánh gốc dùng verdict hiện tại `verdicts/<quest>-<n>.json` có `result: pass`, có check và mọi check xanh, với `created_at` không sớm hơn thời điểm commit HEAD. Không đủ bằng chứng, không có check, có check bị gạt, verdict cũ hay đọc verdict/git lỗi thì không đặt biến. Hook vẫn chạy và tự quyết: hook của repo này gọi `scripts/check-stamp.mjs verify` (RC-01), chỉ bỏ `check:fast` khi biến khớp mọi sha được push tới `quest/*` hay `train/*`. Biến chỉ có nghĩa trong tiến trình push đó; `delivery.pushed.push_ms` ghi thời gian lệnh push gồm hook.
+
 ## Bẫy
 
 - `union` với file JSON (glossary, locale) có thể để lại JSON hỏng (thiếu dấu phẩy giữa hai khối cùng thêm ở cuối). Từ PS-09 luật `union` là ghép theo từng dòng, và file `.json` không parse được sau khi ghép là conflict; ghép tay thì vẫn phải chạy lại `pnpm i18n:check`, `pnpm docs:check`.

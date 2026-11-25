@@ -29,16 +29,22 @@ export async function runDeliveryGit(
   git: DeliveryGit,
   cwd: string,
   args: readonly string[],
-  limits: { readonly timeout_ms: number; readonly signal: AbortSignal },
+  limits: {
+    readonly timeout_ms: number;
+    readonly signal: AbortSignal;
+    readonly env?: Readonly<Record<string, string>>;
+  },
 ): Promise<DeliveryGitRun> {
   const out: string[] = [];
   const err: string[] = [];
   const env = { ...git.env, ...DELIVERY_GIT_SWITCHES };
   const guard = await gitGuard(git.launch, cwd, env);
+  // The extra env belongs to this command alone, not gitGuard's preceding `git config` (RC-02).
+  const commandEnv = { ...env, ...limits.env, ...DELIVERY_GIT_SWITCHES };
   const child = startChild(
     git.launch,
     [...guard, ...args],
-    { cwd, env, onStderr: (chunk) => err.push(chunk) },
+    { cwd, env: commandEnv, onStderr: (chunk) => err.push(chunk) },
     (line) => out.push(line),
   );
   // An object, not a let: the callbacks set it, which TypeScript's narrowing cannot see.

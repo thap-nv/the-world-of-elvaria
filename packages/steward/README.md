@@ -490,6 +490,10 @@
   rebuilt from the log at start by `forgeOutcomesOf`), and the next plan delivers it from the start. The digest
   lists a stopped delivery (`delivery_failed`) and a pull request waiting for the owner (`delivery_waits`). Without
   `deps.forges` such a quest gets one `delivery.failed` (`forge_error`).
+  The push alone gets `ELVARIA_CHECKED_HEAD` when checks passed on its head, with at least one check and none
+  set aside for the environment (RC-02). A current branch uses its current run's pass verdict only when it has
+  green checks and does not predate HEAD's commit; unreadable evidence leaves the variable absent. The hook decides
+  what to do with it. `delivery.pushed.push_ms` measures git push including the hook, also on an up-to-date retry.
 - Merges a sealed quest's pull request under `pr_merge` (PS-08d, `src/forge/merge.ts`): planTick's `forge_polls`
   (the domain's `forgePolls` and `mergeDue`, rule (G)) asks the forge every 30 seconds, one short piece of work
   outside the tick each, the Steward's stop aborting the call in flight (every `Forge` call takes its signal). Merged

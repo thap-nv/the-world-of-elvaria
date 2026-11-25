@@ -26,6 +26,7 @@ import { detailOf, messageOf, stopped } from './delivery.ts';
 import { lateFailAt } from './late-fail.ts';
 import { openQueueMerge, redChecksOf } from './queue-merge.ts';
 import type { Context } from '../context.ts';
+import type { QueueChecks } from './checked-head.ts';
 import type { Delivery } from './delivery.ts';
 import type { Failure } from './outcome.ts';
 import type { Resolvable } from './queue-merge.ts';
@@ -80,7 +81,7 @@ async function checkUpdate(
   d: Delivery,
   merged: Merged,
   secrets: Secrets,
-): Promise<Stop | undefined> {
+): Promise<Stop | QueueChecks | undefined> {
   const request = { plot: d.quest.plot, territory: d.territory, run_dir: deliveryRunOf(d.quest.id) };
   const mode = modeMarkOf(await checkModeFor(ctx, d.quest, d.territory, 'queue'));
   // In full, every check, as a merge quest runs them (K4); a narrow run selects by the quest's diff and role.
@@ -97,12 +98,12 @@ async function checkUpdate(
   if (runs === undefined) return failureOf(d, 'update_failed', { detail: 'the checks did not run' });
   const red = runs.filter(({ pass }) => !pass);
   const environment = environmentFailureOf(runs);
-  if (red.length === 0) return undefined;
+  if (red.length === 0) return runs.length > 0 && environment === undefined ? 'checked' : 'unchecked';
   if (environment !== undefined) {
     ctx.deps.log.warn(
       `steward: ${d.quest.id}: its update's checks set aside (${environment.check}: ${environment.line})`,
     );
-    return undefined;
+    return 'unchecked';
   }
   const checks = red.map(({ id, timed_out }) => ({
     name: id,
@@ -138,7 +139,11 @@ async function generateAfter(ctx: Context, d: Delivery, merged: Merged, secrets:
 }
 
 /** After the merge: setup again, the generators, every check; the update settled once they passed. */
-async function afterMerge(ctx: Context, d: Delivery, merged: Merged): Promise<Stop | undefined> {
+async function afterMerge(
+  ctx: Context,
+  d: Delivery,
+  merged: Merged,
+): Promise<Stop | QueueChecks | undefined> {
   let secrets: Secrets;
   try {
     secrets = await questSecretsOf(ctx, d.quest, d.territory);
@@ -153,13 +158,13 @@ async function afterMerge(ctx: Context, d: Delivery, merged: Merged): Promise<St
   const generated = await generateAfter(ctx, d, merged, secrets);
   if (generated !== undefined || stopped(d)) return generated;
   const checked = await checkUpdate(ctx, d, merged, secrets);
-  if (checked !== undefined || stopped(d)) return checked;
+  if (typeof checked === 'object' || stopped(d)) return checked;
   await ctx.deps.plots.settle?.(d.quest.plot);
-  return undefined;
+  return checked;
 }
 
-/** The update itself: the merge, then what follows it; undefined when the delivery goes on or the Steward stopped. */
-async function updateOf(ctx: Context, d: Delivery): Promise<Stop | undefined> {
+/** The update itself: the merge and its checks; undefined when already current or the Steward stopped. */
+async function updateOf(ctx: Context, d: Delivery): Promise<Stop | QueueChecks | undefined> {
   const { plots } = ctx.deps;
   if (plots.update === undefined) return undefined;
   const update = await plots.update(d.quest.plot, d.territory);
@@ -176,7 +181,7 @@ async function updateOf(ctx: Context, d: Delivery): Promise<Stop | undefined> {
 }
 
 /**
- * The update before the scan; undefined when the delivery goes on (or the Steward stopped, which records nothing). A
+ * The update before the scan; `checked`/`unchecked` name the queue run, undefined means current or stopped. A
  * stop the merge queue's merge quest resolves opens it (PS-09b) and the failure names it. (PS-09d) Checks red after a
  * clean merge ask the base branch first (baseRedAt): red on its own, the delivery ends with nothing recorded
  * (`base_red`), the merge commit on the branch, and the quest waits in the queue for the branch to be green. (CM-06)
@@ -186,9 +191,10 @@ async function updateOf(ctx: Context, d: Delivery): Promise<Stop | undefined> {
 export async function updateBranch(
   ctx: Context,
   d: Delivery,
-): Promise<Failure | 'base_red' | 'late_fail' | undefined> {
+): Promise<Failure | QueueChecks | 'base_red' | 'late_fail' | undefined> {
   const outcome = await updateOf(ctx, d);
   if (outcome === undefined || stopped(d)) return undefined;
+  if (typeof outcome === 'string') return outcome;
   const { resolvable, ...failure } = outcome;
   if (resolvable === undefined) return failure;
   if (resolvable.stop.reason === 'checks_red' && (await baseRedAt(ctx, d, resolvable.base)))

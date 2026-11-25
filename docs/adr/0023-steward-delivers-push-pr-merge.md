@@ -24,6 +24,8 @@ In stage 1 the owner merged by hand after the royal seal. In practice the owner 
 - (Amended 2026-11-17, fix/push-scan, owner's decision (212)) A push sends every commit of `base..HEAD`, so the scan reads each commit's added lines as well as the branch's whole diff (a merge's own lines through `--remerge-diff`): a secret one commit adds and a later one removes still blocks the push, and `delivery.failed` names the commits that add it.
 - (Amended 2026-11-23, CM-05, [ADR 0033](0033-late-machine-verdict.md)) A quest returned by a red check leaves `done` by a late machine verdict: `verdicts/<quest>-<n>-late.json` and the Steward's `done` + `verdict_fail` rows (to `returned`, to `open` for the machine's merge, to the infirmary once out of attempts), not two `return` rows; the seal and the delivery stamp go with it, so the rework is sealed again when the quest needs it and delivered again.
 
+- (Amended 2026-11-25, RC-02: a push names the commit the Steward's checks passed on in `ELVARIA_CHECKED_HEAD`, when that run had a check and set none aside; the hooks still run.)
+
 ## Alternatives
 
 - Push and open the pull request only, the owner merges (the session's recommendation): it keeps the owner in every delivery. It stays available as mode `pr`.
