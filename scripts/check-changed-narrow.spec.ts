@@ -1,19 +1,22 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import { batches, narrowCommands } from './check-changed-narrow.mjs';
 import { changedPaths, main, parseArgs, plan, toolEnv } from './check-changed.mjs';
 
 let dir: string;
+let temp: TempDir;
 const git = (...args: string[]): string =>
   execFileSync('git', args, { cwd: dir, env: toolEnv(), encoding: 'utf8' }).trim();
 beforeEach(async () => {
   vi.stubEnv('ELVARIA_CHECK_BASE', '');
-  dir = await mkdtemp(path.join(tmpdir(), 'narrow checks '));
+  temp = await tempDir('narrow checks');
+  dir = temp.root;
   git('init', '-q', '-b', 'main');
   git('config', 'user.name', 'Test');
   git('config', 'user.email', 'test@example.com');
@@ -24,7 +27,7 @@ beforeEach(async () => {
 });
 afterEach(async () => {
   vi.unstubAllEnvs();
-  await rm(dir, { recursive: true, force: true, maxRetries: 3 });
+  await temp.remove();
 });
 
 it('compares directly with the supplied commit, including when it is not an ancestor', async () => {
@@ -121,7 +124,8 @@ it('uses the environment base and prints only the selected group through main', 
 });
 
 it('executes legacy defaults unchanged, adds formatting with env, and reserves exit 3 for uncovered paths', async () => {
-  const tools = await mkdtemp(path.join(tmpdir(), 'check commands '));
+  const toolsTemp = await tempDir('check commands');
+  const tools = toolsTemp.root;
   const log = path.join(tools, 'commands.jsonl');
   const runner = path.join(tools, 'pnpm.mjs');
   const record = `import { appendFileSync } from 'node:fs';
@@ -141,6 +145,6 @@ appendFileSync(${JSON.stringify(log)}, JSON.stringify(process.argv.slice(2)) + '
     await writeFile(runner, `${record}\nprocess.exitCode = 3;`);
     expect(main(['--only', 'docs'], dir, () => undefined)).toBe(1);
   } finally {
-    await rm(tools, { recursive: true, force: true, maxRetries: 3 });
+    await toolsTemp.remove();
   }
 });

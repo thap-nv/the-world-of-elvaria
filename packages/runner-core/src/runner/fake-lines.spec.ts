@@ -1,4 +1,4 @@
-import { mkdtemp } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { openEventLog, openJournal } from '@elvaria/eventlog';
@@ -45,7 +45,12 @@ const requestIn = (kingdom: string | undefined, scenario: FakeScenario): SpawnRe
   run_dir: root,
 });
 
-const kingdomDir = () => mkdtemp(path.join(root, 'kingdom '));
+let kingdoms = 0;
+const kingdomDir = async () => {
+  const dir = path.join(root, `kingdom ${++kingdoms}`);
+  await mkdir(dir, { recursive: true });
+  return dir;
+};
 
 const signalsOf = async (signals: AsyncIterable<RunnerSignal>) => {
   const read: RunnerSignal[] = [];

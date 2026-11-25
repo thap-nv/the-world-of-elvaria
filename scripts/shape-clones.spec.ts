@@ -1,9 +1,10 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { toolEnv } from './check-changed.mjs';
 import type { CloneList, ListedPair } from './shape-clones.mjs';
@@ -122,13 +123,15 @@ const body = (n: string) => `export function ${n}Parts(${n}Input: string, ${n}Li
 
 describe('main', () => {
   let root = '';
-  afterEach(() => {
-    rmSync(root, { recursive: true, force: true, maxRetries: 10 });
+  let temp: TempDir;
+  beforeEach(async () => {
+    temp = await tempDir('elvaria dup');
+    root = temp.root;
   });
+  afterEach(() => temp.remove());
 
   /** A repo in a temp folder with a space in its name (§6), holding `files`. */
   function repoWith(files: Record<string, string>) {
-    root = mkdtempSync(join(tmpdir(), 'elvaria dup '));
     for (const [file, text] of Object.entries(files)) {
       mkdirSync(dirname(join(root, file)), { recursive: true });
       writeFileSync(join(root, file), text);

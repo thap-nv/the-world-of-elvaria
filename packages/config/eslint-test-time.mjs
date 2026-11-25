@@ -171,6 +171,76 @@ const noRealClock = {
   },
 };
 
+const TEMP_MODULES = new Set(['fs', 'node:fs', 'fs/promises', 'node:fs/promises']);
+const TEMP_METHODS = new Set(['mkdtemp', 'mkdtempSync']);
+
+/**
+ * @param {EsNode} node
+ * @param {SourceCode} sourceCode
+ */
+function isTempCall(node, sourceCode) {
+  if (node.type !== 'MemberExpression') return false;
+  const name =
+    !node.computed && node.property.type === 'Identifier'
+      ? node.property.name
+      : node.property.type === 'Literal'
+        ? String(node.property.value)
+        : '';
+  const parent = sourceCode.getAncestors(node).at(-1);
+  return TEMP_METHODS.has(name) && parent?.type === 'CallExpression' && parent.callee === node;
+}
+
+/**
+ * Match references to the import binding, so a local variable shadowing fs is left alone.
+ * @param {ImportDeclaration} declaration
+ * @param {SourceCode} sourceCode
+ * @returns {EsNode[]}
+ */
+function importedTempUses(declaration, sourceCode) {
+  if (!TEMP_MODULES.has(String(declaration.source.value))) return [];
+  return declaration.specifiers.flatMap(
+    /** @returns {EsNode[]} */
+    (specifier) => {
+      if (specifier.type === 'ImportSpecifier') {
+        const { imported } = specifier;
+        const name = imported.type === 'Identifier' ? imported.name : String(imported.value);
+        return TEMP_METHODS.has(name) ? [specifier] : [];
+      }
+      return sourceCode
+        .getDeclaredVariables(specifier)
+        .flatMap((variable) => variable.references)
+        .flatMap(({ identifier }) => {
+          if (identifier.type !== 'Identifier') return [];
+          const member = sourceCode.getAncestors(identifier).at(-1);
+          return member?.type === 'MemberExpression' &&
+            member.object === identifier &&
+            isTempCall(member, sourceCode)
+            ? [member]
+            : [];
+        });
+    },
+  );
+}
+
+/** @type {RuleModule} */
+const noMkdtemp = {
+  meta: {
+    type: 'problem',
+    docs: { description: 'Keep temporary test folders in testkit' },
+    schema: [],
+    messages: { temp: 'Use tempDir from @elvaria/testkit instead of creating temporary folders directly.' },
+  },
+  create(context) {
+    return {
+      ImportDeclaration(declaration) {
+        for (const node of importedTempUses(declaration, context.sourceCode)) {
+          context.report({ node, messageId: 'temp' });
+        }
+      },
+    };
+  },
+};
+
 /**
  * The test-time rules on `files` (the repo's *.spec.ts).
  * @param {string[]} files
@@ -180,12 +250,22 @@ export function testTimeConfig(files) {
   return {
     name: 'elvaria/tests/time',
     files,
+    // Character sessions cannot read .claude/**; hook-io.spec.ts keeps its synchronous setup.
+    ignores: ['.claude/**'],
     plugins: {
       elvaria: {
         meta: { name: 'elvaria' },
-        rules: { 'no-real-wait': noRealWait, 'no-real-clock': noRealClock, 'timeout-reason': timeoutReason },
+        rules: {
+          'no-real-wait': noRealWait,
+          'no-real-clock': noRealClock,
+          'timeout-reason': timeoutReason,
+          'no-mkdtemp': noMkdtemp,
+        },
       },
     },
-    rules: Object.fromEntries(TEST_TIME_RULES.map((rule) => [rule, 'error'])),
+    rules: {
+      ...Object.fromEntries(TEST_TIME_RULES.map((rule) => [rule, 'error'])),
+      'elvaria/no-mkdtemp': 'error',
+    },
   };
 }

@@ -1,8 +1,9 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { GLOSSARY, LOCALE_FILES, LOCALE_NAMESPACES } from '@elvaria/i18n';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { folderProblems, run } from './i18n-check.mjs';
@@ -40,14 +41,16 @@ describe('i18n:check', () => {
 
 describe('folderProblems', () => {
   let dir = '';
+  let temp: TempDir;
   const namespaces = { vi: { cli: { version: 1, messages: {} } } };
 
   beforeEach(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), 'i18n check '));
+    temp = await tempDir('i18n check');
+    dir = temp.root;
     await mkdir(path.join(dir, 'vi'));
   });
   afterEach(async () => {
-    await rm(dir, { recursive: true, force: true, maxRetries: 10 });
+    await temp.remove();
   });
 
   it('accepts a loaded namespace file up to 40 KB, and ignores what is not JSON', async () => {

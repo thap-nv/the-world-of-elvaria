@@ -1,9 +1,10 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { QuestSchema } from '@elvaria/domain';
 import type { MetricsInput, Quest } from '@elvaria/domain';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { daysOf, metricsReportOf, renderMetricsReport } from './docs-metrics-report.mjs';
@@ -124,8 +125,10 @@ describe('renderMetricsReport', () => {
 
 describe('the report from a kingdom on disk', () => {
   let kingdom: string;
+  let temp: TempDir;
   beforeEach(async () => {
-    kingdom = await mkdtemp(path.join(tmpdir(), 'elvaria metrics '));
+    temp = await tempDir('elvaria metrics');
+    kingdom = temp.root;
     await mkdir(path.join(kingdom, 'quests'), { recursive: true });
     await mkdir(path.join(kingdom, 'events'), { recursive: true });
     await writeFile(path.join(kingdom, 'quests', `${QUEST}.json`), JSON.stringify(quest), 'utf8');
@@ -139,7 +142,7 @@ describe('the report from a kingdom on disk', () => {
     };
     await writeFile(path.join(kingdom, 'events', '2026-11-08.jsonl'), `${JSON.stringify(line)}\n`, 'utf8');
   });
-  afterEach(() => rm(kingdom, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
+  afterEach(() => temp.remove());
 
   it('reads the kingdom with the reader of elvaria metrics', async () => {
     const report = await metricsReportOf(kingdom);

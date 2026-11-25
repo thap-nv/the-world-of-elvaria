@@ -1,7 +1,8 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { kingdomGenerators, run } from './docs-gen.mjs';
@@ -127,8 +128,10 @@ describe('renderTierReport', () => {
 
 describe('the report from a kingdom on disk', () => {
   let kingdom: string;
+  let temp: TempDir;
   beforeEach(async () => {
-    kingdom = await mkdtemp(path.join(tmpdir(), 'elvaria tiers '));
+    temp = await tempDir('elvaria tiers');
+    kingdom = temp.root;
     await mkdir(path.join(kingdom, 'events', 'sandbox'), { recursive: true });
     const jsonl = (lines: readonly unknown[]) =>
       `${lines.map((entry) => JSON.stringify(entry)).join('\n')}\n`;
@@ -141,7 +144,7 @@ describe('the report from a kingdom on disk', () => {
     await writeFile(path.join(kingdom, 'events', 'sandbox', '2026-11-07.jsonl'), jsonl(DAY), 'utf8');
     await writeFile(path.join(kingdom, 'events', 'notes.txt'), 'not a day', 'utf8');
   });
-  afterEach(() => rm(kingdom, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
+  afterEach(() => temp.remove());
 
   it("upgrades the kingdom's v1 days, counts their work and leaves the files unchanged", async () => {
     const file = path.join(kingdom, 'events', '2026-11-07.jsonl');
