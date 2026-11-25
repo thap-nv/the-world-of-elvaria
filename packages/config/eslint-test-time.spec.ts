@@ -16,7 +16,7 @@ const SPEC = 'packages/store/src/lock.spec.ts';
 const linter = new Linter({ cwd: REPO });
 const configs: Linter.Config[] = [
   { files: ['**/*.ts'], languageOptions: { parser: tseslint.parser, globals: globals.node } },
-  testTimeConfig(['**/*.spec.ts']),
+  ...testTimeConfig(['**/*.spec.ts']),
 ];
 
 /** `rule:line` for each report on `lines` placed at `file`, a path from the repo root. */
@@ -172,7 +172,62 @@ describe('elvaria/timeout-reason', () => {
   });
 });
 
+describe('temporary folder rule', () => {
+  // Keep forbidden API spellings in generated snippets, so the repository scan finds actual uses only.
+  const factory = ['mk', 'dtemp'].join('');
+  const rule = `elvaria/no-${factory}`;
+  it.each(['fs', 'node:fs', 'fs/promises', 'node:fs/promises'])(
+    'flags named imports from %s, including aliases',
+    (module) => {
+      expect(
+        lint([`import { ${factory} as folder, ${factory}Sync as syncFolder } from '${module}';`]),
+      ).toEqual([`${rule}:1`, `${rule}:1`]);
+    },
+  );
+
+  it('flags calls through namespace and default imports, including computed properties', () => {
+    expect(
+      lint([
+        "import * as fs from 'node:fs';",
+        "import promises from 'fs/promises';",
+        `fs.${factory}Sync('prefix');`,
+        `promises.${factory}('prefix');`,
+        `fs['${factory}']('prefix', done);`,
+      ]),
+    ).toEqual([`${rule}:3`, `${rule}:4`, `${rule}:5`]);
+  });
+
+  it('leaves testkit, other fs calls, unrelated imports and shadowed bindings alone', () => {
+    expect(
+      lint([
+        "import { tempDir } from '@elvaria/testkit';",
+        "import * as fs from 'node:fs';",
+        "import other from './other.ts';",
+        "await tempDir('kingdom');",
+        "fs.mkdirSync('child');",
+        `other.${factory}('prefix');`,
+        `function local(fs) { fs.${factory}('prefix'); }`,
+      ]),
+    ).toEqual([]);
+  });
+
+  it('leaves runtime files and the protected hook specs alone', () => {
+    const code = [`import { ${factory} } from 'node:fs/promises';`];
+    expect(lint(code, 'packages/store/src/lock.ts')).toEqual([]);
+    expect(lint(code, '.claude/hooks/hook-io.spec.ts')).toEqual([]);
+  });
+});
+
 describe('elvaria()', () => {
+  it('keeps all time guards on protected hook specs', () => {
+    expect(
+      lint(
+        ['setTimeout(done, 10);', 'Date.now();', "it('a', async () => {}, 5000);"],
+        '.claude/hooks/example.spec.ts',
+      ),
+    ).toEqual(['elvaria/no-real-wait:1', 'elvaria/no-real-clock:2', 'elvaria/timeout-reason:3']);
+  });
+
   it('runs the test-time rules on every spec', () => {
     const time = elvaria({ root: REPO }).find((config) => config.name === 'elvaria/tests/time');
     expect(time?.files).toEqual(['**/*.spec.ts']);

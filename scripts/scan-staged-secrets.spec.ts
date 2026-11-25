@@ -2,11 +2,12 @@
 // takes the spec's own source for a leak. The end-to-end cases run in real git repos in a temp folder whose name has a
 // space, with git run without the caller's GIT_* variables (implementation-plan §6).
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { loadPatterns, scanStaged } from './scan-staged-secrets.mjs';
@@ -119,10 +120,12 @@ function scan(cwd: string): { status: number | null; out: string } {
 
 describe('the script, in a repo', () => {
   let root = '';
+  let temp: TempDir;
   let repo = '';
 
   beforeEach(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'elvaria scan '));
+    temp = await tempDir('elvaria scan');
+    root = temp.root;
     repo = path.join(root, 'repo');
     await mkdir(repo);
     git(repo, 'init', '-q');
@@ -132,7 +135,7 @@ describe('the script, in a repo', () => {
   });
 
   afterEach(async () => {
-    await rm(root, { recursive: true, force: true });
+    await temp.remove();
   });
 
   const put = (file: string, text: string): Promise<void> => writeFile(path.join(repo, file), text);

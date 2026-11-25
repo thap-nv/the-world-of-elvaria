@@ -3,11 +3,12 @@
 // pushed (implementation-plan §6).
 import { execFileSync, spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { copyFile, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { copyFile, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { pushedRefs, verdictOf } from './check-stamp.mjs';
@@ -87,12 +88,14 @@ describe('pushedRefs', () => {
 
 describe('check stamp in a git repo', () => {
   let root: string;
+  let temp: TempDir;
   let repo: string;
   let first: string;
   let head: string;
 
   beforeEach(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'check stamp '));
+    temp = await tempDir('check stamp');
+    root = temp.root;
     repo = path.join(root, 'my repo');
     await mkdir(repo);
     git(repo, 'init', '-q', '-b', 'main');
@@ -102,7 +105,7 @@ describe('check stamp in a git repo', () => {
     first = await commit(repo, 'README.md', '# demo\n');
     head = await commit(repo, 'notes.md', 'one\n');
   });
-  afterEach(() => rm(root, { recursive: true, force: true }));
+  afterEach(() => temp.remove());
 
   it('lets the hook skip check:fast for HEAD after a green check on a clean tree', () => {
     greenCheck(repo);
@@ -191,6 +194,7 @@ describe('check stamp in a git repo', () => {
 
 describe('.husky/pre-push in a real git push', () => {
   let root: string;
+  let temp: TempDir;
   let repo: string;
 
   /** git push with its hook's output; the hook's `pnpm` only says it ran. */
@@ -201,7 +205,8 @@ describe('.husky/pre-push in a real git push', () => {
   }
 
   beforeEach(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'check stamp push '));
+    temp = await tempDir('check stamp push');
+    root = temp.root;
     repo = path.join(root, 'my repo');
     const hooks = path.join(root, 'hooks');
     await mkdir(path.join(repo, 'scripts'), { recursive: true });
@@ -219,7 +224,7 @@ describe('.husky/pre-push in a real git push', () => {
     const hook = `#!/bin/sh\npnpm() { echo "fake pnpm $*"; }\n. "${HOOK.replaceAll('\\', '/')}"\n`;
     await writeFile(path.join(hooks, 'pre-push'), hook, { mode: 0o755 });
   });
-  afterEach(() => rm(root, { recursive: true, force: true }));
+  afterEach(() => temp.remove());
 
   it('skips check:fast for the stamped HEAD and a branch deletion, and runs it otherwise', async () => {
     expect(push('-q', 'origin', 'main')).toContain('fake pnpm check:fast');

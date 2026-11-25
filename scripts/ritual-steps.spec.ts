@@ -1,7 +1,8 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { main, stepsChange } from './ritual-steps.mjs';
@@ -21,6 +22,7 @@ const file = (steps: readonly string[]) => ({
 });
 
 let dir: string;
+let temp: TempDir;
 let kingdom: string;
 let lines: string[];
 const ritualsPath = () => path.join(kingdom, 'registry', 'rituals.json');
@@ -36,15 +38,16 @@ const run = (...args: string[]) =>
     defaults: path.join(dir, 'defaults.json'),
   });
 
-beforeEach(() => {
-  dir = mkdtempSync(path.join(tmpdir(), 'elvaria ritual steps '));
+beforeEach(async () => {
+  temp = await tempDir('elvaria ritual steps');
+  dir = temp.root;
   kingdom = path.join(dir, 'my kingdom');
   mkdirSync(path.join(kingdom, 'registry'), { recursive: true });
   writeFileSync(path.join(dir, 'defaults.json'), JSON.stringify(file(NEW)));
   lines = [];
 });
-afterEach(() => {
-  rmSync(dir, { recursive: true, force: true });
+afterEach(async () => {
+  await temp.remove();
 });
 
 describe('ritual-steps (PS-06: check_plan_ready reaches a running kingdom)', () => {

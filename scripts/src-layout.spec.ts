@@ -1,9 +1,10 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { toolEnv } from './check-changed.mjs';
 import type { Baseline } from './src-layout.mjs';
@@ -180,13 +181,15 @@ describe('parseBaseline', () => {
 
 describe('main', () => {
   let root = '';
-  afterEach(() => {
-    rmSync(root, { recursive: true, force: true, maxRetries: 10 });
+  let temp: TempDir;
+  beforeEach(async () => {
+    temp = await tempDir('elvaria layout');
+    root = temp.root;
   });
+  afterEach(() => temp.remove());
 
   /** A repo in a temp folder with a space in its name (§6), holding `files`. */
   function repoWith(files: readonly string[]) {
-    root = mkdtempSync(join(tmpdir(), 'elvaria layout '));
     for (const file of files) {
       mkdirSync(dirname(join(root, file)), { recursive: true });
       writeFileSync(join(root, file), '');

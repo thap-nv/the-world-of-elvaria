@@ -2,12 +2,13 @@
 // folder whose name has a space, with git run without the caller's GIT_* variables (the pre-push hook that runs
 // these tests exports GIT_DIR; implementation-plan §6).
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { changedPaths, DEFAULT_BASE, parseArgs, plan, pnpmInvocation, toolEnv } from './check-changed.mjs';
@@ -209,6 +210,7 @@ it('passes on only the variables the tools need', () => {
 
 describe('in a git repo', () => {
   let dir: string;
+  let temp: TempDir;
   const git = (...args: string[]): string =>
     execFileSync('git', args, { cwd: dir, encoding: 'utf8', env: toolEnv() }).trim();
   const put = async (file: string, text = 'x'): Promise<void> => {
@@ -217,7 +219,8 @@ describe('in a git repo', () => {
   };
 
   beforeEach(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), 'check changed '));
+    temp = await tempDir('check changed');
+    dir = temp.root;
     git('init', '-q', '-b', 'main');
     git('config', 'user.name', 'Test');
     git('config', 'user.email', 'test@example.com');
@@ -229,7 +232,7 @@ describe('in a git repo', () => {
     git('checkout', '-q', '-b', 'work');
   });
 
-  afterEach(() => rm(dir, { recursive: true, force: true }));
+  afterEach(() => temp.remove());
 
   it('lists committed, uncommitted and untracked paths against the merge-base, not what main gained since', async () => {
     await put('packages/store/src/a.ts');

@@ -229,6 +229,9 @@
 
 ## How to test
 
+Specs create temporary folders with `tempDir` from the root devDependency `@elvaria/testkit`, keep the returned
+object, and call `temp.remove()` during cleanup. Its `root` always contains a space to exercise real path handling.
+
 ```bash
 pnpm test              # root vitest (scripts/**/*.spec.ts and .claude/hooks/**/*.spec.ts), then workspaces
 pnpm typecheck         # root tsc -p tsconfig.json checks scripts/*.mjs (checkJs) and scripts/*.spec.ts

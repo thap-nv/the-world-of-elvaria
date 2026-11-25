@@ -2,11 +2,12 @@
 // and the two commands of the root `knip` script, so the spec fails when either drifts from what it proves. The
 // temp folder's name has a space (implementation-plan §6).
 import { spawnSync } from 'node:child_process';
-import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { toolEnv } from './check-changed.mjs';
@@ -66,10 +67,12 @@ async function gate(): Promise<{ status: number | null; output: string }[]> {
 }
 
 describe('pnpm knip', () => {
+  let temp: TempDir;
   beforeEach(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), 'knip gate '));
+    temp = await tempDir('knip gate');
+    dir = temp.root;
   });
-  afterEach(() => rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
+  afterEach(() => temp.remove());
 
   it('runs the default mode, then the production mode', async () => {
     const steps = await gateSteps();

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { openEventLog, openJournal } from '@elvaria/eventlog';
@@ -24,16 +24,21 @@ beforeAll(async () => {
 });
 afterAll(() => temp.remove());
 
-const contextIn = async (fields: Partial<RunContext> = {}): Promise<RunContext> => ({
-  kingdom: await mkdtemp(path.join(root, 'kingdom ')),
-  quest: QUEST_ID,
-  attempt: 1,
-  character: THORN.id,
-  role: 'assignee',
-  model: THORN.model,
-  tz: 'Asia/Ho_Chi_Minh',
-  ...fields,
-});
+let kingdoms = 0;
+const contextIn = async (fields: Partial<RunContext> = {}): Promise<RunContext> => {
+  const kingdom = path.join(root, `kingdom ${++kingdoms}`);
+  await mkdir(kingdom, { recursive: true });
+  return {
+    kingdom,
+    quest: QUEST_ID,
+    attempt: 1,
+    character: THORN.id,
+    role: 'assignee',
+    model: THORN.model,
+    tz: 'Asia/Ho_Chi_Minh',
+    ...fields,
+  };
+};
 
 const SESSION_END = { type: 'agent.session.end', data: { outcome: 'completed', usage: { tokens: 42 } } };
 
