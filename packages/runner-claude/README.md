@@ -83,6 +83,7 @@
 - `@elvaria/runner-core` (the interface, `ToolPolicy`, `policy.json`, the run log and output, the conformance
   suite). No third-party package.
 - `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
+- `@elvaria/testkit` (dev only: temporary folders for specs).
 
 ## How to test
 

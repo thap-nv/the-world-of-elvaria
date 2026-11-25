@@ -107,6 +107,7 @@ blocked by PreToolUse hook: <reason>. Command: <command>`) into `tool_blocked` s
   that `AGENTS.override.md` is as Prettier would write it. The specs run the hook from `packages/hooks/src` by path,
   never by import.
 - `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
+- `@elvaria/testkit` (dev only: temporary folders for specs).
 
 ## How to test
 

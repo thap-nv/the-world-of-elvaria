@@ -2,16 +2,15 @@
 // else. The fake CLI prints it, and secrets of known shapes, everywhere it can; Elvaria's real hook (from source:
 // Node strips its types, so no build is needed) writes the log and the journal, the runner writes the run folder.
 // Afterwards no file of the kingdom holds any of them.
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { CONFORMANCE_QUEST, FAKE_SCENARIO_ENV, STDERR_FILE, STDOUT_FILE } from '@elvaria/runner-core';
 import type { SpawnRequest } from '@elvaria/runner-core';
+import { tempDir } from '@elvaria/testkit';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { prepare } from './__fixtures__/harness.ts';
-import { RM_TEMP } from './__fixtures__/temp.ts';
 import { PROMPT_FILE } from './run-files.ts';
 import type { HookCommand } from './settings.ts';
 
@@ -51,8 +50,8 @@ afterEach(async () => {
 
 describe('the secrets of a session', () => {
   it('reach the CLI env, and no file of the kingdom: log, journal, run folder', async () => {
-    const outside = await mkdtemp(path.join(tmpdir(), 'elvaria record '));
-    const record = path.join(outside, 'record.json');
+    const temp = await tempDir('record');
+    const record = path.join(temp.root, 'record.json');
     const prepared = await prepare(
       'submit',
       { hookCommand: realHook },
@@ -67,7 +66,7 @@ describe('the secrets of a session', () => {
     );
     cleanup.push(
       () => prepared.workspace.remove(),
-      () => rm(outside, RM_TEMP),
+      () => temp.remove(),
     );
     const prompt = { ...prepared.request.prompt, user: `Publish with the token ${TREASURY_VALUE}.` };
     const session = await prepared.runner.spawn({ ...prepared.request, quest: QUEST, prompt });

@@ -1,19 +1,22 @@
 // Where Codex CLI is before doctor pins it (spike Codex 2026-11-12 §1.1): PATH, npm's folder, then the VS Code
 // extension's binary, newest extension first.
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { codexCandidates, locateCodex } from './locate.ts';
 
 let home: string;
+let temp: TempDir;
 beforeEach(async () => {
-  home = await mkdtemp(path.join(tmpdir(), 'elvaria codex home '));
+  temp = await tempDir('codex home');
+  home = temp.root;
 });
-afterEach(() => rm(home, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
+afterEach(() => temp.remove());
 
 /** Writes an extension binary under the home folder; returns its path as the search on `platform` names it. */
 async function extension(

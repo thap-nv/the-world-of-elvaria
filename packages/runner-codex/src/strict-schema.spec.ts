@@ -2,8 +2,7 @@
 // API side (fixtures/fake-codex-schema.mjs), which refuses what OpenAI's strict structured output refuses, against the
 // verdict's shape and the Chancellor's three contracts as `pnpm schemas` writes them.
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
@@ -11,6 +10,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { FAKE_SCENARIO_ENV, FAKE_STRUCTURED_SCHEMA } from '@elvaria/runner-core';
 import type { JsonSchema } from '@elvaria/runner-core';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 
 import { FAKE_CODEX, minimalEnv } from './__fixtures__/codex.ts';
 import { strictSchemaOf, withoutNulls } from './strict-schema.ts';
@@ -144,11 +145,13 @@ describe('withoutNulls', () => {
 });
 
 describe("the fake CLI's API side", () => {
+  let temp: TempDir;
   let dir = '';
   beforeEach(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), 'elvaria strict schema '));
+    temp = await tempDir('strict schema');
+    dir = temp.root;
   });
-  afterEach(() => rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }));
+  afterEach(() => temp.remove());
 
   /** One `codex exec` of the fake with `schema` as its `--output-schema`, playing `structured`: what it printed. */
   async function exec(schema: unknown) {
