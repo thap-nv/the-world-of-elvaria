@@ -11,7 +11,8 @@ import { tempDir } from '@elvaria/testkit';
 import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { changedPaths, DEFAULT_BASE, parseArgs, plan, pnpmInvocation, toolEnv } from './check-changed.mjs';
+import { changedPaths, DEFAULT_BASE, parseArgs, plan } from './check-changed.mjs';
+import { pnpmInvocation, toolEnv } from './check-changed-run.mjs';
 
 const SCRIPT = path.join(import.meta.dirname, 'check-changed.mjs');
 const lines = (paths: string[]): string[] => plan(paths).commands.map((c) => c.join(' '));

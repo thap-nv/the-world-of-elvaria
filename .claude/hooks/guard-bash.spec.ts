@@ -9,6 +9,23 @@ import { REPO } from './hook-io.mjs';
 
 // Commands are assembled from words so that this file, read as a command line, matches none of them.
 const cmd = (...words: string[]): string => words.join(' ');
+/** The Steward's variable (scripts/check-stamp.mjs), spelled in parts for the same reason. */
+const HEAD_VAR = ['ELVARIA', 'CHECKED', 'HEAD'].join('_');
+const SETS_HEAD_VAR = [
+  cmd(`${HEAD_VAR}=abc`, 'git', 'push', 'origin', 'quest/q-1'),
+  cmd('export', `${HEAD_VAR}=abc`),
+  cmd('export', HEAD_VAR),
+  cmd('env', `${HEAD_VAR}=abc`, 'git', 'push'),
+  cmd(`${HEAD_VAR.toLowerCase()}=abc`, 'git', 'push'),
+  cmd('set', `${HEAD_VAR}=abc`, '&&', 'git', 'push'),
+  cmd('setx', HEAD_VAR, 'abc'),
+  cmd(`$env:${HEAD_VAR}`, '=', "'abc';", 'git', 'push'),
+  cmd('Set-Item', `-Path Env:${HEAD_VAR}`, '-Value', 'abc'),
+  cmd(`[Environment]::SetEnvironmentVariable('${HEAD_VAR}',`, "'abc')"),
+  cmd('node', '-e', `"spawnSync('git', ['push'], { env: { ${HEAD_VAR}: sha } })"`),
+  cmd('node', '-e', `"process.env['${HEAD_VAR}'] = sha"`),
+  cmd('node', '-e', `"process.env.${HEAD_VAR} = sha"`),
+];
 
 const REFUSED = [
   cmd('git', 'push', '--force', 'origin', 'main'),
@@ -41,6 +58,7 @@ const REFUSED = [
   cmd('Remove-Item', '-Recurse', '-Force', String.raw`~\Documents`),
   cmd('Remove-Item', '-Path', String.raw`$env:USERPROFILE\Documents`, '-Recurse'),
   cmd('rd', '-r', String.raw`~\Documents`),
+  ...SETS_HEAD_VAR,
 ];
 
 const ALLOWED = [
@@ -62,6 +80,9 @@ const ALLOWED = [
   `rm -rf "${join(tmpdir(), 'elvaria-test')}"`,
   String.raw`Remove-Item -Recurse -Force apps\cli\dist`,
   'ls -la',
+  cmd('grep', '-rn', HEAD_VAR, 'scripts'),
+  cmd('echo', `"$${HEAD_VAR}"`),
+  cmd('git', 'log', `-S${HEAD_VAR}`),
 ];
 
 describe('refusalOf', () => {
@@ -82,6 +103,7 @@ describe('refusalOf', () => {
     expect(refusalOf(cmd('git', 'rebase', 'main'))).toMatch(/git merge origin\/main/);
     expect(refusalOf(cmd('git', 'stash', 'pop'))).toMatch(/shared by every worktree/);
     expect(refusalOf(cmd('git', 'commit', '-n', '-m', 'x'))).toMatch(/--no-verify/);
+    expect(refusalOf(cmd(`${HEAD_VAR}=abc`, 'git', 'push'))).toMatch(/Steward's word/);
   });
 });
 

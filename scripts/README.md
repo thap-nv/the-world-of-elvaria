@@ -158,14 +158,19 @@
   `<kingdom>/.backup/<stamp>-ritual-steps/registry/rituals.json`, then writes it whole through a file beside it.
   Exits `0` (done, nothing to do, or `--dry-run`), `1` (refused, no such ritual) or `2` (no `--kingdom`). Run by
   hand after `elvaria upgrade` (`docs/guides/operating-a-kingdom.md` §13).
-- `check-stamp.mjs` (`check-stamp.spec.ts`): the check stamp that lets the husky pre-push hook skip
-  `pnpm check:fast` (fix/pre-push-stamp). `start`, the first step of `pnpm check`, removes the worktree's stamp and
-  notes HEAD when `git status --porcelain` is empty; `write`, its last step, stamps HEAD only when the tree is still
-  clean and HEAD is the one `start` noted. `verify`, which `.husky/pre-push` runs before `pnpm check:fast`, reads the
-  hook's stdin and exits `0` (the hook skips check:fast) when every commit the push sends is HEAD, the stamp is HEAD
-  and the tree is clean, or when the push sends no commit (only branch deletions); otherwise, or on input or a git
-  it cannot read, it exits `1` and the hook runs check:fast. Reads git through `git rev-parse` and `git status` with
-  a minimal env; writes only `git rev-parse --git-path elvaria-check-ok`, a file in the worktree's own git dir.
+- `check-stamp.mjs` (`check-stamp.spec.ts`, `check-stamp-words.spec.ts`): the check stamp that lets the husky
+  pre-push hook skip `pnpm check:fast` (fix/pre-push-stamp, RC-01). `start`, the first step of `pnpm check`, removes
+  the worktree's stamp and notes HEAD when `git status --porcelain` is empty; `write`, its last step, stamps HEAD only
+  when the tree is still clean and HEAD is the one `start` noted. `writeNarrow()`, called by a green default
+  `pnpm check:changed`, stamps `changed <head>` when the tree was clean at its start and end at one HEAD, and keeps a
+  full stamp of the same HEAD. `verify`, which `.husky/pre-push` runs before `pnpm check:fast`, reads the hook's
+  stdin and exits `0` (the hook skips check:fast) when `ELVARIA_CHECKED_HEAD` (the Steward's word, RC-02) is every
+  sha the push sends and every target is `refs/heads/quest/*` or `refs/heads/train/*`; or when every commit the push
+  sends is HEAD, the tree is clean and the stamp is HEAD (the full stamp) or `changed <HEAD>` with no target
+  `refs/heads/main` (the narrow one); or when the push sends no commit (only branch deletions). Otherwise, or on
+  input or a git it cannot read, it exits `1` and the hook runs check:fast. Reads git through `git rev-parse` and
+  `git status` with a minimal env; writes only `git rev-parse --git-path elvaria-check-ok`, a file in the worktree's
+  own git dir.
 - `scan-staged-secrets.mjs` (`scan-staged-secrets.spec.ts`): the secret scan `.husky/pre-commit` runs (SEC-04).
   `stagedPaths()` lists the staged files (`git diff --cached --name-only --diff-filter=ACMR -z`), `stagedContent()`
   reads each one's staged blob (`git show :<path>`), and `scanStaged()` (pure: files and contents in, findings out)
@@ -173,7 +178,8 @@
   `packages/eventlog/src/redact-patterns.json`, the file the pre-push scan (PS-08c) reads. A specific shape stops the
   commit (exit `1`); patterns marked `warn_only` in `redact-patterns.json` only warn. It prints `<file>:<line>: <pattern id>` and never the
   matched text. Runs git with the hook's own env, because `GIT_INDEX_FILE` names the index of the commit.
-- `check-changed.mjs` (`check-changed.spec.ts`): `pnpm check:changed` (fix/check-changed). `changedPaths()` lists the
+- `check-changed.mjs` (`check-changed.spec.ts`, `check-changed-stamp.spec.ts`; runs commands through
+  `check-changed-run.mjs`): `pnpm check:changed` (fix/check-changed). `changedPaths()` lists the
   files that differ from the merge-base with `origin/main` (or `--base <ref>`): tracked changes, committed or not, and
   untracked files git does not ignore. `plan()` maps them through `RULES`, the "Change impact" table of CLAUDE.md as
   data (domain → `pnpm test` + `pnpm typecheck`; another workspace → `pnpm --filter @elvaria/<key> test`; i18n →
@@ -183,8 +189,10 @@
   order, stopping at the first failure; `--dry-run` only prints. With `--only <group>` or `ELVARIA_CHECK_BASE` (a
   territory's narrow command, `check-changed-narrow.mjs`) it also lints and formats the changed files; a path no rule
   covers then runs the group's full command (`FULL_COMMANDS`) under `--only`, and exits 3 without it. `pnpm check` stays the gate before a merge. Reads git
-  through `git merge-base`, `git diff` and `git ls-files` with a minimal env; writes nothing itself. Runs pnpm as
-  `node <npm_execpath>` (no shell), so call it through `pnpm check:changed`.
+  through `git merge-base`, `git diff` and `git ls-files` with a minimal env; writes nothing itself but the narrow
+  stamp: a green run without `--only`, `--dry-run`, another `--base` or `ELVARIA_CHECK_BASE`, on a clean tree, with
+  a rule for every path, calls `writeNarrow()` of `check-stamp.mjs` (RC-01). Runs pnpm as `node <npm_execpath>` (no
+  shell), so call it through `pnpm check:changed`.
 - `knip-gate.spec.ts`: the `pnpm knip` gate (AH-01). No script of its own: the root `knip` script runs knip with
   `knip.json` twice, in its default mode, then `--production` (specs, `__fixtures__`, `fixtures/` and `test/` left
   out, so an export only tests use fails unless its JSDoc says `@internal`). The spec builds a throwaway workspace
@@ -208,7 +216,7 @@
 - Edit source schemas (`packages/domain/src/schema/`), `packages/i18n/src/glossary.json`, locale files, or
   `packages/config/boundaries.mjs`: the generators only write derived files under `docs/`, `plan-split.mjs` only
   moves lines of the implementation plan, and the check scripts never write to disk (`check-stamp.mjs` writes only
-  its stamp, inside the git dir).
+  its stamp, inside the git dir, for `pnpm check` and `pnpm check:changed`).
 - Change a line of the implementation plan when `plan-split.mjs` moves it, beyond its relative link targets.
 - Run shell scripts or pass `process.env` wholesale to child `git` processes (ADR 0013, 0015).
 - Follow web URLs, `mailto:` links, in-page `#` anchors, or links under `design/` in `docs-links.mjs` (ADR
