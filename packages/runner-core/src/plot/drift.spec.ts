@@ -1,13 +1,12 @@
 // How far a territory moved since a gazetteer was written (PS-21): the commits from the stamp to the quest branch's
 // fork point, per top-level folder, each commit once per folder; the quest's own commits are not counted; null when
 // git cannot say. On a repo in a folder whose name has a space.
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { driftOf } from './drift.ts';
 import { createPlotManager } from './plot-manager.ts';
@@ -29,8 +28,10 @@ let stamp = '';
 let manager: PlotManager;
 let plot: Plot;
 
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria gazetteer drift '));
+  temp = await tempDir('gazetteer drift');
+  root = temp.root;
   repo = await gitRepo(path.join(root, 'territory repo'));
   stamp = git(repo, 'rev-parse', 'HEAD');
   await commitFile(repo, 'apps/web/a.ts', 'export const a = 1;\n');
@@ -42,7 +43,7 @@ beforeAll(async () => {
   if (!prepared.ok) throw new Error(prepared.error.detail);
   plot = prepared.value.plot;
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 describe('PlotManager.drift', () => {
   it('counts the commits from the stamp to the fork point, not the quest branch own ones', async () => {

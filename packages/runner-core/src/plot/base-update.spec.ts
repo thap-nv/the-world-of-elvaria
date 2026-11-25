@@ -1,22 +1,24 @@
 // The merge queue's update of a done quest's branch (PS-09) on real git: main merged in, hot files resolved by their
 // rule, nothing done when main did not move, and a dry run first so a conflict leaves the plot as it was.
-import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { chmod, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git } from '../__fixtures__/git-repo.ts';
 import { recordOf } from '../__fixtures__/party-repo.ts';
 import { PLAN, addSource, head, indexOf, queueRepo } from '../__fixtures__/queue-repo.ts';
 import { createPlotManager } from './plot-manager.ts';
 
 let root = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria base update '));
+  temp = await tempDir('base update');
+  root = temp.root;
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const plots = () => createPlotManager({ kingdom: path.join(root, 'my kingdom'), host: TEST_HOST });
 const setup = (name: string, fields: Record<string, unknown> = {}) => queueRepo(plots(), root, name, fields);

@@ -2,13 +2,13 @@
 // to SETUP_TIMEOUT_MS for a `pnpm install`, in the quest's plot or in a judge's scratch plot, and the plot stays not
 // set up, so the next prepare runs it again.
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { createPlotManager } from './plot-manager.ts';
 import { scratchIdOf } from './scratch.ts';
@@ -25,12 +25,14 @@ const HANGING_SETUP = [
 
 let root = '';
 let kingdom = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria setup signal '));
+  temp = await tempDir('setup signal');
+  root = temp.root;
   kingdom = path.join(root, 'my kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 /** Aborts `control` once `file` exists: the setup is running, not merely about to start. */
 async function abortOnceStarted(file: string, control: AbortController): Promise<void> {

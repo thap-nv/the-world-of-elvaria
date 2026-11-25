@@ -1,13 +1,13 @@
 // The generated files a merge quest's merge leaves for later (fix/merge-quest-followups (n), PS-09): a file a
 // `regenerate` rule names that a knight resolves by hand, or that a rule resolved before a later merge stopped, is
 // named by the first merge that stops no more, once, so the Steward runs the generators on what the knight concluded.
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, gitRepo, questId } from '../__fixtures__/git-repo.ts';
 import {
   CONTRACT,
@@ -23,12 +23,14 @@ import type { SharedPaths } from './dry-merge.ts';
 
 let root = '';
 let kingdom = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria merge generate '));
+  temp = await tempDir('merge generate');
+  root = temp.root;
   kingdom = path.join(root, 'my kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const plots = () => createPlotManager({ kingdom, host: TEST_HOST });
 const PARTS = [PART_A, PART_B];

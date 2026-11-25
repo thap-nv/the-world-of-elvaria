@@ -1,14 +1,14 @@
 // The probe's git (CM-04) on a real repo whose path has spaces: the commits one head has and another has not, with
 // their parents; the trial of a named commit with the red checks only, under `probe-<territory>`, its plot gone after.
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { TEST_HOST, commitFile, git, gitRepo, territoryAt } from '../__fixtures__/git-repo.ts';
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { commitLinksOf, probeIdOf, tryTerritory } from './territory-trial.ts';
 
 const STATE =
@@ -22,8 +22,10 @@ let root = '';
 let repo = '';
 let kingdom = '';
 const sha: Record<string, string> = {};
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria probe '));
+  temp = await tempDir('probe');
+  root = temp.root;
   repo = await gitRepo(path.join(root, 'Tool - Demo'));
   await commitFile(repo, 'state.mjs', STATE);
   await commitFile(repo, 'state.txt', 'green\n');
@@ -39,7 +41,7 @@ beforeAll(async () => {
   kingdom = path.join(root, 'the kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 describe('commitLinksOf', () => {
   it('the commits the head has and the excluded one has not, each with its parents', async () => {

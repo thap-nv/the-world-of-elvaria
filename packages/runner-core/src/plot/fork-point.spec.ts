@@ -1,12 +1,11 @@
 // Where a new quest branch starts on a territory with a remote (implementation-plan §3.3): fetched, never pulled.
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { fromPortable } from '@elvaria/store';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { createPlotManager } from './plot-manager.ts';
 
@@ -14,8 +13,10 @@ let root = '';
 let origin = '';
 let seed = '';
 let territoryRepo = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria fork point '));
+  temp = await tempDir('fork point');
+  root = temp.root;
   origin = path.join(root, 'origin repo.git');
   git(root, 'init', '-q', '--bare', '-b', 'main', origin);
   seed = await gitRepo(path.join(root, 'seed checkout'));
@@ -27,7 +28,7 @@ beforeAll(async () => {
   git(territoryRepo, 'config', 'user.email', 'test@elvaria.invalid');
   git(territoryRepo, 'config', 'core.autocrlf', 'false');
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const plots = () => createPlotManager({ kingdom: path.join(root, 'kingdom'), host: TEST_HOST });
 const withRemote = () =>

@@ -1,19 +1,21 @@
 // clearLeftover (P1-11): the folder git keeps after `git worktree remove` on Windows, pnpm's dead junctions in it.
-import { mkdir, mkdtemp, readdir, rm, symlink, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { pathExists } from '@elvaria/store';
+import { RM_TEMP, tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { clearLeftover } from './leftover.ts';
 
 let root = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria leftover '));
+  temp = await tempDir('leftover');
+  root = temp.root;
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 /** A directory link as pnpm makes it: a junction on Windows (no privilege needed), a symlink elsewhere. */
 const link = (target: string, at: string) =>
