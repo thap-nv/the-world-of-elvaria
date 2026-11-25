@@ -1,6 +1,6 @@
 # Vòng học cấp Nhiếp chính: sự cố vận hành từ sổ event — kế hoạch chi tiết
 
-Ngày: 2026-11-25 · Trạng thái: **chờ chủ nhân chốt VH1–VH12** (mục 10) · Nguồn: §11 ngày 2026-11-25, (533)–(535) và (552) · ADR nháp: [0036](../adr/0036-disruptions-second-source-of-learning.md) · Đo trên `main` `cf0fd1fb`, sổ event của `my-kingdom` từ 2026-11-07 tới 2026-11-25 (19 ngày, 22 193 dòng).
+Ngày: 2026-11-25 · Trạng thái: **chủ nhân đã chốt VH1–VH12 ngày 2026-11-25** (mục 10) · Nguồn: §11 ngày 2026-11-25, (533)–(535) và (552) · ADR nháp: [0036](../adr/0036-disruptions-second-source-of-learning.md) · Đo trên `main` `cf0fd1fb`, sổ event của `my-kingdom` từ 2026-11-07 tới 2026-11-25 (19 ngày, 22 193 dòng).
 
 Các task `LL-…` ở mục 9 đã vào bảng §8 của kế hoạch triển khai, chưa mở; phiên điều phối quyết lúc mở.
 
@@ -179,7 +179,9 @@ Hai dòng (552) là LL-06 và LL-07: cùng chủ đề "mã máy đọc thay cho
 - **Kế hoạch (546)** ([recheck.md](recheck.md), task `RC-…`, PR #322): RC-03 thêm `tree`, `base`, `config`, `carried_from` vào `check.end` và `patrol.ran`, đúng hai file schema mà LL-05 thêm `cause` và `timed_out`; RC-04 nối luật cùng cây ở `steward/src/{patrol,forge,review}/**` và cho hàng đợi chạy lại check đỏ một lần rồi ghi `flaky`. Vì vậy LL-05 đứng sau RC-04. Phần dùng chung: có `tree` của RC-03 thì registry thêm được loại "cùng cây, đỏ rồi xanh" mà không cần trường mới; `cause` của LL-05 chỉ dán nhãn và không đụng luật chạy lại của RC-04; check mang sang (`carried_from`) không được dò dấu nguyên nhân vì nó không có log mới.
 - **CM-08**: thêm `train.ran` và `train` trên event giao hàng; LL-05 thêm `cause` vào cùng file schema `delivery-data.ts` (hai trường tùy chọn khác tên). Loại sự cố cho tàu đỏ thêm sau khi `train.ran` có.
 
-## 10. Quyết định cần chủ nhân
+## 10. Quyết định của chủ nhân (chốt 2026-11-25)
+
+Chủ nhân chốt cả mười hai mục theo khuyến nghị ngày 2026-11-25 ("chốt hết theo khuyến nghị"); dòng §11 cùng ngày ghi lại.
 
 **Phải chốt trước khi mở task:**
 
