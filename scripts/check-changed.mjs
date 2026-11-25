@@ -11,6 +11,7 @@
 //
 // The diff is every tracked file that differs from the merge-base (committed or not) plus the untracked files that
 // are not ignored. Checks run one after another and stop at the first failure, as the `&&` chain of `pnpm check` does.
+// A green default run on a clean tree stamps HEAD for the pre-push hook, for pushes that do not update main (RC-01).
 import { spawnSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -18,6 +19,11 @@ import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
 import { commandsOf, GROUPS, HELP, UNCOVERED_EXIT } from './check-changed-narrow.mjs';
+import { runCommands, toolEnv } from './check-changed-run.mjs';
+import { worktreeOf, writeNarrow } from './check-stamp.mjs';
+
+// Other scripts' specs take the tool env from here, where it was first.
+export { toolEnv };
 
 /** The checkout the script sits in (`scripts/` is one level under it, in a git worktree too). */
 const REPO = resolve(import.meta.dirname, '..');
@@ -88,30 +94,6 @@ export const SUBSUMES = [
   },
   { by: ['typecheck'], covers: (c) => c.join(' ') === 'exec tsc -p tsconfig.json' },
 ];
-
-/** Only what git, node and pnpm read from the environment; never process.env whole (CLAUDE.md, ADR 0013). */
-const ENV_KEYS = [
-  'PATH',
-  'Path',
-  'PATHEXT',
-  'SystemRoot',
-  'ComSpec',
-  'HOME',
-  'USERPROFILE',
-  'TEMP',
-  'TMP',
-  'TMPDIR',
-  'APPDATA',
-  'LOCALAPPDATA',
-  'PNPM_HOME',
-  'COREPACK_HOME',
-  'CI',
-];
-
-/** @param {NodeJS.ProcessEnv} env */
-export function toolEnv(env = process.env) {
-  return Object.fromEntries(ENV_KEYS.flatMap((key) => (env[key] ? [[key, env[key]]] : [])));
-}
 
 /**
  * @param {string[]} argv
@@ -213,29 +195,13 @@ export function changedPaths(cwd, base, exactBase = process.env.ELVARIA_CHECK_BA
 }
 
 /**
- * How to start `pnpm <command>` without a shell: pnpm is a `.cmd` shim on Windows, which spawn cannot start, so run
- * pnpm's own script with node when `pnpm run` told us where it is (`npm_execpath`).
- * @param {readonly string[]} command
- * @param {NodeJS.ProcessEnv} env
- * @param {string} platform
- * @returns {{ file: string; args: string[] } | { error: string }}
- */
-export function pnpmInvocation(command, env, platform) {
-  const script = env.npm_execpath;
-  if (script && /\.[cm]?js$/.test(script)) return { file: process.execPath, args: [script, ...command] };
-  if (script) return { file: script, args: [...command] };
-  if (platform === 'win32')
-    return { error: 'run it as `pnpm check:changed` (pnpm is a .cmd shim on Windows and no shell is used)' };
-  return { file: 'pnpm', args: [...command] };
-}
-
-/**
  * @param {string[]} argv
  * @param {string} cwd
  * @param {(line: string) => void} out
+ * @param {Partial<Deps>} [deps] the environment, and what runs the checks
  * @returns {number} the exit code
  */
-export function main(argv, cwd, out) {
+export function main(argv, cwd, out, deps = {}) {
   if (argv.length === 1 && argv[0] === '--help') {
     out(HELP);
     return 0;
@@ -245,40 +211,44 @@ export function main(argv, cwd, out) {
     out(args.error);
     return 2;
   }
-  const paths = changedPaths(cwd, args.base);
-  const exactBase = process.env.ELVARIA_CHECK_BASE;
-  const narrow = Boolean(exactBase || args.only);
-  out(`${paths.length} changed path(s) against ${exactBase || `the merge-base with ${args.base}`}`);
-  const commands = commandsOf(plan(paths), paths, cwd, { only: args.only, narrow, out });
-  if (commands === undefined) return UNCOVERED_EXIT;
-  if (commands.length === 0) {
-    out('nothing to check');
-    return 0;
-  }
-  out(`checks:\n${commands.map((c) => `  pnpm ${c.join(' ')}`).join('\n')}`);
-  if (args.dryRun) return 0;
-  return runCommands(commands, cwd, out, narrow);
+  return checkChanged(args, cwd, out, { env: process.env, run: runCommands, ...deps });
 }
 
-/** @param {Command[]} commands @param {string} cwd @param {(line: string) => void} out @param {boolean} narrow */
-function runCommands(commands, cwd, out, narrow) {
-  for (const command of commands) {
-    const start = pnpmInvocation(command, process.env, process.platform);
-    if ('error' in start) {
-      out(start.error);
-      return 2;
-    }
-    out(`\n> pnpm ${command.join(' ')}`);
-    const run = spawnSync(start.file, start.args, { cwd, env: toolEnv(), stdio: 'inherit', shell: false });
-    if (run.status !== 0) {
-      out(
-        `pnpm ${command.join(' ')} failed (${run.error?.message ?? `exit ${run.status}`}); the checks after it did not run`,
-      );
-      return narrow ? 1 : (run.status ?? 1);
-    }
-  }
-  out('\nchanged-file checks passed; `pnpm check` is still the gate before a merge');
-  return 0;
+/** @typedef {{ env: NodeJS.ProcessEnv; run: typeof runCommands }} Deps */
+
+/**
+ * A green default run (no --only, --dry-run, other --base or ELVARIA_CHECK_BASE) that started and ended on a clean
+ * tree at one HEAD, with a rule for every path, stamps `changed <head>` for the pre-push hook (RC-01,
+ * check-stamp.mjs): what CLAUDE.md asks for each changed file has passed on that commit.
+ * @param {{ base: string; dryRun: boolean; only?: string }} args
+ * @param {string} cwd
+ * @param {(line: string) => void} out
+ * @param {Deps} deps
+ */
+function checkChanged(args, cwd, out, { env, run }) {
+  const exactBase = env.ELVARIA_CHECK_BASE;
+  const narrow = Boolean(exactBase || args.only);
+  const started = narrow || args.dryRun || args.base !== DEFAULT_BASE ? undefined : worktreeOf(cwd);
+  // '' and not undefined: undefined would let changedPaths read process.env, not `env`
+  const paths = changedPaths(cwd, args.base, exactBase ?? '');
+  out(`${paths.length} changed path(s) against ${exactBase || `the merge-base with ${args.base}`}`);
+  const planned = plan(paths);
+  const commands = commandsOf(planned, paths, cwd, { only: args.only, narrow, out });
+  if (commands === undefined) return UNCOVERED_EXIT;
+  out(
+    commands.length > 0
+      ? `checks:\n${commands.map((c) => `  pnpm ${c.join(' ')}`).join('\n')}`
+      : 'nothing to check',
+  );
+  if (args.dryRun) return 0;
+  const code = commands.length > 0 ? run(commands, cwd, out, narrow) : 0;
+  if (code === 0 && started)
+    out(
+      planned.unmatched.length > 0
+        ? 'check stamp: a path no rule covers, no stamp'
+        : writeNarrow(cwd, started),
+    );
+  return code;
 }
 
 const entry = process.argv[1];

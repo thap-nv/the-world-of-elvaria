@@ -79,6 +79,8 @@ Ba thay đổi này nằm ở `scripts/`, `.husky/`, `.claude/hooks/` của repo
 
 Hệ quả cho phiên task: một lần `pnpm check:changed` sau `git merge origin/main` rồi push, không còn 8–10 phút `check:fast`. Lời CLAUDE.md bước 5 không đổi.
 
+(Amended 2026-11-25, RC-01: lời của Nhiếp chính được nhận mà không đọc cây làm việc của đất, vì nó nói về commit, không về cây; một lần push trộn ref `quest/*` với ref khác thì đi đường dấu như cũ. Dấu hẹp không đè dấu đủ của cùng HEAD và không xóa dấu cũ (dấu cũ nêu HEAD của nó). `--base origin/main` viết tường minh tính như mặc định; nhánh không đổi gì so với merge-base ("nothing to check") cũng ghi dấu. Phần chạy lệnh của `check-changed.mjs` tách sang `scripts/check-changed-run.mjs` cho trần 300 dòng; spec mới: `check-stamp-words.spec.ts`, `check-changed-stamp.spec.ts`.)
+
 ### 2.5 Ghép nhánh gốc trước lượt kiểm sau phiên (C; ADR 0035)
 
 - **Nay:** phán quyết đạt ⇒ dấu vua ⇒ hàng đợi ⇒ ghép nhánh gốc ⇒ chạy lại check ⇒ push (ADR 0023). Lượt sau phiên kiểm một cây sẽ không bao giờ vào `main`; cây thật chỉ được kiểm sau khi người chấm đã xong. Quest ghép của đội đã làm ngược lại từ PS-08e (`mergePartsBeforeChecks`: ghép nhánh gốc rồi mới kiểm).

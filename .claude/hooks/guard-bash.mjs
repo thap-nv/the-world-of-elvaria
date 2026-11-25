@@ -15,6 +15,25 @@ const GIT = String.raw`\bgit(?:\s+-[cC]\s+\S+)*\s+`;
 const END = String.raw`(?=\s*(?:$|[;&|)\n]))`;
 const FIX_THE_CHECK = 'Fix the failing check instead.';
 
+/**
+ * A command line that sets the Steward's ELVARIA_CHECKED_HEAD (scripts/check-stamp.mjs): an assignment in sh, cmd,
+ * PowerShell or JS (`NAME=`, `$env:NAME =`, `set NAME=`, `process.env.NAME =`), `export`/`setx`/`declare NAME`,
+ * PowerShell's `Env:NAME` drive, and the name as a key (`{ NAME: sha }`, `('NAME', sha)`). Case-insensitive, as
+ * Windows reads environment names. Reading it in sh (`$NAME`) or searching for its name stays allowed.
+ */
+function checkedHeadSet() {
+  const name = 'ELVARIA_CHECKED_HEAD';
+  return new RegExp(
+    [
+      String.raw`\b${name}['"\]]*\s*[:=]`,
+      String.raw`\b(?:export|setx|declare|typeset|readonly|local)\s+(?:-\S+\s+)*${name}\b`,
+      String.raw`\benv:${name}\b`,
+      String.raw`['"]${name}['"]\s*,`,
+    ].join('|'),
+    'i',
+  );
+}
+
 /** @type {readonly (readonly [RegExp, string])[]} */
 export const RULES = [
   [
@@ -25,6 +44,11 @@ export const RULES = [
   [
     /\bHUSKY=0\b|\bcore\.hooksPath\b/,
     `Turning husky off skips the checks as --no-verify does. ${FIX_THE_CHECK}`,
+  ],
+  [
+    checkedHeadSet(),
+    "ELVARIA_CHECKED_HEAD is the Steward's word that its checks passed on a commit (RC-01, ADR 0035): set by a " +
+      'session it skips the pre-push checks as --no-verify does. Run `pnpm check:changed` or `pnpm check` instead.',
   ],
   [
     new RegExp(

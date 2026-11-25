@@ -11,12 +11,13 @@ import { tempDir } from '@elvaria/testkit';
 import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { pushedRefs, verdictOf } from './check-stamp.mjs';
+import { CHECKED_HEAD, pushedRefs, verdictOf, worktreeOf, writeNarrow } from './check-stamp.mjs';
 
 const SCRIPT = path.join(import.meta.dirname, 'check-stamp.mjs');
 const HOOK = path.join(import.meta.dirname, '..', '.husky', 'pre-push');
 const ZERO = '0'.repeat(40);
 const SHA = 'a'.repeat(40);
+const FEAT = 'refs/heads/feat/rc-01';
 
 /** What git and node need; node's own folder first, as the hook finds `node` on PATH. */
 function testEnv(): Record<string, string> {
@@ -75,13 +76,13 @@ describe('verdictOf', () => {
 describe('pushedRefs', () => {
   it('keeps the commits a push sends and drops the branches it deletes', () => {
     const input = `refs/heads/a ${SHA} refs/heads/a ${ZERO}\r\n(delete) ${ZERO} refs/heads/b ${SHA}\n\n`;
-    expect(pushedRefs(input)).toEqual([{ ref: 'refs/heads/a', sha: SHA }]);
+    expect(pushedRefs(input)).toEqual([{ ref: 'refs/heads/a', sha: SHA, target: 'refs/heads/a' }]);
   });
 
   it('reads sha-256 object names', () => {
     const long = 'b'.repeat(64);
     expect(pushedRefs(`refs/heads/a ${long} refs/heads/a ${'0'.repeat(64)}`)).toEqual([
-      { ref: 'refs/heads/a', sha: long },
+      { ref: 'refs/heads/a', sha: long, target: 'refs/heads/a' },
     ]);
   });
 });
@@ -187,6 +188,33 @@ describe('check stamp in a git repo', () => {
     expect(stamp(repo, 'verify', pushOf(head)).status).toBe(0);
   });
 
+  it('stamps changed <head> after a clean narrow run, for a push to any branch but main', () => {
+    expect(writeNarrow(repo, worktreeOf(repo))).toContain('unless the push updates main');
+    expect(readFileSync(path.join(repo, '.git', 'elvaria-check-ok'), 'utf8')).toBe(`changed ${head}\n`);
+    expect(stamp(repo, 'verify', pushOf(head, FEAT)).status).toBe(0);
+    expect(stamp(repo, 'verify', pushOf(head)).status).toBe(1);
+  });
+
+  it('keeps the full stamp of pnpm check through a narrow run on the same HEAD', () => {
+    greenCheck(repo);
+    expect(writeNarrow(repo, worktreeOf(repo))).toContain('its stamp stays');
+    expect(stamp(repo, 'verify', pushOf(head)).status).toBe(0);
+  });
+
+  it('stamps nothing narrow when the tree had changes, or HEAD moved, while the run ran', async () => {
+    await writeFile(path.join(repo, 'new.md'), 'new\n');
+    const dirty = worktreeOf(repo);
+    git(repo, 'clean', '-fdq');
+    expect(writeNarrow(repo, dirty)).toContain('no stamp');
+    const before = worktreeOf(repo);
+    await writeFile(path.join(repo, 'new.md'), 'new\n');
+    expect(writeNarrow(repo, before)).toContain('no stamp');
+    git(repo, 'clean', '-fdq');
+    await commit(repo, 'notes.md', 'two\n');
+    expect(writeNarrow(repo, before)).toContain('HEAD moved');
+    expect(stamp(repo, 'verify', pushOf(head, FEAT)).status).toBe(1);
+  });
+
   it('refuses a mode it does not know', () => {
     expect(stamp(repo, 'stamp').status).toBe(2);
   });
@@ -197,12 +225,14 @@ describe('.husky/pre-push in a real git push', () => {
   let temp: TempDir;
   let repo: string;
 
-  /** git push with its hook's output; the hook's `pnpm` only says it ran. */
-  function push(...args: string[]): string {
-    const run = spawnSync('git', ['push', ...args], { cwd: repo, encoding: 'utf8', env: testEnv() });
+  /** git push with its hook's output, `extra` in its env; the hook's `pnpm` only says it ran. */
+  function pushWith(extra: Record<string, string>, ...args: string[]): string {
+    const env = { ...testEnv(), ...extra };
+    const run = spawnSync('git', ['push', ...args], { cwd: repo, encoding: 'utf8', env });
     expect(run.status).toBe(0);
     return `${run.stdout}${run.stderr}`;
   }
+  const push = (...args: string[]): string => pushWith({}, ...args);
 
   beforeEach(async () => {
     temp = await tempDir('check stamp push');
@@ -235,6 +265,22 @@ describe('.husky/pre-push in a real git push', () => {
     expect(stamped).not.toContain('fake pnpm');
     await commit(repo, 'notes.md', 'two\n');
     expect(push('-q', 'origin', '--delete', 'extra')).not.toContain('fake pnpm');
+    expect(push('-q', 'origin', 'main')).toContain('fake pnpm check:fast');
+  });
+
+  it("takes the Steward's word from the env of git push for a quest branch only", async () => {
+    const head = await commit(repo, 'notes.md', 'one\n');
+    const word = { [CHECKED_HEAD]: head };
+    const quest = pushWith(word, '-q', 'origin', 'HEAD:refs/heads/quest/q-1');
+    expect(quest).toContain("the Steward's checks passed");
+    expect(quest).not.toContain('fake pnpm');
+    expect(pushWith(word, '-q', 'origin', 'HEAD:refs/heads/feat/x')).toContain('fake pnpm check:fast');
+  });
+
+  it('takes the narrow stamp for a push to a feature branch and runs check:fast for main', async () => {
+    await commit(repo, 'notes.md', 'one\n');
+    writeNarrow(repo, worktreeOf(repo));
+    expect(push('-q', 'origin', 'HEAD:refs/heads/feat/y')).not.toContain('fake pnpm');
     expect(push('-q', 'origin', 'main')).toContain('fake pnpm check:fast');
   });
 });
