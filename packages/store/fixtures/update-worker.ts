@@ -1,4 +1,4 @@
-// A second process for concurrency.spec.ts: `node test/update-worker.ts <kingdom> <quest id> <count>` adds 1
+// A second process for concurrency.spec.ts: `node fixtures/update-worker.ts <kingdom> <quest id> <count>` adds 1
 // to the quest's estimate.minutes `count` times through the store, as the Steward and the CLI would.
 // Node runs this TypeScript file directly (type stripping; imports name their `.ts` files).
 import process from 'node:process';

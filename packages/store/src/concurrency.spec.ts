@@ -17,7 +17,7 @@ import type { KingdomStore } from './kingdom-store.ts';
 import type { StoreIssue } from './issues.ts';
 import type { Quest, Result } from '@elvaria/domain';
 
-const WORKER = fileURLToPath(new URL('../test/update-worker.ts', import.meta.url));
+const WORKER = fileURLToPath(new URL('../fixtures/update-worker.ts', import.meta.url));
 const PROCESSES = 4;
 const UPDATES_EACH = 15;
 const IN_PROCESS_WRITERS = 25;
