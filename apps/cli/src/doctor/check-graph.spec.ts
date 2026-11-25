@@ -17,8 +17,8 @@ import {
   run,
   tempDir,
   testIo,
-} from '../../test/cli.ts';
-import type { TempDir } from '../../test/cli.ts';
+} from '../__fixtures__/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 let dir: TempDir;
 let kingdom = '';

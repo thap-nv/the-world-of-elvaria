@@ -5,9 +5,9 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import { FAKE_LANTERN, LANTERN_ADAPTER, installLantern } from '../../test/lantern.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { FAKE_LANTERN, LANTERN_ADAPTER, installLantern } from '../__fixtures__/lantern.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 describe('elvaria tribe check --tool', () => {
   let dir: TempDir;

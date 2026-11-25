@@ -8,10 +8,10 @@ import type { InboxCommand } from '@elvaria/domain';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import { GITHUB_REMOTE } from '../../test/credential.ts';
-import { OTHER_QUEST_ID, QUEST_ID, UPDATED_AT, plantQuests, questFixture } from '../../test/quest.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { GITHUB_REMOTE } from '../__fixtures__/credential.ts';
+import { OTHER_QUEST_ID, QUEST_ID, UPDATED_AT, plantQuests, questFixture } from '../__fixtures__/quest.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 /** A done quest the Steward delivered: its delivery note written, on its own worktree branch. */
 const delivered = (id: string, extra: Record<string, unknown> = {}) =>

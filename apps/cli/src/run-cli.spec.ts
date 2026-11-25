@@ -3,10 +3,10 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { printed, run, tempDir, testIo } from '../test/cli.ts';
+import { printed, run, tempDir, testIo } from './__fixtures__/cli.ts';
 import { COMMANDS } from './commands.ts';
 import { localeFlag, lookupCommand } from './run-cli.ts';
-import type { TempDir } from '../test/cli.ts';
+import type { TempDir } from './__fixtures__/cli.ts';
 
 describe('lookupCommand', () => {
   it('finds commands by their leading words', () => {

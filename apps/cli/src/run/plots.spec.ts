@@ -1,16 +1,16 @@
 // The checks of `elvaria run` with a quest's secrets (P1-10b, implementation-plan §3.9): the Steward hands
 // `Plots.check` the treasury values, runChecks puts them in each check's env and masks them in its log. The plot's
 // `commands.setup` gets them the same way, through `Plots.prepare` and PlotManager (P1-30).
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { TerritorySchema } from '@elvaria/domain';
 import type { PlotManager } from '@elvaria/runner-core';
+import { tempDir } from '@elvaria/testkit';
 import { describe, expect, it } from 'vitest';
 
-import { RM_TEMP, testIo } from '../../test/cli.ts';
-import { questFixture } from '../../test/quest.ts';
+import { testIo } from '../__fixtures__/cli.ts';
+import { questFixture } from '../__fixtures__/quest.ts';
 import { plotsOver, processHostOf } from './plots.ts';
 
 const unused = () => Promise.reject(new Error('unused'));
@@ -18,7 +18,8 @@ const unused = () => Promise.reject(new Error('unused'));
 describe("plots' checks with a quest's secrets", () => {
   it('gives each check the secrets and masks their values in its log (P1-10b)', async () => {
     const quest = questFixture('open');
-    const dir = await mkdtemp(path.join(os.tmpdir(), 'elvaria plots-'));
+    const temp = await tempDir('plots-');
+    const dir = temp.root;
     try {
       const folder = { type: 'folder' as const, path: `quests/${quest.id}/work` };
       const work = path.join(dir, 'quests', quest.id, 'work');
@@ -76,7 +77,7 @@ describe("plots' checks with a quest's secrets", () => {
       const bare = await plots.check({ plot: folder, territory, run_dir: `.runs/${quest.id}-2` });
       expect(bare).toMatchObject([{ id: 'login', pass: false }]);
     } finally {
-      await rm(dir, RM_TEMP);
+      await temp.remove();
     }
   });
 });
@@ -182,7 +183,8 @@ describe("plots' prepare with a quest's secrets", () => {
     );
     // Made again, the plot gets the territory's commands.reset once, its log beside the setup's (P1-47).
     setupFails = false;
-    const dir = await mkdtemp(path.join(os.tmpdir(), 'elvaria scratch reset '));
+    const temp = await tempDir('scratch reset');
+    const dir = temp.root;
     try {
       const resetting = TerritorySchema.parse({ ...territory, commands: { reset: 'elvaria-no-such-reset' } });
       const reset = plotsOver(dir, manager, processHostOf(testIo())).prepareScratch(quest, resetting);
@@ -192,7 +194,7 @@ describe("plots' prepare with a quest's secrets", () => {
       );
       expect(await readFile(path.join(dir, log), 'utf8')).toContain('elvaria: cannot run this command');
     } finally {
-      await rm(dir, RM_TEMP);
+      await temp.remove();
     }
   });
 });
@@ -200,7 +202,8 @@ describe("plots' prepare with a quest's secrets", () => {
 describe("plots of a party's quests (P1-18)", () => {
   it('runs every check for a merge quest, and hands merging and its check to PlotManager', async () => {
     const quest = questFixture('open');
-    const dir = await mkdtemp(path.join(os.tmpdir(), 'elvaria party plots-'));
+    const temp = await tempDir('party plots-');
+    const dir = temp.root;
     try {
       const folder = { type: 'folder' as const, path: `quests/${quest.id}/work` };
       await mkdir(path.join(dir, 'quests', quest.id, 'work'), { recursive: true });
@@ -252,7 +255,7 @@ describe("plots of a party's quests (P1-18)", () => {
       expect(await plots.unmerged(folder, ['quest/a'])).toEqual([]);
       expect(asked).toEqual(['merge quest/a', 'unmerged quest/a']);
     } finally {
-      await rm(dir, RM_TEMP);
+      await temp.remove();
     }
   });
 });

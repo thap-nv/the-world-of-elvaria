@@ -6,8 +6,8 @@ import path from 'node:path';
 import { POWERSHELL_TIMEOUT_MS } from '@elvaria/runner-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, gitRepo, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import { foundKingdom, gitRepo, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 let dir: TempDir;
 let kingdom: string;

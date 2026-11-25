@@ -14,7 +14,7 @@ import { createSteward, folderPlots } from '@elvaria/steward';
 import type { Steward, StewardDeps } from '@elvaria/steward';
 import { openKingdom } from '@elvaria/store';
 
-import { consoleBell } from '../src/run/bell.ts';
+import { consoleBell } from '../run/bell.ts';
 import { TZ, run, testIo } from './cli.ts';
 import { OTHER_QUEST_ID, QUEST_ID, plantQuests, questFixture } from './quest.ts';
 import type { TestIo } from './cli.ts';

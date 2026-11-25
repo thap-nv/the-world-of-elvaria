@@ -9,15 +9,15 @@ import { translator } from '@elvaria/i18n';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { ACCEPT, CHILD, CLAUDE, DRAFTED, author, seedAmendments } from '../../test/amend.ts';
-import { foundKingdom, tempDir, testIo } from '../../test/cli.ts';
-import { QUIET_VIEW } from '../../test/job-view.ts';
+import { ACCEPT, CHILD, CLAUDE, DRAFTED, author, seedAmendments } from '../__fixtures__/amend.ts';
+import { foundKingdom, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { QUIET_VIEW } from '../__fixtures__/job-view.ts';
 import { amendmentJob } from '../amend/job.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { triageJob } from '../triage/job.ts';
 import { triageCommand } from '../triage/triage.ts';
 import { sayCommand } from './say.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 const GEMINI = TribeIdSchema.parse('gemini');
 const OLD = 'C:/Users/owner/.vscode/extensions/anthropic.claude-code-2.1.322-win32-x64/claude.exe';

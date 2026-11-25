@@ -8,11 +8,11 @@ import { KingdomSchema } from '@elvaria/domain';
 import type { AgentRunner } from '@elvaria/runner-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { baseEnv, tempDir, testIo } from '../../test/cli.ts';
+import { baseEnv, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { newKingdom } from '../init.ts';
 import { SELF_ROOT } from '../upgrade/self.ts';
 import { crewOf } from './crew.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const FAKE_CLAUDE = path.join(SELF_ROOT, 'packages', 'runner-claude', 'fixtures', 'fake-claude.mjs');
 

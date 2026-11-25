@@ -10,10 +10,10 @@ import { openEventLog } from '@elvaria/eventlog';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import { GITHUB_REMOTE } from '../../test/credential.ts';
-import { OTHER_QUEST_ID, QUEST_ID, UPDATED_AT, plantQuests, questFixture } from '../../test/quest.ts';
-import type { TempDir } from '../../test/cli.ts';
+import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { GITHUB_REMOTE } from '../__fixtures__/credential.ts';
+import { OTHER_QUEST_ID, QUEST_ID, UPDATED_AT, plantQuests, questFixture } from '../__fixtures__/quest.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const MERGE_QUEST = 'q_20261106_9p5q4c';
 const AT = '2026-11-06T08:10:00+07:00';

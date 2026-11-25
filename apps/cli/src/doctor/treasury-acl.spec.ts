@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import { translator } from '@elvaria/i18n';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
+import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { aclReaders, extraAclReaders, readTreasuryAcl, treasuryAclFindings } from './treasury-acl.ts';
 
 const file = 'C:\\owner home\\treasury.json';

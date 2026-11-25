@@ -3,11 +3,11 @@ import { translator } from '@elvaria/i18n';
 import { openKingdom, readTextFile, inKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { NOW, foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import { OTHER_QUEST_ID, QUEST_ID, plantQuests, questFixture } from '../../test/quest.ts';
+import { NOW, foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { OTHER_QUEST_ID, QUEST_ID, plantQuests, questFixture } from '../__fixtures__/quest.ts';
 import { watchInterval } from './watch.ts';
 import { watchTable } from './table.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 describe('watch command', () => {
   let dir: TempDir;

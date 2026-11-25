@@ -8,9 +8,9 @@ import { translator } from '@elvaria/i18n';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
+import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { digestMarkdown } from './markdown.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const SUSPENDED: AttentionItem = {
   kind: 'character_suspended',

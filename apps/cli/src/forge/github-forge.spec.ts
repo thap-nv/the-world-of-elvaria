@@ -8,12 +8,12 @@ import path from 'node:path';
 import { err } from '@elvaria/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { baseEnv, gitRepo, isolatedPath, tempDir, testIo } from '../../test/cli.ts';
-import { FAKE_TOKEN, GITHUB_REMOTE, useFakeHelper } from '../../test/credential.ts';
-import { BRANCH, HEAD, REPO, at, fakeGithub, forgeOver } from '../../test/github.ts';
+import { baseEnv, gitRepo, isolatedPath, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { FAKE_TOKEN, GITHUB_REMOTE, useFakeHelper } from '../__fixtures__/credential.ts';
+import { BRANCH, HEAD, REPO, at, fakeGithub, forgeOver } from '../__fixtures__/github.ts';
 import { gitToken, githubForge } from './github-forge.ts';
-import type { TempDir } from '../../test/cli.ts';
-import type { HelperAnswer } from '../../test/credential.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
+import type { HelperAnswer } from '../__fixtures__/credential.ts';
 
 const PULL = (number: number, state: string) => ({
   number,

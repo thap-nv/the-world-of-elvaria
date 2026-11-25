@@ -11,7 +11,7 @@ import type { TribeHold } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, tempDir, testIo } from '../../test/cli.ts';
+import { foundKingdom, tempDir, testIo } from '../__fixtures__/cli.ts';
 import {
   FAILED,
   HOLD,
@@ -27,10 +27,10 @@ import {
   stageFailures,
   stewardOf,
   templeRanOf,
-} from '../../test/temple.ts';
+} from '../__fixtures__/temple.ts';
 import { templeRunCommand } from './run.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
-import type { MonkRunner } from '../../test/temple.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
+import type { MonkRunner } from '../__fixtures__/temple.ts';
 
 describe('elvaria temple run (PS-12f)', () => {
   let dir: TempDir;

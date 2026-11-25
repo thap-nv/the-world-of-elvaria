@@ -14,14 +14,14 @@ import { createSteward, folderPlots } from '@elvaria/steward';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { TZ, foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import { REFUSAL, refusing } from '../../test/refusing.ts';
-import { QUIET_VIEW } from '../../test/job-view.ts';
+import { TZ, foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { REFUSAL, refusing } from '../__fixtures__/refusing.ts';
+import { QUIET_VIEW } from '../__fixtures__/job-view.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { consoleBell } from '../run/bell.ts';
 import { triageJob } from './job.ts';
 import { triageCommand } from './triage.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 const CLAUDE = TribeIdSchema.parse('claude');
 

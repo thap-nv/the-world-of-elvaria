@@ -13,8 +13,8 @@ import type { JobView } from '@elvaria/steward';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, tempDir, testIo } from '../../test/cli.ts';
-import { QUIET_VIEW } from '../../test/job-view.ts';
+import { foundKingdom, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { QUIET_VIEW } from '../__fixtures__/job-view.ts';
 import {
   HOLD,
   LETTER_REPLY,
@@ -24,10 +24,10 @@ import {
   stageFailures,
   stewardOf,
   templeRanOf,
-} from '../../test/temple.ts';
+} from '../__fixtures__/temple.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { templeJob } from './job.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 const GEMINI = 'gemini' as TribeId;
 const SCHEDULE = { enabled: true, every_quests: 2, weekly: false };

@@ -5,9 +5,9 @@ import type { InboxCommand, Memo } from '@elvaria/domain';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import { QUEST_ID, plantQuests, questFixture } from '../../test/quest.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { QUEST_ID, plantQuests, questFixture } from '../__fixtures__/quest.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 const OPEN = 'm_20261106_4k2pqz';
 const CLOSED = 'm_20261106_9tw3hx';

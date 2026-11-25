@@ -8,7 +8,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { baseEnv, gitRepo, isolatedPath, pathWithoutGit, tempDir, testIo } from '../../test/cli.ts';
+import { baseEnv, gitRepo, isolatedPath, pathWithoutGit, tempDir, testIo } from '../__fixtures__/cli.ts';
 import {
   FAKE_TOKEN,
   FAKE_USER,
@@ -16,10 +16,10 @@ import {
   poisonRepo,
   poisonRuns,
   useFakeHelper,
-} from '../../test/credential.ts';
+} from '../__fixtures__/credential.ts';
 import { deliveryGitEnv, readCredential } from './credential.ts';
 import { forgeRepoOf } from './remote.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const REPO = forgeRepoOf(GITHUB_REMOTE, 'github')!;
 /** Long enough for git and Node to start on a busy Windows machine, short enough for a spec. */

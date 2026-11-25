@@ -3,8 +3,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, git, gitRepo, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import type { TempDir } from '../../test/cli.ts';
+import { foundKingdom, git, gitRepo, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 describe('doctor territory globs (AH-16)', () => {
   let dir: TempDir;

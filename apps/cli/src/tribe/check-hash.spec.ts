@@ -6,16 +6,16 @@ import { KingdomSchema } from '@elvaria/domain';
 import { runConformance } from '@elvaria/runner-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
+import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import {
   FAKE_LANTERN,
   LANTERN_ADAPTER,
   editKingdom,
   installLantern,
   kingdomJson,
-} from '../../test/lantern.ts';
+} from '../__fixtures__/lantern.ts';
 import { handOf } from '../run/crew.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 import type * as RunnerCore from '@elvaria/runner-core';
 
 vi.mock('@elvaria/runner-core', async (importOriginal) => ({

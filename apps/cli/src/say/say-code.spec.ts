@@ -10,9 +10,9 @@ import type { AgentRunner, CodeGraphs } from '@elvaria/runner-core';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, git, gitRepo, run, tempDir, testIo } from '../../test/cli.ts';
+import { foundKingdom, git, gitRepo, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { sayCommand } from './say.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 const REPLY = path.join(
   import.meta.dirname,

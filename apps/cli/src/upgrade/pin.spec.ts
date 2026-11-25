@@ -6,12 +6,12 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { tempDir, testIo } from '../../test/cli.ts';
-import { SHA_A, SHA_B, placeBuild, writePin } from '../../test/builds.ts';
+import { tempDir, testIo } from '../__fixtures__/cli.ts';
+import { SHA_A, SHA_B, placeBuild, writePin } from '../__fixtures__/builds.ts';
 import { PINNED_MARK, pinOf } from './pin.ts';
 import { cliEntryOf } from './pointer.ts';
 import { forwardSignals, relaunchEnv } from './relaunch.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 describe('pinOf', () => {
   let dir: TempDir;

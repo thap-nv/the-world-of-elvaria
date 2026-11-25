@@ -2,9 +2,9 @@
 // the acceptance part, which share one title, and the party's stage comes from its quests, in the owner's language.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import { questFixture, plantQuests } from '../../test/quest.ts';
-import type { TempDir } from '../../test/cli.ts';
+import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { questFixture, plantQuests } from '../__fixtures__/quest.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const CONTRACT_ID = 'q_20261109_c0c0c0';
 const API_ID = 'q_20261109_a1a1a1';

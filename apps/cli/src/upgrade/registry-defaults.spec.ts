@@ -7,14 +7,14 @@ import path from 'node:path';
 import { translator } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { sourceRepo, stubPnpm } from '../../test/builds.ts';
-import { baseEnv, foundKingdom, printed, tempDir, testIo } from '../../test/cli.ts';
+import { sourceRepo, stubPnpm } from '../__fixtures__/builds.ts';
+import { baseEnv, foundKingdom, printed, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { findExecutable } from '../process/find-executable.ts';
 import { rollbackKingdom } from './rollback.ts';
 import { upgradeKingdom } from './upgrade.ts';
-import type { SourceRepo } from '../../test/builds.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import type { SourceRepo } from '../__fixtures__/builds.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 import type { UpgradeDeps } from './upgrade.ts';
 
 const short = (sha: string) => sha.slice(0, 12);

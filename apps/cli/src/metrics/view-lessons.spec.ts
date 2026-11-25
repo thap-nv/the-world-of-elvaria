@@ -6,7 +6,7 @@ import type { LessonRow, Metrics, RepeatedFailure } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
 
-import { OTHER_QUEST_ID, QUEST_ID } from '../../test/quest.ts';
+import { OTHER_QUEST_ID, QUEST_ID } from '../__fixtures__/quest.ts';
 import { failKindsSection, lessonsSection, repeatsSection } from './view-lessons.ts';
 import { metricsSections } from './view.ts';
 

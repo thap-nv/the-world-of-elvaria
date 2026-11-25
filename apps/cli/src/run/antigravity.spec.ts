@@ -5,9 +5,9 @@ import path from 'node:path';
 import { TribeSchema } from '@elvaria/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { baseEnv, fakeTool, isolatedPath, tempDir, testIo } from '../../test/cli.ts';
+import { baseEnv, fakeTool, isolatedPath, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { antigravityRunner } from './antigravity.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const TERMS = '2026-11-07T23:23:54+07:00';
 

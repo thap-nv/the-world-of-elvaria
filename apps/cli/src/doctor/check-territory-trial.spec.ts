@@ -5,9 +5,9 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { baseEnv, foundKingdom, isolatedPath, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import { FULL, attachDemo, fillDemo, gazetteerAt, patientIo, writeGazetteer } from '../../test/trial.ts';
-import type { TempDir } from '../../test/cli.ts';
+import { baseEnv, foundKingdom, isolatedPath, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { FULL, attachDemo, fillDemo, gazetteerAt, patientIo, writeGazetteer } from '../__fixtures__/trial.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 /**
  * The five lines doctor writes of territory demo's trial, by their own words. Not by a word a path may hold: run in

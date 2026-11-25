@@ -4,9 +4,9 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SHA_A, SHA_B, placeBuild, readPin, writePin } from '../../test/builds.ts';
-import { baseEnv, foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import { SHA_A, SHA_B, placeBuild, readPin, writePin } from '../__fixtures__/builds.ts';
+import { baseEnv, foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 describe('elvaria upgrade, the command', () => {
   let dir: TempDir;

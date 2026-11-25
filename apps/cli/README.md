@@ -434,6 +434,7 @@ delivery`), with no event; `deferred` is refused unless the territory delivers b
   `claude_code` adapter), `@elvaria/runner-antigravity` (the `antigravity` adapter, P1-15), `@elvaria/runner-codex`
   (the `codex_cli` adapter), `@elvaria/hooks` (the hook's command).
 - `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
+- `@elvaria/testkit` (dev only: throwaway folders and their cleanup).
 
 ## How to test
 
@@ -442,23 +443,23 @@ pnpm --filter @elvaria/cli test   # builds dist/, then vitest: commands in-proce
 pnpm elvaria --help               # runs src/cli.ts directly (Node type stripping), no build
 ```
 
-Vitest's global setup (`test/global-setup.ts`) builds the hook of `packages/hooks` once, before any spec, when its
+Vitest's global setup (`src/__fixtures__/global-setup.ts`) builds the hook of `packages/hooks` once, before any spec, when its
 build is missing or older than its source: the runners the specs start use it as `elvaria run` would, and Codex's
 doctor reports a missing build as `auth_ok: false`, so a spec run alone with no build failed (fix/busy-machine).
 
-Specs run `runCli` on a fake machine (`test/cli.ts`: fixed clock, captured output) and throwaway kingdoms in
+Specs run `runCli` on a fake machine (`src/__fixtures__/cli.ts`: fixed clock, captured output) and throwaway kingdoms in
 paths with a space and a Vietnamese letter. Fake CLIs are npm-style `.cmd` shims on Windows and shebang scripts
 elsewhere; `cli.spec.ts` spawns the built bin as the owner would. Lines the Steward would have written are
 planted with `openEventLog` / `openJournal`: `src/quest/infirmary.spec.ts` (the infirmary reason of `quest show`,
 old lines included), `src/quest/last-run.spec.ts` (verdicts and `plot.restored` of the last run), `src/gauges.spec.ts` (the gauges, and `character list` and `doctor` showing them),
 `src/quest/stamina-view.spec.ts` and `src/quest/edit-tokens.spec.ts` (PS-28b: the session and notch lines of
-`test/stamina.ts`, for the ceilings, the stamina bar and what a new token budget does).
-No spec reads a real credential or reaches a forge (PS-08): `test/credential.ts` empties `credential.helper` in the
+`src/__fixtures__/stamina.ts`, for the ceilings, the stamina bar and what a new token budget does).
+No spec reads a real credential or reaches a forge (PS-08): `src/__fixtures__/credential.ts` empties `credential.helper` in the
 `.gitconfig` of the spec's own home folder (the owner's config: a delivery's git asks no helper of the repo's own,
 SEC-02) and names a Node script that answers as a helper does (a token of GitHub's `gho_` shape, nothing, or no
 answer at all), and `poisonRepo` makes a repo's own config name programs that must never run; `testIo` hands every command a `fetch` that fails, and
 `src/doctor/check-delivery.spec.ts` passes a fake one. The specs compare the token, never print it, and look for it
-in the output and in every file of the kingdom. (PS-08c) `test/github.ts` is a fake GitHub that answers by method
+in the output and in every file of the kingdom. (PS-08c) `src/__fixtures__/github.ts` is a fake GitHub that answers by method
 and path and keeps every request: `src/forge/github-forge.spec.ts` takes each call of the forge port through it
 (a 422 that races, the credential's refusals apart from the forge's, a token echoed back or in a network error
 masked, `gitToken` on the fake helper), `src/forge/github-status.spec.ts` a pull request's state and its required
@@ -470,8 +471,8 @@ runs the Steward (`elvaria run`) with it until a rank D quest is done, while a r
 `src/tribe/list.spec.ts` lists it beside the built-in tribes, one with no runner and a broken file, and has
 `doctor --enable` refuse it (P1-34). `fixtures/flint-adapter.mjs` and `fixtures/fake-flint.mjs` are the fourth tribe of
 PS-23: a CLI with hooks of its own, described to Elvaria's hook by a neutral dialect in `policy.json`, and models of
-several makers under its own names; `src/tribe/flint.spec.ts` (with `test/flint.ts`) passes it through every check of the conformance suite, summons its characters at the
-levels its models give, takes a rank C quest round, and finds its name in no source of `packages/` or `apps/`. `test/builds.ts` (PS-04b) has a stub build CLI that answers the trial's
+several makers under its own names; `src/tribe/flint.spec.ts` (with `src/__fixtures__/flint.ts`) passes it through every check of the conformance suite, summons its characters at the
+levels its models give, takes a rank C quest round, and finds its name in no source of `packages/` or `apps/`. `src/__fixtures__/builds.ts` (PS-04b) has a stub build CLI that answers the trial's
 commands as its `behavior.json` says and records each call, a stub pnpm that leaves a link into the build (a
 junction on Windows, a symlink elsewhere), and a fixture repo builds are made from: `src/upgrade/upgrade.spec.ts`
 upgrades, refuses and rolls back on real git worktrees, `src/upgrade/trial.spec.ts` runs the real trial (child

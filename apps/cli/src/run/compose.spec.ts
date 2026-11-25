@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -8,9 +8,9 @@ import { translator } from '@elvaria/i18n';
 import type { PlotManager } from '@elvaria/runner-core';
 import { describe, expect, it } from 'vitest';
 
-import { questFixture } from '../../test/quest.ts';
+import { questFixture } from '../__fixtures__/quest.ts';
 import { newKingdom } from '../init.ts';
-import { RM_TEMP, testIo } from '../../test/cli.ts';
+import { tempDir, testIo } from '../__fixtures__/cli.ts';
 import { consoleBell, lineOf } from './bell.ts';
 import { crewOf, toolOptionsOf } from './crew.ts';
 import { plotsOver, processHostOf } from './plots.ts';
@@ -144,11 +144,11 @@ describe('plots over PlotManager', () => {
   });
 
   it('commits, runs the checks on what the quest touched, gives the diff and releases through PlotManager', async () => {
-    const dir = await mkdtemp(path.join(os.tmpdir(), 'elvaria plots-'));
+    const temp = await tempDir();
     try {
       const calls: string[] = [];
       const folder = { type: 'folder' as const, path: `quests/${quest.id}/work` };
-      await mkdir(path.join(dir, 'quests', quest.id, 'work'), { recursive: true });
+      await mkdir(path.join(temp.root, 'quests', quest.id, 'work'), { recursive: true });
       const wired: PlotManager = {
         ...manager({ ok: true, value: { plot: folder, created: false, setup: null } }),
         touched: () => Promise.resolve(['notes/today.md']),
@@ -172,7 +172,7 @@ describe('plots over PlotManager', () => {
         timeout_minutes: 1,
       };
       const checked = { ...territory, checks: [lint] };
-      const plots = plotsOver(dir, wired, HOST);
+      const plots = plotsOver(temp.root, wired, HOST);
       expect(await plots.applyPatch(folder, ['.husky/**'])).toEqual({ status: 'none' });
       expect(await plots.commit(folder, 'chore: submit q')).toEqual({ status: 'no_git' });
       expect(calls).toEqual(['patch .husky/**', 'chore: submit q']);
@@ -192,14 +192,14 @@ describe('plots over PlotManager', () => {
       });
       // A quest that never got a plot runs its checks from the kingdom: nothing it touched, nothing to run.
       expect(
-        await plotsOver(dir, { ...wired, touched: () => Promise.resolve([]) }, HOST).check({
+        await plotsOver(temp.root, { ...wired, touched: () => Promise.resolve([]) }, HOST).check({
           plot: { type: 'none' },
           territory: TerritorySchema.parse(checked),
           run_dir: `.runs/${quest.id}-1`,
         }),
       ).toEqual([]);
     } finally {
-      await rm(dir, RM_TEMP);
+      await temp.remove();
     }
   });
 

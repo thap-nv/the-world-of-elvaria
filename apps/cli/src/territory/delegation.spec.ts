@@ -17,10 +17,10 @@ import { translator } from '@elvaria/i18n';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, gitRepo, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import { OTHER_QUEST_ID, QUEST_ID, plantQuests, questFixture } from '../../test/quest.ts';
+import { foundKingdom, gitRepo, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { OTHER_QUEST_ID, QUEST_ID, plantQuests, questFixture } from '../__fixtures__/quest.ts';
 import { lineOf } from '../run/bell.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const SHA = 'abcdef1234567890abcdef1234567890abcdef12';
 const TS = '2026-11-06T06:30:00+07:00';

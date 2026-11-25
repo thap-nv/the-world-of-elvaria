@@ -5,7 +5,7 @@ import type { Event } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
 
-import { QUEST_ID, questFixture } from '../../test/quest.ts';
+import { QUEST_ID, questFixture } from '../__fixtures__/quest.ts';
 import { metricsSections } from './view.ts';
 import { firstEditsLine, graphLine, promptSection } from './view-sessions.ts';
 

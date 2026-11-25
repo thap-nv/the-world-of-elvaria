@@ -17,9 +17,9 @@ import {
   run,
   tempDir,
   testIo,
-} from '../../test/cli.ts';
+} from '../__fixtures__/cli.ts';
 import { UPGRADE_TRIAL_ENV } from './held-in-trial.ts';
-import type { TempDir, TestIo } from '../../test/cli.ts';
+import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
 
 describe('elvaria doctor in the trial of an upgrade', () => {
   let dir: TempDir;

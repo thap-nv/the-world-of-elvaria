@@ -5,10 +5,10 @@
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
-import { QUEST_ID, plantQuests, questFixture } from '../../test/quest.ts';
-import { journal, notch } from '../../test/stamina.ts';
-import type { TempDir } from '../../test/cli.ts';
+import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { QUEST_ID, plantQuests, questFixture } from '../__fixtures__/quest.ts';
+import { journal, notch } from '../__fixtures__/stamina.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const AT = '2026-11-06T08:30:00+07:00';
 const BIG = { estimate: { tokens: 300_000, minutes: 30 } };

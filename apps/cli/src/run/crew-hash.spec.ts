@@ -5,10 +5,10 @@ import path from 'node:path';
 import { KingdomSchema, TribeSchema } from '@elvaria/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, tempDir, testIo } from '../../test/cli.ts';
-import { FAKE_LANTERN, LANTERN_ADAPTER, installLantern, kingdomJson } from '../../test/lantern.ts';
+import { foundKingdom, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { FAKE_LANTERN, LANTERN_ADAPTER, installLantern, kingdomJson } from '../__fixtures__/lantern.ts';
 import { crewOf, handOf } from './crew.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 describe('file adapter SHA-256 gate (SEC-03)', () => {
   let dir: TempDir;

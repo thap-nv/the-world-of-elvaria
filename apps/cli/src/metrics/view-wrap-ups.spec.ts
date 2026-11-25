@@ -6,10 +6,10 @@ import { openEventLog } from '@elvaria/eventlog';
 import { translator } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
+import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { metricsSections } from './view.ts';
 import { afterWrapUpSection } from './view-wrap-ups.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const t = translator('en');
 const DAY = '2026-11-17';

@@ -13,9 +13,9 @@ import {
   run,
   tempDir,
   testIo,
-} from '../../test/cli.ts';
+} from '../__fixtures__/cli.ts';
 import { territoryCommands } from './check-commands.ts';
-import type { TempDir } from '../../test/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 /** A program no machine has: `sh` would be found on macOS and Linux, where git's folder is /usr/bin. */
 const ABSENT = 'elvaria-no-such-program';
