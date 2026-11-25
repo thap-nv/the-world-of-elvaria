@@ -8,6 +8,7 @@ import {
   CharacterSchema,
   ModelSlugSchema,
   NAME_MAX_LENGTH,
+  familyOfCharacter,
   rankCeilingOf,
   startingLevelOf,
 } from '@elvaria/domain';
@@ -176,6 +177,7 @@ async function runCharacterAdd(input: CommandInput, cli: CliContext): Promise<Ex
   ctx.io.out(ctx.t('cli.character.added', params));
   ctx.io.out(ctx.t('cli.character.tribe_model', { tribe: tribe.id, model: choices.model }));
   levelLines(ctx, choices).forEach(ctx.io.out);
+  healerLines(ctx, choices).forEach(ctx.io.out);
   if (!tribe.enabled) ctx.io.out(ctx.t('cli.character.tribe_disabled', { tribe: tribe.id }));
   return EXIT.ok;
 }
@@ -205,6 +207,19 @@ function levelLines(ctx: KingdomContext, { id, level, levelSource, model, declar
   const suggested = startingLevelOf(model, declared);
   if (suggested === undefined || level <= suggested) return [];
   return [ctx.t('cli.character.level_above_model', { level, model, suggested, ceiling, id })];
+}
+
+/**
+ * Which quests a healer mends (ADR 0034, selectHealer): only those whose doers include a model of its own family, read
+ * as the Steward reads it (the families the tribe's adapter declares, else the slug), so the owner sees the family this
+ * one covers and summons one per family. Every adapter names a family for each model it serves (PS-23).
+ */
+function healerLines(ctx: KingdomContext, { klass, tribe, model, declared }: Choices): string[] {
+  const models = declared === undefined ? {} : { [tribe.id]: declared };
+  const family = familyOfCharacter({ tribe: tribe.id, model }, models);
+  return klass.is_healer === true && family !== undefined
+    ? [ctx.t('cli.character.healer_family', { family })]
+    : [];
 }
 
 export const CHARACTER_ADD: CommandSpec = {

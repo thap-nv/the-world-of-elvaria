@@ -282,5 +282,34 @@
       "Grep"
     ],
     "apprentice": null
+  },
+  {
+    "class": "healer",
+    "role": "assignee",
+    "tools": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash"
+    ],
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm --filter:*)",
+      "Bash(pnpm install --frozen-lockfile --prefer-offline)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(pnpm -r test:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm api:openapi:*)"
+    ],
+    "apprentice": null
   }
 ]

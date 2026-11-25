@@ -39,6 +39,7 @@ export type RegistryIssueCode =
   | 'unknown_step'
   | 'unknown_tag'
   | 'verifier_and_monk'
+  | 'verifier_and_healer'
   | 'verifier_takes_work'
   | 'class_kind_mismatch'
   | 'entry_mismatch';
@@ -152,20 +153,40 @@ function kindRules(registry: Registry): RegistryIssue[] {
   });
 }
 
-function classRules({ kinds, classes }: Registry): RegistryIssue[] {
-  const kindById = new Map<string, Kind>(kinds.map((kind) => [kind.id, kind]));
-  return classes.flatMap((entry, index) => {
-    const role = entry.is_verifier && entry.is_monk;
-    const both = role
+/**
+ * A verifier class has no other role. A healer is a doer of the quest it mends (ADR 0034), and the one who does never
+ * judges (ADR 0008): a class that did both would be barred from judging every quest it healed.
+ */
+function roleRules(entry: CharacterClass, index: number): RegistryIssue[] {
+  if (!entry.is_verifier) return [];
+  const monk = entry.is_monk
+    ? [
+        issue(
+          'classes',
+          ['classes', index, 'is_monk'],
+          'verifier_and_monk',
+          'a class is a verifier or a monk',
+        ),
+      ]
+    : [];
+  const healer =
+    entry.is_healer === true
       ? [
           issue(
             'classes',
-            ['classes', index, 'is_monk'],
-            'verifier_and_monk',
-            'a class is a verifier or a monk',
+            ['classes', index, 'is_healer'],
+            'verifier_and_healer',
+            'a class is a verifier or a healer',
           ),
         ]
       : [];
+  return [...monk, ...healer];
+}
+
+function classRules({ kinds, classes }: Registry): RegistryIssue[] {
+  const kindById = new Map<string, Kind>(kinds.map((kind) => [kind.id, kind]));
+  return classes.flatMap((entry, index) => {
+    const both = roleRules(entry, index);
     const listed = entry.kinds.flatMap((kindId, position) => {
       const path = ['classes', index, 'kinds', position];
       const kind = kindById.get(kindId);

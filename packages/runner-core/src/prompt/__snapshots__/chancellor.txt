@@ -124,6 +124,7 @@ Kiểm tra link trong docs rồi viết lại README cho rõ phần cài đặt.
 - `envoy` (Envoy): reads and searches files; writes files; no shell
 - `judge` (Judge): reads and searches files; writes no file; web; shell: `pnpm test`, `pnpm check:changed`, `pnpm --filter`, `pnpm lint`, `pnpm typecheck`, `git diff`, and its territory's check commands
 - `monk` (Monk): reads and searches files; writes no file; no shell
+- `healer` (Healer): reads and searches files; writes files; shell: `pnpm lint`, `pnpm typecheck`, `pnpm --filter`, `pnpm install --frozen-lockfile --prefer-offline`, `git status`, `git diff`, and its territory's check commands
 
 # Tags
 
