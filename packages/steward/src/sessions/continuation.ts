@@ -1,17 +1,23 @@
 // What an assignee that goes on with a quest in a fresh session reads instead of a transcript (implementation-plan
 // §10 question 4, ADR 0017): why it goes on (a return with its verdict, or a revival), the letter, the journal, what
 // the branch touched, why the Steward refused the last run's patch when it did (P1-31), or its patch or commit while
-// the quest waited on the doer's amendment (fix/session-notes), and the memos its letters filed (PS-02).
+// the quest waited on the doer's amendment (fix/session-notes), the memos its letters filed (PS-02), and after a
+// refused commit sent back for a heal, what the territory's hooks said of it (ADR 0034).
+import { readFile } from 'node:fs/promises';
+import { stripVTControlCharacters } from 'node:util';
+
 import {
   currentRun,
   endedInCut,
+  endedInHealDue,
   isEventOf,
   lateVerdictIdOf,
   ownerVerdictIdOf,
   verdictIdOf,
 } from '@elvaria/domain';
-import { openJournal } from '@elvaria/eventlog';
-import type { Quest, Verdict } from '@elvaria/domain';
+import { createRedactor, openJournal } from '@elvaria/eventlog';
+import { inKingdom } from '@elvaria/store';
+import type { Attempt, EventOf, Quest, Verdict } from '@elvaria/domain';
 import type { Continuation, Memory, RefusedWork } from '@elvaria/runner-core';
 
 import { handoverPath, readHandover, readJournal } from '../texts/files.ts';
@@ -21,6 +27,53 @@ import { withLogTails } from '../review/log-tail.ts';
 import { apprenticeLeft } from './breaker.ts';
 import type { Context } from '../context.ts';
 import type { SessionInput } from './input.ts';
+
+/** The most of a refused commit's log a heal session reads (plans/healer.md 4.4): the head, where its errors start. */
+export const HEAL_LOG_MAX_CHARS = 4000;
+
+/**
+ * Whether the next assignee session goes on in the run of the last one, in its `.runs/<quest>-<n>`: after a cut that
+ * goes on (ADR 0030), or a refused commit sent back for a heal (ADR 0034).
+ */
+export const goesOnInRun = (log: readonly Attempt[]): boolean => endedInCut(log) || endedInHealDue(log);
+
+/** The non-blank lines of `text`, uncoloured, from the first, within `max` characters; a longer first line is cut. */
+function headOf(text: string, max: number): string {
+  const lines = stripVTControlCharacters(text)
+    .split(/\r\n|\n|\r/u)
+    .filter((line) => line.trim() !== '');
+  while (lines.length > 1 && lines.join('\n').length > max) lines.pop();
+  return lines.join('\n').slice(0, max);
+}
+
+/** The log the run's `quest.heal_due` line names: the refused commit's, relative to the kingdom. */
+async function healDueLogOf(ctx: Context, quest: Quest): Promise<string | undefined> {
+  const n = currentRun(quest);
+  const { events } = await openJournal(ctx.root, quest.id).read();
+  const line = events.findLast(
+    (event): event is EventOf<'quest.heal_due'> => isEventOf(event, 'quest.heal_due') && event.attempt === n,
+  );
+  const log = line?.data.reason.params.log;
+  return typeof log === 'string' ? log : undefined;
+}
+
+/**
+ * What the territory's hooks said of the refused commit the session after a heal's `due` mends (ADR 0034,
+ * plans/healer.md 4.4): the log in `.runs/`, which the session cannot read, masked with `known` and the patterns
+ * before it is cut, as a check's log is (log-tail.ts). A journal or a log that cannot be read tells nothing: the
+ * session finds the errors by running the territory's lint itself.
+ */
+async function healLogOf(ctx: Context, quest: Quest, known: readonly string[]): Promise<RefusedWork> {
+  if (!endedInHealDue(quest.attempt_log)) return {};
+  try {
+    const log = await healDueLogOf(ctx, quest);
+    if (log === undefined) return {};
+    const said = createRedactor(known)(await readFile(inKingdom(ctx.root, log), 'utf8'));
+    return { refused_commit: headOf(said, HEAL_LOG_MAX_CHARS) };
+  } catch {
+    return {};
+  }
+}
 
 /** What the prompt says in place of a letter too long for the tribe to take copied (letter-fit.ts). */
 export const letterPathNote = (file: string): string =>
@@ -149,6 +202,7 @@ export async function continuationFor(
   const memory = {
     ...(await memoryOf(ctx, quest, input.letterAsPath === true)),
     ...(await touchedOf(ctx, quest)),
+    ...(await healLogOf(ctx, quest, known)),
     ...(apprentice ? { apprentice_left: true as const } : {}),
   };
   if (continuation.reason === 'revive') return { ...continuation, ...memory };

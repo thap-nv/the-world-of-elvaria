@@ -2,7 +2,17 @@
 // that leaves heal sessions out. The moves of the state machine are in quest/heal-due.spec.ts.
 import { describe, expect, it } from 'vitest';
 
-import { KINGDOM, NOW, Q1, at, character, quest, workingBy } from '../dispatch/__fixtures__/snapshot.ts';
+import {
+  KINGDOM,
+  NOW,
+  Q1,
+  at,
+  character,
+  quest,
+  snapshot,
+  workingBy,
+} from '../dispatch/__fixtures__/snapshot.ts';
+import { planTick } from '../dispatch/plan-tick.ts';
 import { breakersOf } from './breakers.ts';
 import { calibrationOf } from './calibration.ts';
 import { healCallOf } from './heal.ts';
@@ -67,6 +77,15 @@ describe('a heal session under the breakers', () => {
     // Five minutes into the session, past 150 % of two; the quest allows 45.
     expect(tripsOf(healing('session'), 500, rules)).toEqual([['time', 3]]);
     expect(tripsOf(healing(), 500, rules)).toEqual([]);
+  });
+});
+
+describe('planTick: a heal session', () => {
+  it("is held to the kingdom's own heal ceilings (HL-02)", () => {
+    const sessions = [{ quest: Q1, role: 'assignee', usage: { tokens: 500 } }] as const;
+    const kingdom = { ...KINGDOM, heal: { ...KINGDOM.heal, tokens: 1000, minutes: 2 } };
+    const plan = planTick(snapshot([healing('session')], [character('thorn')], { kingdom, sessions }), NOW);
+    expect(plan.breakers).toMatchObject([{ quest: Q1, trip: 'time', params: { limit: 3 } }]);
   });
 });
 

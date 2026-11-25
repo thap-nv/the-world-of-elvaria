@@ -2,7 +2,7 @@
 // under it, because a quest the owner just added exists only as a command until the Steward's next tick. A party's
 // member says its role and where the party stands (P1-21 (c)). A quest that waits on its territory's scope rules says
 // for whom (PS-05), and one the owner holds says so (fix/quest-hold), as one that waits for its territory's default
-// branch to be green (PS-09d).
+// branch to be green (PS-09d), and one in its run's heal (ADR 0034).
 import { QUEST_STATUSES } from '@elvaria/domain';
 import type { Quest, QuestId, QuestStatus, Registry, ScopeWait } from '@elvaria/domain';
 
@@ -12,6 +12,7 @@ import { openKingdomContext } from '../kingdom-context.ts';
 import { QUEST_STATUS_LABEL, nameIn } from '../labels.ts';
 import { NONE, printListing } from '../listing.ts';
 import { baseWaitsOf } from './base-wait.ts';
+import { healMark } from './heal.ts';
 import { partyCell } from './party.ts';
 import { scopeWaitText, scopeWaitsOf } from './scope.ts';
 import { unclaimableOf } from './unclaimable.ts';
@@ -37,6 +38,9 @@ const statusCell = (ctx: KingdomContext, quest: Quest, board: Board): string => 
   if (quest.held !== undefined) return `${status} (${ctx.t('cli.quest.held.mark')})`;
   if (board.base.has(quest.id)) return `${status} (${ctx.t('cli.quest.base_wait.mark')})`;
   if (board.unclaimable.has(quest.id)) return `${status} (${ctx.t('cli.quest.unclaimable.mark')})`;
+  // A refused submit sent back for a heal (ADR 0034): neither waiting on the owner nor in the infirmary.
+  const heal = healMark(ctx.t, quest);
+  if (heal !== undefined) return `${status} (${heal})`;
   const wait = board.waits.get(quest.id);
   return wait === undefined ? status : `${status} (${scopeWaitText(ctx, wait)})`;
 };

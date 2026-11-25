@@ -46,7 +46,7 @@ export type SessionRules = Pick<Kingdom['breakers'], 'max_turns' | 'verifier_tok
     readonly characters?: ReadonlyMap<string, Pick<Character, 'tribe'>>;
     readonly tribes?: readonly Pick<Kingdom['tribes'][number], 'id' | 'max_turns'>[];
     /** A heal session's ceilings (ADR 0034); HEAL_DEFAULTS when absent. */
-    readonly heal?: Pick<Kingdom['heal'], 'tokens' | 'minutes'>;
+    readonly heal?: Pick<Kingdom['heal'], 'tokens' | 'minutes'> | undefined;
   };
 
 /** The tribe of the character holding `role` on the quest; none for an empty seat or a character not in `rules`. */

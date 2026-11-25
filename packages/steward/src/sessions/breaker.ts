@@ -5,7 +5,7 @@
 // assignee whose CLI stopped itself at its own limit (settle.ts), and a quest no session can open for because its
 // secrets are missing (open.ts) or its spawn failed (no-session.ts): that one waits in the infirmary instead of being
 // claimed again every tick.
-import { infirmaryReasonOf, isCapTrip, reviewBreaksOf, reviewStalled, runDirOf } from '@elvaria/domain';
+import { infirmaryReasonOf, isCapTrip, reviewBreaksOf, reviewStalled } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { plotCommitMessage } from '@elvaria/runner-core';
 import type { Breaker, BreakerTrip, InfirmaryReason, Quest, Result, SessionTrip } from '@elvaria/domain';
@@ -16,7 +16,7 @@ import { moveAndRing } from '../bell/move-and-ring.ts';
 import { step } from '../quest/record.ts';
 import { runOf } from '../review/judge.ts';
 import { afterJudge } from '../review/after-judge.ts';
-import { commitPlot, forbiddenWip } from './commit.ts';
+import { commitDirOf, commitPlot, forbiddenWip } from './commit.ts';
 import { givenTo, maskFinished } from './secrets.ts';
 import { madeProgress } from './progress.ts';
 import { stopLeftOf, writeStopLetter } from './stop-letter.ts';
@@ -35,11 +35,19 @@ function wipLeft(wip: PlotCommit | undefined): { wip?: string } {
 }
 
 /**
+ * The reason on the breaker event, which the domain's heal reads (ADR 0034): named only while kingdom.heal.enabled
+ * holds, so with the heal turned off every refused commit goes to the infirmary as before. The domain reads no setting.
+ */
+const healReasonOf = (ctx: Context, reason: InfirmaryReason) =>
+  ctx.world.kingdom.heal.enabled ? { reason: reason.code } : {};
+
+/**
  * An assignee meets a breaker: the character sinks into the swamp while `end` ends the session (the kill tree, or
  * the end its CLI already reported) and the work is committed as WIP, never past the territory's hooks nor with a
  * forbidden path (P1-49); then the quest goes to the infirmary, the bell rings, and the character is free again. A
  * WIP commit not made leaves the work in the plot and says so in the detail. The `commit` and `forbidden_paths`
- * trips are such a commit already: no second try.
+ * trips are such a commit already: no second try. A refused submit the domain sends back for a heal (ADR 0034), as a
+ * cut that goes on (ADR 0030), returns the quest instead, with no bell: its line is `quest.heal_due` (record.ts).
  */
 export async function breakAssignee(
   ctx: Context,
@@ -73,6 +81,7 @@ export async function breakAssignee(
       left,
       givenTo(running.session),
     );
+  const reason = assigneeReason(ctx, running, breaker, result);
   const said = {
     ...(patch === undefined ? {} : { patch }),
     ...(paths === undefined ? {} : { paths: [...paths] }),
@@ -85,11 +94,12 @@ export async function breakAssignee(
       type: 'breaker',
       trip,
       ...(progress === undefined ? {} : { progress }),
+      ...healReasonOf(ctx, reason),
       ...runOf(running, result),
     },
     actor: 'steward',
     edits: swamped.ok ? { [who]: step('quest_infirmary') } : {},
-    infirmary: { trip, reason: assigneeReason(ctx, running, breaker, result), detail: said },
+    infirmary: { trip, reason, detail: said },
     ...(breaker.before === undefined ? {} : { before: breaker.before }),
   });
 }
@@ -128,11 +138,11 @@ function assigneeReason(
     return infirmaryReasonOf('breaker:setup', { ...breaker.refused.setup });
   if (breaker.refused !== undefined) {
     const { head, log } = breaker.refused;
-    const dir = runDirOf(quest, running.n, 'assignee');
     const params = {
       lines: head.lines.join('\n'),
       total_lines: head.total_lines,
-      log: `${dir}/${log ?? 'pre-commit.log'}`,
+      // A heal's own refusal names its log, beside the first one (commitDirOf).
+      log: `${commitDirOf(quest)}/${log ?? 'pre-commit.log'}`,
     };
     return head.errors === 0
       ? infirmaryReasonOf('breaker:commit', params)

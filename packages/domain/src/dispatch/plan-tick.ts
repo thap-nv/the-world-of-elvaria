@@ -54,6 +54,8 @@ export interface KingdomSnapshot extends RosterSource, ReviewSource {
    */
   readonly kingdom: Pick<Kingdom, 'tribes' | 'dispatch' | 'breakers'> & {
     readonly mana?: Pick<Kingdom['mana'], 'reassign_after_hours'>;
+    /** A heal session's ceilings (ADR 0034); absent: HEAL_DEFAULTS. */
+    readonly heal?: Pick<Kingdom['heal'], 'tokens' | 'minutes'>;
   };
   /** The sessions the Steward holds, with their usage so far, for the breakers (§3.4); none in a sandbox day. */
   readonly sessions?: readonly HeldSession[];
@@ -187,17 +189,17 @@ const byPriority = (a: Quest, b: Quest): number =>
 
 /** Step 3: the held sessions past a breaker, each measured as its holder's tribe allows (minutes_only, P1-33). */
 const heldPastBreakers = (
-  snapshot: KingdomSnapshot,
+  { quests, sessions = [], kingdom, limits }: KingdomSnapshot,
   characters: ReadonlyMap<string, Character>,
   now: Instant,
 ) =>
   breakersOf(
-    snapshot.quests,
-    snapshot.sessions ?? [],
-    { ...snapshot.kingdom.breakers, characters, tribes: snapshot.kingdom.tribes },
+    quests,
+    sessions,
+    { ...kingdom.breakers, characters, tribes: kingdom.tribes, heal: kingdom.heal },
     now,
-    measureOf(characters, snapshot.limits),
-    calibrationOf(snapshot.quests, characters, snapshot.kingdom),
+    measureOf(characters, limits),
+    calibrationOf(quests, characters, kingdom),
   );
 
 /**
