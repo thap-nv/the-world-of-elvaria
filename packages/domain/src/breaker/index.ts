@@ -2,6 +2,7 @@ export * from './breakers.ts';
 export * from './calibration.ts';
 export * from './continue.ts';
 export * from './evaluate.ts';
+export * from './heal.ts';
 export * from './review.ts';
 export * from './stamina.ts';
 export * from './token-ceiling.ts';

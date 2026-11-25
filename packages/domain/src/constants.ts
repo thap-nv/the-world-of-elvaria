@@ -29,5 +29,18 @@ export const BREAKER_DEFAULTS = {
    */
   verifier_tokens_multiplier: 2,
 } as const;
+
+/**
+ * One heal per run (ADR 0034, plans/healer.md K3, K8): a heal session's nominal ceilings, which the breakers' soft and
+ * hard percentages apply to (225 000 tokens and 22.5 minutes at 150 %), and the most a healer may change. The schema
+ * fills kingdom.heal with them, and the breakers read them for a kingdom file without the key.
+ */
+export const HEAL_DEFAULTS = {
+  enabled: true,
+  tokens: 150_000,
+  minutes: 15,
+  max_files: 8,
+  max_lines: 60,
+} as const;
 /** patrol.ran's error lines (PS-26): the first line of a log that says what went wrong, never more. */
 export const PATROL_LINE_MAX_LENGTH = 500;

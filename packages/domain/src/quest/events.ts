@@ -2,6 +2,7 @@
 // mana readings into these events and passes them to transition(); nothing else changes a quest's status
 // (ADR 0005). Every event carries its time, so transition() stays a pure function of its arguments (ADR 0002).
 import type { CharacterId } from '../core/ids.ts';
+import type { InfirmaryReasonCode } from '../infirmary/reasons.ts';
 import type { BlockedAmendment } from '../schema/quest/quest-parts.ts';
 
 /**
@@ -166,8 +167,18 @@ export type QuestEvent =
   /**
    * `progress`: the assignee's session left a new commit, or a WIP commit with changes, before the cut. Only the
    * ceilings read it; without it (a Steward that does not report it yet) the cut goes to the infirmary as before.
+   * `reason`: the infirmary reason code of the trip, which the heal reads (ADR 0034). The Steward names it only while
+   * `kingdom.heal.enabled` holds, since the machine sees no setting; without it a refused commit goes to the
+   * infirmary as before.
    */
-  | Shaped<'breaker', RunEnd & { readonly trip: BreakerTrip; readonly progress?: boolean }>
+  | Shaped<
+      'breaker',
+      RunEnd & {
+        readonly trip: BreakerTrip;
+        readonly progress?: boolean;
+        readonly reason?: InfirmaryReasonCode;
+      }
+    >
   | Shaped<'answer', SessionStart & { readonly answer: string }>
   | Shaped<'assign_verifier', SessionStart & { readonly verifier: CharacterId }>
   /** The judge the Steward chose, whose session could not open (fix/review-no-session): no session id to give. */

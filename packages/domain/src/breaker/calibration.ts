@@ -34,14 +34,17 @@ const calibrated = (values: readonly number[], fallback: number): CalibratedValu
 
 /**
  * One completed first assignee run per quest, including its resumed sessions, as in firstRunOf.
- * Incomplete measurements and mixed-tribe runs cannot teach a tribe its own ceiling.
+ * Incomplete measurements and mixed-tribe runs cannot teach a tribe its own ceiling. A heal session (ADR 0034) is
+ * left out: it fixes what the hooks refused under ceilings of its own, so it says nothing of what the work cost.
  */
 function samplesOf(quests: readonly Quest[], characters: ReadonlyMap<string, Pick<Character, 'tribe'>>) {
   return quests.flatMap((quest) => {
     const first = quest.attempt_log.find(({ role, character }) => role === 'assignee' && character !== null);
     if (first === undefined || quest.estimate.tokens <= 0) return [];
     const tribe = characters.get(first.character as string)?.tribe;
-    const run = quest.attempt_log.filter(({ role, n }) => role === 'assignee' && n === first.n);
+    const run = quest.attempt_log.filter(
+      ({ role, n, heal }) => role === 'assignee' && n === first.n && heal !== 'session',
+    );
     if (
       tribe === undefined ||
       run.some(

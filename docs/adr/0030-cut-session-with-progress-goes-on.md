@@ -9,7 +9,7 @@
 
 ## Decision
 
-- Only the trips `time`, `tokens`, `turns` (`CAP_TRIPS`) of a character's session (`tier = session`, with an `assignee`) read the rule. `commit`, `secrets`, `forbidden_paths` and `no_session` ignore `progress` and go to the infirmary as before; a script's `time` does too.
+- Only the trips `time`, `tokens`, `turns` (`CAP_TRIPS`) of a character's session (`tier = session`, with an `assignee`) read the rule. `commit`, `secrets`, `forbidden_paths` and `no_session` ignore `progress` and go to the infirmary as before; a script's `time` does too. (Amended 2026-11-25, HL-01: the first `commit` refusal of a run for a healable reason goes back for a heal instead, `working.breaker.heal_due`, [ADR 0034](0034-one-heal-per-run.md); a heal session cut by a ceiling never goes on, `cutCallOf` sends it to the infirmary.)
 - The `breaker` event carries `progress` (a new commit, or a WIP commit with changes). The attempt entry keeps it as an optional `progress`, added after v1 (`version` stays 1).
 - `cutCallOf(attempt_log, progress)` decides. A cut with progress always goes on, however many went on before: no ceiling on continuations. A cut without it goes on too, unless the session right before it in the same run was also cut without progress: then `working.breaker.cut_stops`, reason `breaker:no_progress`. A cut with progress clears the chain.
 - Going on reuses a path that exists: `working.breaker.cut_goes_on` leads to `returned`, and the `redispatch` that follows opens a fresh session of the same run `n` (as after an answer or mana), the same assignee, `attempts` unchanged; its prompt continuation is `revive`. No new status or event.

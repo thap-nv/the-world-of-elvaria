@@ -82,6 +82,13 @@
       "context_budget_tokens": 120000,
       "verifier_tokens_multiplier": 2
     },
+    "heal": {
+      "enabled": true,
+      "tokens": 150000,
+      "minutes": 15,
+      "max_files": 8,
+      "max_lines": 60
+    },
     "schedule": {
       "chronicle": {
         "enabled": false,
@@ -208,6 +215,13 @@
       "subagent_max_turns": 30,
       "context_budget_tokens": 120000,
       "verifier_tokens_multiplier": 2
+    },
+    "heal": {
+      "enabled": true,
+      "tokens": 150000,
+      "minutes": 15,
+      "max_files": 8,
+      "max_lines": 60
     },
     "schedule": {
       "chronicle": {

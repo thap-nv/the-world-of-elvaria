@@ -2,6 +2,7 @@
 // counter, the attempt log, the question, the seal, the delivery. One effect per event type; the row of
 // QUEST_TRANSITIONS has already been chosen, and `to` is its target status.
 import { endedInCut, isCapTrip } from '../breaker/continue.ts';
+import { endedInHealDue, healCallOf, healDueIn } from '../breaker/heal.ts';
 import { aboveCeiling } from '../character/level.ts';
 import { err, ok } from '../core/result.ts';
 import { machineMergeDue, machineRun } from '../party/machine-merge.ts';
@@ -73,36 +74,50 @@ function startAttempt(quest: Quest, event: QuestEventOf<'start' | 'redispatch'>)
 }
 
 /**
- * The redispatch of a quest a ceiling cut and let go on (ADR 0030) opens a fresh session of the same run: no new
- * attempt, no new run number. Any other redispatch is a new attempt.
+ * The redispatch of a quest a ceiling cut and let go on (ADR 0030), or whose refused commit went back for a heal
+ * (ADR 0034), opens a fresh session of the same run: no new attempt, no new run number. Any other redispatch is a new
+ * attempt.
  */
 function redispatch(quest: Quest, event: QuestEventOf<'redispatch'>): Result<Quest, never> {
-  return endedInCut(quest.attempt_log)
+  return endedInCut(quest.attempt_log) || endedInHealDue(quest.attempt_log)
     ? ok(resume(quest, event.at, event.session_id))
     : startAttempt(quest, event);
 }
 
+/** The assignee's latest entry with `mark` added: what its ended session leaves for the next one of the run. */
+function markLastAssignee(quest: Quest, mark: Pick<Attempt, 'progress' | 'heal'>): Quest {
+  const index = quest.attempt_log.findLastIndex((entry) => entry.role === 'assignee');
+  const log = quest.attempt_log.map((entry, at) => (at === index ? { ...entry, ...mark } : entry));
+  return { ...quest, attempt_log: log };
+}
+
 /**
- * A breaker ends the session; one of a character's sessions cut by a ceiling also keeps whether it made progress
- * (ADR 0030), which the next cut of the run reads. Other trips ignore `progress`.
+ * A breaker ends the session. A character's refused commit that goes back for a heal marks its entry `due`
+ * (ADR 0034), so the run's next refusal goes to the infirmary; one of its sessions cut by a ceiling keeps whether it
+ * made progress (ADR 0030), which the next cut of the run reads. Other trips ignore `progress` and `reason`.
  */
-function cut(quest: Quest, event: QuestEventOf<'breaker'>): Result<Quest, never> {
+function cut(quest: Quest, event: QuestEventOf<'breaker'>, to: QuestStatus): Result<Quest, never> {
   const ended = endRun(quest, event, event.trip === 'time' ? 'timeout' : 'breaker');
+  // Only `working.breaker.heal_due` leads a commit trip to `returned`; the guard read the same log.
+  if (to === 'returned' && healCallOf(quest.attempt_log, event) === 'heal')
+    return ok(markLastAssignee(ended, { heal: 'due' }));
   const { progress } = event;
   const working = quest.status === 'working' && quest.assignee !== null;
   if (!working || progress === undefined || !isCapTrip(event.trip)) return ok(dropVerifierInReview(ended));
-  const index = ended.attempt_log.findLastIndex((entry) => entry.role === 'assignee');
-  const log = ended.attempt_log.map((entry, at) => (at === index ? { ...entry, progress } : entry));
-  return ok({ ...ended, attempt_log: log });
+  return ok(markLastAssignee(ended, { progress }));
 }
 
 /**
  * The same attempt goes on in a fresh session, rebuilt from handover.md and the journal (principle 13, ADR 0017):
- * after mana comes back, or after the owner answered the character's question.
+ * after mana comes back, after the owner answered the character's question, after a cut that goes on. In a run whose
+ * refused commit went back, every such session heals (`heal: "session"`, ADR 0034): its ceilings are kingdom.heal's,
+ * a cut stops it, and the calibration of (G) leaves it out.
  */
 function resume(quest: Quest, at: string, session_id: string | undefined): Quest {
-  const entry = assigneeRun(quest, currentRun(quest), at, session_id);
-  return { ...quest, attempt_log: [...quest.attempt_log, entry] };
+  const n = currentRun(quest);
+  const entry = assigneeRun(quest, n, at, session_id);
+  const heals = healDueIn(quest.attempt_log, n) ? { heal: 'session' as const } : {};
+  return { ...quest, attempt_log: [...quest.attempt_log, { ...entry, ...heals }] };
 }
 
 /**

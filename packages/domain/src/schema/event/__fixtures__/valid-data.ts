@@ -48,6 +48,13 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
     detail: { patch: 'touches src/a.ts', wip: 'hook refused', apprentice_left: true },
     ...QUEST_CHANGE,
   },
+  'quest.heal_due': {
+    reason: {
+      code: 'breaker:commit_errors',
+      params: { lines: 3, errors: 2, total_lines: 28, log: '.runs/q_20261106_7k3m2a-1/pre-commit.log' },
+    },
+    ...QUEST_CHANGE,
+  },
   'quest.delivered': QUEST_CHANGE,
   'quest.edited': { quest: QUEST_VIEW },
   'quest.unclaimable': {
