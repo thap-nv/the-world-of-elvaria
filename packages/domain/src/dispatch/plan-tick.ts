@@ -10,7 +10,6 @@
 // trials included (background-room.ts, P1-54).
 import { breakersOf, measureOf } from '../breaker/breakers.ts';
 import { calibrationOf } from '../breaker/calibration.ts';
-import { endedInCut } from '../breaker/continue.ts';
 import { machineMergeDue } from '../party/machine-merge.ts';
 import { questFinished } from '../quest/finished.ts';
 import { heldByBase } from '../patrol/base-red.ts';
@@ -20,6 +19,7 @@ import { forgeQueueOf } from './forge-due.ts';
 import { forgePolls } from './forge-polls.ts';
 import { baseLooks, forgeArchives } from './in-base.ts';
 import { reassignsOf } from './reassigns.ts';
+import { cutReturns, returnsOf } from './returns.ts';
 import { planReviews } from './reviews.ts';
 import { rosterOf } from './roster.ts';
 import { claims, holderGoes, suspensions, unclaimable } from './tick-steps.ts';
@@ -32,6 +32,7 @@ import type { ForgePoll, ForgeWait } from './forge-polls.ts';
 import type { BaseLook, BaseLookDone } from './in-base.ts';
 import type { JudgeWait } from './judge-waits.ts';
 import type { Reassign } from './reassigns.ts';
+import type { Heal } from './returns.ts';
 import type { ReviewSource, Verification } from './reviews.ts';
 import type { RosterSource } from './roster.ts';
 import type { Claim, Step, Unclaimable } from './tick-steps.ts';
@@ -137,6 +138,8 @@ export interface TickPlan {
   readonly judge_waits: readonly JudgeWait[];
   /** Step 5: returned quests that go back to their assignee in a fresh session. */
   readonly redispatches: readonly QuestId[];
+  /** Step 5 too (ADR 0034): returned quests awaiting their heal, and the free healer chosen (returnsOf). */
+  readonly heals: readonly Heal[];
   /** Step 6, in the order the Steward applies them. */
   readonly claims: readonly Claim[];
   /**
@@ -221,9 +224,6 @@ const deliveriesOf = (
   forge_archives: forgeArchives(snapshot, done),
 });
 
-const cutReturns = (quests: readonly Quest[]): Quest[] =>
-  quests.filter((quest) => endedInCut(quest.attempt_log));
-
 /**
  * The open quests ready to go; (PS-09d) one of a territory whose default branch is red waits as a held one does, the
  * patrol's fix aside.
@@ -285,9 +285,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
     machine_verdicts: judged.machine,
     unjudgeable: judged.unjudgeable,
     judge_waits: judged.judge_waits,
-    redispatches: inStatus('returned')
-      .filter((quest) => !endedInCut(quest.attempt_log) && holderGoes(step, quest))
-      .map(({ id }) => id),
+    ...returnsOf(step, inStatus('returned'), snapshot.registry.classes),
     claims: claims(step, openSessions, now),
     scripts: machine.scripts,
     merges: open.filter(machineMergeDue).map(({ id }) => id),

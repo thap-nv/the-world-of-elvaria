@@ -1,6 +1,7 @@
 // Quests and events for the state-machine specs. Every quest here is reached through transition() itself from a
 // draft, so the specs test the machine on states it really produces, not on hand-made ones.
 import { reviewBreaksOf, reviewPartialsOf } from '../../breaker/review.ts';
+import { awaitsHeal } from '../../breaker/heal.ts';
 import { machineMergeDue } from '../../party/machine-merge.ts';
 import { QuestSchema } from '../../schema/quest/quest.ts';
 import { QUEST_ACTORS, QUEST_EVENT_TYPES } from '../events.ts';
@@ -14,6 +15,8 @@ export const QUEST_ID = 'q_20261106_7k3m2a';
 export const THORN = 'thorn' as CharacterId;
 export const BRANN = 'brann' as CharacterId;
 export const ELLA = 'ella' as CharacterId;
+/** The healer of the fixtures (ADR 0034): never the assignee, never a judge. */
+export const MIRA = 'mira' as CharacterId;
 
 export interface Variant {
   readonly tier: Tier;
@@ -116,6 +119,7 @@ export function payloadOf<T extends QuestEventType>(type: T, quest: Quest): Payl
     block: { question: 'Bản EN dùng giọng nào?' },
     ask: { question: 'Giữ API cũ không?' },
     breaker: { trip: 'tokens' },
+    heal: { healer: MIRA, session_id: 's-heal' },
     answer: { answer: 'Giữ, đánh dấu deprecated.' },
     assign_verifier: { verifier: BRANN, session_id: 's-verify' },
     no_session: { verifier: BRANN },
@@ -144,8 +148,14 @@ export function walk(quest: Quest, types: readonly QuestEventType[]): Quest {
   }, quest);
 }
 
-/** A path from draft into each status (session tier; the script tier skips what needs a character). */
-export const PATHS: Readonly<Record<QuestStatus, readonly QuestEventType[]>> = {
+/**
+ * A submit commit the hooks refused for a healable reason, which the heal takes (ADR 0034); the default breaker is a
+ * cut without progress, which goes to the infirmary.
+ */
+export const REFUSED = { trip: 'commit', reason: 'breaker:commit_errors' } as const;
+
+/** A path from draft into each status but healing (session tier; the script tier skips what needs a character). */
+export const PATHS: Readonly<Record<Exclude<QuestStatus, 'healing'>, readonly QuestEventType[]>> = {
   draft: [],
   open: ['confirm'],
   claimed: ['confirm', 'claim'],
@@ -160,8 +170,22 @@ export const PATHS: Readonly<Record<QuestStatus, readonly QuestEventType[]>> = {
   archived: ['confirm', 'cancel'],
 };
 
+/** A quest whose refused commit went back, and the healer's session on it: a refused breaker takes no default payload. */
+function healingIn(variant: Variant): Quest {
+  const working = walk(draftQuest(variant), PATHS.working);
+  const refused = transition(working, { type: 'breaker', at: at(4), ...REFUSED }, 'steward');
+  if (!refused.ok) throw new Error(`working -> breaker: ${JSON.stringify(refused.error)}`);
+  return walk(refused.value, ['heal']);
+}
+
 export const questIn = (status: QuestStatus, variant: Variant = SESSION): Quest =>
-  walk(draftQuest(variant), PATHS[status]);
+  status === 'healing' ? healingIn(variant) : walk(draftQuest(variant), PATHS[status]);
+
+/** The events reachable tries for a type: a breaker also as a refused commit, so the heal's rows are reached. */
+const triedEvents = (type: QuestEventType, quest: Quest, when: string): QuestEvent[] => {
+  const event = eventOf(type, quest, when);
+  return event.type === 'breaker' ? [event, { ...event, ...REFUSED }] : [event];
+};
 
 /** The fields guards and effects read; two quests alike in these behave alike. */
 const keyOf = (quest: Quest): string =>
@@ -182,6 +206,9 @@ const keyOf = (quest: Quest): string =>
     reviewPartialsOf(quest),
     // The assignee_last guard reads whose session came last (fix/quest-hold).
     quest.attempt_log.at(-1)?.role,
+    // The heal's guards read whether the run had its heal, and whether it still waits for one (ADR 0034).
+    quest.attempt_log.some((entry) => entry.heal !== undefined),
+    awaitsHeal(quest),
   ]);
 
 /**
@@ -194,9 +221,10 @@ export function reachable(depth: number): Quest[] {
   for (let step = 1; step <= depth; step += 1) {
     const next: Quest[] = [];
     for (const quest of frontier) {
-      for (const type of QUEST_EVENT_TYPES) {
+      const tries = QUEST_EVENT_TYPES.flatMap((type) => triedEvents(type, quest, at(step)));
+      for (const event of tries) {
         for (const actor of QUEST_ACTORS) {
-          const result = transition(quest, eventOf(type, quest, at(step)), actor);
+          const result = transition(quest, event, actor);
           if (result.ok && !seen.has(keyOf(result.value))) {
             seen.set(keyOf(result.value), result.value);
             next.push(result.value);

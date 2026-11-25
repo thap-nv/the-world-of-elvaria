@@ -16,6 +16,8 @@ export const QUEST_STATUSES = [
   'working',
   'review',
   'returned',
+  // ADR 0034: a healer's session mends the refused work of the quest's run, as a doer of it.
+  'healing',
   'awaiting_seal',
   'done',
   'blocked',

@@ -6,6 +6,7 @@ import { HEALABLE_REASONS } from '../infirmary/reasons.ts';
 import type { InfirmaryReasonCode } from '../infirmary/reasons.ts';
 import type { BreakerTrip } from '../quest/events.ts';
 import type { Attempt } from '../schema/quest/quest-parts.ts';
+import type { Quest } from '../schema/quest/quest.ts';
 
 export type HealCall = 'heal' | 'infirmary';
 
@@ -42,3 +43,16 @@ export const endedInHealDue = (log: readonly Attempt[]): boolean => {
 /** Whether run `n` had its refused commit sent back: each assignee session of it after that one heals. */
 export const healDueIn = (log: readonly Attempt[], n: number): boolean =>
   log.some((entry) => entry.n === n && entry.heal === 'due');
+
+/**
+ * Whether a returned quest's run still waits for its heal: its refused commit just went back (`due`), or a healer's
+ * session of the run ended without one, its mana out or lost while no Steward ran (`healing.mana_out`,
+ * `healing.release`), which does not count, so the next tick chooses again (plans/healer.md 4.4). A healer's entry
+ * is a heal session of a character other than the quest's assignee; the doer's own heal sessions keep the rows of
+ * `working`, where a lost one opens a new run (HL-01).
+ */
+export const awaitsHeal = (quest: Pick<Quest, 'assignee' | 'attempt_log'>): boolean => {
+  if (endedInHealDue(quest.attempt_log)) return true;
+  const last = quest.attempt_log.at(-1);
+  return last?.role === 'assignee' && last.heal === 'session' && last.character !== quest.assignee;
+};

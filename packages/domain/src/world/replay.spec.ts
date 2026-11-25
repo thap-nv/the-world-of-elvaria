@@ -107,6 +107,8 @@ describe('replaying a fake day', () => {
     expect(unused).toEqual([
       // A refused commit sent back for a heal (ADR 0034): no writer before HL-02, and the fake day refuses no commit.
       'quest.heal_due',
+      // A healer's session on the quest (ADR 0034): no writer before HL-05, and the fake day has no healer.
+      'quest.healing',
       'quest.edited',
       'quest.unclaimable',
       'mana.warning',

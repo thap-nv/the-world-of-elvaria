@@ -15,6 +15,7 @@ const HELD: readonly QuestStatus[] = [
   'working',
   'review',
   'returned',
+  'healing',
   'awaiting_seal',
   'paused_mana',
 ];

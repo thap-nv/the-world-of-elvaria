@@ -34,7 +34,7 @@ describe('renderQuestTransitionTable', () => {
     const rows = [{ from: 'draft', event: 'confirm', actors: ['user'], to: 'open' }] as const;
     const table = renderQuestTransitionTable(rows, { 'draft.confirm': 'a | b' }).split('\n');
     // Every status but draft has no row here, so each is listed as terminal.
-    expect(table).toHaveLength(2 + 1 + 11);
+    expect(table).toHaveLength(2 + 1 + 12);
     expect(table[2]).toBe(String.raw`| draft | ` + '`confirm`' + String.raw` |  | U | open | a \| b |`);
   });
 });

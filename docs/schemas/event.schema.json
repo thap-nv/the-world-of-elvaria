@@ -110,7 +110,6 @@
               "quest.claimed",
               "quest.released",
               "quest.started",
-              "quest.submitted",
               "quest.returned",
               "quest.verdict",
               "quest.done",
@@ -207,6 +206,7 @@
                       "working",
                       "review",
                       "returned",
+                      "healing",
                       "awaiting_seal",
                       "done",
                       "blocked",
@@ -627,6 +627,552 @@
       "if": {
         "properties": {
           "type": {
+            "const": "quest.submitted"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "quest"
+            ],
+            "properties": {
+              "quest": {
+                "description": "The quest after this event (questViewOf). Its id is the envelope `quest`.",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "title",
+                  "kind",
+                  "rank",
+                  "territory",
+                  "status",
+                  "tier",
+                  "class_required",
+                  "tags",
+                  "assignee",
+                  "verifier",
+                  "attempts",
+                  "max_attempts",
+                  "seal_required",
+                  "sealed_at",
+                  "question",
+                  "party_id",
+                  "party_role",
+                  "campaign_id",
+                  "parent_id",
+                  "depends_on",
+                  "delivered_at",
+                  "created_at",
+                  "updated_at"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "kind": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "rank": {
+                    "enum": [
+                      "F",
+                      "E",
+                      "D",
+                      "C",
+                      "B",
+                      "A",
+                      "S"
+                    ]
+                  },
+                  "territory": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "global"
+                      ]
+                    }
+                  },
+                  "status": {
+                    "enum": [
+                      "draft",
+                      "open",
+                      "claimed",
+                      "working",
+                      "review",
+                      "returned",
+                      "healing",
+                      "awaiting_seal",
+                      "done",
+                      "blocked",
+                      "paused_mana",
+                      "infirmary",
+                      "archived"
+                    ]
+                  },
+                  "tier": {
+                    "enum": [
+                      "script",
+                      "session"
+                    ]
+                  },
+                  "class_required": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "maxItems": 6,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "assignee": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "user",
+                        "machine",
+                        "temple"
+                      ]
+                    }
+                  },
+                  "verifier": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "user",
+                        "machine",
+                        "temple"
+                      ]
+                    }
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "max_attempts": {
+                    "description": "budget.max_attempts: \"3 attempts used\" on the infirmary card.",
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "seal_required": {
+                    "type": "boolean"
+                  },
+                  "seal_raised": {
+                    "description": "quest.seal_raised: why the machine raised the seal the kingdom's delegation had spared the quest; the digest's awaiting_seal item names them.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "enum": [
+                        "protected_paths",
+                        "above_level",
+                        "out_of_scope",
+                        "diff_size",
+                        "same_family_judge",
+                        "machine_judge",
+                        "objection",
+                        "rank_above",
+                        "out_of_delegation",
+                        "suspended"
+                      ]
+                    }
+                  },
+                  "sealed_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "question": {
+                    "description": "blocked.question while it waits for the owner's answer: the throne asks the owner to answer it. (PS-22b) Null while the quest's author decides the amendment it waits on.",
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1
+                  },
+                  "party_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "party_role": {
+                    "enum": [
+                      "contract",
+                      "part",
+                      "acceptance",
+                      "merge"
+                    ]
+                  },
+                  "campaign_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^c_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "parent_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                    }
+                  },
+                  "delivered_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              "characters": {
+                "description": "Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "name",
+                    "class",
+                    "tribe",
+                    "model",
+                    "level",
+                    "status",
+                    "status_since",
+                    "current",
+                    "reputation",
+                    "title"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                      "not": {
+                        "enum": [
+                          "user",
+                          "machine",
+                          "temple"
+                        ]
+                      }
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 24
+                    },
+                    "class": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "tribe": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "model": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9.-]*$"
+                    },
+                    "level": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10
+                    },
+                    "status": {
+                      "enum": [
+                        "idle",
+                        "working",
+                        "reviewing",
+                        "sleeping_mana",
+                        "meditating",
+                        "suspended",
+                        "swamp"
+                      ]
+                    },
+                    "status_since": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "current": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "additionalProperties": false,
+                      "required": [
+                        "quest",
+                        "role"
+                      ],
+                      "properties": {
+                        "quest": {
+                          "type": "string",
+                          "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                        },
+                        "role": {
+                          "enum": [
+                            "assignee",
+                            "verifier"
+                          ]
+                        }
+                      }
+                    },
+                    "reputation": {
+                      "description": "reputationOf(reputation.window): the avatar ring (--rep); pct null before any verdict.",
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "verdicts",
+                        "pct"
+                      ],
+                      "properties": {
+                        "verdicts": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "pct": {
+                          "type": [
+                            "number",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      }
+                    },
+                    "title": {
+                      "description": "titleOf(character): the tag shown over the head, if any.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  }
+                }
+              },
+              "sequels": {
+                "description": "The line that tells a session's end: the sessions that followed the first in the same run (a reply tried once more for a tribe without structured output, a reminder of an unchanged letter, P1-33), in order. The envelope `session` is the first one's, and attempt_log has one entry for them all, so the log counts every session a run opened (P1-49).",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "session_id": {
+                      "description": "The sequel's CLI session, when the runner knew it.",
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "why": {
+                      "description": "Why it opened: the reply tried once more, the letter unchanged (not translated).",
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              },
+              "load_trace": {
+                "description": "What the prompt of the session this line opens carried (PS-01b): on a session's opening line only, quest.started (an assignee's start or redispatch, a verifier's assignment), quest.unblocked (the owner's answer) and quest.resumed (mana back). Absent from every other line and from lines written before PS-01b.",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "scriptures",
+                  "skills",
+                  "blocks"
+                ],
+                "properties": {
+                  "scriptures": {
+                    "description": "The scripture files the prompt carried a lesson of; empty when it carried none. A file none of whose lessons loaded is absent (PS-12).",
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "file",
+                        "lines"
+                      ],
+                      "properties": {
+                        "file": {
+                          "description": "The scripture's file, relative to the kingdom with `/`: the character's, then the temple's.",
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "lines": {
+                          "description": "Its lessons the prompt carried, after scope filtering and the 40-line cap (PS-12); before PS-12, its lines as the prompt carried them, trimmed.",
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      }
+                    }
+                  },
+                  "lessons": {
+                    "description": "The lessons the prompt carried, in order (PS-12, lesson-sharing S7): a line's id `L_…`, or `T_…`, the hash of the sentence of a line without one. Absent before PS-12 and from a resumed session's line.",
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^(?:L_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}|T_[0-9a-hjkmnp-tv-z]{10})$"
+                    }
+                  },
+                  "skills": {
+                    "description": "The skills the prompt carried, by id; empty until stage 5 (§3.13).",
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "blocks": {
+                    "description": "The prompt's blocks that said something, the system part's first, each part's in order.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "part",
+                        "id",
+                        "chars"
+                      ],
+                      "properties": {
+                        "part": {
+                          "enum": [
+                            "system",
+                            "user"
+                          ]
+                        },
+                        "id": {
+                          "description": "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, graph (PS-21), quest, advisories (PS-09c), gazetteer, scripture, skills, continuation, memos (PS-02), partial, objection (PS-22), review, resumed, answer.",
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9_]*$"
+                        },
+                        "chars": {
+                          "description": "Its size in characters, trimmed: the code has no token counter (§3.16.1).",
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "out_of_scope": {
+                "description": "On the `quest.submitted` line of a quest with scope_paths: the files the work changed outside them, the territory's shared paths aside, relative to the plot with `/`. A signal for the judge, who sees the same list, and a number in the metrics; never a fail (ADR 0028).",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "diff_lines": {
+                "description": "On the `quest.submitted` line of a quest with seal_delegated: the lines its branch added and removed since its fork point, the territory's shared paths merged by `regenerate` aside, which the delegation's max_diff_lines bounds. PS-16 reads the same measure.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "refused_patch": {
+                "description": "On the `quest.blocked` line of a run that ended on its amendment (PS-22b): why the Steward did not apply the run's patch, which stays in the plot while the quest waits. The doer's next session reads it (Continuation.refused_patch, P1-31).",
+                "type": "string",
+                "minLength": 1
+              },
+              "refused_commit": {
+                "description": "On the `quest.blocked` line of a run that ended on its amendment (PS-22b): the first lines of what git said when the Steward's commit of the run's work failed, most often a territory hook refusing it; the work stays uncommitted in the plot while the quest waits. The doer's next session reads it (Continuation.refused_commit).",
+                "type": "string",
+                "minLength": 1
+              },
+              "heal": {
+                "description": "On the `quest.submitted` line of a healer's session (healing → review): what the healer changed in the doer's refused work before the Steward's commit through the territory's hooks passed (ADR 0034). The doer's own heal is not measured and has none.",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "by",
+                  "files",
+                  "lines",
+                  "patch"
+                ],
+                "properties": {
+                  "by": {
+                    "description": "The healer whose session mended the work.",
+                    "type": "string",
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "user",
+                        "machine",
+                        "temple"
+                      ]
+                    }
+                  },
+                  "files": {
+                    "description": "The files the healer changed, measured by the Steward against the staged tree its session opened on; at most kingdom.heal.max_files, all of them in the work the doer staged.",
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "lines": {
+                    "description": "The lines it added and removed; at most kingdom.heal.max_lines.",
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "patch": {
+                    "description": "What it changed, `.runs/<quest>-<n>/heal/heal.patch`, which the judge's prompt shows beside the branch's diff.",
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "const": "quest.infirmary"
           }
         }
@@ -665,6 +1211,11 @@
                       "breaker:treasury_unreadable",
                       "breaker:no_session",
                       "breaker:no_progress",
+                      "heal:over_limit",
+                      "heal:out_of_work",
+                      "heal:unchanged",
+                      "heal:cut",
+                      "heal:session_ended",
                       "judge:time",
                       "judge:tokens",
                       "judge:turns",
@@ -737,7 +1288,7 @@
                     "minLength": 1
                   },
                   "paths": {
-                    "description": "trip forbidden_paths: the paths of laws.forbidden_paths the session left changed, added or deleted in the quest's plot, relative to it with `/` (P1-49). Nothing was committed: the work stays in the plot.",
+                    "description": "trip forbidden_paths: the paths of laws.forbidden_paths the session left changed, added or deleted in the quest's plot, relative to it with `/` (P1-49). Nothing was committed: the work stays in the plot. Reason heal:out_of_work (ADR 0034): the files the healer changed outside the work the doer staged, the plot put back.",
                     "type": "array",
                     "minItems": 1,
                     "items": {
@@ -843,6 +1394,7 @@
                       "working",
                       "review",
                       "returned",
+                      "healing",
                       "awaiting_seal",
                       "done",
                       "blocked",
@@ -1301,6 +1853,11 @@
                       "breaker:treasury_unreadable",
                       "breaker:no_session",
                       "breaker:no_progress",
+                      "heal:over_limit",
+                      "heal:out_of_work",
+                      "heal:unchanged",
+                      "heal:cut",
+                      "heal:session_ended",
                       "judge:time",
                       "judge:tokens",
                       "judge:turns",
@@ -1406,6 +1963,526 @@
                       "working",
                       "review",
                       "returned",
+                      "healing",
+                      "awaiting_seal",
+                      "done",
+                      "blocked",
+                      "paused_mana",
+                      "infirmary",
+                      "archived"
+                    ]
+                  },
+                  "tier": {
+                    "enum": [
+                      "script",
+                      "session"
+                    ]
+                  },
+                  "class_required": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "maxItems": 6,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "assignee": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "user",
+                        "machine",
+                        "temple"
+                      ]
+                    }
+                  },
+                  "verifier": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "user",
+                        "machine",
+                        "temple"
+                      ]
+                    }
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "max_attempts": {
+                    "description": "budget.max_attempts: \"3 attempts used\" on the infirmary card.",
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "seal_required": {
+                    "type": "boolean"
+                  },
+                  "seal_raised": {
+                    "description": "quest.seal_raised: why the machine raised the seal the kingdom's delegation had spared the quest; the digest's awaiting_seal item names them.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "enum": [
+                        "protected_paths",
+                        "above_level",
+                        "out_of_scope",
+                        "diff_size",
+                        "same_family_judge",
+                        "machine_judge",
+                        "objection",
+                        "rank_above",
+                        "out_of_delegation",
+                        "suspended"
+                      ]
+                    }
+                  },
+                  "sealed_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "question": {
+                    "description": "blocked.question while it waits for the owner's answer: the throne asks the owner to answer it. (PS-22b) Null while the quest's author decides the amendment it waits on.",
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1
+                  },
+                  "party_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "party_role": {
+                    "enum": [
+                      "contract",
+                      "part",
+                      "acceptance",
+                      "merge"
+                    ]
+                  },
+                  "campaign_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^c_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "parent_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                    }
+                  },
+                  "delivered_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              "characters": {
+                "description": "Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "name",
+                    "class",
+                    "tribe",
+                    "model",
+                    "level",
+                    "status",
+                    "status_since",
+                    "current",
+                    "reputation",
+                    "title"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                      "not": {
+                        "enum": [
+                          "user",
+                          "machine",
+                          "temple"
+                        ]
+                      }
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 24
+                    },
+                    "class": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "tribe": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "model": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9.-]*$"
+                    },
+                    "level": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10
+                    },
+                    "status": {
+                      "enum": [
+                        "idle",
+                        "working",
+                        "reviewing",
+                        "sleeping_mana",
+                        "meditating",
+                        "suspended",
+                        "swamp"
+                      ]
+                    },
+                    "status_since": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "current": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "additionalProperties": false,
+                      "required": [
+                        "quest",
+                        "role"
+                      ],
+                      "properties": {
+                        "quest": {
+                          "type": "string",
+                          "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                        },
+                        "role": {
+                          "enum": [
+                            "assignee",
+                            "verifier"
+                          ]
+                        }
+                      }
+                    },
+                    "reputation": {
+                      "description": "reputationOf(reputation.window): the avatar ring (--rep); pct null before any verdict.",
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "verdicts",
+                        "pct"
+                      ],
+                      "properties": {
+                        "verdicts": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "pct": {
+                          "type": [
+                            "number",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      }
+                    },
+                    "title": {
+                      "description": "titleOf(character): the tag shown over the head, if any.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  }
+                }
+              },
+              "sequels": {
+                "description": "The line that tells a session's end: the sessions that followed the first in the same run (a reply tried once more for a tribe without structured output, a reminder of an unchanged letter, P1-33), in order. The envelope `session` is the first one's, and attempt_log has one entry for them all, so the log counts every session a run opened (P1-49).",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "session_id": {
+                      "description": "The sequel's CLI session, when the runner knew it.",
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "why": {
+                      "description": "Why it opened: the reply tried once more, the letter unchanged (not translated).",
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              },
+              "load_trace": {
+                "description": "What the prompt of the session this line opens carried (PS-01b): on a session's opening line only, quest.started (an assignee's start or redispatch, a verifier's assignment), quest.unblocked (the owner's answer) and quest.resumed (mana back). Absent from every other line and from lines written before PS-01b.",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "scriptures",
+                  "skills",
+                  "blocks"
+                ],
+                "properties": {
+                  "scriptures": {
+                    "description": "The scripture files the prompt carried a lesson of; empty when it carried none. A file none of whose lessons loaded is absent (PS-12).",
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "file",
+                        "lines"
+                      ],
+                      "properties": {
+                        "file": {
+                          "description": "The scripture's file, relative to the kingdom with `/`: the character's, then the temple's.",
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "lines": {
+                          "description": "Its lessons the prompt carried, after scope filtering and the 40-line cap (PS-12); before PS-12, its lines as the prompt carried them, trimmed.",
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      }
+                    }
+                  },
+                  "lessons": {
+                    "description": "The lessons the prompt carried, in order (PS-12, lesson-sharing S7): a line's id `L_…`, or `T_…`, the hash of the sentence of a line without one. Absent before PS-12 and from a resumed session's line.",
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^(?:L_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}|T_[0-9a-hjkmnp-tv-z]{10})$"
+                    }
+                  },
+                  "skills": {
+                    "description": "The skills the prompt carried, by id; empty until stage 5 (§3.13).",
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "blocks": {
+                    "description": "The prompt's blocks that said something, the system part's first, each part's in order.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "part",
+                        "id",
+                        "chars"
+                      ],
+                      "properties": {
+                        "part": {
+                          "enum": [
+                            "system",
+                            "user"
+                          ]
+                        },
+                        "id": {
+                          "description": "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, graph (PS-21), quest, advisories (PS-09c), gazetteer, scripture, skills, continuation, memos (PS-02), partial, objection (PS-22), review, resumed, answer.",
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9_]*$"
+                        },
+                        "chars": {
+                          "description": "Its size in characters, trimmed: the code has no token counter (§3.16.1).",
+                          "type": "integer",
+                          "minimum": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "out_of_scope": {
+                "description": "On the `quest.submitted` line of a quest with scope_paths: the files the work changed outside them, the territory's shared paths aside, relative to the plot with `/`. A signal for the judge, who sees the same list, and a number in the metrics; never a fail (ADR 0028).",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "diff_lines": {
+                "description": "On the `quest.submitted` line of a quest with seal_delegated: the lines its branch added and removed since its fork point, the territory's shared paths merged by `regenerate` aside, which the delegation's max_diff_lines bounds. PS-16 reads the same measure.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "refused_patch": {
+                "description": "On the `quest.blocked` line of a run that ended on its amendment (PS-22b): why the Steward did not apply the run's patch, which stays in the plot while the quest waits. The doer's next session reads it (Continuation.refused_patch, P1-31).",
+                "type": "string",
+                "minLength": 1
+              },
+              "refused_commit": {
+                "description": "On the `quest.blocked` line of a run that ended on its amendment (PS-22b): the first lines of what git said when the Steward's commit of the run's work failed, most often a territory hook refusing it; the work stays uncommitted in the plot while the quest waits. The doer's next session reads it (Continuation.refused_commit).",
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "quest.healing"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "healer",
+              "quest"
+            ],
+            "properties": {
+              "healer": {
+                "description": "The healer selectHealer chose, whose session opens now as a doer of the quest, in the same run; the quest's assignee stays the doer's.",
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                "not": {
+                  "enum": [
+                    "user",
+                    "machine",
+                    "temple"
+                  ]
+                }
+              },
+              "quest": {
+                "description": "The quest after this event (questViewOf). Its id is the envelope `quest`.",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "title",
+                  "kind",
+                  "rank",
+                  "territory",
+                  "status",
+                  "tier",
+                  "class_required",
+                  "tags",
+                  "assignee",
+                  "verifier",
+                  "attempts",
+                  "max_attempts",
+                  "seal_required",
+                  "sealed_at",
+                  "question",
+                  "party_id",
+                  "party_role",
+                  "campaign_id",
+                  "parent_id",
+                  "depends_on",
+                  "delivered_at",
+                  "created_at",
+                  "updated_at"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "kind": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "rank": {
+                    "enum": [
+                      "F",
+                      "E",
+                      "D",
+                      "C",
+                      "B",
+                      "A",
+                      "S"
+                    ]
+                  },
+                  "territory": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "global"
+                      ]
+                    }
+                  },
+                  "status": {
+                    "enum": [
+                      "draft",
+                      "open",
+                      "claimed",
+                      "working",
+                      "review",
+                      "returned",
+                      "healing",
                       "awaiting_seal",
                       "done",
                       "blocked",
@@ -5211,6 +6288,7 @@
         "quest.resumed",
         "quest.infirmary",
         "quest.heal_due",
+        "quest.healing",
         "quest.delivered",
         "quest.edited",
         "quest.unclaimable",

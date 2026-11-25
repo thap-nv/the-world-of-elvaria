@@ -149,7 +149,10 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   `selectHealer` (HL-03, ADR 0034) chooses who mends a work the territory's hooks refused: a free character of an
   `is_healer` class whose model family is among the quest's doers (`workedOn`), the higher level first; one that
   stands by busy is waited for; with none, the doer heals its own work. Never the assignee itself, nor a character
-  the party's bars keep from the quest (`partyBarsOf`).
+  the party's bars keep from the quest (`partyBarsOf`). `planTick` (HL-04) asks it for each returned quest whose run
+  awaits its heal (`awaitsHeal`, `src/dispatch/returns.ts`): a healer that stands by as a claimant does (its tribe
+  may take the quest on its territory, its pool open) and is free takes it (`heals`, then `returned.heal` into the
+  status `healing`, a doer's entry of the same run); a busy one is waited for; the doer goes through `redispatches`.
 - Keeps quests whose files meet apart (`src/dispatch/scope.ts`, implementation-plan §3.16.5, ADR 0028, PS-05):
   `quest.scope_paths` is optional; `scopesMeet` compares the literal text of the globs, a doubt is an overlap, and
   entries inside `territory.shared_paths` do not count. A session-tier quest holds its scope from its first run until

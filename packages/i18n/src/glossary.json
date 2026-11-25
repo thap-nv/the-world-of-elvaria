@@ -775,7 +775,7 @@
               "en": "Heal",
               "id": ["heal"],
               "definition": "Mỗi lượt một lần (ADR 0034): commit nộp việc bị hook của lãnh thổ từ chối vì lý do chữa được thì quest quay lại một lần, không tốn lượt thử, để người làm tự chữa trong phiên mới hay một Y sư cùng họ model chữa; lần từ chối thứ hai của lượt vào trạm quân y. Phiên chữa có trần riêng (`kingdom.heal`) và không có phiên tiếp.",
-              "used_in": "`attempt_log[].heal`, `kingdom.heal`, event `quest.heal_due`, `healCallOf`, `selectHealer`"
+              "used_in": "`attempt_log[].heal`, `kingdom.heal`, event `quest.heal_due`, `quest.healing`, `quest.status = healing`, `healCallOf`, `selectHealer`, `planTick.heals`"
             },
             {
               "vi": "Mana",
@@ -1560,6 +1560,12 @@
               "id": ["returned"],
               "tone": "`returned`",
               "icon": "`q-returned` → `quest-returned`"
+            },
+            {
+              "vi": "Đang chữa",
+              "id": ["healing"],
+              "tone": "`infirmary`",
+              "icon": "—"
             },
             {
               "vi": "Chờ dấu vua",
@@ -2465,11 +2471,12 @@
                 "quest.resumed",
                 "quest.infirmary",
                 "quest.heal_due",
+                "quest.healing",
                 "quest.delivered",
                 "quest.edited",
                 "quest.unclaimable"
               ],
-              "meaning": "mỗi chuyển trạng thái của quest (§2.5 của implementation-plan); `quest.edited`: người dùng sửa trường của quest (`edit_quest`, `set_rank`); `quest.unclaimable`: Nhiếp chính báo quest `open` không ai nhận được (§3.1); `quest.heal_due`: hook từ chối commit nộp lần đầu trong lượt, quest về `returned` chờ phiên chữa, không chuông (ADR 0034)"
+              "meaning": "mỗi chuyển trạng thái của quest (§2.5 của implementation-plan); `quest.edited`: người dùng sửa trường của quest (`edit_quest`, `set_rank`); `quest.unclaimable`: Nhiếp chính báo quest `open` không ai nhận được (§3.1); `quest.heal_due`: hook từ chối commit nộp lần đầu trong lượt, quest về `returned` chờ phiên chữa, không chuông (ADR 0034); `quest.healing`: phiên của Y sư mở trên quest (`returned` → `healing`, ADR 0034)"
             },
             {
               "group": "Phiên agent",

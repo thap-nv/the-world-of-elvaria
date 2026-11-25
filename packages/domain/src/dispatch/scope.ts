@@ -85,9 +85,9 @@ export function pathInScope(path: string, scope: readonly string[]): boolean {
   });
 }
 
-/** A session-tier quest at work on its territory: R2 counts these. */
+/** A session-tier quest at work on its territory, a healer's session on it included (ADR 0034): R2 counts these. */
 export const worksOnTerritory = (quest: Quest): boolean =>
-  quest.tier === 'session' && quest.status === 'working';
+  quest.tier === 'session' && (quest.status === 'working' || quest.status === 'healing');
 
 /**
  * Whether the quest holds its scope (ADR 0028, amended 2026-11-11): a session-tier quest with a scope, from its first

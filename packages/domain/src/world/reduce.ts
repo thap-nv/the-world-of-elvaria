@@ -105,6 +105,9 @@ const HANDLERS: { readonly [T in TypedEventType]?: Handler<T> } = {
   'quest.paused': onQuest,
   'quest.resumed': onQuest,
   'quest.infirmary': onQuest,
+  // One heal per run (ADR 0034): the refusal that goes back, and the healer's session on it.
+  'quest.heal_due': onQuest,
+  'quest.healing': onQuest,
   'quest.delivered': onQuest,
   'quest.edited': onQuest,
   'character.created': onCharacter,
