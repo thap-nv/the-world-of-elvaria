@@ -22,10 +22,15 @@ import type { QuestActor, QuestEvent, QuestEventType } from './events.ts';
 // Deep enough to reach every row: the longest path (three failed verdicts into the infirmary) is 13 events
 // with a budget of three attempts, 6 with a budget of one.
 const SAMPLES = reachable(10);
-/** The events tried for a type: a breaker is also tried as a cut that made progress (ADR 0030). */
+/**
+ * The events tried for a type: a breaker is also tried as a cut that made progress (ADR 0030), and as a refused
+ * commit the heal may take (ADR 0034).
+ */
 const eventsOf = (type: QuestEventType, quest: Quest): QuestEvent[] => {
   const event = eventOf(type, quest, at(30));
-  return event.type === 'breaker' ? [event, { ...event, progress: true }] : [event];
+  if (event.type !== 'breaker') return [event];
+  const refused = { ...event, trip: 'commit', reason: 'breaker:commit_errors' } as const;
+  return [event, { ...event, progress: true }, refused];
 };
 const CASES = SAMPLES.flatMap((quest) =>
   QUEST_EVENT_TYPES.flatMap((type) =>
@@ -139,7 +144,8 @@ function randomEvent(random: () => number, type: QuestEventType, quest: Quest, m
   if (event.type === 'assign_verifier') return { ...event, verifier: pick(random, PEOPLE) };
   if (event.type === 'breaker') {
     const progress = pick(random, [{}, { progress: true }, { progress: false }]);
-    return { ...event, trip: pick(random, BREAKER_TRIPS), ...progress };
+    const reason = pick(random, [{}, { reason: 'breaker:commit' }, { reason: 'breaker:patch' }] as const);
+    return { ...event, trip: pick(random, BREAKER_TRIPS), ...progress, ...reason };
   }
   return event;
 }

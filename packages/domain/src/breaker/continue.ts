@@ -15,12 +15,14 @@ export const isCapTrip = (trip: BreakerTrip): trip is CapTrip =>
  * The call for a cut of the assignee's open session, the last assignee entry of `log`. A cut with progress always
  * goes on, however many went on before it (no ceiling on continuations). One without goes on too, unless the session
  * right before it, in the same run, was cut without progress as well: two such cuts in a row, the infirmary. Only the
- * run counts: `retry` and `reassign` open run n + 1, so a cut after them starts a new chain.
+ * run counts: `retry` and `reassign` open run n + 1, so a cut after them starts a new chain. A heal session never
+ * goes on (ADR 0034): its ceilings are its own and small, so a cut says the heal failed, and the owner looks.
  */
 export function cutCallOf(log: readonly Attempt[], progress: boolean): CutCall {
-  if (progress) return 'go_on';
   const mine = log.filter((entry) => entry.role === 'assignee');
   const open = mine.at(-1);
+  if (open?.heal === 'session') return 'infirmary';
+  if (progress) return 'go_on';
   const before = mine.slice(0, -1).at(-1);
   return open !== undefined && before?.n === open.n && before.progress === false ? 'infirmary' : 'go_on';
 }

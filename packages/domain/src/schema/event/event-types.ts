@@ -18,6 +18,8 @@ export const EVENT_TYPES = [
   'quest.paused',
   'quest.resumed',
   'quest.infirmary',
+  // ADR 0034: a refused submit commit sent back for a heal (working → returned, no bell).
+  'quest.heal_due',
   'quest.delivered',
   'quest.edited',
   'quest.unclaimable',

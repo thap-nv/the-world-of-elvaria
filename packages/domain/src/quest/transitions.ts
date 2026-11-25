@@ -2,6 +2,7 @@
 // table, and transition() refuses anything else. The table in the plan is rendered from these rows
 // (renderQuestTransitionTable), so the document cannot drift from the code. Read before changing: CLAUDE.md.
 import { cutCallOf, isCapTrip } from '../breaker/continue.ts';
+import { healCallOf } from '../breaker/heal.ts';
 import { reviewStalled } from '../breaker/review.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { QuestStatus } from '../schema/quest/shared.ts';
@@ -26,6 +27,7 @@ export type QuestGuard =
   | 'undelivered'
   | 'stalled_review'
   | 'no_stalled_review'
+  | 'heal_due'
   | 'cut_goes_on'
   | 'cut_stops'
   | 'assignee_last';
@@ -60,6 +62,14 @@ const cutGoesOn = (quest: Quest, event?: QuestEvent): boolean =>
   cutCallOf(quest.attempt_log, event.progress) === 'go_on';
 
 /**
+ * A character's submit commit the territory's hooks refused goes back once per run (ADR 0034): the event names a
+ * healable reason, which the Steward does only while kingdom.heal.enabled holds, and healCallOf finds no heal in the
+ * run. Trip `commit` only, so it never holds with `cut_goes_on`, which takes the ceilings.
+ */
+const healDue = (quest: Quest, event?: QuestEvent): boolean =>
+  event?.type === 'breaker' && byCharacter(quest) && healCallOf(quest.attempt_log, event) === 'heal';
+
+/**
  * A character's work waits in the infirmary: the quest's last session was its assignee's (cut, crashed, its commit
  * refused), not a judge's, so a judge has work of this run to read (fix/quest-hold). A review that stalled has its own
  * way back (`infirmary.retry.stalled_review`), and a quest no session ran for has nothing to judge.
@@ -92,8 +102,9 @@ export const QUEST_GUARDS: Readonly<Record<QuestGuard, (quest: Quest, event?: Qu
   // work is done, only its review stalled.
   stalled_review: reviewStalled,
   no_stalled_review: (quest) => !reviewStalled(quest),
+  heal_due: healDue,
   cut_goes_on: cutGoesOn,
-  cut_stops: (quest, event) => !cutGoesOn(quest, event),
+  cut_stops: (quest, event) => !healDue(quest, event) && !cutGoesOn(quest, event),
   assignee_last: assigneeLast,
 };
 
@@ -139,9 +150,13 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'working', event: 'release', actors: S, guard: 'by_character', to: 'returned' },
   { from: 'working', event: 'ask', actors: R, to: 'blocked' },
   { from: 'working', event: 'mana_out', actors: M, guard: 'by_character', to: 'paused_mana' },
+  // The hooks refused a character's submit commit for the first time in the run (ADR 0034): the quest goes back with
+  // no bell, and the `redispatch` that follows opens a heal session of the same run, the attempt kept.
+  { from: 'working', event: 'breaker', actors: S, guard: 'heal_due', to: 'returned' },
   // A ceiling cut a character's session that made progress, or the first without (ADR 0030): the same character goes
   // on in a fresh session of the same run, as after a lost session (P1-44) but with the attempt kept. The
-  // `redispatch` that follows opens it. Right after, the other trips and the second cut in a row without progress.
+  // `redispatch` that follows opens it. Right after, the other trips, a second refusal of the run, a heal session's
+  // cut and the second cut in a row without progress.
   { from: 'working', event: 'breaker', actors: S, guard: 'cut_goes_on', to: 'returned' },
   { from: 'working', event: 'breaker', actors: S, guard: 'cut_stops', to: 'infirmary' },
   { from: 'working', event: 'crash', actors: S, guard: 'can_retry', to: 'returned' },

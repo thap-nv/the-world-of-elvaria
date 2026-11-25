@@ -86,6 +86,14 @@ export const AttemptSchema = z.strictObject({
         'Only on an assignee session cut by the time, token or turn ceiling: whether it left a new commit (or a WIP commit with changes) before the cut. A cut with progress goes on in a fresh session; two cuts in a row without it send the quest to the infirmary (ADR 0030). Added after v1: no entry written before has it.',
       ),
     ),
+  heal: z
+    .enum(['due', 'session'])
+    .optional()
+    .meta(
+      describe(
+        "One heal per run (ADR 0034). due: an assignee session whose submit commit the territory's hooks refused for a healable reason, sent back for a heal instead of to the infirmary; session: a session of the same run after it, which heals (no continuation, ceilings of kingdom.heal). A run with either has had its heal. Added after v1: no entry written before has it.",
+      ),
+    ),
   run_dir: z
     .string()
     .regex(/^\.runs\/[^\\]+$/)

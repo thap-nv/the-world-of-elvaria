@@ -251,6 +251,42 @@
         }
       }
     },
+    "heal": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "A submit commit the territory's hooks refused (breaker:commit, breaker:commit_errors) goes back once per run for a heal, with no bell, instead of to the infirmary. false: every refusal goes to the infirmary.",
+          "type": "boolean",
+          "default": true
+        },
+        "tokens": {
+          "description": "A heal session's nominal token ceiling, in place of the quest's; breakers.soft_pct and hard_pct apply to it.",
+          "type": "integer",
+          "minimum": 1,
+          "default": 150000
+        },
+        "minutes": {
+          "description": "A heal session's nominal time ceiling, in place of the quest's.",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "default": 15
+        },
+        "max_files": {
+          "description": "The most files a healer may change in the staged work (K8).",
+          "type": "integer",
+          "minimum": 1,
+          "default": 8
+        },
+        "max_lines": {
+          "description": "The most lines a healer may change in the staged work (K8).",
+          "type": "integer",
+          "minimum": 1,
+          "default": 60
+        }
+      },
+      "default": {}
+    },
     "schedule": {
       "$comment": "Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03) and the triage (PS-03b) have a runner and are on by default; the patrol (PS-26) has one and is off by default, since it runs every check of each territory it watches; chronicle and temple have none yet, so they default to disabled.",
       "type": "object",
@@ -900,6 +936,13 @@
         "context_budget_tokens": 120000,
         "verifier_tokens_multiplier": 2
       },
+      "heal": {
+        "enabled": true,
+        "tokens": 150000,
+        "minutes": 15,
+        "max_files": 8,
+        "max_lines": 60
+      },
       "schedule": {
         "chronicle": {
           "enabled": false,
@@ -1032,6 +1075,13 @@
         "subagent_max_turns": 30,
         "context_budget_tokens": 120000,
         "verifier_tokens_multiplier": 2
+      },
+      "heal": {
+        "enabled": true,
+        "tokens": 150000,
+        "minutes": 15,
+        "max_files": 8,
+        "max_lines": 60
       },
       "schedule": {
         "chronicle": {

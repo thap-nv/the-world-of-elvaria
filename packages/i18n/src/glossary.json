@@ -2450,11 +2450,12 @@
                 "quest.paused",
                 "quest.resumed",
                 "quest.infirmary",
+                "quest.heal_due",
                 "quest.delivered",
                 "quest.edited",
                 "quest.unclaimable"
               ],
-              "meaning": "mỗi chuyển trạng thái của quest (§2.5 của implementation-plan); `quest.edited`: người dùng sửa trường của quest (`edit_quest`, `set_rank`); `quest.unclaimable`: Nhiếp chính báo quest `open` không ai nhận được (§3.1)"
+              "meaning": "mỗi chuyển trạng thái của quest (§2.5 của implementation-plan); `quest.edited`: người dùng sửa trường của quest (`edit_quest`, `set_rank`); `quest.unclaimable`: Nhiếp chính báo quest `open` không ai nhận được (§3.1); `quest.heal_due`: hook từ chối commit nộp lần đầu trong lượt, quest về `returned` chờ phiên chữa, không chuông (ADR 0034)"
             },
             {
               "group": "Phiên agent",
