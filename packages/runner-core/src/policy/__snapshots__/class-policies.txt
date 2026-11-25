@@ -68,6 +68,7 @@
       "Bash(pnpm --filter:*)",
       "Bash(pnpm lint:*)",
       "Bash(pnpm typecheck:*)",
+      "Bash(pnpm install --frozen-lockfile --prefer-offline)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git add:*)",

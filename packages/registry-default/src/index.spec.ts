@@ -200,6 +200,14 @@ describe('the default registry', () => {
     expect(allowOf('knight')).toContain('Bash(pnpm --filter:*)');
   });
 
+  // (512) a knight adding a workspace dependency could not lint before the Steward's setup at commit linked it: it may
+  // run exactly the frozen offline install; adding packages stays the dwarf's craft.
+  it('lets the knight run only the frozen offline install', () => {
+    const knight = registry().classes.find((entry) => entry.id === 'knight')?.tools.allow ?? [];
+    expect(knight).toContain('Bash(pnpm install --frozen-lockfile --prefer-offline)');
+    expect(knight.filter((rule) => /^Bash\(pnpm (install|add)/.test(rule))).toHaveLength(1);
+  });
+
   it('ships the prompt of every class, opened by a note for the maintainer (P1-15)', () => {
     for (const entry of registry().classes) {
       expect(entry.prompt_file).toBe(`prompts/${entry.id}.md`);
