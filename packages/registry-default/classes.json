@@ -239,6 +239,34 @@
         "deny": ["Edit", "Write", "Bash"]
       },
       "prompt_file": "prompts/monk.md"
+    },
+    {
+      "id": "healer",
+      "name_vi": "Y sư",
+      "name_en": "Healer",
+      "kinds": [],
+      "is_verifier": false,
+      "is_monk": false,
+      "is_healer": true,
+      "default_tribe": "claude",
+      "default_model": "claude-sonnet-5-5",
+      "tools": {
+        "allow": [
+          "Read",
+          "Edit",
+          "Write",
+          "Glob",
+          "Grep",
+          "Bash(pnpm lint:*)",
+          "Bash(pnpm typecheck:*)",
+          "Bash(pnpm --filter:*)",
+          "Bash(pnpm install --frozen-lockfile --prefer-offline)",
+          "Bash(git status:*)",
+          "Bash(git diff:*)"
+        ],
+        "deny": ["Bash(git add:*)", "Bash(git commit:*)", "Bash(git push:*)", "WebFetch", "Agent"]
+      },
+      "prompt_file": "prompts/healer.md"
     }
   ]
 }

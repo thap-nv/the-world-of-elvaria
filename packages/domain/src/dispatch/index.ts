@@ -13,6 +13,7 @@ export * from './revival.ts';
 export * from './roster.ts';
 export * from './scope.ts';
 export * from './select-assignee.ts';
+export * from './select-healer.ts';
 export {
   BASE_LOOK_MINUTES,
   FORGE_POLL_SECONDS,

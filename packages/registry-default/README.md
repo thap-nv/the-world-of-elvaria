@@ -3,7 +3,7 @@
 ## Does
 
 - Ships the default registry that `elvaria init` copies into `<kingdom>/registry/` (implementation-plan §2.2):
-  11 kinds, 11 classes, 12 rituals, 6 catalog scripts, 8 tags, 4 memo kinds (`proposal`, routed to the Chancellor,
+  11 kinds, 12 classes (the last, `healer`, `is_healer`, HL-03, ADR 0034), 12 rituals, 6 catalog scripts, 8 tags, 4 memo kinds (`proposal`, routed to the Chancellor,
   PS-02; `objection`, routed to a second judge, PS-22; `amendment`, routed to the quest's author, PS-22b; `advisory`,
   routed to the quests at work, the one the Steward writes as a quest reaches its base branch, PS-09c; `memos.json`,
   ADR 0024), and one prompt per class. The package root is laid

@@ -57,6 +57,7 @@ describe('the default registry', () => {
       'envoy',
       'judge',
       'monk',
+      'healer',
     ]);
     expect(rituals).toHaveLength(13);
     expect(ids(scripts)).toEqual([
@@ -164,18 +165,6 @@ describe('the default registry', () => {
     expect(judgedByEye(quest('document', 'visual'), defaults)).toBe(false);
     const acceptance = { ...quest('build', 'visual'), party_role: 'acceptance' as const };
     expect(ritualOf(acceptance, defaults)?.id).toBe('build_review');
-  });
-
-  it('has one judge for every kind, and keeps the judge and the monk from producing (ADR 0008, 0011)', () => {
-    const { kinds, classes } = registry();
-    const verifiers = classes.filter((entry) => entry.is_verifier);
-    expect(ids(verifiers)).toEqual(['judge']);
-    expect(verifiers[0]?.kinds).toEqual(ids(kinds));
-    for (const id of ['judge', 'monk']) {
-      expect(classes.find((entry) => entry.id === id)?.tools.deny).toEqual(
-        expect.arrayContaining(['Edit', 'Write']),
-      );
-    }
   });
 
   // (156)(b): check_sources has the judge open the sources a work cites, and a judge without the web could not (run

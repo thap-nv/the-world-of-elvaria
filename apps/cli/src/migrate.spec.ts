@@ -60,12 +60,13 @@ describe('elvaria migrate', () => {
     const io = testIo();
     expect(await run(io, 'migrate', '--kingdom', kingdom, '--locale', 'en')).toBe(0);
     expect(io.printed.out[1]).toBe(
-      'Copied 10 registry files this Elvaria ships and the kingdom lacked (files you have are left as they are):',
+      // Every class prompt but the owner's judge.md: twelve classes since the healer (HL-03).
+      'Copied 11 registry files this Elvaria ships and the kingdom lacked (files you have are left as they are):',
     );
     expect(io.printed.out).toContain('  registry/prompts/mage.md');
     expect(io.printed.out).not.toContain('  registry/prompts/judge.md');
     expect(await readFile(path.join(prompts, 'judge.md'), 'utf8')).toBe('# My own judge\n');
-    expect(await readdir(prompts)).toHaveLength(11);
+    expect(await readdir(prompts)).toHaveLength(12);
   });
 
   it('copies registry/memos.json into a kingdom made before PS-02, so its registry loads again', async () => {

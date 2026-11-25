@@ -119,6 +119,7 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Sa lầy | Bogged down | `swamp` | Nhân vật kẹt tại chỗ đang làm khi cầu dao (thời gian, token, lượt) ngắt phiên, trong lúc Nhiếp chính dừng tiến trình và lưu việc dở; hiển thị «Sa lầy trong nhiệm vụ {quest}». Là trạng thái, không phải nơi chốn. | `character.status` |
 | Thể lực | Stamina | `stamina` | Thanh của một phiên nhân vật, người làm hay người chấm, đo quãng còn lại tới lúc cầu dao cắt phiên, không đo việc còn lại. Thanh đi theo thước (phút, token, lượt) đang gần ngưỡng cắt `hard_pct` nhất và cạn đúng ở đó; phiên người làm có mốc nhắc ở `soft_pct`. Thanh theo phiên: phiên mới, kể cả sau một lần cắt đi tiếp, bắt đầu đầy. Thanh là giá trị suy ra từ sổ sự kiện, không lưu ở file hay trường nào. Khác mana: thể lực cạn thì phiên bị cắt và nhân vật sa lầy, mana cạn thì nhân vật ngủ. | event `agent.session.usage`, `staminaOf`, `sessionStaminaOf` (PS-28) |
 | Trạm quân y | Infirmary | `infirmary` | Quest dừng hẳn, chờ người dùng quyết. | `quest.status` |
+| Chữa | Heal | `heal` | Mỗi lượt một lần (ADR 0034): commit nộp việc bị hook của lãnh thổ từ chối vì lý do chữa được thì quest quay lại một lần, không tốn lượt thử, để người làm tự chữa trong phiên mới hay một Y sư cùng họ model chữa; lần từ chối thứ hai của lượt vào trạm quân y. Phiên chữa có trần riêng (`kingdom.heal`) và không có phiên tiếp. | `attempt_log[].heal`, `kingdom.heal`, event `quest.heal_due`, `healCallOf`, `selectHealer` |
 | Mana | Mana | `mana` | Hạn mức dùng của một tài khoản/pool. | `kingdom.mana`, event `mana.*` |
 | Trần mana | Mana cap | `mana.cap_pct` | Mức dùng tối đa thế giới được chạm (mặc định 98%). | `kingdom.mana` |
 | Phần của vua | King's reserve | `mana.king_reserve_pct` | Phần thế giới không bao giờ dùng (mặc định 2%). | `kingdom.mana` |
@@ -211,7 +212,7 @@ Nghi thức chọn theo tag, không chỉ theo kind (kế hoạch sản phẩm 0
 
 ## 6. Nghề (class)
 
-11 class mặc định trong `registry/classes.json`; thiết kế có 12 icon nghề vì `judge` có hai icon theo kind.
+12 class mặc định trong `registry/classes.json`; thiết kế có 12 icon nghề vì `judge` có hai icon theo kind, và `healer` (HL-03) chưa có icon.
 
 | VI | EN | class id | Icon (thiết kế → code) | Ghi chú |
 |---|---|---|---|---|
@@ -226,6 +227,7 @@ Nghi thức chọn theo tag, không chỉ theo kind (kế hoạch sản phẩm 0
 | Sứ thần | Envoy | `envoy` | `su-than` → `class-envoy` | thư từ, chỉ nháp |
 | Người nghiệm thu | Judge | `judge` | `tho-ca` → `class-judge-build`; `thu-thu-truong` → `class-judge-document` | `is_verifier`; danh hiệu và icon theo kind là dữ liệu theme (`title_by_kind`, `icon_by_kind`) |
 | Thầy tu | Monk | `monk` | `thay-tu` → `class-monk` | `is_monk`; phản tỉnh, viết kinh |
+| Y sư | Healer | `healer` | chưa có (thiết kế v0.2 không có; id dự kiến `class-healer`) | `is_healer` (ADR 0034); không nhận quest, chữa phần việc mà hook của lãnh thổ từ chối commit, mỗi lượt một lần; chỉ chữa quest có người làm cùng họ model (`selectHealer`); là người làm của quest nó chữa nên không bao giờ chấm quest đó hay quest cùng đội |
 
 Danh hiệu của `judge` (chuỗi hiển thị, không phải id): Thợ cả (Kiến tạo), Thủ thư trưởng (Soạn thảo), Chiêm tinh gia thứ hai (Chiêm nghiệm), Trọng tài (đối kháng trong Trận đánh), Hiền giả. Bảng đầy đủ kind → danh hiệu chốt trong `themes/fantasy/classes.json` ở giai đoạn 4.
 
