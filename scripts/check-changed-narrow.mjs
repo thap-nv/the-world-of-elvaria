@@ -1,7 +1,8 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-// Distinct from a failed check (1) and invalid arguments (2): ask the caller to run full checks.
+// Distinct from a failed check (1) and invalid arguments (2): ask the caller to run full checks. Only a narrow run
+// without --only exits so: with --only the group's full command runs instead (FULL_COMMANDS).
 export const UNCOVERED_EXIT = 3;
 export const GROUPS = [
   'test',
@@ -19,8 +20,30 @@ export const GROUPS = [
 export const HELP = `check-changed [--base <ref>] [--dry-run] [--only <group>]
 Groups: ${GROUPS.join(', ')}
 ELVARIA_CHECK_BASE: diff directly against this commit; enables narrow checks.
---only also enables narrow checks. Uncovered paths exit 3 (run full checks).
+--only also enables narrow checks. Uncovered paths run the group's full command with --only, and exit 3
+(run full checks) without it.
 Without either, the legacy checks and merge-base with origin/main are preserved.`;
+
+/**
+ * The full command of each group, as `pnpm check` runs it. A territory's narrow command is `check:changed --only
+ * <group>`, and the Steward reads any exit but 0 as red (CM-02), so a path no rule covers used to fail every narrow
+ * check of the run (PR #317, 2026-11-25) and the queue ran them all again in full; running the group whole here
+ * gives the same answer in one run.
+ * @type {Readonly<Record<string, readonly string[][]>>}
+ */
+export const FULL_COMMANDS = {
+  test: [['test']],
+  typecheck: [['typecheck']],
+  docs: [['docs:gen', '--check'], ['docs:check']],
+  schemas: [['schemas', '--check']],
+  boundaries: [['boundaries']],
+  layout: [['layout']],
+  knip: [['knip']],
+  dup: [['dup']],
+  i18n: [['i18n:check']],
+  lint: [['lint']],
+  format: [['format:check']],
+};
 
 /** @param {string[]} command */
 export function groupOf(command) {
@@ -63,4 +86,30 @@ export function narrowCommands(commands, paths, cwd, only) {
     ...batches(['exec', 'prettier', '--check', '--ignore-unknown', '--'], existing),
   ];
   return only ? all.filter((command) => groupOf(command) === only) : all;
+}
+
+/**
+ * The commands of a run, after printing what no rule covers; undefined when a narrow run without --only meets such
+ * a path (exit 3). With --only that group runs whole instead (FULL_COMMANDS).
+ * @param {{ commands: string[][]; unmatched: string[] }} planned  `plan(paths)` of check-changed.mjs
+ * @param {string[]} paths @param {string} cwd
+ * @param {{ only: string | undefined; narrow: boolean; out: (line: string) => void }} run
+ * @returns {string[][] | undefined}
+ */
+export function commandsOf(planned, paths, cwd, { only, narrow, out }) {
+  for (const path of planned.unmatched) out(`  no rule for ${path}`);
+  if (planned.unmatched.length === 0) {
+    return narrow ? narrowCommands(planned.commands, paths, cwd, only) : planned.commands;
+  }
+  if (!narrow) {
+    out('  (lint, formatting and root configuration are left to `pnpm check`)');
+    return planned.commands;
+  }
+  const full = only === undefined ? undefined : FULL_COMMANDS[only];
+  if (full === undefined) {
+    out('uncovered paths: run full checks (exit 3)');
+    return undefined;
+  }
+  out(`uncovered paths: the whole ${only} group runs`);
+  return full.map((command) => [...command]);
 }

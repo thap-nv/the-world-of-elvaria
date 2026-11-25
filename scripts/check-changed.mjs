@@ -2,7 +2,8 @@
 // asks for the files this branch changed, and only those, so a session can check its work between commits while
 // several sessions share one machine. `pnpm check` stays the gate before a merge: this is not a smaller `check`,
 // by default it skips lint, formatting and every package the diff does not reach. ELVARIA_CHECK_BASE or --only
-// enables the territory's narrow mode, including changed-file lint/format and exit 3 for uncovered paths.
+// enables the territory's narrow mode, including changed-file lint/format; a path no rule covers runs the --only
+// group whole, or exits 3 without --only.
 //
 //   pnpm check:changed                  diff against the merge-base with origin/main, then run the checks
 //   pnpm check:changed --base <ref>     another base (`--base=<ref>` too): a branch, a tag, a sha
@@ -16,7 +17,7 @@ import { resolve } from 'node:path';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
-import { GROUPS, HELP, narrowCommands, UNCOVERED_EXIT } from './check-changed-narrow.mjs';
+import { commandsOf, GROUPS, HELP, UNCOVERED_EXIT } from './check-changed-narrow.mjs';
 
 /** The checkout the script sits in (`scripts/` is one level under it, in a git worktree too). */
 const REPO = resolve(import.meta.dirname, '..');
@@ -245,18 +246,11 @@ export function main(argv, cwd, out) {
     return 2;
   }
   const paths = changedPaths(cwd, args.base);
-  const planned = plan(paths);
-  const { unmatched } = planned;
   const exactBase = process.env.ELVARIA_CHECK_BASE;
   const narrow = Boolean(exactBase || args.only);
-  const commands = narrow ? narrowCommands(planned.commands, paths, cwd, args.only) : planned.commands;
   out(`${paths.length} changed path(s) against ${exactBase || `the merge-base with ${args.base}`}`);
-  for (const path of unmatched) out(`  no rule for ${path}`);
-  if (narrow && unmatched.length > 0) {
-    out('uncovered paths: run full checks (exit 3)');
-    return UNCOVERED_EXIT;
-  }
-  if (unmatched.length > 0) out('  (lint, formatting and root configuration are left to `pnpm check`)');
+  const commands = commandsOf(plan(paths), paths, cwd, { only: args.only, narrow, out });
+  if (commands === undefined) return UNCOVERED_EXIT;
   if (commands.length === 0) {
     out('nothing to check');
     return 0;
