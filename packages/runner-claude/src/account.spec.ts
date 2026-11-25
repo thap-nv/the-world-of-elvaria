@@ -1,15 +1,16 @@
 // A tribe's config folder (PS-27): every process of a tribe that names one runs with CLAUDE_CONFIG_DIR set to it, and
 // none of a tribe that names none, whatever its env brought; doctor says which folder and account the CLI runs on.
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { homedir, tmpdir } from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
 import path from 'node:path';
 
 import { doctorNoteOf } from '@elvaria/runner-core';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { FAKE_CLAUDE, fakeRunner, minimalEnv, prepare } from './__fixtures__/harness.ts';
-import { RM_TEMP } from './__fixtures__/temp.ts';
 import { accountEnv, accountOf } from './account.ts';
 import { createClaudeForget } from './runner.ts';
 
@@ -66,14 +67,16 @@ describe('accountOf', () => {
 });
 
 describe("the CLI in the tribe's folder (fake CLI)", () => {
+  let temp: TempDir;
   let root: string;
   let second: string;
   beforeAll(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'elvaria config dir '));
+    temp = await tempDir('config dir');
+    root = temp.root;
     second = path.join(root, 'accounts', 'claude_2');
     await mkdir(second, { recursive: true });
   });
-  afterAll(() => rm(root, RM_TEMP));
+  afterAll(() => temp.remove());
 
   /** The calls the fake CLI made in `dir`, one line each (fake-calls.jsonl). */
   const callsIn = async (dir: string): Promise<string[]> => {

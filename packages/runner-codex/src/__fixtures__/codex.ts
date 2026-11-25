@@ -1,13 +1,13 @@
 // What the adapter's specs share: the fake CLI, the real hook run from its source, a throwaway kingdom with a plot
 // (a space in its name, like real kingdoms), the minimal env, and a request a knight of the Codex tribe would get.
 // The hook is reached by path, not imported: an adapter may not import @elvaria/hooks (§1.3).
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
 import { toolPolicyOf } from '@elvaria/runner-core';
 import type { AgentRunner, SpawnRequest } from '@elvaria/runner-core';
+import { tempDir } from '@elvaria/testkit';
 
 import { createCodexRunner } from '../runner.ts';
 import type { CodexOptions } from '../runner.ts';
@@ -62,7 +62,8 @@ export interface World {
 }
 
 export async function openWorld(): Promise<World> {
-  const root = await mkdtemp(path.join(tmpdir(), 'elvaria codex '));
+  const temp = await tempDir('codex');
+  const root = temp.root;
   const plot = path.join(root, 'dc1 repo', '.elvaria', 'worktrees', QUEST);
   const runDir = path.join(root, '.runs', `${QUEST}-1`);
   await Promise.all([mkdir(plot, { recursive: true }), mkdir(runDir, { recursive: true })]);
@@ -71,8 +72,7 @@ export async function openWorld(): Promise<World> {
     plot,
     run_dir: runDir,
     handover: path.join(root, 'quests', QUEST, 'handover.md'),
-    // A killed tree may hold the plot a moment longer on Windows (EBUSY, EPERM): retry, as the conformance workspace.
-    remove: () => rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }),
+    remove: () => temp.remove(),
   };
 }
 

@@ -138,6 +138,7 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
 - `@elvaria/eventlog` (append, journal, redact, stamps, `QUEST_ID_SHAPE`), loaded from its build through the
   `elvaria-dist` export condition. No third-party package.
 - `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
+- `@elvaria/testkit` (dev only: temporary folders for specs).
 
 ## How to test
 
