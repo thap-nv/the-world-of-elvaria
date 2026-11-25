@@ -11,8 +11,8 @@
   their TypeScript types.
   `pnpm schemas` writes `docs/schemas/` from them; each contract's `examples` live in `examples/`.
 - Checks a registry across its six files (`parseRegistry`, `checkRegistry`): unknown ritual, class, kind,
-  step or tag (a kind's `ritual_overrides`, P1-20), duplicate ids, a verifier allowed to take work, a class and a
-  kind that disagree, a follow-up (a script's `follow_up`, a ritual's `flaky_follow_up`) the kingdom cannot make.
+  step or tag (a kind's `ritual_overrides`, P1-20), duplicate ids, a verifier allowed to take work, a verifier class that is a monk or a healer too
+  (`verifier_and_healer`, ADR 0034), a class and a kind that disagree, a follow-up (a script's `follow_up`, a ritual's `flaky_follow_up`) the kingdom cannot make.
 - Chooses the ritual that judges a quest (`ritualOf`, ADR 0011, 0022; P1-20): the kind's, unless one of its
   `ritual_overrides` meets the quest's tags (tests as the product: `build`/`refactor` tagged `e2e` or
   `integration` → `mutation_check`; then `build`/`fix`/`refactor` tagged `visual` → `visual_review`, PS-11);
@@ -146,6 +146,10 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   resume); `answeredAlready` knows a question the owner answered. `namedAssignee` checks the character the
   owner names for a quest (`reassign`, `create_quest.assignee`): known, of the class, not suspended, of an enabled
   tribe, the level aside; `questFromCommand` refuses an assignee it rejects before the quest exists (P1-29).
+  `selectHealer` (HL-03, ADR 0034) chooses who mends a work the territory's hooks refused: a free character of an
+  `is_healer` class whose model family is among the quest's doers (`workedOn`), the higher level first; one that
+  stands by busy is waited for; with none, the doer heals its own work. Never the assignee itself, nor a character
+  the party's bars keep from the quest (`partyBarsOf`).
 - Keeps quests whose files meet apart (`src/dispatch/scope.ts`, implementation-plan §3.16.5, ADR 0028, PS-05):
   `quest.scope_paths` is optional; `scopesMeet` compares the literal text of the globs, a doubt is an overlap, and
   entries inside `territory.shared_paths` do not count. A session-tier quest holds its scope from its first run until

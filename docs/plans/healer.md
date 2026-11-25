@@ -103,6 +103,8 @@ Danh sách chữa được là một hằng của domain (`HEALABLE_REASONS`), v
 
 Vương quốc không triệu hồi Y sư nào thì luôn là nhánh người làm tự chữa: đội hình là công tắc của (515), không cần cờ riêng.
 
+(HL-03: `selectHealer(quest, characters, policy)` ở `dispatch/select-healer.ts` trả `{ by: 'healer', character }`, `{ by: 'wait' }` hay `{ by: 'doer' }`. Luật 1 đi vào qua hai vị từ mà `planTick` truyền ở HL-04: `stands` (không bị đình chỉ, tộc bật và có runner, bể mana mở: `Roster.standsBy` cùng `manaOpen`) và `free` (`Roster.canStart`); giới hạn của tộc trên lãnh thổ (`max_rank`, vùng canh) chưa xét, HL-04 gộp vào `stands` nếu cần, như `mayClaim`. Luật 2 đọc họ của người làm từ `workedOn` và file nhân vật còn trong đội hình; họ không rõ, ở Y sư hay ở người làm, không bao giờ trùng. Thêm hai luật kế hoạch chưa nêu: Y sư không phải người làm hiện tại (người làm tự chữa đi đường `redispatch`), và người mà `partyBarsOf` chặn khỏi quest (từng chấm quest đó hay quest cùng đội, phía bên kia của trận thử mù) không bao giờ chữa nó. Xếp hạng: cấp cao trước, rồi rảnh lâu nhất, rồi id.)
+
 Một Y sư Sonnet duy nhất chỉ chữa được quest của người làm họ Claude (thorn, brann, brom, morwen, lyra, orrin), và không nhận ca nào trong 5 ca đã đo (đều của dorian, họ GPT). **Chủ nhân chốt (K7): mỗi tộc một Y sư** (`claude`, `codex`, `gemini`), mỗi Y sư chạy model thuộc họ của tộc mình, để quest của họ nào cũng có Y sư cùng họ. Luật 2 giữ nguyên và đo theo họ model, không theo tên tộc: một Y sư tộc `gemini` chạy model Claude thì tính là họ Claude. Nhánh người làm tự chữa còn lại cho lúc Y sư cùng họ hết mana, bị đình chỉ hay tộc bị tắt, và cho vương quốc không có Y sư.
 
 ### 4.4 Phiên chữa
@@ -180,13 +182,14 @@ Mọi thay đổi là thêm trường tùy chọn, giá trị enum hay loại ev
   }
   ```
 
+  (HL-03: các dòng nghề mặc định khác không ghi `is_healer: false`, vì `registryGaps` sẽ nêu khóa thiếu ở mọi dòng nghề của vương quốc cũ; `parseRegistry` báo `verifier_and_healer` khi một nghề vừa `is_verifier` vừa `is_healer`. Vương quốc cũ nạp được như cũ; `elvaria upgrade` chạy `migrate` của bản ghim, thêm dòng `healer` theo id và chép `prompts/healer.md`, không đổi dòng nào chủ nhân đã có.)
 - **`kingdom.json`**: đối tượng tùy chọn `heal`: `enabled` (true), `tokens` (150 000), `minutes` (15), `max_files` (8), `max_lines` (60). Vắng thì lấy mặc định. Vương quốc chỉ thêm khóa này sau `elvaria upgrade` (bản ghim cũ từ chối khóa lạ).
 - **Đội hình**: mỗi tộc một Y sư (K7) là nhân vật của vương quốc (`elvaria character add`), cùng một nghề `healer`; registry không đổi theo số Y sư.
 - **Quest**: `status` thêm `healing`; mục `attempt_log[]` thêm trường tùy chọn `heal`: `"due"` (phiên của người làm mà commit bị từ chối và được chữa) hay `"session"` (phiên chữa, của người làm hay của Y sư). (HL-01: `session` ghi trên mọi phiên người làm của cùng lượt sau mục `due`, cả phiên dậy sau mana hay sau câu trả lời, để trần `kingdom.heal`, luật không đi tiếp và mẫu (G) theo phiên chữa tới hết lượt.) `statusToneOf('healing')` là `infirmary`; nhãn hiển thị "Đang chữa".
 - **Event của máy trạng thái**: `heal` (mang `healer`); event `breaker` thêm trường tùy chọn `reason` (mã lý do) để guard đọc. (HL-01: Nhiếp chính chỉ ghi `reason` khi `kingdom.heal.enabled` bật, vì guard chỉ đọc quest và event, không đọc cấu hình; không có `reason` thì quest vào trạm quân y như trước, như lần cắt không có `progress` của ADR 0030.)
 - **Sổ event**: loại mới `quest.heal_due` (dòng của nước `working` → `returned`, mang mã lý do như `quest.infirmary`; HL-01 ghi hợp đồng: `data` gồm `reason` và view của quest, không có `trip`, `detail`. `questLogTypeOf(event, from, to)` không phân biệt được nước này với `working.breaker.cut_goes_on` (cùng `breaker`, cùng `working` → `returned`), nên Nhiếp chính đặt tên dòng ở HL-02: nước `breaker` mà mục cuối của `attempt_log` sau nước mang `heal: "due"`) và `quest.healing` (mang `healer`); `quest.submitted` thêm trường tùy chọn `heal` (`by`, `files`, `lines`, `patch`).
 - **Mã lý do trạm quân y** (nhóm mới, khóa i18n `cli.quest.infirmary.reason.heal.*`): `heal:over_limit` (`files`, `lines`), `heal:out_of_work` (`count`, đường dẫn ở `detail.paths`), `heal:unchanged` (Y sư không sửa gì), `heal:cut` (`trip`), `heal:session_ended` (`outcome`). Hook từ chối lần hai dùng lại `breaker:commit` và `breaker:commit_errors`, `log` trỏ vào log của lần hai.
-- **Thuật ngữ** (`glossary.json`, rồi `pnpm docs:gen`): Y sư / Healer / `healer`; Đang chữa / Healing / `healing`; Chữa / Heal / `heal`.
+- **Thuật ngữ** (`glossary.json`, rồi `pnpm docs:gen`): Y sư / Healer / `healer`; Đang chữa / Healing / `healing`; Chữa / Heal / `heal`. (HL-03 thêm `healer` vào bảng nghề và `heal` vào bảng nghiệm thu, cầu dao; `healing` vào bảng trạng thái quest cùng trạng thái ở HL-04.)
 
 ## 6. Ca biên
 

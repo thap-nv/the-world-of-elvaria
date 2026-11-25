@@ -74,6 +74,14 @@ export const ClassSchema = z
     ),
     is_verifier: z.boolean(),
     is_monk: z.boolean(),
+    is_healer: z
+      .boolean()
+      .optional()
+      .meta(
+        describe(
+          "Mends a submitted work whose commit the territory's hooks refused, as a session of the quest's assignee role (ADR 0034); selectHealer takes a character of such a class whose model family is among the quest's doers. Never with is_verifier. Absent: false, so a classes.json from before HL-03 loads as it was.",
+        ),
+      ),
     default_tribe: TribeIdSchema.meta(
       describe(
         'Tribe suggested for new characters of this class; any tribe in kingdom.tribes may be chosen at summon time.',
@@ -173,7 +181,7 @@ export const ClassesFileSchema = z
   .meta({
     title: 'Registry: character classes',
     description: `registry/classes.json in the kingdom (${COPIED}). A class = role prompt + kinds it takes + tool policy + default model and tribe. One class per character (principle 5). There is one verifier class, \`judge\`, whose ritual follows the quest kind; the per-kind titles (Thợ cả, Thủ thư trưởng, ...) are theme data (ADR 0011). Default registry: chancellor, mage, knight, dwarf, scout, scribe, bard, astrologer, envoy, judge, monk (11 classes; the design has 12 class icons because judge has two).`,
-    $comment: `${GENERATED_NOTE} Tool names use Claude Code syntax; runner-antigravity and runner-gemini translate them into their own policy format. ToolPolicy = class tools + territory laws + role (a verifier never gets Edit/Write). The registry loader (parseRegistry) checks: not both is_verifier and is_monk; kinds exist in kinds.json and, for a class that is not a verifier, allow it back. prompt_file is checked by the store when it loads a kingdom.`,
+    $comment: `${GENERATED_NOTE} Tool names use Claude Code syntax; runner-antigravity and runner-gemini translate them into their own policy format. ToolPolicy = class tools + territory laws + role (a verifier never gets Edit/Write). The registry loader (parseRegistry) checks: not is_verifier with is_monk or is_healer; kinds exist in kinds.json and, for a class that is not a verifier, allow it back. prompt_file is checked by the store when it loads a kingdom.`,
   });
 
 export const RitualsFileSchema = z

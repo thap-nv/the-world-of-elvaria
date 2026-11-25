@@ -116,6 +116,32 @@ describe('parseRegistry', () => {
     ]);
   });
 
+  // HL-03: `is_healer` came after the first kingdoms; their classes.json has none and loads as it was.
+  it('loads a classes.json without is_healer, and a healer class that is no verifier (ADR 0034)', () => {
+    const before = parseRegistry(consistent());
+    expect(before.ok && before.value.classes.map((entry) => entry.is_healer)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]);
+    const healer = { ...cls('healer', []), is_healer: true };
+    const files = consistent();
+    files.classes.classes.push(healer);
+    const after = parseRegistry(files);
+    expect(after.ok && after.value.classes.at(-1)).toEqual(healer);
+  });
+
+  it('names both roles of a verifier class that is a monk and a healer too', () => {
+    const issues = issuesAfter((f) =>
+      Object.assign(f.classes.classes[2]!, { is_monk: true, is_healer: true }),
+    );
+    expect(issues).toEqual([
+      'classes verifier_and_monk classes.2.is_monk',
+      'classes verifier_and_healer classes.2.is_healer',
+    ]);
+  });
+
   it.each(REGISTRY_FILES)('reports a %s file that fails its schema, before any cross-file rule', (file) => {
     expect(issuesAfter((files) => Object.assign(files, { [file]: { version: 2 } }))).toContain(
       `${file} invalid version`,
@@ -193,6 +219,11 @@ describe('parseRegistry', () => {
       'a class both verifier and monk',
       (f: Files) => (f.classes.classes[2]!.is_monk = true),
       'classes verifier_and_monk classes.2.is_monk',
+    ],
+    [
+      'a class both verifier and healer (ADR 0034: the healer is a doer of what it mends)',
+      (f: Files) => Object.assign(f.classes.classes[2]!, { is_healer: true }),
+      'classes verifier_and_healer classes.2.is_healer',
     ],
     [
       'a ritual step no prompt knows',

@@ -14,6 +14,7 @@
     "cli.character.bad_level": "Cấp phải là số nguyên từ 1 đến {max}.",
     "cli.character.bad_model": "Model «{model}» không hợp lệ: chỉ chữ thường, số, dấu chấm và gạch ngang.",
     "cli.character.exists": "Đã có nhân vật {id}; triệu hồi không ghi đè nhân vật đã có.",
+    "cli.character.healer_family": "Là Y sư, nhân vật này chữa quest có người làm chạy model họ {family}; muốn chữa quest của họ khác thì triệu hồi một Y sư chạy model của họ đó.",
     "cli.character.level.arg.level": "Cấp mới, 1–10.",
     "cli.character.level.same": "{character} đã ở cấp {level}.",
     "cli.character.level.sent": "Đã gửi lệnh đổi {character} từ cấp {from} sang cấp {level}: sau đó Nhiếp chính giao cho nhân vật này nhiệm vụ tới hạng {ceiling}.",

@@ -771,6 +771,13 @@
               "used_in": "`quest.status`"
             },
             {
+              "vi": "Chữa",
+              "en": "Heal",
+              "id": ["heal"],
+              "definition": "Mỗi lượt một lần (ADR 0034): commit nộp việc bị hook của lãnh thổ từ chối vì lý do chữa được thì quest quay lại một lần, không tốn lượt thử, để người làm tự chữa trong phiên mới hay một Y sư cùng họ model chữa; lần từ chối thứ hai của lượt vào trạm quân y. Phiên chữa có trần riêng (`kingdom.heal`) và không có phiên tiếp.",
+              "used_in": "`attempt_log[].heal`, `kingdom.heal`, event `quest.heal_due`, `healCallOf`, `selectHealer`"
+            },
+            {
               "vi": "Mana",
               "en": "Mana",
               "id": ["mana"],
@@ -1372,7 +1379,7 @@
     {
       "heading": "6. Nghề (class)",
       "blocks": [
-        "11 class mặc định trong `registry/classes.json`; thiết kế có 12 icon nghề vì `judge` có hai icon theo kind.",
+        "12 class mặc định trong `registry/classes.json`; thiết kế có 12 icon nghề vì `judge` có hai icon theo kind, và `healer` (HL-03) chưa có icon.",
         {
           "table": "classes",
           "columns": [
@@ -1475,6 +1482,13 @@
               "class": ["monk"],
               "icon": "`thay-tu` → `class-monk`",
               "remark": "`is_monk`; phản tỉnh, viết kinh"
+            },
+            {
+              "vi": "Y sư",
+              "en": "Healer",
+              "class": ["healer"],
+              "icon": "chưa có (thiết kế v0.2 không có; id dự kiến `class-healer`)",
+              "remark": "`is_healer` (ADR 0034); không nhận quest, chữa phần việc mà hook của lãnh thổ từ chối commit, mỗi lượt một lần; chỉ chữa quest có người làm cùng họ model (`selectHealer`); là người làm của quest nó chữa nên không bao giờ chấm quest đó hay quest cùng đội"
             }
           ]
         },
