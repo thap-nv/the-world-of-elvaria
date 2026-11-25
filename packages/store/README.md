@@ -81,7 +81,7 @@ pnpm --filter @elvaria/store test
 ```
 
 Tests build throwaway kingdoms with testkit's `tempDir` (`src/__fixtures__/kingdom.ts`, folder names with a space).
-`concurrency.spec.ts` races writers in one process and in four Node processes (`test/update-worker.ts`, run by
+`concurrency.spec.ts` races writers in one process and in four Node processes (`fixtures/update-worker.ts`, run by
 Node's type stripping) while a reader reads in a loop: no update may be lost and no read may fail.
 `migrations.spec.ts` reads every stored fixture with the current store. `registry-gaps.spec.ts` plays a newer
 default registry (the fixtures plus a ritual, a tag and a kind's `ritual_overrides`) against a kingdom made of the
