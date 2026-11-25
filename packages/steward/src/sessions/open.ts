@@ -13,7 +13,7 @@ import { checksRunOf, takeChecks } from '../review/checks.ts';
 import { inScratch, judgeMayOpen } from '../review/scratch.ts';
 import { judgeParseOf } from '../review/verdict-file.ts';
 import { secretsBreaker } from './breaker.ts';
-import { continuationOf, refusedWhileWaiting } from './continuation.ts';
+import { continuationOf, goesOnInRun, refusedWhileWaiting } from './continuation.ts';
 import { assigneeUnopened, judgeUnopened, unopenedLine } from './no-session.ts';
 import { branchHeadOf } from './progress.ts';
 import { fittedRequestOf } from './letter-fit.ts';
@@ -116,7 +116,7 @@ export type Opening =
 const goesOn = (opening: Opening): boolean => opening.kind === 'answer' || opening.kind === 'wake';
 
 const sameRun = (quest: Quest, opening: Opening): boolean =>
-  goesOn(opening) || (opening.kind === 'redispatch' && endedInCut(quest.attempt_log));
+  goesOn(opening) || (opening.kind === 'redispatch' && goesOnInRun(quest.attempt_log));
 
 async function continuationFor(ctx: Context, quest: Quest, opening: Opening): Promise<Continuation | null> {
   // The decision on an amendment ends a wait that may have begun with the run's work refused (fix/session-notes).

@@ -114,7 +114,8 @@ describe("work the territory's hook refuses (P1-55)", () => {
     await kingdom.command('create_quest', questPayload('Long hook'));
     await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Long hook', 'infirmary'));
     const quest = await kingdom.quest('Long hook');
-    const log = `.runs/${quest.id}-1/pre-commit.log`;
+    // The hook refuses the run's heal too (ADR 0034): the reason names the second log, beside the first.
+    const log = `.runs/${quest.id}-1/heal/pre-commit.log`;
     const lines = Array.from({ length: 5 }, (_, index) => `error ${index}: lint failed`).join('\n');
     expect(kingdom.notices.at(-1)).toMatchObject({
       reason: {

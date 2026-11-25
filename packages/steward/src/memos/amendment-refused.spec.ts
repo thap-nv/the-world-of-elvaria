@@ -111,7 +111,7 @@ describe('a run that ended on its amendment with its commit refused', () => {
     const user = next?.prompt.user ?? '';
     expect(user).toMatch(/^# Going on/);
     expect(user).toContain(fencedText(HOOK));
-    expect(user).toContain('That work is still in your plot, uncommitted.');
+    expect(user).toContain('That work is still in your plot, staged and uncommitted.');
     expect(user.indexOf(DECISION_HEADING)).toBeGreaterThan(-1);
     expect(user.indexOf(DECISION_HEADING)).toBeLessThan(user.indexOf(COMMIT_HEADING));
   });

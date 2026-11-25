@@ -7,7 +7,7 @@
 // ADR 0026): never a refusal, the submit marks the quest for the royal seal and the stronger judge instead.
 // (fix/plot-setup-on-lockfile) commands.setup runs again first when the work changed a file of commands.setup_when:
 // the hooks would otherwise run on what the old lockfile installed, and refuse the work (AH-07b1, AH-07b2).
-import { currentRun, protectedPathsOf, runDirOf } from '@elvaria/domain';
+import { currentRun, healDueIn, protectedPathsOf, runDirOf } from '@elvaria/domain';
 import { redact } from '@elvaria/eventlog';
 import { forbiddenChangesOf, forbiddenPathsOf, hookOutputHead, setupLogOf } from '@elvaria/runner-core';
 import { inKingdom, writeFileAtomic } from '@elvaria/store';
@@ -31,6 +31,16 @@ export type PlotCommit =
       readonly setup?: { readonly detail: string; readonly log: string };
     })
   | { readonly status: 'forbidden'; readonly paths: readonly string[] };
+
+/**
+ * Where the commit of the quest's run keeps what a refusal leaves (P1-55): the run's folder, and its `heal/` once the
+ * run's refused commit went back for a heal (ADR 0034), so the heal's own refusal leaves its log beside the first one.
+ */
+export function commitDirOf(quest: Quest): string {
+  const n = currentRun(quest);
+  const dir = runDirOf(quest, n, 'assignee');
+  return healDueIn(quest.attempt_log, n) ? `${dir}/heal` : dir;
+}
 
 /** Why a WIP commit was not made: the forbidden paths, for the infirmary's `wip` detail. */
 export const forbiddenWip = (paths: readonly string[]): string =>
@@ -102,7 +112,7 @@ export async function commitPlot(ctx: Context, questId: QuestId, message: string
     if (setup !== undefined) return setup;
     // Matched as the forbidden paths are, at any depth: a seal asked for in error costs the owner one look.
     const guarded = forbiddenChangesOf(changed, protectedPathsOf(territory));
-    const dir = inKingdom(ctx.root, runDirOf(quest, currentRun(quest), 'assignee'));
+    const dir = inKingdom(ctx.root, commitDirOf(quest));
     const outcome = await ctx.deps.plots.commit(quest.plot, message, { dir });
     const aside = 'set_aside' in outcome ? (outcome.set_aside ?? []) : [];
     if (aside.length > 0)
@@ -114,9 +124,8 @@ export async function commitPlot(ctx: Context, questId: QuestId, message: string
     const output = redact(messageOf(error), []);
     const head = hookOutputHead(output);
     const log = 'pre-commit.log';
-    const dir = runDirOf(quest, currentRun(quest), 'assignee');
     try {
-      await writeFileAtomic(inKingdom(ctx.root, `${dir}/${log}`), output);
+      await writeFileAtomic(inKingdom(ctx.root, `${commitDirOf(quest)}/${log}`), output);
     } catch (failure) {
       ctx.deps.log.warn(`steward: ${questId}: commit log could not be written: ${messageOf(failure)}`);
     }

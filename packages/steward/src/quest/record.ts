@@ -7,6 +7,7 @@ import {
   EventSchema,
   characterViewOf,
   currentRun,
+  endedInHealDue,
   err,
   ok,
   questLogTypeOf,
@@ -27,6 +28,7 @@ import type {
   QuestActor,
   QuestEvent,
   QuestId,
+  QuestLogType,
   Result,
   TerritoryId,
 } from '@elvaria/domain';
@@ -200,6 +202,22 @@ async function save(
   return ok(undefined);
 }
 
+/**
+ * The line of a move. A breaker that sent the doer's refused commit back for a heal (its entry now `due`, ADR 0034)
+ * is `quest.heal_due`, which questLogTypeOf cannot tell from a cut that goes on: same event, same statuses.
+ */
+const lineTypeOf = (event: QuestEvent, from: Quest, after: Quest): QuestLogType =>
+  event.type === 'breaker' && after.status === 'returned' && endedInHealDue(after.attempt_log)
+    ? 'quest.heal_due'
+    : questLogTypeOf(event.type, from.status, after.status);
+
+/** Why the quest went where it did: the infirmary's cause, or the refusal a heal answers (as the infirmary says it). */
+function causeOf(type: QuestLogType, request: Move) {
+  const cause = request.infirmary ?? OUT_OF_ATTEMPTS;
+  if (type === 'quest.infirmary') return infirmaryData(cause);
+  return type === 'quest.heal_due' ? { reason: cause.reason } : {};
+}
+
 async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, string>> {
   const at = deps.stamp();
   const found = deps.world.quests.get(request.quest);
@@ -214,12 +232,12 @@ async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, st
     deps.log.warn(`steward: ${request.quest} ${event.type}: ${saved.error}`);
     return saved;
   }
-  const type = questLogTypeOf(event.type, found.status, after.value.status);
+  const type = lineTypeOf(event, found, after.value);
   const session = 'session_id' in event ? event.session_id : undefined;
   // The sessions that followed the first in the run that ends here (P1-49): attempt_log keeps one entry for them all.
   const sequels = 'sequels' in event ? event.sequels : undefined;
   const data = {
-    ...(type === 'quest.infirmary' ? infirmaryData(request.infirmary ?? OUT_OF_ATTEMPTS) : {}),
+    ...causeOf(type, request),
     quest: questViewOf(after.value),
     ...(moved.value.length > 0 ? { characters: moved.value.map(characterViewOf) } : {}),
     ...(sequels === undefined || sequels.length === 0 ? {} : { sequels }),

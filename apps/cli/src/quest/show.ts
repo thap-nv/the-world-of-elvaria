@@ -1,7 +1,7 @@
 // `elvaria quest show <id>`: one quest, its fields as labelled lines (its party too, P1-21 (c); the owner's hold,
-// fix/quest-hold), why it waits (nobody can take it, P1-03; the infirmary, P1-32; a scope held, PS-05), the protected
-// paths its work changed (PS-04), what its last run came to (verdicts, plot put back, P1-46), its delivery to the forge
-// (PS-08c), then its description.
+// fix/quest-hold), why it waits (nobody can take it, P1-03; the infirmary, P1-32; a scope held, PS-05; a heal, ADR
+// 0034), the protected paths its work changed (PS-04), what its last run came to (verdicts, plot put back, P1-46), its
+// delivery to the forge (PS-08c), then its description.
 // (PS-06b) A plan quest's brief comes apart from the rest of its description, with its plan's summary while the plan
 // waits for the seal.
 // (PS-28b) Its budget, the ceilings in force for the assignee and the judge as the breakers compute them, and the
@@ -18,6 +18,7 @@ import { renderTable } from '../table.ts';
 import { ceilingLines, ceilingRulesOf } from './ceiling.ts';
 import { deliveryLines } from './delivery-view.ts';
 import { infirmaryLines, journalOf, lastInfirmaryOf } from './infirmary.ts';
+import { healLines, healMark } from './heal.ts';
 import { lastRunLines } from './last-run.ts';
 import { kindName } from './list.ts';
 import { partyFields } from './party.ts';
@@ -33,6 +34,15 @@ import type { KingdomContext } from '../kingdom-context.ts';
 
 const listed = (values: readonly string[]): string => (values.length === 0 ? NONE : values.join(', '));
 
+/**
+ * The status, with the reason `quest list` gives for a quest that waits on its territory's scope rules
+ * (scopeWaitText), or the mark of a quest in its run's heal (ADR 0034).
+ */
+function statusText(ctx: KingdomContext, quest: Quest, wait: ScopeWait | undefined): string {
+  const mark = wait === undefined ? healMark(ctx.t, quest) : scopeWaitText(ctx, wait);
+  return `${ctx.t(QUEST_STATUS_LABEL[quest.status])} (${quest.status})${mark === undefined ? '' : ` (${mark})`}`;
+}
+
 function fields(
   ctx: KingdomContext,
   registry: Registry | undefined,
@@ -41,10 +51,8 @@ function fields(
   wait: ScopeWait | undefined,
 ): [MessageKey, string][] {
   const { t } = ctx;
-  // The reason `quest list` gives for a quest that waits on its territory's scope rules (scopeWaitText).
-  const because = wait === undefined ? '' : ` (${scopeWaitText(ctx, wait)})`;
   return [
-    ['cli.quest.field.status', `${t(QUEST_STATUS_LABEL[quest.status])} (${quest.status})${because}`],
+    ['cli.quest.field.status', statusText(ctx, quest, wait)],
     ['cli.quest.field.kind', `${kindName(ctx, registry, quest.kind)} (${quest.kind})`],
     ['cli.quest.field.rank', quest.rank],
     ...(quest.scope_paths === undefined
@@ -154,6 +162,7 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
     ...why,
     ...base,
     ...sick,
+    ...healLines(ctx.t, quest, journal),
     ...last,
     ...delivery,
     ...plan.lines,
