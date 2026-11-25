@@ -28,4 +28,4 @@ A finished session whose submit commit the territory's hooks refuse sends its qu
 
 - The infirmary keeps its meaning: stopped, the owner decides. A quest being healed is `returned` or `healing`.
 - Data added, all optional (versions stay 1): `classes[].is_healer`, `kingdom.heal`, quest status `healing`, `attempt_log[].heal`, event types `quest.heal_due` and `quest.healing`, reason codes `heal:*`.
-- A kingdom without a healer still heals through the doer; summoning one turns the healer on.
+- A kingdom without a healer still heals through the doer; summoning one turns the healer on. The owner's kingdom keeps one healer per tribe, each on a model of its tribe's family (settled 2026-11-25), so every doer's family has one; the doer's own heal remains for a healer that sleeps or is suspended.

@@ -1,8 +1,8 @@
 # Y sư ở trạm quân y: mỗi lượt một lần chữa — kế hoạch chi tiết
 
-Ngày: 2026-11-25 · Trạng thái: **chờ chủ nhân chốt** (mục 9) · Nguồn: ý (513) và (515) chủ nhân đã "oke" ngày 2026-11-25 · ADR nháp: [0034](../adr/0034-one-heal-per-run.md) · Đo trên `main` `2ee1e2b4`, vương quốc `my-kingdom` (ghim `459a99a7`).
+Ngày: 2026-11-25 · Trạng thái: **chủ nhân đã chốt K1–K12 ngày 2026-11-25** (mục 9) · Nguồn: ý (513) và (515) chủ nhân đã "oke" ngày 2026-11-25 · ADR nháp: [0034](../adr/0034-one-heal-per-run.md) · Đo trên `main` `2ee1e2b4`, vương quốc `my-kingdom` (ghim `459a99a7`).
 
-Kế hoạch này chưa mở task nào. Các task `HL-…` ở mục 8 vào bảng §8 sau khi chủ nhân chốt mục 9.
+Các task `HL-…` ở mục 8 đã vào bảng §8 của kế hoạch triển khai, chưa mở; phiên điều phối quyết lúc mở.
 
 ## 1. Bối cảnh
 
@@ -64,7 +64,7 @@ Phiên đầu tiên của người làm sau một lần vào trạm quân y (tok
 | Lý do không chữa được | không giúp gì | viết được chẩn đoán cho chủ nhân (hết lượt thử, không tiến triển) |
 | Công dựng | nhỏ: dùng lại đường "đi tiếp cùng lượt" của ADR 0030 | lớn hơn: nghề, trạng thái mới, phiên trong đất của người khác, đo phần đổi |
 
-**Kết luận: kết hợp, thành một cơ chế có hai nhánh.** Hai hướng khác nhau ở chỗ *ai* mở phiên chữa; phần còn lại giống nhau: lý do nào chữa được, mỗi lượt một lần, trần nhỏ, hook của lãnh thổ là trọng tài, trượt lần hai thì vào trạm quân y. Nhánh người làm tự chữa dựng trước vì nó nhỏ, không đụng tách vai, và trên số đo hiện có nó nhận cả 5 ca mà không tốn cửa sổ Claude. Y sư là nhánh thứ hai của cùng cơ chế: rẻ hơn khi người làm chạy Opus, và là nhân vật duy nhất viết được chẩn đoán.
+**Kết luận: kết hợp, thành một cơ chế có hai nhánh.** Hai hướng khác nhau ở chỗ *ai* mở phiên chữa; phần còn lại giống nhau: lý do nào chữa được, mỗi lượt một lần, trần nhỏ, hook của lãnh thổ là trọng tài, trượt lần hai thì vào trạm quân y. Nhánh người làm tự chữa dựng trước vì nó nhỏ, không đụng tách vai, và trên số đo hiện có nó nhận cả 5 ca mà không tốn cửa sổ Claude. Y sư là nhánh thứ hai của cùng cơ chế: rẻ hơn khi người làm chạy Opus, và là nhân vật duy nhất viết được chẩn đoán. (Bảng trên so một Y sư Sonnet duy nhất. Chủ nhân sau đó chốt mỗi tộc một Y sư, nên ca của Codex do Y sư tộc `codex` chữa: xem 4.3 và mục 9.)
 
 ## 4. Thiết kế
 
@@ -103,7 +103,7 @@ Danh sách chữa được là một hằng của domain (`HEALABLE_REASONS`), v
 
 Vương quốc không triệu hồi Y sư nào thì luôn là nhánh người làm tự chữa: đội hình là công tắc của (515), không cần cờ riêng.
 
-Với đội hình hôm nay và một Y sư Sonnet: quest của thorn, brann, brom, morwen, lyra, orrin (họ Claude) do Y sư chữa; quest của dorian (GPT) và kael, quill, sylva (Gemini) do chính họ tự chữa. **Trên số đo hiện có, Y sư không nhận ca nào trong 5 ca đã đo** (đều của dorian). Nới luật 2 là quyết định K6.
+Một Y sư Sonnet duy nhất chỉ chữa được quest của người làm họ Claude (thorn, brann, brom, morwen, lyra, orrin), và không nhận ca nào trong 5 ca đã đo (đều của dorian, họ GPT). **Chủ nhân chốt (K7): mỗi tộc một Y sư** (`claude`, `codex`, `gemini`), mỗi Y sư chạy model thuộc họ của tộc mình, để quest của họ nào cũng có Y sư cùng họ. Luật 2 giữ nguyên và đo theo họ model, không theo tên tộc: một Y sư tộc `gemini` chạy model Claude thì tính là họ Claude. Nhánh người làm tự chữa còn lại cho lúc Y sư cùng họ hết mana, bị đình chỉ hay tộc bị tắt, và cho vương quốc không có Y sư.
 
 ### 4.4 Phiên chữa
 
@@ -181,6 +181,7 @@ Mọi thay đổi là thêm trường tùy chọn, giá trị enum hay loại ev
   ```
 
 - **`kingdom.json`**: đối tượng tùy chọn `heal`: `enabled` (true), `tokens` (150 000), `minutes` (15), `max_files` (8), `max_lines` (60). Vắng thì lấy mặc định. Vương quốc chỉ thêm khóa này sau `elvaria upgrade` (bản ghim cũ từ chối khóa lạ).
+- **Đội hình**: mỗi tộc một Y sư (K7) là nhân vật của vương quốc (`elvaria character add`), cùng một nghề `healer`; registry không đổi theo số Y sư.
 - **Quest**: `status` thêm `healing`; mục `attempt_log[]` thêm trường tùy chọn `heal`: `"due"` (phiên của người làm mà commit bị từ chối và được chữa) hay `"session"` (phiên chữa, của người làm hay của Y sư). `statusToneOf('healing')` là `infirmary`; nhãn hiển thị "Đang chữa".
 - **Event của máy trạng thái**: `heal` (mang `healer`); event `breaker` thêm trường tùy chọn `reason` (mã lý do) để guard đọc.
 - **Sổ event**: loại mới `quest.heal_due` (dòng của nước `working` → `returned`, mang mã lý do như `quest.infirmary`) và `quest.healing` (mang `healer`); `quest.submitted` thêm trường tùy chọn `heal` (`by`, `files`, `lines`, `patch`).
@@ -208,9 +209,9 @@ Từ sổ event, in ở `elvaria metrics` (HL-06):
 4. Kết quả chấm của lượt đã chữa so với lượt thường (tỉ lệ pass).
 5. Số lần chủ nhân phải `quest submit` hay sửa tay sau một lần commit bị từ chối. Hôm nay 5 trên 5; mốc: 0 với ca chữa khỏi.
 
-Mốc 2 không đạt ở nhánh người làm tự chữa của Codex là tín hiệu để nới luật họ model (K6).
+Mốc 2 không đạt ở Y sư của một tộc sau 10 lần chữa là tín hiệu để xét lại luật họ model cho tộc đó (K6): cho một Y sư khác họ chữa quest của tộc ấy.
 
-## 8. Chia task (đề xuất cho §8, chưa mở)
+## 8. Chia task (đã vào §8, chưa mở)
 
 Cỡ theo một context. "Đọc trước" là vùng "đọc trước khi sửa" của CLAUDE.md: task có dấu đó chạy Opus xhigh.
 
@@ -218,33 +219,35 @@ Cỡ theo một context. "Đọc trước" là vùng "đọc trước khi sửa"
 |---|---|---|---|---|---|---|
 | HL-01 | **Domain: mỗi lượt một lần chữa, nhánh người làm.** `HEALABLE_REASONS`, `healCallOf`, trường `heal` của attempt, `reason` trên event `breaker`, guard `heal_due` và hàng `working.breaker.heal_due`, `redispatch` cùng lượt, `cutGoesOn` sai với phiên chữa, `kingdom.heal` và trần phiên chữa trong `breakersOf`, mẫu hiệu chỉnh (G) bỏ phiên chữa, loại event `quest.heal_due`; ADR 0034 thành accepted; sửa dòng 64 của phase-2-plan và ADR 0030 tại chỗ | M | — | `p/domain/src/{quest,breaker,infirmary,metrics}/**`, `p/domain/src/schema/{quest,event,kingdom*}`, `docs/adr/0034*`, `docs/adr/0030*`, `docs/plans/phase-2-plan.md`, `docs/implementation-plan/{2-data-and-events,3.4-breakers}.md` | máy trạng thái, schema | spec: lần hook từ chối đầu của một lượt đưa quest về `returned`, `redispatch` kế đó không tăng `attempts` và không đổi `n`; lần thứ hai trong lượt vào `infirmary`; `patch`, `setup`, `forbidden_paths`, `secrets`, `no_session` không bao giờ được chữa; phiên chữa bị trần cắt vào `infirmary`; coverage 100 % |
 | HL-02 | **Nhiếp chính và prompt: người làm tự chữa.** `breakAssignee` truyền mã lý do, không chuông khi được chữa; phần "đi tiếp" mang dòng lỗi của log (che secret, cắt 4 000 ký tự) qua `refused-commit.md`; log lần hai nằm cạnh log lần đầu; `quest show` và `quest list` nói quest đang chờ chữa; hướng dẫn vận hành mục trạm quân y | M | HL-01 | `p/steward/src/sessions/{breaker,submit,commit,continuation}.ts`, `p/runner-core/prompts/**`, `p/runner-core/src/prompt/**`, `a/cli/src/quest/**`, `p/i18n`, `docs/guides/operating-a-kingdom.md` | — | spec của steward: phiên có commit bị hook từ chối được nối, không chuông và không lệnh nào của chủ nhân, bằng một phiên của cùng nhân vật, cùng lượt, prompt có dòng lỗi của log; commit qua thì quest tới `review`; bị từ chối lần nữa thì `infirmary`, chuông, đủ hai log |
-| HL-03 | **Nghề `healer` và luật chọn.** `is_healer` trên `ClassSchema`, kiểm ở `parseRegistry`; dòng nghề và `prompts/healer.md` mặc định; `selectHealer` (thuần); thuật ngữ; `character add --class healer`; test: Y sư từng chữa quest không bao giờ được chọn chấm quest đó hay quest cùng đội | S | HL-02 (thời điểm: K5) | `p/domain/src/schema/registry*.ts`, `p/domain/src/dispatch/**`, `p/registry-default/**`, `p/i18n/src/glossary.json` và locale, `a/cli/src/character/**` | schema; `verify/**` chỉ thêm test | `pnpm -r test` xanh; vương quốc có `classes.json` cũ vẫn nạp được; `elvaria upgrade` đưa dòng nghề mới vào vương quốc hoặc hướng dẫn ghi cách thêm tay |
+| HL-03 | **Nghề `healer` và luật chọn.** `is_healer` trên `ClassSchema`, kiểm ở `parseRegistry`; dòng nghề và `prompts/healer.md` mặc định; `selectHealer` (thuần); thuật ngữ; `character add --class healer`; test: Y sư từng chữa quest không bao giờ được chọn chấm quest đó hay quest cùng đội; với ba Y sư ba họ, `selectHealer` chọn đúng Y sư cùng họ với người làm | S | HL-02 | `p/domain/src/schema/registry*.ts`, `p/domain/src/dispatch/**`, `p/registry-default/**`, `p/i18n/src/glossary.json` và locale, `a/cli/src/character/**` | schema; `verify/**` chỉ thêm test | `pnpm -r test` xanh; vương quốc có `classes.json` cũ vẫn nạp được; `elvaria upgrade` đưa dòng nghề mới vào vương quốc hoặc hướng dẫn ghi cách thêm tay |
 | HL-04 | **Máy trạng thái của Y sư.** Trạng thái `healing`, event `heal`, các hàng `returned.heal` và `healing.*`, hiệu ứng, `planTick.heals`, loại event `quest.healing`, trường `heal` của `quest.submitted`, mã lý do `heal:*`, `statusToneOf`, nhãn CLI | M | HL-03 | `p/domain/src/{quest,dispatch,infirmary,world}/**`, `p/domain/src/schema/**`, `a/cli/src/labels.ts`, `p/i18n` | máy trạng thái, schema | spec: bảng §2.5 sinh lại có 7 hàng mới, guard của mỗi cặp (từ, event) không bao giờ cùng đúng; `planTick` không vừa `starts` vừa `heals` một quest; Y sư bận thì quest chờ, không có Y sư hợp lệ thì `starts` |
 | HL-05 | **Nhiếp chính: phiên của Y sư.** Mở phiên trong đất của quest (prompt `heal.md`, chính sách tool của nghề, thư mục `/heal`, trần riêng); cổng `Plots` chụp cây đã stage và lấy khác biệt; giới hạn, `heal.patch`, trả đất khi bị từ chối; commit qua hook, nộp hay vào trạm quân y; chuông kèm thư của Y sư; mục `heal.patch` trong prompt người chấm; phiên mất khi khởi động lại | M | HL-04 | `p/steward/src/sessions/**`, `p/steward/src/tick/**`, `p/runner-core/src/{plot,prompt,policy}/**`, `p/runner-core/prompts/**`, `a/cli/src/{quest,run}/**`, `docs/guides/operating-a-kingdom.md` | — | spec của steward với repo git thật trong thư mục tạm: Y sư sửa một dòng, commit qua, quest tới `review`, `heal.patch` đúng một dòng đó và có trong prompt người chấm; Y sư đổi 61 dòng hay một file ngoài phần đã stage thì đất trở lại đúng cây cũ và quest vào `infirmary`. Chạm plot và git: nêu trong báo cáo để chủ nhân quyết có chạy CI hai hệ điều hành |
 | HL-06 | **Sổ đo lần chữa**: năm số của mục 7 trong `elvaria metrics` và một dòng trong bản tấu | S | HL-02 | `p/domain/src/metrics/**`, `a/cli/src/metrics/**` | — | báo cáo in năm số từ một sổ event mẫu có lần chữa khỏi, lần chữa hỏng và lần Y sư chữa |
 | HL-07 | (Đợt C, chờ K9) **Chẩn đoán**: phiên chỉ đọc của Y sư cho `quest:max_attempts` và `breaker:no_progress`, loại thư `diagnosis` gửi chủ nhân, chuông in thư và lệnh đề xuất | M | HL-05, số đo | `p/registry-default/memos.json`, `p/domain/src/{memo,dispatch}/**`, `p/steward/src/**`, `a/cli/src/run/**` | — | quest hết lượt thử có đúng một thư chẩn đoán trước khi chủ nhân làm gì; phiên đó không có `Edit`, `Write`, shell |
 
-Phụ thuộc: HL-01 → HL-02 là đợt A và đứng được một mình (đó là (513)). HL-06 chạy song song với đợt B. HL-03 → HL-04 → HL-05 là đợt B. HL-01 và HL-04 cùng sửa `transitions.ts`, `effects.ts` nên không chạy cùng lúc. Sau HL-02 và sau HL-05: `elvaria upgrade` vương quốc; sau HL-05 chủ nhân triệu hồi Y sư.
+Phụ thuộc: HL-01 → HL-02 là đợt A và đứng được một mình (đó là (513)). HL-06 chạy song song với đợt B. HL-03 → HL-04 → HL-05 là đợt B. HL-01 và HL-04 cùng sửa `transitions.ts`, `effects.ts` nên không chạy cùng lúc. Đợt B mở ngay sau HL-02, không chờ số đo (K5). Sau HL-02 và sau HL-05: `elvaria upgrade` vương quốc; sau HL-05 chủ nhân triệu hồi ba Y sư, mỗi tộc một (`elvaria character add`, nghề `healer`). Model gợi ý là model rẻ mà tộc đó đang dùng: `claude-sonnet-5-5` cho `claude`, `gpt-6.1-sol-low` cho `codex`, `gemini-3.8-flash-high` cho `gemini`; chủ nhân chọn lúc triệu hồi.
 
-## 9. Quyết định cho chủ nhân
+## 9. Quyết định của chủ nhân (chốt 2026-11-25)
 
-**Phải chốt trước task đầu (HL-01):**
+Chủ nhân trả lời trong phiên lập kế hoạch: "tạo cho mỗi tộc 1 Y sư để đảm bảo là nếu cần thì có Y sư. K5: dựng Y sư luôn. Còn lại oke". Dòng §11 của ngày ghi lại. Hai chỗ chủ nhân chọn khác khuyến nghị là K5 và K7.
 
-- **K1. Kết hợp thành một cơ chế, nhánh người làm tự chữa dựng trước.** Khuyến nghị: đồng ý. Đợt A (HL-01, HL-02) là (513) và nhận cả 5 ca đã đo mà không tốn cửa sổ Claude.
-- **K2. Đợt đầu chỉ chữa `breaker:commit` và `breaker:commit_errors`.** Khuyến nghị: đồng ý; `setup` và `patch` chờ có ca để đo. Không phiên nào cho `secrets`, `forbidden_paths`, `no_session` (khác chữ của đề bài, lý do ở 4.2).
-- **K3. Trần phiên chữa 150 000 token và 15 phút, cắt ở 150 %; phiên chữa bị cắt thì vào trạm quân y.** Khuyến nghị: đồng ý, chỉnh khi đủ 10 mẫu.
-- **K4. Phiên chữa không tốn lượt thử, và cơ chế bật mặc định** (`kingdom.heal.enabled`). Khuyến nghị: đồng ý cả hai; tắt được bằng một khóa khi cần so sánh.
+**Trước HL-01:**
 
-**Chờ được tới trước HL-03 (đợt B):**
+- **K1. Kết hợp thành một cơ chế, nhánh người làm tự chữa dựng trước.** Chốt: đồng ý. Đợt A (HL-01, HL-02) là (513).
+- **K2. Đợt đầu chỉ chữa `breaker:commit` và `breaker:commit_errors`.** Chốt: đồng ý; `setup` và `patch` chờ có ca để đo. Không phiên nào cho `secrets`, `forbidden_paths`, `no_session` (lý do ở 4.2).
+- **K3. Trần phiên chữa 150 000 token và 15 phút, cắt ở 150 %; phiên chữa bị cắt thì vào trạm quân y.** Chốt: đồng ý, chỉnh khi đủ 10 mẫu.
+- **K4. Phiên chữa không tốn lượt thử, và cơ chế bật mặc định** (`kingdom.heal.enabled`). Chốt: đồng ý cả hai.
 
-- **K5. Khi nào dựng Y sư.** Khuyến nghị: sau khi đợt A chạy thật khoảng 10 lần chữa hoặc hai tuần. Lý do: với luật họ model, Y sư Sonnet chưa có ca nào trong số đo, và hai bản vá gốc (#303–#305) có thể làm số ca giảm. Chủ nhân muốn có Y sư ngay thì đợt B không phụ thuộc số đo nào, chỉ cần HL-02 xong.
-- **K6. Luật họ model của `selectHealer`** (4.3, luật 2). Hai lựa chọn: (a) Y sư chỉ chữa quest đã có người làm cùng họ, còn lại người làm tự chữa; (b) Y sư chữa mọi quest, chấp nhận người chấm ưu tiên của quest Codex chuyển sang họ Gemini và mỗi lần chữa tốn khoảng 30–60 nghìn token Sonnet. Khuyến nghị: (a), và chuyển sang (b) nếu tỉ lệ chữa khỏi của Codex tự chữa dưới 70 % sau 10 lần.
-- **K7. Tên và Y sư đầu tiên.** id `healer`, "Y sư" / "Healer", trạng thái `healing` "Đang chữa"; một Y sư tộc `claude`, model `claude-sonnet-5-5`. Khuyến nghị: đồng ý; thử Haiku sau khi có số đo chất lượng.
-- **K8. Giới hạn phần Y sư được đổi: 8 file, 60 dòng, chỉ file đã có trong phần việc đã stage.** Khuyến nghị: đồng ý. Hệ quả: lỗi `max-lines` (phải tách file) Y sư không chữa được, quest vào trạm quân y kèm thư của nó.
+**Trước HL-03 (đợt B):**
 
-**Chờ được tới khi có số đo:**
+- **K5. Khi nào dựng Y sư.** Chốt: **dựng luôn**, ngay sau HL-02, không chờ số đo. (Khuyến nghị của kế hoạch là chờ khoảng 10 lần chữa của đợt A.)
+- **K6. Luật họ model của `selectHealer`** (4.3, luật 2). Chốt (a): Y sư chỉ chữa quest đã có người làm cùng họ; không có Y sư cùng họ thì người làm tự chữa. Mốc xét lại là tỉ lệ chữa khỏi dưới 70 % sau 10 lần. Bản đề xuất đo mốc này trên Codex tự chữa; nay ca của Codex do Y sư tộc `codex` chữa, nên phiên lập kế hoạch đọc mốc là đo trên Y sư của từng tộc.
+- **K7. Tên và Y sư.** Chốt: id `healer`, "Y sư" / "Healer", trạng thái `healing` "Đang chữa". **Mỗi tộc một Y sư** (`claude`, `codex`, `gemini`), thay cho một Y sư Sonnet của bản đề xuất. Model của từng Y sư chủ nhân chọn lúc triệu hồi (gợi ý ở mục 8). Điều cần theo dõi: Y sư tộc `codex` chạy trong cùng sandbox với dorian, nên nếu gốc là phiên Codex không lint được thì nó cũng sửa theo log rồi để hook kiểm; số 2 và 3 của mục 7, chia theo tộc, sẽ cho thấy.
+- **K8. Giới hạn phần Y sư được đổi: 8 file, 60 dòng, chỉ file đã có trong phần việc đã stage.** Chốt: đồng ý. Hệ quả: lỗi `max-lines` (phải tách file) Y sư không chữa được, quest vào trạm quân y kèm thư của nó.
 
-- **K9. Đợt C (chẩn đoán cho hết lượt thử và không tiến triển).** Khuyến nghị: chưa dựng; quyết khi đợt A và B có số. 8 ca trong 18 ngày, mỗi thư khoảng 50 nghìn token Sonnet.
-- **K10. `commands.fix`, bậc script tự sửa trước khi gọi model.** Khuyến nghị: chưa cần; hook của `elvaria` đã tự sửa. Xét lại khi có lãnh thổ thứ hai.
-- **K11. Y sư bó tay thì có trả tiếp cho người làm tự chữa không.** Khuyến nghị: không, giữ "mỗi lượt một lần chữa"; xét lại theo số ca `heal:unchanged`.
-- **K12. Bài học cho người làm bị hook từ chối nhiều lần.** Khuyến nghị: HL-06 đếm theo nhân vật; việc đưa vào kinh chờ đợt rà bài học.
+**Chờ số đo:**
+
+- **K9. Đợt C (chẩn đoán cho hết lượt thử và không tiến triển).** Chốt: chưa dựng. HL-07 nằm ở §8 với điều kiện chỉ mở khi chủ nhân chốt lại sau khi đợt A và B có số.
+- **K10. `commands.fix`, bậc script tự sửa trước khi gọi model.** Chốt: chưa làm; xét lại khi có lãnh thổ thứ hai.
+- **K11. Y sư bó tay thì có trả tiếp cho người làm tự chữa không.** Chốt: không, giữ "mỗi lượt một lần chữa"; xét lại theo số ca `heal:unchanged`.
+- **K12. Bài học cho người làm bị hook từ chối nhiều lần.** Chốt: HL-06 đếm theo nhân vật; việc đưa vào kinh chờ đợt rà bài học.
