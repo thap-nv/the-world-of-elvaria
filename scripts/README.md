@@ -180,7 +180,9 @@
   `docs:gen --check`, `docs:check`, `i18n:check`; `scripts/` and `.claude/hooks/` → root vitest and tsc; docs and
   package READMEs → `docs:check`; a contract → `schemas --check`; a manifest or `boundaries.mjs` → `boundaries`; any code, `knip.json` or the root manifest → `knip`; workspace code, `shape-clones.json` or its detector → `dup`), drops
   repeats and what `SUBSUMES` covers, and lists paths no rule covers. It prints the plan and runs the commands in
-  order, stopping at the first failure; `--dry-run` only prints. `pnpm check` stays the gate before a merge. Reads git
+  order, stopping at the first failure; `--dry-run` only prints. With `--only <group>` or `ELVARIA_CHECK_BASE` (a
+  territory's narrow command, `check-changed-narrow.mjs`) it also lints and formats the changed files; a path no rule
+  covers then runs the group's full command (`FULL_COMMANDS`) under `--only`, and exits 3 without it. `pnpm check` stays the gate before a merge. Reads git
   through `git merge-base`, `git diff` and `git ls-files` with a minimal env; writes nothing itself. Runs pnpm as
   `node <npm_execpath>` (no shell), so call it through `pnpm check:changed`.
 - `knip-gate.spec.ts`: the `pnpm knip` gate (AH-01). No script of its own: the root `knip` script runs knip with
