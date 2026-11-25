@@ -74,6 +74,8 @@ export const CheckIdSchema = z.string().regex(REGISTRY_ID_PATTERN).brand<'CheckI
 export const ScriptIdSchema = z.string().regex(SCRIPT_ID_PATTERN).brand<'ScriptId'>();
 /** A kind of memo, `registry/memos.json` (PS-02): `proposal`. */
 export const MemoKindIdSchema = z.string().regex(REGISTRY_ID_PATTERN).brand<'MemoKindId'>();
+/** A kind of operational disruption, `registry/disruptions.json` (LL-01, ADR 0036): `guest_waited`. */
+export const DisruptionKindIdSchema = z.string().regex(REGISTRY_ID_PATTERN).brand<'DisruptionKindId'>();
 
 export type QuestId = z.infer<typeof QuestIdSchema>;
 export type CampaignId = z.infer<typeof CampaignIdSchema>;
@@ -92,3 +94,4 @@ export type TagId = z.infer<typeof TagIdSchema>;
 export type CheckId = z.infer<typeof CheckIdSchema>;
 export type ScriptId = z.infer<typeof ScriptIdSchema>;
 export type MemoKindId = z.infer<typeof MemoKindIdSchema>;
+export type DisruptionKindId = z.infer<typeof DisruptionKindIdSchema>;

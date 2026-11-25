@@ -271,6 +271,7 @@ describe('registryFiles', () => {
         'kinds.json',
         'tags.json',
         'memos.json',
+        'disruptions.json',
         'scripts/common.mjs',
         'scripts/link-check.mjs',
         ...registry().classes.map((entry) => entry.prompt_file),
@@ -282,7 +283,9 @@ describe('registryFiles', () => {
 
   it('lists the same files of the package in another folder, as a build of another commit holds it', () => {
     expect(registryFiles(path.join(REGISTRY_ROOT, 'prompts'))).toEqual(
-      ['classes', 'kinds', 'memos', 'rituals', 'scripts', 'tags'].map((file) => `${file}.json`),
+      ['classes', 'disruptions', 'kinds', 'memos', 'rituals', 'scripts', 'tags'].map(
+        (file) => `${file}.json`,
+      ),
     );
     expect(registryFiles(REGISTRY_ROOT)).toEqual(registryFiles());
   });

@@ -322,6 +322,14 @@ count}` counted in the list's order, never stored: `siblingRootOf`, `siblingsOf`
   attempt_log does not keep. `mana.exhausted` may name the reset it waits for
   (`resets_at`), and `mana.level` may read one model's own cap (`model`), which the reducer leaves out of the
   pool's band, as it does that cap's sleep (P1-32).
+- Reads operational disruptions from the event log (`src/disruption/`, LL-01, ADR 0036): `disruptionsOf(events,
+kinds, window)` returns each time the kingdom's machinery slowed or spoiled work that was not wrong, with its kind,
+  place, times, wait minutes, cause code and the ids of the events that prove it; nothing is stored. Kinds are data
+  (`registry/disruptions.json`, schema `src/schema/disruption/disruption-kind.ts`) in two shapes, `event` and
+  `sequence` (`same` values, `within_seconds` or `after_minutes`, `unless`), with conditions `in`, `gte`, `exists` on
+  one coded field. `parseDisruptionKinds` reads that file apart from `parseRegistry` and refuses repeated ids and
+  event types outside the catalog. The test suite of plans/learning-loop.md (30 cases, `src/disruption/__fixtures__/`)
+  runs against the default file of `@elvaria/registry-default`.
 - Keeps the metrics ledger, read side (`src/metrics/`, implementation-plan §3.16.1, ADR 0027, PS-01): `metricsOf(input,
 window)` over quests, verdicts, the event log and the handled inbox commands counts the runs of a window, the
   rework (every character session beyond one assignee and one verifier per quest, `reworkOf`) with its cause, the

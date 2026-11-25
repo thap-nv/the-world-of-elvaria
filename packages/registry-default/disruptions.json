@@ -1,0 +1,182 @@
+{
+  "version": 1,
+  "disruptions": [
+    {
+      "id": "unclaimable",
+      "name_vi": "Quest không ai nhận được",
+      "name_en": "Unclaimable quest",
+      "description": "No character could take a quest: no one of its class, levels too low, or a party bars them. The roster or the draft is at fault, not the work.",
+      "shape": "event",
+      "type": "quest.unclaimable",
+      "cause": "data.reason"
+    },
+    {
+      "id": "session_cut_then_submitted",
+      "name_vi": "Phiên bị cắt vẫn nộp",
+      "name_en": "Cut session handed in",
+      "description": "A session ran out of turns or budget and its run was still handed in: the work may be unfinished although nothing failed.",
+      "shape": "sequence",
+      "first": {
+        "type": "agent.session.end",
+        "where": [{ "path": "data.outcome", "in": ["max_turns", "budget"] }]
+      },
+      "then": { "type": "quest.submitted" },
+      "same": ["quest", "session"],
+      "within_seconds": 600,
+      "cause": "first.data.outcome"
+    },
+    {
+      "id": "edit_killed_session",
+      "name_vi": "Sửa quest giết phiên",
+      "name_en": "Edit killed the session",
+      "description": "The owner edited a quest at work and its running session was killed right after: the session's work so far is lost.",
+      "shape": "sequence",
+      "first": {
+        "type": "quest.edited",
+        "where": [{ "path": "data.quest.status", "in": ["working"] }]
+      },
+      "then": {
+        "type": "agent.session.end",
+        "where": [{ "path": "data.outcome", "in": ["killed"] }]
+      },
+      "same": ["quest"],
+      "within_seconds": 120
+    },
+    {
+      "id": "edited_after_start",
+      "name_vi": "Quest bị sửa sau khi phiên mở",
+      "name_en": "Edited after its session opened",
+      "description": "A quest was edited while a session worked or judged it: that session read the old text.",
+      "shape": "event",
+      "type": "quest.edited",
+      "where": [{ "path": "data.quest.status", "in": ["working", "review"] }]
+    },
+    {
+      "id": "retry_dropped_assignee",
+      "name_vi": "Thử lại bỏ người làm",
+      "name_en": "Retry dropped the assignee",
+      "description": "A quest left the infirmary by a retry, which opens it to the whole class: another character may take it without the context of the runs before.",
+      "shape": "sequence",
+      "first": { "type": "quest.infirmary" },
+      "then": {
+        "type": "quest.released",
+        "where": [{ "path": "data.quest.status", "in": ["open"] }]
+      },
+      "same": ["quest"],
+      "within_seconds": 604800
+    },
+    {
+      "id": "guest_waited",
+      "name_vi": "Làn khách chờ lâu",
+      "name_en": "Guest waited long",
+      "description": "A pull request in the merge queue waited 30 minutes or more between its enqueue and its merge.",
+      "shape": "sequence",
+      "first": { "type": "delivery.enqueued" },
+      "then": { "type": "delivery.guest_merged" },
+      "same": ["data.territory", "data.pr"],
+      "after_minutes": 30,
+      "unless": { "type": "delivery.guest_refused" }
+    },
+    {
+      "id": "commit_refused",
+      "name_vi": "Commit bị từ chối",
+      "name_en": "Commit refused",
+      "description": "The Steward's commit of a run's work failed (a hook refused it, or it erred), and the quest went to the infirmary.",
+      "shape": "event",
+      "type": "quest.infirmary",
+      "where": [{ "path": "data.reason.code", "in": ["breaker:commit", "breaker:commit_errors"] }],
+      "cause": "data.reason.code"
+    },
+    {
+      "id": "setup_failed",
+      "name_vi": "Setup của đất hỏng",
+      "name_en": "Plot setup failed",
+      "description": "The territory's setup failed in a quest's plot, and the quest went to the infirmary before any work.",
+      "shape": "event",
+      "type": "quest.infirmary",
+      "where": [{ "path": "data.reason.code", "in": ["breaker:setup"] }],
+      "cause": "data.reason.code"
+    },
+    {
+      "id": "patrol_setup_failed",
+      "name_vi": "Setup của tuần tra hỏng",
+      "name_en": "Patrol setup failed",
+      "description": "The territory's setup failed on a clean plot of its default branch: every quest plot made from it would fail the same way.",
+      "shape": "event",
+      "type": "patrol.ran",
+      "where": [{ "path": "data.setup.pass", "in": [false] }]
+    },
+    {
+      "id": "delivery_refused",
+      "name_vi": "Giao hàng dừng",
+      "name_en": "Delivery stopped",
+      "description": "The delivery of a done quest stopped at one of its stages: pushing, opening, checking or merging.",
+      "shape": "event",
+      "type": "delivery.failed",
+      "cause": "data.reason"
+    },
+    {
+      "id": "guest_refused",
+      "name_vi": "Làn khách từ chối",
+      "name_en": "Guest refused",
+      "description": "The merge queue refused a guest pull request: a conflict, red checks, a moved head or a forge error.",
+      "shape": "event",
+      "type": "delivery.guest_refused",
+      "cause": "data.reason"
+    },
+    {
+      "id": "checks_stopped",
+      "name_vi": "Check bị dừng",
+      "name_en": "Checks stopped",
+      "description": "A run's checks were killed before they ended, because the Steward stopped or the quest moved on.",
+      "shape": "event",
+      "type": "check.end",
+      "where": [{ "path": "data.outcome", "in": ["stopped"] }]
+    },
+    {
+      "id": "many_rounds",
+      "name_vi": "Nhiều vòng chấm",
+      "name_en": "Many rounds",
+      "description": "A quest failed its judging a third time or more: the description, the checks or the judges keep sending it back.",
+      "shape": "event",
+      "type": "verdict.fail",
+      "where": [{ "path": "attempt", "gte": 3 }],
+      "cause": "data.fail_kind"
+    },
+    {
+      "id": "out_of_scope",
+      "name_vi": "Vùng thiếu file",
+      "name_en": "Scope missed files",
+      "description": "A run changed files outside its quest's scope: the scope the quest was drafted with missed files the work needed.",
+      "shape": "event",
+      "type": "quest.submitted",
+      "where": [{ "path": "data.out_of_scope", "exists": true }]
+    },
+    {
+      "id": "pass_overturned",
+      "name_vi": "Lượt đỗ bị lật",
+      "name_en": "Pass overturned",
+      "description": "A late verdict overturned a judge's pass: the judging let wrong work through.",
+      "shape": "event",
+      "type": "character.judged",
+      "where": [{ "path": "data.role", "in": ["judge"] }]
+    },
+    {
+      "id": "graph_failed",
+      "name_vi": "Đồ thị code hỏng",
+      "name_en": "Code graph failed",
+      "description": "The code graph of a territory could not be built: the sessions that would ask it read files instead.",
+      "shape": "event",
+      "type": "graph.failed"
+    },
+    {
+      "id": "tribe_check_failed",
+      "name_vi": "Kiểm tộc trượt",
+      "name_en": "Tribe check failed",
+      "description": "A check of a tribe's CLI failed: its characters may not open sessions until it passes.",
+      "shape": "event",
+      "type": "tribe.checked",
+      "where": [{ "path": "data.outcome", "in": ["failed"] }]
+    }
+  ]
+}
