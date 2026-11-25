@@ -1,6 +1,6 @@
 # ADR 0035 · Checks run once per tree: green runs are carried, and the base branch goes in before the checks
 
-- Status: proposed · 2026-11-25
+- Status: proposed · 2026-11-25 (the owner settled K1–K11 of the plan the same day; accepted when RC-05 lands)
 - Amends (once accepted): [ADR 0023](0023-steward-delivers-push-pr-merge.md) (the order of a delivery; what a push tells the territory's hook), [ADR 0032](0032-check-modes-of-a-territory.md) (the patrol after each move of the base branch; the queue's rerun)
 - Related: [plans/recheck.md](../plans/recheck.md); [ADR 0008](0008-separation-of-duties.md), [ADR 0033](0033-late-machine-verdict.md); owner's (546), (555), (556) in implementation-plan §11 (2026-11-25)
 
