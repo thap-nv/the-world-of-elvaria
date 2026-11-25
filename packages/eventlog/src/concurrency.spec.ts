@@ -5,10 +5,10 @@ import process from 'node:process';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { linesOf, tempDir, testScript } from '../test/temp.ts';
+import { linesOf, tempDir, testScript } from './__fixtures__/temp.ts';
 import { QUEST } from './__fixtures__/events.ts';
 import { openEventLog, openJournal } from './event-log.ts';
-import type { TempDir } from '../test/temp.ts';
+import type { TempDir } from './__fixtures__/temp.ts';
 import type { Event } from '@elvaria/domain';
 
 const WRITERS = 4;

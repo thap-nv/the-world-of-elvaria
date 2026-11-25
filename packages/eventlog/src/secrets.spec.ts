@@ -5,12 +5,12 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { tempDir } from '../test/temp.ts';
+import { tempDir } from './__fixtures__/temp.ts';
 import { DAY_1, QUEST, QUEST_VIEW, makeEvent } from './__fixtures__/events.ts';
 import { KNOWN_SECRET, SECRET_SAMPLES } from './__fixtures__/secrets.ts';
 import { openEventLog, openJournal } from './event-log.ts';
 import { REDACTED, createRedactor, redactDeep } from './redact.ts';
-import type { TempDir } from '../test/temp.ts';
+import type { TempDir } from './__fixtures__/temp.ts';
 import type { Event } from '@elvaria/domain';
 
 const MIN_KINDS = 12;

@@ -1,5 +1,5 @@
 // Prints, as JSON, the URL of every module Node loads while importing the file given as argument:
-//   node test/load-probe.ts <file>
+//   node fixtures/load-probe.ts <file>
 // light-entry.spec.ts checks that the package entry does not pull in @elvaria/domain or zod.
 import { registerHooks } from 'node:module';
 import process from 'node:process';

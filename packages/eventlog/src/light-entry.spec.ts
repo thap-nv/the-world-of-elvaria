@@ -6,7 +6,7 @@ import process from 'node:process';
 
 import { describe, expect, it } from 'vitest';
 
-import { testScript } from '../test/temp.ts';
+import { testScript } from './__fixtures__/temp.ts';
 
 const ENTRY = fileURLToPath(new URL('index.ts', import.meta.url));
 

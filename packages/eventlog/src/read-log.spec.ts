@@ -2,10 +2,10 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { plantText, tempDir } from '../test/temp.ts';
+import { plantText, tempDir } from './__fixtures__/temp.ts';
 import { DAY_1, DAY_2, DAY_3, QUEST, idsOf, makeEvent, makeEvents, plus } from './__fixtures__/events.ts';
 import { openEventLog, openJournal } from './event-log.ts';
-import type { TempDir } from '../test/temp.ts';
+import type { TempDir } from './__fixtures__/temp.ts';
 import type { EventLog } from './event-log.ts';
 
 describe('EventLog.read', () => {

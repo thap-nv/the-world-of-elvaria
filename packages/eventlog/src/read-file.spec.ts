@@ -3,11 +3,11 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { linesOf, plantText, tempDir } from '../test/temp.ts';
+import { linesOf, plantText, tempDir } from './__fixtures__/temp.ts';
 import { DAY_1, idsOf, makeEvent, makeEvents } from './__fixtures__/events.ts';
 import { appendEvents, serializeEvent } from './append.ts';
 import { readEventFile } from './read-file.ts';
-import type { TempDir } from '../test/temp.ts';
+import type { TempDir } from './__fixtures__/temp.ts';
 
 const TEN_THOUSAND = 10_000;
 const BATCH = 100;

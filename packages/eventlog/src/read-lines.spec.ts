@@ -3,10 +3,10 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { plantText, tempDir } from '../test/temp.ts';
+import { plantText, tempDir } from './__fixtures__/temp.ts';
 import { MAX_LINE_BYTES, READ_CHUNK_BYTES } from './constants.ts';
 import { endOfLines, readLines, splitLines } from './read-lines.ts';
-import type { TempDir } from '../test/temp.ts';
+import type { TempDir } from './__fixtures__/temp.ts';
 
 describe('splitLines', () => {
   it('returns complete lines with their offsets and stops before an unfinished one', () => {
