@@ -1,20 +1,22 @@
-import { mkdtemp, realpath, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { realpath } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST } from '../__fixtures__/git-repo.ts';
 import { goneWithin, treeScript } from '../__fixtures__/tree.ts';
 import { childEnvOf, runProgram } from './program.ts';
 
 let dir = '';
+let temp: TempDir;
 beforeAll(async () => {
-  dir = await mkdtemp(path.join(tmpdir(), 'elvaria program '));
+  temp = await tempDir('program');
+  dir = temp.root;
 });
-afterAll(() => rm(dir, RM_TEMP));
+afterAll(() => temp.remove());
 
 describe('childEnvOf', () => {
   it('drops every GIT_* variable, whatever its case, and keeps the rest', () => {

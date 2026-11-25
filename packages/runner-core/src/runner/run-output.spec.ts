@@ -3,20 +3,22 @@
 // OS: macOS refuses to open it, Windows opens it and refuses the first write. The run folder removed before the
 // streams open is fix/cli-lines' case: an adapter that opened its output and then threw, its test folder cleaned.
 import { existsSync, rmSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { NOTE_PREFIX, STDERR_FILE, STDOUT_FILE, openRunOutput } from './run-output.ts';
 
 let root: string;
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria run output '));
+  temp = await tempDir('run output');
+  root = temp.root;
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 /** A run folder in which `file` is a folder, so its stream fails. */
 async function runDirWithout(name: string, file: string): Promise<string> {

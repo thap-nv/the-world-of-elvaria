@@ -1,11 +1,10 @@
-import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { RITUAL_STEPS } from '@elvaria/domain';
+import { tempDir } from '@elvaria/testkit';
 import { describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import {
   PROMPTS_DIR,
   PROMPT_TEMPLATES,
@@ -25,7 +24,8 @@ describe('loadPromptTemplates', () => {
   });
 
   it('drops the maintainer notes and normalises line ends', async () => {
-    const dir = await mkdtemp(path.join(tmpdir(), 'elvaria prompts '));
+    const temp = await tempDir('prompts');
+    const dir = temp.root;
     try {
       await Promise.all(
         PROMPT_TEMPLATES.map((name) =>
@@ -38,7 +38,7 @@ describe('loadPromptTemplates', () => {
         true,
       );
     } finally {
-      await rm(dir, RM_TEMP);
+      await temp.remove();
     }
   });
 });

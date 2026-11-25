@@ -1,10 +1,10 @@
-import { chmod, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { chmod, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { QUEST } from '../__fixtures__/world.ts';
 import { MINIMAL_ENV_NAMES, minimalEnv } from './minimal-env.ts';
 import { secretEnvNamesOf, secretValuesOf, sessionEnv } from './session-env.ts';
@@ -111,11 +111,13 @@ describe('secret names and values of a request', () => {
 describe('openFileTreasury', () => {
   let dir: string;
   let file: string;
+  let temp: TempDir;
   beforeAll(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), 'elvaria treasury '));
+    temp = await tempDir('treasury');
+    dir = temp.root;
     file = path.join(dir, 'treasury.json');
   });
-  afterAll(() => rm(dir, RM_TEMP));
+  afterAll(() => temp.remove());
 
   const save = async (text: string): Promise<void> => {
     await writeFile(file, text, 'utf8');

@@ -1,12 +1,12 @@
 // The files a session keeps in the plot for its life (P1-23): written unless the territory owns the name, taken out
 // when the session ends or never starts, a territory's file never touched.
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { existingText, removeOwnFile, withPlotFiles, writeOwnFile } from './plot-file.ts';
 import type { RunResult, RunningSession } from '../runner/types.ts';
 
@@ -16,14 +16,16 @@ const isOurs = (text: string): boolean => text.startsWith(OURS);
 let root: string;
 let plot: string;
 let file: string;
+let temp: TempDir;
 beforeEach(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria plot file '));
+  temp = await tempDir('plot file');
+  root = temp.root;
   plot = path.join(root, 'plot');
   await mkdir(path.join(root, 'run'), { recursive: true });
   await mkdir(plot);
   file = path.join(plot, 'CONTEXT.md');
 });
-afterEach(() => rm(root, RM_TEMP));
+afterEach(() => temp.remove());
 
 describe('writeOwnFile and removeOwnFile', () => {
   it('writes and takes out Elvaria’s file', async () => {

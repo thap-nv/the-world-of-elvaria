@@ -1,12 +1,12 @@
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { TerritorySchema } from '@elvaria/domain';
 import { inKingdom } from '@elvaria/store';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST } from '../__fixtures__/git-repo.ts';
 import { stripesPng } from '../conformance/stripes.ts';
 import { SCREEN_MAX_BYTES, SCREEN_MAX_FILES } from '../policy/constants.ts';
@@ -18,8 +18,10 @@ let kingdom = '';
 let plot = '';
 const PNG = stripesPng(['red', 'green', 'blue', 'yellow'], 64, 8);
 
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria screens '));
+  temp = await tempDir('screens');
+  root = temp.root;
   kingdom = path.join(root, 'my kingdom');
   plot = path.join(root, 'Tool - DC1', 'plot');
   await mkdir(plot, { recursive: true });
@@ -37,7 +39,7 @@ beforeAll(async () => {
     ].join('\n'),
   );
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const RUN = '.runs/q_20261117_s3r33n-1';
 const screensDir = () => inKingdom(kingdom, screensDirOf(RUN));

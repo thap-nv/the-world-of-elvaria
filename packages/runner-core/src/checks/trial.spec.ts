@@ -1,12 +1,12 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { FLAKE_RUNS, TerritorySchema } from '@elvaria/domain';
 import { inKingdom } from '@elvaria/store';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { createPlotManager } from '../plot/plot-manager.ts';
 import { trialInScratch } from './scratch-trial.ts';
@@ -15,12 +15,14 @@ import type { TrialRequest } from './trial.ts';
 
 let root = '';
 let kingdom = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria trial '));
+  temp = await tempDir('trial');
+  root = temp.root;
   kingdom = path.join(root, 'my kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 /** Counts its runs in `<plot>/../counts/<name>` and fails on the runs listed after the name. */
 const COUNT = [

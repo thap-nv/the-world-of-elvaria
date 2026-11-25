@@ -3,14 +3,14 @@
 // its plot gone after and the session's branch untouched; a red head fails its check; a head that conflicts names
 // the file; a head the branch does not have, or a territory without git, fails before any plot.
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { TEST_HOST, commitFile, git, gitRepo, territoryAt } from '../__fixtures__/git-repo.ts';
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { guestIdOf, tryGuest } from './guest-trial.ts';
 
 const CHECK = [
@@ -34,8 +34,10 @@ async function pushed(branch: string, from: string, file: string, text: string):
   return head;
 }
 
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria guest '));
+  temp = await tempDir('guest');
+  root = temp.root;
   repo = await gitRepo(path.join(root, 'Tool - Demo'));
   await commitFile(repo, 'check.mjs', CHECK);
   await commitFile(repo, 'state.txt', 'green\n');
@@ -54,7 +56,7 @@ beforeAll(async () => {
   kingdom = path.join(root, 'the kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const territory = () =>
   territoryAt(repo, {

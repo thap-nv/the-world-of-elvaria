@@ -1,16 +1,16 @@
 // The session of a CLI that streams JSON lines (Codex, agy; AH-09) against a Node child that plays one: lines become
 // signals, a turn past the budget stops the run, stderr lines reach the adapter, and the end becomes a RunResult and
 // `agent.session.end` whatever happened. Each adapter's spec and the conformance suite play it with its fake CLI.
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { openJournal } from '@elvaria/eventlog';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { QUEST, REGISTRY, TERRITORY, THORN } from '../__fixtures__/world.ts';
 import { toolPolicyOf } from '../policy/tool-policy.ts';
 import { runContextOf } from '../runner/run-context.ts';
@@ -66,11 +66,13 @@ const plainVerdict = ({ exit, stopped }: LineEnd<Tally>): LineVerdict => ({
 });
 
 let root: string;
+let temp: TempDir;
 beforeEach(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria line session '));
+  temp = await tempDir('line session');
+  root = temp.root;
   await mkdir(path.join(root, 'run'));
 });
-afterEach(() => rm(root, RM_TEMP));
+afterEach(() => temp.remove());
 
 function request(env: Record<string, string>, maxTurns = 5): SpawnRequest {
   return {

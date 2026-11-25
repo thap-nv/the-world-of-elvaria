@@ -4,15 +4,15 @@
 // switches, last, runs the repository's, so the case cannot pass on a poison that never worked.
 import { spawnSync } from 'node:child_process';
 import type { SpawnSyncOptions } from 'node:child_process';
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { TEST_HOST, git as gitIn, gitRepo, minimalEnv } from '../__fixtures__/git-repo.ts';
 import { poisonedGit, runsIn } from '../__fixtures__/poisoned-git.ts';
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { gitOf } from '../plot/git.ts';
 import { runToEnd } from './child.ts';
 import { gitGuard, gitGuardOf, gitGuards } from './git-guard.ts';
@@ -84,12 +84,14 @@ describe('gitGuard on a poisoned repository', () => {
   const QUESTION = 'protocol=https\nhost=elvaria.invalid\n\n';
   const SSH_REMOTE = 'ssh://git@elvaria.invalid/demo.git';
 
+  let temp: TempDir;
   beforeAll(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'elvaria git guard '));
+    temp = await tempDir('git guard');
+    root = temp.root;
     repo = await gitRepo(path.join(root, 'lãnh thổ'));
     poisoned = await poisonedGit(repo, root);
   });
-  afterAll(() => rm(root, RM_TEMP));
+  afterAll(() => temp.remove());
 
   it("runs none of the repository's programs, and the owner's ssh command and helper", async () => {
     const git = await gitOf({ resolve: TEST_HOST.resolve, env: poisoned.env });

@@ -1,14 +1,14 @@
 // The code graphs' port (PS-21): the base of a quest's plot from its record, the default branch's tip, a session's
 // env and one question, against a fake graphify (build-graph.spec.ts) in folders whose names have spaces.
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { fromPortable } from '@elvaria/store';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { FAKE_GRAPHIFY } from '../__fixtures__/fake-graphify.ts';
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import {
   TEST_HOST,
   commitFile,
@@ -28,8 +28,10 @@ let root = '';
 let repo = '';
 let graphs: CodeGraphs;
 
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria graphs port '));
+  temp = await tempDir('graphs port');
+  root = temp.root;
   repo = await gitRepo(path.join(root, 'territory repo'));
   await commitFile(repo, 'src/a.ts', 'export const a = 1;\n');
   const fake = path.join(root, 'fake graphify.mjs');
@@ -43,7 +45,7 @@ beforeAll(async () => {
     env: minimalEnv(),
   });
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 describe('codeGraphsOf', () => {
   it('reads the commit a quest branch forked from, which stays when the branch moves on', async () => {

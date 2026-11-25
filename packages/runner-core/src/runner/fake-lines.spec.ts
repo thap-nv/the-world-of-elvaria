@@ -1,11 +1,11 @@
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdtemp } from 'node:fs/promises';
 import path from 'node:path';
 
 import { openEventLog, openJournal } from '@elvaria/eventlog';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { QUEST_ID, REGISTRY, TERRITORY, THORN } from '../__fixtures__/world.ts';
 import { FAKE_SCENARIO_ENV } from '../conformance/scenarios.ts';
 import { toolPolicyOf } from '../policy/tool-policy.ts';
@@ -17,10 +17,12 @@ import type { RunnerSignal, SpawnRequest } from './types.ts';
 const NOW = Date.parse('2026-11-07T02:00:00Z');
 
 let root = '';
+let temp: TempDir;
 beforeAll(async () => {
-  root = await mkdtemp(path.join(tmpdir(), 'elvaria fake lines '));
+  temp = await tempDir('fake lines');
+  root = temp.root;
 });
-afterAll(() => rm(root, RM_TEMP));
+afterAll(() => temp.remove());
 
 const knight = REGISTRY.classes.find((entry) => entry.id === 'knight')!;
 
