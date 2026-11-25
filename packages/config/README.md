@@ -16,7 +16,7 @@
   the repo's `eslint-suppressions.json` (ESLint's bulk suppressions); `suppressions.mjs` tells when that list grew
   or holds an entry it may not (another rule, a spec that is gone).
 - Keeps temporary spec folders in `@elvaria/testkit`: `elvaria/no-mkdtemp` rejects direct fs imports of
-  `mkdtemp`/`mkdtempSync` and calls through fs namespace or default imports. The test rules exclude `.claude/**`
+  `mkdtemp`/`mkdtempSync` and calls through fs namespace or default imports. Only this rule excludes `.claude/**`
   because character sessions cannot read those protected hook specs.
 - Caps a function's `complexity` at 15 in every linted file (AH-02, K9 of docs/plans/architecture-health.md). The
   23 older functions above it sit in the same `eslint-suppressions.json`; `SUPPRESSIBLE_RULES` in

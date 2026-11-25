@@ -244,28 +244,34 @@ const noMkdtemp = {
 /**
  * The test-time rules on `files` (the repo's *.spec.ts).
  * @param {string[]} files
- * @returns {import('eslint').Linter.Config}
+ * @returns {import('eslint').Linter.Config[]}
  */
 export function testTimeConfig(files) {
-  return {
-    name: 'elvaria/tests/time',
-    files,
-    // Character sessions cannot read .claude/**; hook-io.spec.ts keeps its synchronous setup.
-    ignores: ['.claude/**'],
-    plugins: {
-      elvaria: {
-        meta: { name: 'elvaria' },
-        rules: {
-          'no-real-wait': noRealWait,
-          'no-real-clock': noRealClock,
-          'timeout-reason': timeoutReason,
-          'no-mkdtemp': noMkdtemp,
+  return [
+    {
+      name: 'elvaria/tests/time',
+      files,
+      plugins: {
+        elvaria: {
+          meta: { name: 'elvaria' },
+          rules: {
+            'no-real-wait': noRealWait,
+            'no-real-clock': noRealClock,
+            'timeout-reason': timeoutReason,
+            'no-mkdtemp': noMkdtemp,
+          },
         },
       },
+      rules: {
+        ...Object.fromEntries(TEST_TIME_RULES.map((rule) => [rule, 'error'])),
+      },
     },
-    rules: {
-      ...Object.fromEntries(TEST_TIME_RULES.map((rule) => [rule, 'error'])),
-      'elvaria/no-mkdtemp': 'error',
+    {
+      name: 'elvaria/tests/temp',
+      files,
+      // Character sessions cannot read .claude/**; hook-io.spec.ts keeps its synchronous setup.
+      ignores: ['.claude/**'],
+      rules: { 'elvaria/no-mkdtemp': 'error' },
     },
-  };
+  ];
 }

@@ -16,7 +16,7 @@ const SPEC = 'packages/store/src/lock.spec.ts';
 const linter = new Linter({ cwd: REPO });
 const configs: Linter.Config[] = [
   { files: ['**/*.ts'], languageOptions: { parser: tseslint.parser, globals: globals.node } },
-  testTimeConfig(['**/*.spec.ts']),
+  ...testTimeConfig(['**/*.spec.ts']),
 ];
 
 /** `rule:line` for each report on `lines` placed at `file`, a path from the repo root. */
@@ -219,6 +219,15 @@ describe('temporary folder rule', () => {
 });
 
 describe('elvaria()', () => {
+  it('keeps all time guards on protected hook specs', () => {
+    expect(
+      lint(
+        ['setTimeout(done, 10);', 'Date.now();', "it('a', async () => {}, 5000);"],
+        '.claude/hooks/example.spec.ts',
+      ),
+    ).toEqual(['elvaria/no-real-wait:1', 'elvaria/no-real-clock:2', 'elvaria/timeout-reason:3']);
+  });
+
   it('runs the test-time rules on every spec', () => {
     const time = elvaria({ root: REPO }).find((config) => config.name === 'elvaria/tests/time');
     expect(time?.files).toEqual(['**/*.spec.ts']);

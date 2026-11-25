@@ -117,7 +117,7 @@ export function elvaria({ root }) {
         '@typescript-eslint/no-non-null-assertion': 'off',
       },
     },
-    testTimeConfig(TESTS),
+    ...testTimeConfig(TESTS),
     { name: 'elvaria/config-files', files: CONFIG_FILES, rules: { 'import-x/no-default-export': 'off' } },
     // Repo scripts print to the terminal; that is their output.
     { name: 'elvaria/scripts', files: ['scripts/**'], rules: { 'no-console': 'off' } },
