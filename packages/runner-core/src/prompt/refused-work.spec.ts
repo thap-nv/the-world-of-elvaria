@@ -1,5 +1,6 @@
 // What a session reads of the work the Steward could not take from the run before it: a refused patch (P1-31), or a
-// commit git refused while the quest waited on the doer's amendment (fix/session-notes). Each reason is fenced, so
+// commit git refused while the quest waited on the doer's amendment (fix/session-notes) or that went back for a heal
+// (ADR 0034). Each reason is fenced, so
 // a line it quotes is not read as the prompt's.
 import { describe, expect, it } from 'vitest';
 
@@ -35,7 +36,9 @@ describe('refusedCommitBlock (fix/session-notes)', () => {
     const block = refusedCommitBlock(`\n${HOOK_SAID}\n`, templates);
     expect(block).toContain(COMMIT_HEADING);
     expect(block).toContain(`\`\`\`text\n${HOOK_SAID}\n\`\`\``);
-    expect(block).toContain('That work is still in your plot, uncommitted.');
+    expect(block).toContain('That work is still in your plot, staged and uncommitted.');
+    // A heal session (ADR 0034) mends only what the hooks named.
+    expect(block).toContain('do not redo the work, and never turn a lint rule off or skip a hook');
     expect(block).not.toContain('{{');
   });
 

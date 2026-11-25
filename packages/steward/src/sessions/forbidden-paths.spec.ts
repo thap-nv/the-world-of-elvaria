@@ -129,7 +129,12 @@ describe('a plot whose changes cannot be listed (P1-49)', () => {
       trip: 'commit',
       reason: {
         code: 'breaker:commit',
-        params: { lines: 'git status failed', total_lines: 1, log: `.runs/${quest.id}-1/pre-commit.log` },
+        // The run's heal (ADR 0034) cannot list the plot either: the reason names its log.
+        params: {
+          lines: 'git status failed',
+          total_lines: 1,
+          log: `.runs/${quest.id}-1/heal/pre-commit.log`,
+        },
       },
     });
   });

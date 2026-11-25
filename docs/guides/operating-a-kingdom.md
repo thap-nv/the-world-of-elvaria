@@ -368,7 +368,18 @@ cho người chấm sau cùng. `--json` giữ nguyên đối tượng độ chí
 
 Quest vào trạm quân y thì dừng hẳn và chuông rung. `elvaria quest show <quest>` in lý do. Phần dở của người làm đã được commit lên nhánh (`chore: wip <quest> (<lý do>)`), trừ khi `quest show` nói commit bị từ chối.
 
-Phiên người làm vượt trần không còn đưa quest vào trạm quân y ngay. Ở 85 % trần (phút, token hay lượt) Nhiếp chính nhắc phiên một lần (`wrap-up.json`, event `agent.session.wrap_up`) để nó dừng, commit và viết thư; ở 150 % nó cắt phiên. Cắt mà nhánh có commit mới (hay commit WIP có thay đổi) thì quest đi tiếp trong phiên mới của cùng lượt, cùng người làm, không tốn lần thử, không chuông, và không có trần số lần đi tiếp. Chỉ khi hai lần cắt liền nhau trong cùng lượt đều không có tiến triển thì quest vào trạm quân y (`breaker:no_progress`) và chuông rung: một lần cắt giảm nay không buộc bạn `retry`. Các trip `commit`, `secrets`, `forbidden_paths` và `no_session` giữ nguyên: vào trạm quân y ngay, không phiên tiếp nào mở. Người chấm vượt trần vẫn rời lượt chấm cho người kế.
+Phiên người làm vượt trần không còn đưa quest vào trạm quân y ngay. Ở 85 % trần (phút, token hay lượt) Nhiếp chính nhắc phiên một lần (`wrap-up.json`, event `agent.session.wrap_up`) để nó dừng, commit và viết thư; ở 150 % nó cắt phiên. Cắt mà nhánh có commit mới (hay commit WIP có thay đổi) thì quest đi tiếp trong phiên mới của cùng lượt, cùng người làm, không tốn lần thử, không chuông, và không có trần số lần đi tiếp. Chỉ khi hai lần cắt liền nhau trong cùng lượt đều không có tiến triển thì quest vào trạm quân y (`breaker:no_progress`) và chuông rung: một lần cắt giảm nay không buộc bạn `retry`. Các trip `secrets`, `forbidden_paths` và `no_session` giữ nguyên: vào trạm quân y ngay, không phiên tiếp nào mở; trip `commit` có lần chữa ở mục dưới. Người chấm vượt trần vẫn rời lượt chấm cho người kế.
+
+### Mỗi lượt một lần chữa (ADR 0034)
+
+Phiên người làm xong việc mà hook của lãnh thổ từ chối commit nộp (`breaker:commit`, `breaker:commit_errors`: thường là lint) thì quest **không** vào trạm quân y ngay. Quest về `returned`, không chuông, không lệnh nào của bạn; nhịp sau Nhiếp chính mở một phiên mới của **chính người làm**, cùng lượt, không tốn lần thử. Phần việc vẫn nằm đã stage trong đất riêng; prompt của phiên chữa mang các dòng đầu của log hook (đã che secret, cắt ở 4 000 ký tự), vì nhân vật không đọc được `.runs/`, và dặn chỉ sửa điều log nêu, không làm lại việc, không tắt luật lint hay bỏ qua hook. Phiên chữa có trần riêng `kingdom.heal.tokens` (mặc định 150 000) và `kingdom.heal.minutes` (15), cắt ở `breakers.hard_pct` của trần đó, không đi tiếp sau khi bị cắt.
+
+- Commit sau phiên chữa qua hook thì quest sang chờ nghiệm thu như mọi lần nộp (check máy, người chấm, vùng bảo vệ, dấu vua).
+- Bị từ chối lần nữa thì quest vào trạm quân y với chuông, lý do `breaker:commit` hay `breaker:commit_errors` trỏ vào log lần hai `.runs/<quest>-<n>/heal/pre-commit.log`; log lần đầu ở lại `.runs/<quest>-<n>/pre-commit.log`. Từ đây như mọi quest ở trạm quân y: sửa rồi `quest submit`, hay `retry` (lượt mới có lần chữa của nó).
+- `elvaria quest list` ghi "chờ chữa" cạnh trạng thái khi quest chờ phiên chữa, "đang chữa" khi phiên đó chạy; `elvaria quest show <quest>` in thêm vì sao, với dòng hook nói và đường dẫn log, từ dòng `quest.heal_due` của sổ.
+- Lý do khác (`breaker:setup`, `breaker:patch`, `breaker:forbidden_paths`, secret, `no_session`, hết lượt thử, phán quyết) không có lần chữa. Quest ghép của máy và quest bậc script cũng không.
+- Tắt cơ chế: `"heal": { "enabled": false }` trong `kingdom.json` (cần bản build từ HL-01, `elvaria upgrade`); mọi commit bị từ chối lại vào trạm quân y ngay như trước.
+- Y sư (nghề `healer`, HL-03 tới HL-05) chưa có: hiện người làm luôn tự chữa.
 
 | Lý do | Nghĩa là | Làm gì |
 |---|---|---|

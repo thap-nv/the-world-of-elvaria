@@ -178,7 +178,8 @@ describe('a submit the Steward could not commit, its letter holding no amendment
     const objection = '- objection: Ghi chú sai: orders.spec.ts đã xanh. refs: src/api/orders.spec.ts';
     const { kingdom, steward } = await open({
       letters: (_, nth) => letter(nth === 2 ? objection : '-'),
-      plots: (k) => refusingCommits(k, 'Objected', [2]),
+      // The second run's commit, and its heal's (ADR 0034).
+      plots: (k) => refusingCommits(k, 'Objected', [2, 3]),
       verdicts: { Objected: [FAIL] },
     });
     await kingdom.command('create_quest', questPayload('Objected', CHANCELLOR));

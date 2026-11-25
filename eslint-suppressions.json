@@ -310,11 +310,6 @@
       "count": 1
     }
   },
-  "packages/steward/src/quest/record.ts": {
-    "complexity": {
-      "count": 1
-    }
-  },
   "packages/steward/src/script/scripts-restart.spec.ts": {
     "elvaria/no-real-clock": {
       "count": 4
