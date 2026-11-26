@@ -12,6 +12,7 @@ export {
   toVerdictCheck,
 } from './run-checks.ts';
 export type { CheckRun, ChecksOptions, ChecksRequest } from './run-checks.ts';
+export { checkConfigOf } from './check-config.ts';
 export { selectChecks } from './select-checks.ts';
 export { CHECK_BASE_ENV, checkLinesOf, checkModeOf } from './check-mode.ts';
 export type { CheckPass, CheckRunMode, CheckRunOf } from './check-mode.ts';

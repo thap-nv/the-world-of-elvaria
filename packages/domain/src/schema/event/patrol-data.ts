@@ -7,6 +7,13 @@ import { z } from 'zod';
 import { PATROL_LINE_MAX_LENGTH } from '../../constants.ts';
 import { CheckIdSchema, ScriptIdSchema, TerritoryIdSchema } from '../../core/ids.ts';
 import { NonEmptyStringSchema } from '../common.ts';
+import {
+  CARRIED_PASSED,
+  CarriedFromSchema,
+  CheckConfigSchema,
+  TreeIdSchema,
+  carriedPassed,
+} from './check-tree.ts';
 import { CommitShaSchema } from './upgrade-data.ts';
 
 const describe = (description: string) => ({ description });
@@ -45,19 +52,33 @@ const PatrolSetupSchema = z.strictObject({
   log_path: LogPathSchema,
 });
 
-const PatrolCheckSchema = z.strictObject({
-  id: CheckIdSchema,
-  pass: z.boolean(),
-  duration_ms: DurationMsSchema,
-  timed_out: z.boolean(),
-  environment: z
-    .boolean()
-    .meta(
-      describe("It failed and its log matched one of the territory's environment_errors: never counted red."),
+// (RC-03, ADR 0035) A carried check never ran, so it has no log; every check that ran has one.
+const PatrolCheckSchema = z
+  .strictObject({
+    id: CheckIdSchema,
+    pass: z.boolean(),
+    duration_ms: DurationMsSchema,
+    timed_out: z.boolean(),
+    environment: z
+      .boolean()
+      .meta(
+        describe(
+          "It failed and its log matched one of the territory's environment_errors: never counted red.",
+        ),
+      ),
+    error_line: LineSchema.optional(),
+    log_path: LogPathSchema.optional().meta(
+      describe(
+        'Its log, relative to the kingdom: .runs/patrol-<territory>/…; absent when and only when carried.',
+      ),
     ),
-  error_line: LineSchema.optional(),
-  log_path: LogPathSchema,
-});
+    carried_from: CarriedFromSchema.optional(),
+  })
+  .refine(carriedPassed, { message: CARRIED_PASSED })
+  .refine((check) => (check.carried_from === undefined) === (check.log_path !== undefined), {
+    message: 'a check that ran has a log, a carried one none',
+    path: ['log_path'],
+  });
 
 const PatrolScanSchema = z.strictObject({
   script: ScriptIdSchema,
@@ -80,6 +101,10 @@ export const PatrolRanDataSchema = z
       describe('The commit tried, the head of the default branch after a fetch; null when none was found.'),
     ),
     trigger: z.enum(PATROL_TRIGGERS),
+    // Optional and added in v2 (RC-03, ADR 0035): a line without `tree`, as every line before RC-03, is no fact the
+    // check ledger keeps.
+    tree: TreeIdSchema.optional(),
+    config: CheckConfigSchema.optional(),
     plot_failure: LineSchema.optional().meta(
       describe(
         'No plot could be made (no default branch, a folder in the way): nothing ran, and the health of the branch stays as the last run left it.',

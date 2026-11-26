@@ -12,6 +12,7 @@ export * from './delegation.ts';
 export * from './delegation-seal.ts';
 export * from './disruption/disruption-kind.ts';
 export * from './event/chancellor-data.ts';
+export * from './event/check-tree.ts';
 export * from './event/delegation-data.ts';
 export * from './event/delivery-data.ts';
 export * from './event/guest-data.ts';
