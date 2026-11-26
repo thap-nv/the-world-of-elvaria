@@ -248,7 +248,7 @@ export async function tryTerritory(request: TerritoryTrialRequest): Promise<Terr
   if (common.code !== 0) return failed(`${repo}: ${common.stderr.trim()}`);
   // What prepare ensures for every quest plot, so the trial's folder stays out of the owner's status.
   await ensurePlotExcludes(common.stdout.trim());
-  await ensureLongPaths(git, repo, request.platform ?? process.platform);
+  await ensureLongPaths(git, repo, common.stdout.trim(), request.platform ?? process.platform);
   let base = request.commit;
   if (base === undefined) {
     const fork = await forkPoint({ git, repo, vcs: territory.vcs });

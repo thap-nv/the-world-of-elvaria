@@ -42,13 +42,31 @@ export async function ensurePlotExcludes(commonDir: string): Promise<void> {
   if (next !== undefined) await writeFileAtomic(file, next);
 }
 
+/** Each repo's own config file as it read when it held `core.longpaths = true` (ensureLongPaths). */
+const longPathsSet = new Map<string, string>();
+
 /**
  * `core.longpaths` in the repo's own config on Windows: a plot sits a few folders deeper than the checkout, and a
  * `node_modules` under it passes 260 characters quickly (§6). Read first, so a repo already set is not rewritten.
+ * (RC-10) `git config --local` reads `<commonDir>/config` alone, includes never followed, so while that file is what
+ * it was when git said `true`, git would say it again: every prepare after the first spawns nothing here.
  */
-export async function ensureLongPaths(git: Git, repo: string, platform: NodeJS.Platform): Promise<void> {
+export async function ensureLongPaths(
+  git: Git,
+  repo: string,
+  commonDir: string,
+  platform: NodeJS.Platform,
+): Promise<void> {
   if (platform !== 'win32') return;
+  const file = path.join(commonDir, 'config');
+  const before = await readTextFile(file);
+  if (before !== undefined && longPathsSet.get(file) === before) return;
   const current = await git(repo, ['config', '--local', '--get', 'core.longpaths']);
-  if (current.stdout.trim() === 'true') return;
+  if (current.stdout.trim() === 'true') {
+    // Read before git ran: an edit in between only costs another look.
+    if (before !== undefined) longPathsSet.set(file, before);
+    return;
+  }
+  longPathsSet.delete(file);
   await gitOut(git, repo, ['config', '--local', 'core.longpaths', 'true']);
 }

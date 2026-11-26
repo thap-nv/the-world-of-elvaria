@@ -8,6 +8,7 @@ import { fromPortable } from '@elvaria/store';
 
 import { fetchBase } from './fetch.ts';
 import { gitDirOf, readPlotRecord } from './plot-record.ts';
+import { refCommitsOf } from './git.ts';
 import type { Git } from './git.ts';
 import type { BaseBranch } from './merge.ts';
 
@@ -15,11 +16,6 @@ import type { BaseBranch } from './merge.ts';
 export interface BaseTips {
   readonly local: string | null;
   readonly remote: string | null;
-}
-
-async function commitOf(git: Git, repo: string, ref: string): Promise<string | null> {
-  const run = await git(repo, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]);
-  return run.code === 0 ? run.stdout.trim() : null;
 }
 
 /**
@@ -31,9 +27,12 @@ export async function baseTipsIn(git: Git, base: BaseBranch): Promise<BaseTips |
   if (branch === undefined) return undefined;
   const repo = fromPortable(base.path);
   if (base.vcs.remote !== undefined) await fetchBase(git, repo, branch);
-  const local = await commitOf(git, repo, `refs/heads/${branch}`);
-  const remote =
-    base.vcs.remote === undefined ? null : await commitOf(git, repo, `refs/remotes/origin/${branch}`);
+  // One look at both tips (RC-10); origin's only for a territory with a remote.
+  const [localRef, remoteRef] = [`refs/heads/${branch}`, `refs/remotes/origin/${branch}`];
+  const refs = base.vcs.remote === undefined ? [localRef] : [localRef, remoteRef];
+  const tips = await refCommitsOf(git, repo, refs);
+  const local = tips.get(localRef) ?? null;
+  const remote = tips.get(remoteRef) ?? null;
   return local === null && remote === null ? undefined : { local, remote };
 }
 
