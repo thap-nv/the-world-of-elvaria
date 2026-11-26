@@ -4,6 +4,7 @@
 // stays the machine judge of the heal (ADR 0017).
 import { HEALABLE_REASONS } from '../infirmary/reasons.ts';
 import type { InfirmaryReasonCode } from '../infirmary/reasons.ts';
+import type { CharacterId } from '../core/ids.ts';
 import type { BreakerTrip } from '../quest/events.ts';
 import type { Attempt } from '../schema/quest/quest-parts.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -56,3 +57,25 @@ export const awaitsHeal = (quest: Pick<Quest, 'assignee' | 'attempt_log'>): bool
   const last = quest.attempt_log.at(-1);
   return last?.role === 'assignee' && last.heal === 'session' && last.character !== quest.assignee;
 };
+
+/** The healer whose session holds a `healing` quest: the character of its open entry (ADR 0034); none otherwise. */
+export function healerOf(quest: Pick<Quest, 'status' | 'attempt_log'>): CharacterId | undefined {
+  const open = quest.attempt_log.at(-1);
+  return quest.status === 'healing' && typeof open?.character === 'string' ? open.character : undefined;
+}
+
+/**
+ * The healer whose heal of run `n` went to review: its session's entry ended `submitted` (`healing.submit`), so what
+ * it changed is in the branch and the run's judge reads it (plans/healer.md 4.4); none for a run no healer mended.
+ */
+export const healedBy = (
+  quest: Pick<Quest, 'assignee' | 'attempt_log'>,
+  n: number,
+): CharacterId | undefined =>
+  quest.attempt_log.findLast(
+    (entry) =>
+      entry.n === n &&
+      entry.heal === 'session' &&
+      entry.character !== quest.assignee &&
+      entry.outcome === 'submitted',
+  )?.character ?? undefined;

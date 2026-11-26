@@ -198,6 +198,10 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
     head: (plot) => manager.head(plot),
     // What `check` picks the checks by: a continuing session's prompt names them (P1-43).
     touched: (plot) => manager.touched(plot),
+    // A healer's part (ADR 0034): the doer's staged tree, what the healer changed since, the way back to it.
+    stagedTree: (plot) => manager.stagedTree(plot),
+    healDiff: (plot, tree) => manager.healDiff(plot, tree),
+    restoreTree: (plot, tree) => manager.restoreTree(plot, tree),
     ...scratchPlots(kingdom, manager, host),
     diff: (plot, scope) => manager.diff(plot, scope),
     // A merge quest: its parts, then main, merged before its knight's sessions and checks (P1-18, PS-08e).

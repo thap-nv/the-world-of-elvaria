@@ -1,7 +1,7 @@
 // What a session's end does to its quest (implementation-plan §2.5, §3.7): the runner's RunResult becomes one move
 // of the table, the character's matching move, and for a verifier the verdict, the assignee's reputation and level.
 // An end that arrives for a quest that moved on meanwhile (cancelled, reassigned) changes nothing.
-import { currentRun, infirmaryReasonOf } from '@elvaria/domain';
+import { currentRun, healerOf, infirmaryReasonOf } from '@elvaria/domain';
 import { plotCommitMessage } from '@elvaria/runner-core';
 import type { CharacterId, Quest, Result } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
@@ -12,6 +12,8 @@ import { step } from '../quest/record.ts';
 import { judge, runOf, stallWithoutVerdict, verifierLeaves } from '../review/judge.ts';
 import { afterJudge } from '../review/after-judge.ts';
 import { breakAssignee, breakVerifier } from './breaker.ts';
+import { settleHealer } from '../heal/settle.ts';
+import { putBack } from '../heal/tree.ts';
 import { commitPlot, warnUncommitted } from './commit.ts';
 import { ended, submitWork } from './submit.ts';
 import type { Context } from '../context.ts';
@@ -92,15 +94,19 @@ async function settleVerifier(
   );
 }
 
+/** Who holds the session the quest's file says runs: its assignee, a healer while it heals (ADR 0034), its judge. */
+function holderOf(quest: Quest): CharacterId | null | undefined {
+  if (quest.status === 'working') return quest.assignee;
+  if (quest.status === 'healing') return healerOf(quest);
+  return quest.status === 'review' ? quest.verifier : undefined;
+}
+
 /** The quest, while the session is still the one its file says runs: same status, same holder, same run. */
 function current(ctx: Context, running: Running): Quest | undefined {
   const quest = ctx.world.quests.get(running.quest);
   if (quest === undefined || currentRun(quest) !== running.n) return undefined;
-  const holds =
-    running.role === 'assignee'
-      ? quest.status === 'working' && quest.assignee === running.character
-      : quest.status === 'review' && quest.verifier === running.character;
-  return holds ? quest : undefined;
+  const role = quest.status === 'review' ? 'verifier' : 'assignee';
+  return role === running.role && holderOf(quest) === running.character ? quest : undefined;
 }
 
 export async function settle(ctx: Context, { running, result }: Finished): Promise<void> {
@@ -108,9 +114,11 @@ export async function settle(ctx: Context, { running, result }: Finished): Promi
   const quest = current(ctx, running);
   if (quest !== undefined) {
     const settled =
-      running.role === 'assignee'
-        ? await settleAssignee(ctx, running, result)
-        : await settleVerifier(ctx, quest, running, result);
+      running.role === 'verifier'
+        ? await settleVerifier(ctx, quest, running, result)
+        : quest.status === 'healing'
+          ? await settleHealer(ctx, quest, running, result)
+          : await settleAssignee(ctx, running, result);
     if (!settled.ok)
       ctx.deps.log.warn(
         `steward: ${running.quest}: the end of ${running.character}'s session: ${settled.error}`,
@@ -124,20 +132,28 @@ export async function settle(ctx: Context, { running, result }: Finished): Promi
 /** Who holds the session the files say runs on `quest` while this Steward holds none there; undefined otherwise. */
 function lostHolderOf(ctx: Context, quest: Quest): CharacterId | undefined {
   if (ctx.sessions.get(quest.id) !== undefined || quest.tier !== 'session') return undefined;
-  const holder =
-    quest.status === 'working' ? quest.assignee : quest.status === 'review' ? quest.verifier : null;
+  const holder = holderOf(quest);
   return typeof holder === 'string' ? holder : undefined;
 }
+
+/** A healer's session lost while the Steward ran: told as a crash of its session (heal/settle.ts). */
+const HEAL_LOST = {
+  trip: 'no_session',
+  reason: infirmaryReasonOf('heal:session_ended', { outcome: 'lost' }),
+} as const;
 
 /** The end could not be recorded: the run ends as a crash, and a judge lost so counts toward a stalled review. */
 async function crashed(ctx: Context, quest: Quest, holder: CharacterId): Promise<Result<Quest, string>> {
   const holds = ctx.world.characters.get(holder)?.current?.quest === quest.id;
-  const edit = step(quest.status === 'working' ? 'crash' : 'unassign');
+  const edit = step(quest.status === 'review' ? 'unassign' : 'crash');
+  // A healer's lost session ends its heal in the infirmary (`healing.crash`), the plot back on the doer's work.
+  if (quest.status === 'healing') await putBack(ctx, quest);
   const left = await moveAndRing(ctx, {
     quest: quest.id,
     event: { type: 'crash' },
     actor: 'steward',
     edits: holds ? { [holder]: edit } : {},
+    ...(quest.status === 'healing' ? { infirmary: HEAL_LOST } : {}),
   });
   // A judge lost so left no verdict either: it counts toward a stalled review like any other (P1-33).
   return quest.status === 'review'
@@ -146,8 +162,10 @@ async function crashed(ctx: Context, quest: Quest, holder: CharacterId): Promise
 }
 
 /** The last Steward stopped or was killed under the session: the run says nothing and counts for nothing (P1-44). */
-function released(ctx: Context, quest: Quest, holder: CharacterId): Promise<Result<Quest, string>> {
+async function released(ctx: Context, quest: Quest, holder: CharacterId): Promise<Result<Quest, string>> {
   const holds = ctx.world.characters.get(holder)?.current?.quest === quest.id;
+  // A healer's heal does not count either (`healing.release`): the plot goes back on the doer's work (ADR 0034).
+  if (quest.status === 'healing') await putBack(ctx, quest);
   return ctx.record.move({
     quest: quest.id,
     event: { type: 'release' },

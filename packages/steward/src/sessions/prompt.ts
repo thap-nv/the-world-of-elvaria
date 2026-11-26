@@ -38,6 +38,7 @@ import { continuationFor } from './continuation.ts';
 import { lessonSessionOf, sessionLessonsOf } from './lessons.ts';
 import { loadTraceOf } from './load-trace.ts';
 import { outOfScopeIn } from './out-of-scope.ts';
+import { healPatchFor } from '../heal/patch.ts';
 import type { Context } from '../context.ts';
 import type { ScriptureLesson } from './lessons.ts';
 import type { Resume, SessionInput } from './input.ts';
@@ -127,6 +128,8 @@ async function reviewOf(ctx: Context, input: SessionInput, parts: PromptParts) {
   const links = parts.plan_links === undefined ? {} : { plan_links: parts.plan_links };
   const screens = parts.screens === undefined ? {} : { screens: parts.screens };
   const narrow = parts.narrow_checks === undefined ? {} : { narrow_checks: parts.narrow_checks };
+  // What a healer changed of the run's refused work, beside the diff (ADR 0034, plans/healer.md 4.4).
+  const heal = await healPatchFor(ctx, quest, input.n, parts.known);
   return {
     handover,
     diff,
@@ -134,6 +137,7 @@ async function reviewOf(ctx: Context, input: SessionInput, parts: PromptParts) {
     partial,
     out_of_scope: outside,
     objection,
+    heal_patch: heal,
     ...links,
     ...screens,
     ...narrow,
@@ -210,7 +214,9 @@ export async function promptOf(
   given: Pick<PromptParts, 'characterClass' | 'known' | 'graph' | 'plan_links' | 'screens'>,
   resume: Resume | null,
 ): Promise<SessionPrompt> {
-  const advisories = input.role === 'assignee' ? await advisoriesOf(ctx, input.quest) : [];
+  // A healer mends the doer's work and reads none of the quest's advisories, which the doer reads (ADR 0034).
+  const reads = input.role === 'assignee' && input.continuation?.reason !== 'heal';
+  const advisories = reads ? await advisoriesOf(ctx, input.quest) : [];
   const scriptures = await readScriptures(ctx.root, input.character.id);
   const session = lessonSessionOf(input, ctx.deps.platform);
   const { kingdom, registry, territories } = ctx.world;

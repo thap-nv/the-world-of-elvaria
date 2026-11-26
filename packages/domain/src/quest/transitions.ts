@@ -219,6 +219,8 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   // A heal that did not happen does not count: the next tick chooses who heals again.
   { from: 'healing', event: 'mana_out', actors: M, to: 'returned' },
   { from: 'healing', event: 'release', actors: S, to: 'returned' },
+  // The owner suspends the healer mid-heal (HL-04 (557), HL-05): the heal does not count, as on mana_out.
+  { from: 'healing', event: 'suspend', actors: U, to: 'returned' },
   { from: 'healing', event: 'cancel', actors: U, to: 'archived' },
   { from: 'awaiting_seal', event: 'seal', actors: U, to: 'done' },
   { from: 'awaiting_seal', event: 'return', actors: U, guard: 'by_character', to: 'returned' },

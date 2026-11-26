@@ -10,6 +10,7 @@ import type {
   TerritoryTrial,
 } from '@elvaria/domain';
 import type {
+  HealMethods,
   BaseBranch,
   BaseTips,
   CheckPoint,
@@ -89,9 +90,10 @@ export interface ResolvedCheck {
 
 /**
  * The quest's own ground (§3.3): apps/cli puts PlotManager and runChecks of P1-07 behind it; folderPlots gives
- * every quest a folder with no git and no checks (the Steward's specs). The merge queue's methods (PS-09): PlotQueue.
+ * every quest a folder with no git and no checks (the Steward's specs). The merge queue's methods (PS-09): PlotQueue;
+ * the trees a healer's part is measured by (ADR 0034), HealMethods: a Plots without them heals nothing by healer.
  */
-export interface Plots extends PlotQueue {
+export interface Plots extends PlotQueue, HealMethods {
   /**
    * Idempotent: a quest that already has its plot gets the same one back. Throws when it cannot be prepared.
    * `secrets` (the quest's `secrets_required` from the treasury, P1-30) go to the territory's `commands.setup` as

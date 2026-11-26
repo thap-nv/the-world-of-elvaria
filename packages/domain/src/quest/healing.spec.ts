@@ -3,7 +3,7 @@
 // a Steward that stopped) leaves the quest returned, so the next tick chooses again.
 import { describe, expect, it } from 'vitest';
 
-import { awaitsHeal } from '../breaker/heal.ts';
+import { awaitsHeal, healedBy, healerOf } from '../breaker/heal.ts';
 import {
   BRANN,
   ELLA,
@@ -118,6 +118,7 @@ describe('the end of a healer session', () => {
   it.each([
     ['mana_out', 'paused'],
     ['release', 'cancelled'],
+    ['suspend', 'cancelled'],
   ] as const)('goes back on %s with the heal still due, no attempt given or taken', (type, outcome) => {
     const back = next(questIn('healing'), type);
     expect(back).toMatchObject({ status: 'returned', assignee: THORN, attempts: 1 });
@@ -141,5 +142,24 @@ describe('the end of a healer session', () => {
     const reassigned = next(next(stopped, 'reassign'), 'start');
     expect(reassigned).toMatchObject({ assignee: ELLA, attempts: 1 });
     expect(refuse(reassigned)).toMatchObject({ status: 'returned' });
+  });
+});
+
+describe('who heals', () => {
+  it('names the healer of a healing quest, and nobody once its session ended', () => {
+    const healing = questIn('healing');
+    expect(healerOf(healing)).toBe(MIRA);
+    expect(healerOf(next(healing, 'mana_out'))).toBeUndefined();
+    expect(healerOf(questIn('working'))).toBeUndefined();
+  });
+
+  it('names the healer whose heal of the run went to review, for its judge', () => {
+    const healing = questIn('healing');
+    expect(healedBy(healing, 1)).toBeUndefined();
+    const submitted = next(healing, 'submit');
+    expect(healedBy(submitted, 1)).toBe(MIRA);
+    expect(healedBy(submitted, 2)).toBeUndefined();
+    // A heal that went to the infirmary is not in the branch: the judge after the owner's submit reads no heal.
+    expect(healedBy(next(next(healing, 'breaker'), 'submit'), 1)).toBeUndefined();
   });
 });
