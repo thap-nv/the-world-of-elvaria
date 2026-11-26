@@ -229,7 +229,7 @@ show` prints the brief apart from the rest of the description and, while the pla
   the Steward measures it again at start from the log (`levelsFromLog`, `sharesOfHistory`), or the default it
   counts before that, and an awake gauge one more session would take to the cap, or one at it, as a warning
   (`windowClosingOf`, P1-49, (c) of P1-48).
-- Mana gauges for `character list` and `doctor` (`src/gauges.ts`, P1-32), folded from the Steward's `mana.*`
+- Mana gauges for `character list` and `doctor` (`src/mana/gauges.ts`, P1-32), folded from the Steward's `mana.*`
   lines in the event log, since the Steward keeps no file of them: which gauges sleep (`mana.exhausted` /
   `mana.restored`) and the reset a sleep named, the latest reading of each window still in force (`mana.level`, a
   pool's or a model's own cap; `mana.warning`, the only line of a model's cap before P1-32) with its reset. `character list` marks each character the Steward put to sleep for mana

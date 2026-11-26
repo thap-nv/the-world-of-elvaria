@@ -40,7 +40,7 @@ export const CLAUDE_CAPABILITIES: AgentRunner['capabilities'] = {
   // Read opens a PNG outside the plot through one rule a file, and the model saw it (vision spike 2026-11-17, Windows;
   // macOS form inferred, owner's (A)): a judge of this tribe may take a quest whose ritual asks for eyes (PS-11b).
   vision: true,
-  // Every process of the tribe runs with CLAUDE_CONFIG_DIR = tool.config_dir when it names one (./account.ts, PS-27):
+  // Every process of the tribe runs with CLAUDE_CONFIG_DIR = tool.config_dir when it names one (./account/account.ts, PS-27):
   // a second claude.ai account is a second tribe.
   config_dir: true,
 };
