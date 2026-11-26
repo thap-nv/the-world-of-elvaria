@@ -5,6 +5,7 @@ export * from './check-ledger/index.ts';
 export * from './core/index.ts';
 export * from './council/index.ts';
 export * from './delegation/index.ts';
+export * from './device/index.ts';
 export * from './dispatch/index.ts';
 export * from './disruption/index.ts';
 export * from './graph/index.ts';

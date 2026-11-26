@@ -230,6 +230,10 @@
   a model, the windows after a verdict) through the domain's own function for it; each is written to its file, then
   told in one event line carrying the view after it (P0-09), in the log and the quest's journal. Replaying the log
   over the morning gives back the files.
+- Checks a command of source `herald` or `lite` against the device it names before anything else (P2-01, ADR 0037,
+  `inbox/device-check.ts`): it reads `devices/<id>.json` and the memos the command names, and the domain's `deviceMay`
+  refuses it with `unknown_device`, `device_revoked`, `role_forbids`, `outside_territories` or `passkey_required`;
+  `command.applied` and `command.rejected` name the device. Commands of other sources are not checked.
 - Applies the owner's commands: `create_quest` (an id derived from the command id, so a command applied twice
   never makes two quests), `confirm`, `cancel` (kills the session), `archive`, `retry`, `seal` and `return` (the owner's
   verdict, `verdicts/<quest>-<n>-user.json`, weighed three times; a return needs notes of 20 characters and takes

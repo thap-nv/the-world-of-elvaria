@@ -316,7 +316,9 @@ count}` counted in the list's order, never stored: `siblingRootOf`, `siblingsOf`
   `characterToneOf` (`src/character/`) and `bannerOf` (`src/world/`), the one band the HUD shows.
 - Builds the world state (`src/world/`) from the files (`worldStateOf`) or the log (`reduce`): every event that
   changes what the world shows carries the view after it (`questViewOf`, ...; `questLogTypeOf` names quest
-  lines). `snapshotOf` / `readSnapshot` version the snapshot; `src/protocol/` is the herald's WebSocket protocol.
+  lines). `snapshotOf` / `readSnapshot` version the snapshot; `src/protocol/` is the herald's WebSocket protocol:
+  `snapshot`, `events`, `accepted`, `refused` from the herald, `command` (`ref`, `kind`, `payload`) from a client, and
+  `commandOf`, the envelope the herald writes around it (ADR 0031 item 5, P2-01).
   A `quest.infirmary` line also says why in parts (P1-32): `trip` (`INFIRMARY_TRIPS`: the breaker trips,
   `no_verdict` and `partial_verdicts` for a stalled review, `max_attempts`, `script_broken`, `script_usage`,
   `script_fail`) and `detail` (`InfirmaryDetailSchema`; `paths`
@@ -378,6 +380,11 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   territory's first-pass rate. The thresholds are named in `src/scorecard/constants.ts`; `ready` is the trial alone.
   Only `TRIAL_ITEMS` (the trial, each check's time) need a trial: `itemsWithoutTrialOf` gives the other four from the
   territory file, the ledger and the gazetteer, which `doctor` reads again on each run (fix/kingdom-upkeep).
+- Decides what a paired device may do and see (`src/device/`, P2-01, ADR 0037): `COMMAND_GROUPS` and
+  `COMMAND_SCOPES`, one row per inbox kind, give a command's group (ADR 0031: everyday, heavy, trusted configuration)
+  and the territories it reaches (`commandGroupOf`, `commandScopeOf`); `deviceMay` checks a device's role against them
+  and answers with a refusal code. `scopeState` and `scopeEvents` give a `scoped` or `inquiry` device the world of its
+  territories, the lines by an allow list, and `resync` when a line held back moved what it sees.
 - Decides when the Steward's scheduled jobs run (`src/schedule/`, PS-03): `dueJobs` over `kingdom.schedule`, the
   kingdom's local day and time (`localClockOf`) and the day each job last ran: a daily job is due once its `at` has
   come on a day it has not run (`DAILY_JOBS`: `chronicle`, `triage`, `digest`), so a late start catches up and a clock set back
@@ -566,7 +573,8 @@ from a draft in ten events and take long seeded random walks (`src/quest/__fixtu
 outside the table, every row reachable, guards never overlap.
 
 `src/world/replay.spec.ts` replays a fake day of a scripted Steward (`src/world/__fixtures__/`): after every
-line, the state reduced from the log equals `worldStateOf` of the files at that moment.
+line, the state reduced from the log equals `worldStateOf` of the files at that moment. `src/device/scope-day.spec.ts`
+follows the same day as a device given one territory: after every line it holds `scopeState` of the whole state.
 
 Specs cannot read files: the domain's program has no Node types. The one file a spec needs, the design
 system's `elvaria.css` (whose `data-status` values must be the tones of `statusToneOf`), is read by

@@ -24,6 +24,8 @@ export const STORED_CONTRACTS = [
   'memo-kind',
   // PS-12c: the ledger beside a scripture (temple/scripture.json, characters/<id>/scripture.json).
   'scripture',
+  // P2-01: a device paired with the Herald (devices/<id>.json).
+  'device',
 ] as const;
 
 export type StoredContract = (typeof STORED_CONTRACTS)[number];
@@ -45,4 +47,5 @@ export const MIGRATIONS: Readonly<Record<StoredContract, MigrationChain>> = {
   memo: [],
   'memo-kind': [],
   scripture: [],
+  device: [],
 };

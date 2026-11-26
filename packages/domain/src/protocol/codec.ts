@@ -21,20 +21,22 @@ function parseJson(text: string): Result<unknown, ProtocolError> {
   }
 }
 
+/** Where each issue is, then what it says, in English for logs. */
+export const issuesOf = (error: z.ZodError): string[] =>
+  error.issues.map((issue) => `${issue.path.map(String).join('.')}: ${issue.message}`);
+
 const decodeWith =
   <T>(schema: z.ZodType<T>) =>
   (text: string): Result<T, ProtocolError> => {
     const json = parseJson(text);
     if (!json.ok) return json;
     const parsed = schema.safeParse(json.value);
-    if (parsed.success) return ok(parsed.data);
-    const issues = parsed.error.issues.map(
-      (issue) => `${issue.path.map(String).join('.')}: ${issue.message}`,
-    );
-    return err({ code: 'invalid_message', issues });
+    return parsed.success
+      ? ok(parsed.data)
+      : err({ code: 'invalid_message', issues: issuesOf(parsed.error) });
   };
 
-/** What the world and the lite client accept: a snapshot or events. */
+/** What the world and the lite client accept: a snapshot, events, and the answers to their commands. */
 export const decodeServerMessage: (text: string) => Result<ServerMessage, ProtocolError> =
   decodeWith(ServerMessageSchema);
 

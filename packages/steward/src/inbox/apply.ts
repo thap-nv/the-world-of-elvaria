@@ -13,6 +13,7 @@ import { decideMemo } from '../memos/decide.ts';
 import { escalate } from '../memos/escalate.ts';
 import { STEWARD } from '../quest/record.ts';
 import { release, suspend } from './character-commands.ts';
+import { deviceRefusal } from './device-check.ts';
 import { reportEscape, resumeDelegation } from './delegation-commands.ts';
 import { enqueueBranch } from './guest-commands.ts';
 import { setLevel, setModel } from './character-settings.ts';
@@ -97,8 +98,13 @@ function territoryCommand(ctx: Context, command: InboxCommand): Outcome | Promis
   return undefined;
 }
 
-/** What one command does; a command kind of a later task is refused with `unsupported`. */
+/**
+ * What one command does; a command kind of a later task is refused with `unsupported`. A paired device's command
+ * is first checked against its device's role (P2-01): a refusal names why (unknown_device, role_forbids…).
+ */
 export async function applyCommand(ctx: Context, command: InboxCommand): Promise<Outcome> {
+  const refusal = await deviceRefusal(ctx, command);
+  if (refusal !== undefined) return rejected(refusal);
   if (LATER.has(command.kind)) return rejected('unsupported');
   if (command.kind === 'create_quest') return createQuest(ctx, command);
   if (command.kind === 'wake') return wake(ctx, command.payload.tribe);
@@ -134,6 +140,8 @@ async function answered(
     ...(outcome.status === 'rejected' ? { reason: outcome.reason } : {}),
     ...(command === undefined ? {} : { kind: command.kind }),
     ...(command?.source === 'chancellor' || command?.source === 'monk' ? { source: command.source } : {}),
+    // (P2-01, threat model N10) the paired device a Herald's or phone's command came from, so the log names it.
+    ...(command?.device === undefined ? {} : { device: command.device }),
   };
   const quest = outcome.status === 'applied' ? outcome.quest : undefined;
   await ctx.record.note({ type, actor: STEWARD, data, ...(quest === undefined ? {} : { quest }) });

@@ -40,6 +40,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "type": "object",
           "additionalProperties": false,
@@ -102,6 +107,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "type": "object",
           "additionalProperties": false,
@@ -154,6 +164,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "description": "Return always carries a note (design: the Return button requires one). The Steward writes it as the owner's fail verdict, which needs notes of at least 20 characters and a fail_kind (`other` when absent).",
@@ -228,6 +243,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "type": "object",
           "additionalProperties": false,
@@ -277,6 +297,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "type": "object",
@@ -331,6 +356,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "type": "object",
           "additionalProperties": false,
@@ -383,6 +413,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "type": "object",
@@ -441,6 +476,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "description": "'I signed in again': probe this tribe now.",
           "type": "object",
@@ -491,6 +531,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "type": "object",
@@ -552,6 +597,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "type": "object",
           "additionalProperties": false,
@@ -608,6 +658,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "description": "Without character, the Steward selects the next eligible character.",
@@ -671,6 +726,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "type": "object",
           "additionalProperties": false,
@@ -727,6 +787,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "type": "object",
@@ -790,6 +855,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "type": "object",
           "additionalProperties": false,
@@ -846,6 +916,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "description": "draft = true when it comes from the Chancellor (quest starts in `draft`, needs confirm); false for `elvaria quest add` (starts `open`). The Steward writes the quest file.",
@@ -1127,6 +1202,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "description": "Answer to blocked.question; written into handover.md.",
           "type": "object",
@@ -1183,6 +1263,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "type": "object",
           "additionalProperties": false,
@@ -1236,6 +1321,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "type": "object",
@@ -1299,6 +1389,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "type": "object",
@@ -1461,6 +1556,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "description": "Pin a character to an expertise tag (it ranks first and gives the title); tag = null removes the pin.",
           "type": "object",
@@ -1527,6 +1627,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "description": "The owner sets a character's level (`elvaria character level`), any number of levels up or down. The Steward writes it with level_since = now, so levelChange counts only the verdicts after it, and appends character.level_up or character.level_down as the owner's. Refused when the character already has that level.",
           "type": "object",
@@ -1591,6 +1696,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "description": "The owner moves a character to another model of its own tribe (`elvaria character model`, P1-22): its next session runs it, and the mana gauges of that model bind it. Class, tribe, level and reputation stay. The Steward appends character.model_changed as the owner's. Refused when the character already runs that model, or when its tribe does not serve it (an account with named pools serves the models a pool claims; a one-pool account, the family of the character's model).",
           "type": "object",
@@ -1652,6 +1762,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "description": "The owner decides a memo once (PS-02, ADR 0024; `elvaria memo decide`): set it aside (shelved), refuse it (rejected), or name the quest that does the work (handled). The Steward closes the memo and appends memo.closed. Refused when the memo is unknown or already closed, or the quest unknown. A memo is never answered, and closing it changes no quest. With source = chancellor (PS-03b), the Chancellor's triage sets a memo aside within kingdom.delegation; the line's actor is then the Chancellor.",
@@ -1733,6 +1848,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "description": "The Chancellor's triage sends a memo to the owner with its advice (PS-03b; source = chancellor): kingdom.delegation does not let the world decide it. The Steward writes the advice as the memo's `escalation` and appends memo.escalated; the memo stays open for the owner and the digest. Refused when the memo is unknown, closed or already sent up.",
@@ -1828,6 +1948,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "description": "An amendment's author decided it (PS-22b, ADR 0024; source = chancellor: the Chancellor's office, whether the Chancellor or the mage of the quest's plan spoke): accepted rewrites the quest's description and adds the memo's refs outside its scope_paths to them (a quest with none stays unbounded), while no session holds the quest, and closes the memo; rejected closes it; both let the quest that waits on it go on, the note as the answer to its doer. owner sends it to the owner with the note and holds: the memo stays open and the quest asks the owner. The lines' actor is the memo's author. Refused when the memo is unknown, closed or sent up already, or not an amendment to an author.",
@@ -1952,6 +2077,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "type": "object",
           "additionalProperties": false,
@@ -2001,6 +2131,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "type": "object",
@@ -2055,6 +2190,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "type": "object",
           "additionalProperties": false,
@@ -2105,6 +2245,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "type": "object",
           "additionalProperties": false,
@@ -2154,6 +2299,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "type": "object",
@@ -2210,6 +2360,11 @@
             "monk"
           ]
         },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
         "payload": {
           "type": "object",
           "additionalProperties": false,
@@ -2262,6 +2417,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "type": "object",
@@ -2317,6 +2477,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "description": "The Monk's answer to the repeated failures (PS-12c, ADR 0027; source = monk): operations on single lines of scripture, applied in order, and letters. The Steward refuses the whole report (replaces_scripture) when it adds more than TEMPLE_ADDS_MAX (3) lines, the replacing line of a merge included, or takes out of one file more than half the Monk's lines there (never fewer than 2). Else each operation is applied or refused on its own (lesson.added, lesson.retired, lesson.refused): no source verdict, a verdict that is not a fail, an unknown line, a line not the Monk's, the 41st line a session would load, a line the lint refuses or that a redaction pattern matches, a sentence already there. Each letter becomes a proposal memo from the Monk, to the Chancellor or, for a stronger model, to the owner, with an id made from its verdict's quest and its text, so a report applied again files nothing twice.",
@@ -2721,6 +2886,11 @@
             "chancellor",
             "monk"
           ]
+        },
+        "device": {
+          "description": "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+          "type": "string",
+          "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
         },
         "payload": {
           "type": "object",

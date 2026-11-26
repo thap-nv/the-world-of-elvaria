@@ -5,7 +5,9 @@
 - Knows the kingdom folder (implementation-plan §2.2): `kingdomLayout` gives every file's path relative to the
   kingdom with `/`; `toPortable`, `fromPortable`, `inKingdom` and `comparePath` turn and compare paths the way
   Windows and macOS do (§6).
-- Reads and writes `kingdom.json`, territories, quests, characters, campaigns, verdicts and memos (PS-02) through
+- Reads and writes `kingdom.json`, territories, quests, characters, campaigns, verdicts, memos (PS-02) and the
+  devices paired with the Herald (`devices/<id>.json`, P2-01, ADR 0037; a kingdom paired with none has no folder
+  and lists none) through
   `openKingdom(dir)`, the `KingdomStore` the Steward gets injected (§3.1): `read`, `write`, `update` (read →
   change → write inside one lock) and `list` (good files plus one issue per bad file). Every read runs
   JSON → migrate to the current version → the domain's zod schema; every write is validated first. `update` and

@@ -28,6 +28,11 @@ export const LESSON_REF_PATTERN = new RegExp(`^(?:L_${DATE}_${CROCKFORD6}|T_${CR
  */
 export const MEMO_ID_PATTERN = new RegExp(`^m_${DATE}_${CROCKFORD6}$`);
 /**
+ * A paired device's id (P2-01, ADR 0037): `dev_`, the local day it was paired and six random base32 digits, as a quest
+ * id is made, so `devices/<id>.json` sorts by pairing day and the id says nothing about the device.
+ */
+export const DEVICE_ID_PATTERN = new RegExp(`^dev_${DATE}_${CROCKFORD6}$`);
+/**
  * `<quest>-<n>`: the verdict that ends the review of run n. Other judgements on a run get files of their own
  * (P1-04): `-p<k>`, the partial verdict its k-th verifier session left, and `-user`, the owner's seal or return;
  * (ADR 0033) `-late`, the machine's fail of the run after its pass, from a check that first ran later.
@@ -44,6 +49,7 @@ export const LessonIdSchema = z.string().regex(LESSON_ID_PATTERN).brand<'LessonI
 export const LessonRefSchema = z.string().regex(LESSON_REF_PATTERN).brand<'LessonRef'>();
 export const MemoIdSchema = z.string().regex(MEMO_ID_PATTERN).brand<'MemoId'>();
 export const VerdictIdSchema = z.string().regex(VERDICT_ID_PATTERN).brand<'VerdictId'>();
+export const DeviceIdSchema = z.string().regex(DEVICE_ID_PATTERN).brand<'DeviceId'>();
 export const UlidSchema = z.string().regex(ULID_PATTERN).brand<'Ulid'>();
 /**
  * Words other fields put where a character id goes: verdict.verifier_id (`user`, `machine`) and lesson.owner
@@ -83,6 +89,7 @@ export type LessonId = z.infer<typeof LessonIdSchema>;
 export type LessonRef = z.infer<typeof LessonRefSchema>;
 export type MemoId = z.infer<typeof MemoIdSchema>;
 export type VerdictId = z.infer<typeof VerdictIdSchema>;
+export type DeviceId = z.infer<typeof DeviceIdSchema>;
 export type Ulid = z.infer<typeof UlidSchema>;
 export type CharacterId = z.infer<typeof CharacterIdSchema>;
 export type TerritoryId = z.infer<typeof TerritoryIdSchema>;

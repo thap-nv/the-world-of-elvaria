@@ -7,6 +7,8 @@ import {
   CharacterIdSchema,
   CharacterSchema,
   ClassesFileSchema,
+  DeviceIdSchema,
+  DeviceSchema,
   InboxCommandSchema,
   KindsFileSchema,
   KingdomSchema,
@@ -30,6 +32,8 @@ import type {
   CampaignId,
   Character,
   CharacterId,
+  Device,
+  DeviceId,
   InboxCommand,
   Kingdom,
   Memo,
@@ -159,4 +163,17 @@ export const MEMO_SPEC: EntitySpec<Memo, MemoId> = {
   idOf: (memo) => memo.id,
   dir: 'memos',
   scrub: (memo) => ({ ...memo, body: maskPatterns(memo.body) }),
+};
+
+/**
+ * The devices paired with the Herald (P2-01, ADR 0037): one file each, written by the owner's own commands only, read
+ * by the Herald at every request and by the Steward when it applies a command of source herald or lite.
+ */
+export const DEVICE_SPEC: EntitySpec<Device, DeviceId> = {
+  contract: 'device',
+  parser: DeviceSchema,
+  migrations: MIGRATIONS.device,
+  idParser: DeviceIdSchema,
+  idOf: (device) => device.id,
+  dir: 'devices',
 };

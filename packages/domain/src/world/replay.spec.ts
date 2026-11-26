@@ -38,7 +38,8 @@ function overTheWire(state: WorldState, events: readonly Event[], batch: number)
   return frames.reduce<WorldState | undefined>((held, frame) => {
     const message = decodeServerMessage(frame);
     if (!message.ok) throw new Error(JSON.stringify(message.error));
-    return message.value.type === 'snapshot' ? message.value.state : reduce(held!, message.value.events);
+    if (message.value.type === 'snapshot') return message.value.state;
+    return message.value.type === 'events' ? reduce(held!, message.value.events) : held;
   }, undefined)!;
 }
 

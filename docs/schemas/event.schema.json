@@ -4186,6 +4186,11 @@
                   "chancellor",
                   "monk"
                 ]
+              },
+              "device": {
+                "description": "The paired device a command of source herald or lite came from (InboxCommand.device), when it named one.",
+                "type": "string",
+                "pattern": "^dev_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
               }
             }
           }
