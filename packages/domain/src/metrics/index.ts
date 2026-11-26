@@ -5,6 +5,7 @@ export * from './causes.ts';
 export * from './fail-kind-rates.ts';
 export * from './judgement.ts';
 export * from './ledger.ts';
+export * from './heals.ts';
 export * from './lesson-constants.ts';
 export * from './lesson-counts.ts';
 export * from './lesson-effect.ts';
