@@ -5,6 +5,7 @@
     "cli.digest.title": "Bản tấu {day} · {kingdom}",
     "cli.digest.counts": "{must} việc phải quyết để việc chạy tiếp, {can_wait} việc chờ được.",
     "cli.digest.empty": "Không có việc nào chờ bạn.",
+    "cli.digest.heals": "Chữa: {total} lần, {healed} lần chữa khỏi.",
     "cli.digest.group.must": "Phải quyết để việc chạy tiếp",
     "cli.digest.group.can_wait": "Chờ được",
     "cli.digest.gauge": "kho {pool} của tộc {tribe}",

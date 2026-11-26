@@ -5,6 +5,7 @@
     "cli.digest.title": "Digest {day} · {kingdom}",
     "cli.digest.counts": "{must} to decide for the work to go on, {can_wait} that can wait.",
     "cli.digest.empty": "Nothing waits for you.",
+    "cli.digest.heals": "Heals: {total} total, {healed} healed.",
     "cli.digest.group.must": "Decide for the work to go on",
     "cli.digest.group.can_wait": "Can wait",
     "cli.digest.gauge": "pool {pool} of tribe {tribe}",

@@ -6,7 +6,14 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Digest, DigestRequest, Steward } from '../types.ts';
-import { EVENT_VERSION, EventSchema, MemoSchema, TerritoryIdSchema, TerritorySchema } from '@elvaria/domain';
+import {
+  EVENT_VERSION,
+  EventSchema,
+  MemoSchema,
+  QuestSchema,
+  TerritoryIdSchema,
+  TerritorySchema,
+} from '@elvaria/domain';
 import type { Event } from '@elvaria/domain';
 
 let current: Bench | undefined;
@@ -103,6 +110,56 @@ const narrowHistory = (): Event[] =>
   }).flat();
 
 describe('the digest', () => {
+  it.each(['2026-11-07', '2026-11-06', undefined])('counts only heals due today (%s)', async (day) => {
+    const port = recordingPort();
+    current = await bench({ cast: [] });
+    if (day !== undefined) {
+      const entry = {
+        n: 1,
+        character: 'thorn',
+        role: 'assignee',
+        started_at: `${day}T08:00:00+07:00`,
+        ended_at: `${day}T08:10:00+07:00`,
+        run_dir: '.runs/q_20261107_7pzkfv-1',
+      };
+      const quest = QuestSchema.parse({
+        version: 1,
+        id: 'q_20261107_7pzkfv',
+        title: 'Healed quest',
+        description: 'Digest heal evidence.',
+        kind: 'build',
+        rank: 'E',
+        territory: 'dc1-se-team',
+        class_required: 'knight',
+        tags: [],
+        status: 'archived',
+        tier: 'session',
+        assignee: 'thorn',
+        verifier: null,
+        budget: { max_minutes: 45, max_tokens: 400000, max_attempts: 3 },
+        estimate: { tokens: 200000, minutes: 30 },
+        attempts: 1,
+        attempt_log: [
+          { ...entry, heal: 'due', outcome: 'breaker' },
+          { ...entry, character: 'sage', heal: 'session', outcome: 'submitted' },
+        ],
+        plot: { type: 'none' },
+        deliverable: { type: 'branch' },
+        seal_required: false,
+        created_by: 'user',
+        created_at: entry.started_at,
+        updated_at: entry.ended_at,
+      });
+      expect((await current.store.quests.write(quest)).ok).toBe(true);
+    }
+    running = current.steward({ digest: port });
+    expect(await running.start({ loop: false })).toEqual({ ok: true });
+    await running.tick();
+    expect(port.asked).toHaveLength(1);
+    if (day === '2026-11-07') expect(port.asked[0]).toHaveProperty('heals', { total: 1, healed: 1 });
+    else expect(port.asked[0]).not.toHaveProperty('heals');
+  });
+
   it('recommends full checks when narrow escapes exceed one in ten recent merges', async () => {
     const port = recordingPort();
     current = await bench({ cast: [] });
