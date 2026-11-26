@@ -6,7 +6,9 @@
 // the push; green (or no required check and the forge says it can merge) ⇒ `Forge.merge` at the pushed head. After a
 // merge the remote quest branch goes, through the forge (a push would run the pre-push hook), only while its tip is
 // still the head the `delivery.pushed` named; a removal that fails leaves `branch_deleted: false` and a warning, never
-// a failed delivery. A Steward that stops records nothing: the next one asks again, and finds a merge it made.
+// a failed delivery. A Steward that stops records nothing: the next one asks again, and finds a merge it made. (RC-04)
+// A merge the forge answers with its own error (5xx) records nothing either, and is asked again at the next poll, up to
+// FORGE_MERGE_RETRIES times before it fails as before: a forge that merged before it erred says `merged` then.
 import { currentRun, deliveryOf, err, ok } from '@elvaria/domain';
 import { createRedactor } from '@elvaria/eventlog';
 import type { EventData, ForgePoll, Quest, Result } from '@elvaria/domain';
@@ -20,6 +22,10 @@ import type { ForgeCheck } from './forge.ts';
 import type { Failure } from './outcome.ts';
 
 type Pushed = EventData<'delivery.pushed'>;
+
+/** (RC-04) How many times a merge the forge answered with a 5xx is asked again, a poll apart, before it fails. */
+export const FORGE_MERGE_RETRIES = 3;
+const HTTP_SERVER_ERROR = 500;
 
 /** What every outcome of the question names: the branch, the head pushed, the pull request. */
 const aboutOf = ({ branch, head, pr }: Pushed) => ({ branch, head, pr });
@@ -60,11 +66,24 @@ async function merged(
   return undefined;
 }
 
+/** (RC-04) True while a merge the forge answered with a 5xx is to be asked again at the next poll, counted. */
+function againLater(ctx: Context, d: Delivery, status: number | undefined): boolean {
+  const { retries } = ctx.forge;
+  const count = (retries.get(d.quest.id) ?? 0) + 1;
+  if (status === undefined || status < HTTP_SERVER_ERROR || count > FORGE_MERGE_RETRIES) return false;
+  retries.set(d.quest.id, count);
+  ctx.deps.log.warn(
+    `steward: ${d.quest.id}: the forge could not merge (HTTP ${status}), asked again (${count}/${FORGE_MERGE_RETRIES})`,
+  );
+  return true;
+}
+
 /** `Forge.merge` at the pushed head, then the end of a merge. */
 async function mergeNow(ctx: Context, d: Delivery, pushed: Pushed): Promise<Failure | undefined> {
   const method = deliveryOf(d.territory).merge_method;
   const merge = await d.forge.merge(d.repo, pushed.pr.number, { method, head: pushed.head }, d.signal);
-  if (stopped(d)) return undefined;
+  if (stopped(d) || (!merge.ok && againLater(ctx, d, merge.error.status))) return undefined;
+  ctx.forge.retries.delete(d.quest.id);
   if (!merge.ok && merge.error.reason === 'conflict') return staleOf(ctx, d.quest, pushed);
   if (!merge.ok)
     return {

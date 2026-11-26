@@ -17,7 +17,7 @@ import {
   nextLine,
   patrolRan,
 } from './__fixtures__/ledger-log.ts';
-import { carryOf, checkCommandOf } from './carry.ts';
+import { carryOf, checkCommandOf, patrolCarryOf } from './carry.ts';
 import { checkLedgerOf } from './ledger.ts';
 import type { CarryRequest } from './carry.ts';
 import type { Instant } from '../core/clock.ts';
@@ -117,5 +117,16 @@ describe('checkCommandOf', () => {
     expect(checkCommandOf(LINT, true)).toBe('narrow');
     expect(checkCommandOf(LINT, false)).toBe('run');
     expect(checkCommandOf(TEST, true)).toBe('run');
+  });
+});
+
+describe('patrolCarryOf', () => {
+  it('(K4) carries for every trigger but the owner, whose patrol runs every check', () => {
+    const events = [checkEnd([{ id: 'test', pass: true }])];
+    const ledger = checkLedgerOf(events);
+    const carried = [{ id: 'test', from: lineId(nextLine() - 1) }];
+    for (const trigger of ['schedule', 'merged', 'base_moved', 'queue'] as const)
+      expect(patrolCarryOf(ledger, request(), trigger)).toEqual({ run: ['lint'], carried });
+    expect(patrolCarryOf(ledger, request(), 'owner')).toEqual({ run: ['test', 'lint'], carried: [] });
   });
 });

@@ -5,7 +5,8 @@
 // waits with the time of its push, which the log dates, and of the last question to the forge, in memory only.
 // (PS-09) The merge queue keeps beside them what each done quest touched (its order, read once from the plot), the
 // open pull requests whose branch no longer merges cleanly (in memory: the look at start finds them again), and how
-// many times each delivery was updated (its pushes after the first, which the log counts).
+// many times each delivery was updated (its pushes after the first, which the log counts). (RC-04) And how many
+// times the forge answered a merge with its own error (5xx), in memory only: a later Steward asks again from none.
 import { forgeOutcomesOf, forgeRoundsOf, isEventOf, parseInstant } from '@elvaria/domain';
 import type { Event, ForgeOutcome, ForgeSize, ForgeWait, Instant, QuestId } from '@elvaria/domain';
 
@@ -23,6 +24,8 @@ export interface ForgeBook {
   readonly stale: Set<QuestId>;
   /** (PS-09) The updates of each delivery so far: its pushes after the first. */
   readonly rounds: Map<QuestId, number>;
+  /** (RC-04) The merges the forge answered with a 5xx so far, each asked again at the next poll (merge.ts). */
+  readonly retries: Map<QuestId, number>;
 }
 
 export const createForgeBook = (): ForgeBook => ({
@@ -33,6 +36,7 @@ export const createForgeBook = (): ForgeBook => ({
   sizes: new Map(),
   stale: new Set(),
   rounds: new Map(),
+  retries: new Map(),
 });
 
 /** The outcomes the log holds, in place of what the book held, and when each latest push was written. */
@@ -70,4 +74,5 @@ export function forget(book: ForgeBook, quest: QuestId): void {
   book.asked.delete(quest);
   book.stale.delete(quest);
   book.rounds.delete(quest);
+  book.retries.delete(quest);
 }

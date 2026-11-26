@@ -8,7 +8,8 @@ import type { Result } from '@elvaria/domain';
 import { redact } from '@elvaria/eventlog';
 import { pathExists } from '@elvaria/store';
 
-import { gitOut, zList } from './git.ts';
+import type { CheckPoint } from '../checks/check-config.ts';
+import { checkedTreeOf, gitOut, zList } from './git.ts';
 import { hookOutputHead } from './hook-output.ts';
 import type { HookOutputHead } from './hook-output.ts';
 import { clearLeftover } from './leftover.ts';
@@ -104,6 +105,16 @@ export async function touchedIn(git: Git, worktree: string): Promise<string[]> {
 /** The commit the plot's diff counts from (CM-01): ELVARIA_CHECK_BASE of its checks, what touchedIn diffs against. */
 export async function checkBaseIn(git: Git, worktree: string): Promise<string> {
   return (await plotRecordOf(git, worktree)).base;
+}
+
+/**
+ * (RC-04, ADR 0035) What a run of the checks in the plot is a fact about: the tree of its HEAD while nothing but ignored
+ * files differs (checkedTreeOf), and for a narrow run the base its diff counts from. Nothing without that tree.
+ */
+export async function checkPointIn(git: Git, worktree: string, narrow: boolean): Promise<CheckPoint> {
+  const tree = await checkedTreeOf(git, worktree);
+  if (tree === undefined) return {};
+  return narrow ? { tree, base: await checkBaseIn(git, worktree) } : { tree };
 }
 
 /** The paths of `git status --porcelain -z`; a rename or a copy names its source in the entry after it. */

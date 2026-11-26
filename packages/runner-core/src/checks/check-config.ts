@@ -20,3 +20,12 @@ export function checkConfigOf(territory: Pick<Territory, 'checks' | 'commands'>)
   const print = JSON.stringify({ setup: territory.commands.setup ?? null, checks });
   return createHash('sha256').update(print).digest('hex').slice(0, CHECK_CONFIG_LENGTH);
 }
+
+/**
+ * (RC-04, ADR 0035) What a run of the checks is a fact about, told before they run so the Steward can carry: the tree
+ * (absent with uncommitted changes or no git, then the run is no fact) and, for a narrow run, its diff's base.
+ */
+export interface CheckPoint {
+  readonly tree?: string;
+  readonly base?: string;
+}

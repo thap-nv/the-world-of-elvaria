@@ -213,6 +213,12 @@ export const unattributedOf = (health: TerritoryHealth | undefined): string[] =>
 export function attributedHealth(health: TerritoryHealth, data: CheckAttributedData): TerritoryHealth {
   if (data.source !== 'patrol' || data.territory !== health.territory) return health;
   const { cause, commit, culprit } = data;
+  const named = (check: RedCheck): boolean =>
+    check.attribution === undefined && data.checks.includes(check.check);
+  // (RC-04, R-B) Green again on the very head the patrol found red: those checks are not red, so the guests and the
+  // queue go on at once instead of waiting for the next patrol; red again there, the next patrol turns them red anew.
+  if (cause === 'flaky' && commit !== undefined && commit === health.head)
+    return { ...health, red: health.red.filter((check) => !named(check)) };
   const attribution = {
     cause,
     ...(commit === undefined ? {} : { commit }),

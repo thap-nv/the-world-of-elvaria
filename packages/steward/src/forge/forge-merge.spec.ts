@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { forgeBench } from '../__fixtures__/forge-bench.ts';
 import { git } from '../__fixtures__/git-plots.ts';
 import { questPayload, tickUntil, worldOfFiles } from '../__fixtures__/kingdom.ts';
+import { FORGE_MERGE_RETRIES } from '../forge/merge.ts';
 import type { ForgeBench } from '../__fixtures__/forge-bench.ts';
 import type { Steward } from '../types.ts';
 
@@ -100,6 +101,41 @@ describe('a sealed quest on a territory that delivers by pr_merge', () => {
     );
     expect(methods(bench).slice(-3)).toEqual(['status', 'merge', 'deleteBranch']);
     expect(await bench.lines('delivery.failed')).toEqual([]);
+  });
+
+  it('(RC-04) asks a merge the forge answered with a 5xx again at the next poll, and merges', async () => {
+    current = await forgeBench({ delivery: PR_MERGE });
+    const bench = current;
+    bench.forge.failMerges({ reason: 'forge_error', detail: 'HTTP 502', status: 502 }, FORGE_MERGE_RETRIES);
+    const steward = await bench.start();
+    await sealedAndPushed(bench, steward);
+    await tickUntil(
+      steward,
+      bench.kingdom.clock,
+      async () => (await bench.lines('delivery.merged')).length > 0,
+    );
+    expect(methods(bench).filter((method) => method === 'merge')).toHaveLength(FORGE_MERGE_RETRIES + 1);
+    expect(await bench.lines('delivery.failed')).toEqual([]);
+  });
+
+  it('(RC-04) fails the delivery once the forge answered every merge asked again with a 5xx', async () => {
+    current = await forgeBench({ delivery: PR_MERGE });
+    const bench = current;
+    bench.forge.failMerges(
+      { reason: 'forge_error', detail: 'HTTP 503', status: 503 },
+      FORGE_MERGE_RETRIES + 1,
+    );
+    const steward = await bench.start();
+    await sealedAndPushed(bench, steward);
+    await tickUntil(
+      steward,
+      bench.kingdom.clock,
+      async () => (await bench.lines('delivery.failed')).length > 0,
+    );
+    expect(methods(bench).filter((method) => method === 'merge')).toHaveLength(FORGE_MERGE_RETRIES + 1);
+    const [failed] = await bench.lines('delivery.failed');
+    expect(failed?.data).toMatchObject({ stage: 'merge', reason: 'forge_error', detail: 'HTTP 503' });
+    expect(bench.forge.merged.size).toBe(0);
   });
 
   it('stops at red checks: one delivery.failed naming them, the quest still done, nothing merged', async () => {

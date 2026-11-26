@@ -9,9 +9,18 @@
 // next start. (PS-09d) One territory's patrol (patrolTerritory) also runs outside the job, with what started it as its
 // `trigger`; every patrol of a territory runs in its lane (runs.ts), and each sets its territory's health in the book.
 // (CM-04) Red checks no probe has attributed are probed after the patrol, in the same lane (probe.ts).
-import { baseRedSuspension, patrolLedgerOf, patrolRanOf, stepPatrol, territoryViewOf } from '@elvaria/domain';
+import {
+  baseRedSuspension,
+  carriedPatrolOf,
+  patrolLedgerOf,
+  patrolRanOf,
+  stepPatrol,
+  territoryViewOf,
+} from '@elvaria/domain';
+import { checkConfigOf } from '@elvaria/runner-core';
 import type { PatrolLedger, PatrolRanData, PatrolTrigger, RedCheck, Territory } from '@elvaria/domain';
 
+import { factsOf, patrolCarryFor } from '../check-ledger/carry.ts';
 import { ring } from '../context.ts';
 import { suspendDelegation } from '../delegation/suspend.ts';
 import { STEWARD } from '../quest/record.ts';
@@ -20,6 +29,7 @@ import { openPatrolDraft } from './draft.ts';
 import { probeDue, probeTerritory } from './probe.ts';
 import { scansIn } from './scans.ts';
 import type { Context } from '../context.ts';
+import type { PatrolOptions } from './ports.ts';
 import type { StewardJob } from '../schedule/scheduler.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -31,20 +41,51 @@ export const patrolled = ({ vcs, patrol }: Territory): boolean => vcs.type === '
 const patrolledOf = (ctx: Context): Territory[] =>
   [...ctx.world.territories.values()].filter(patrolled).sort((a, b) => a.id.localeCompare(b.id));
 
+/** (RC-04) What the patrol gives Plots.patrol, what its line names, and the whole line when it makes no plot. */
+interface PatrolPlan {
+  readonly given: Pick<PatrolOptions, 'commit' | 'carried'>;
+  readonly facts: Record<string, string>;
+  readonly line?: PatrolRanData;
+}
+
+/**
+ * (RC-04, ADR 0035) The commit the patrol tries, its tree and what it carries there. Plots that cannot say (no
+ * patrolHead, no git, no default branch) carry nothing: the patrol runs every check as before. Every check carried and
+ * no scan to run: no plot, no commands.setup, the line all the same (plans/recheck.md §2.2).
+ */
+async function planOf(ctx: Context, territory: Territory, trigger: PatrolTrigger): Promise<PatrolPlan> {
+  const head = await ctx.deps.plots.patrolHead?.(territory);
+  if (head === undefined) return { given: {}, facts: {} };
+  const { commit, tree } = head;
+  if (tree === undefined) return { given: { commit }, facts: {} };
+  const { run, carried } = await patrolCarryFor(ctx, territory, tree, trigger);
+  const facts = factsOf(territory, head);
+  const scans = territory.patrol?.scans.length ?? 0;
+  if (run.length > 0 || carried.length === 0 || scans > 0)
+    return { given: { commit, ...(carried.length === 0 ? {} : { carried }) }, facts };
+  const config = checkConfigOf(territory);
+  const line = carriedPatrolOf({ territory: territory.id, trigger, head: commit, tree, config, carried });
+  return { given: { commit }, facts, line };
+}
+
 /** One territory's run, or undefined when it threw or the Steward stopped under it. */
 async function patrolOne(ctx: Context, territory: Territory, trigger: PatrolTrigger, signal: AbortSignal) {
   const { plots } = ctx.deps;
   if (plots.patrol === undefined) return undefined;
   let scans: PatrolRanData['scans'] = [];
   try {
+    const plan = await planOf(ctx, territory, trigger);
+    // An aborted signal starts nothing in Plots.patrol, and the check below records nothing of it.
+    if (plan.line !== undefined) return signal.aborted ? undefined : plan.line;
     const trial = await plots.patrol(territory, {
       signal,
       scan: async (cwd) => {
         scans = await scansIn(ctx, territory, cwd, signal);
       },
+      ...plan.given,
     });
     if (signal.aborted) return undefined;
-    return patrolRanOf({ territory: territory.id, trigger, trial, scans });
+    return patrolRanOf({ territory: territory.id, trigger, trial, scans, ...plan.facts });
   } catch (error) {
     if (!signal.aborted) ctx.deps.log.warn(`steward: patrol of ${territory.id} failed: ${messageOf(error)}`);
     return undefined;

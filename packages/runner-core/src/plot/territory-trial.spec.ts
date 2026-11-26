@@ -8,10 +8,11 @@ import { tempDir } from '@elvaria/testkit';
 import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { CheckIdSchema, UlidSchema } from '@elvaria/domain';
 import type { Territory } from '@elvaria/domain';
 
 import { TEST_HOST, commitFile, git, gitRepo, territoryAt } from '../__fixtures__/git-repo.ts';
-import { commitsSinceStamp, trialIdOf, tryTerritory } from './territory-trial.ts';
+import { commitsSinceStamp, territoryHeadOf, trialIdOf, tryTerritory } from './territory-trial.ts';
 
 const SCRIPTS: Record<string, string> = {
   'setup.mjs': "import { writeFileSync } from 'node:fs';\nwriteFileSync('setup-ran.txt', 'yes');\n",
@@ -124,6 +125,20 @@ describe('tryTerritory', () => {
     expect('commits_since' in (await trialOf({}))).toBe(false);
   });
 
+  it('(RC-04) carries the checks the Steward names: they pass without running, their step names the line', async () => {
+    const from = UlidSchema.parse('01JC0000000000000000000007');
+    const run = await tryTerritory({
+      kingdom,
+      territory: territoryAt(repo, { checks: [check('unit', 'node ok.mjs'), check('lint', 'node red.mjs')] }),
+      host: TEST_HOST,
+      carried: [{ id: CheckIdSchema.parse('lint'), from }],
+    });
+    expect(run.trial.checks.map(({ id, pass, carried_from }) => ({ id, pass, carried_from }))).toEqual([
+      { id: 'unit', pass: true, carried_from: undefined },
+      { id: 'lint', pass: true, carried_from: from },
+    ]);
+  });
+
   it('removes a trial plot a killed trial left, then tries', async () => {
     git(repo, 'worktree', 'add', '--quiet', '--detach', trialFolder(), 'main');
     const run = await trialOf({ checks: [check('unit', 'node ok.mjs')] });
@@ -181,5 +196,36 @@ describe('commitsSinceStamp', () => {
     const gitless = { ...TEST_HOST, resolve: () => Promise.resolve(undefined) };
     expect(await countOf(territoryAt(repo), first, gitless)).toBeUndefined();
     expect(await countOf(territoryAt(repo), first)).toBe(Object.keys(SCRIPTS).length);
+  });
+});
+
+describe('territoryHeadOf', () => {
+  it('(RC-04) names the commit a patrol would try, origin fetched, and its tree', async () => {
+    const local = await gitRepo(path.join(root, 'Tool - Headed'));
+    const upstream = path.join(root, 'upstream headed.git');
+    git(root, 'clone', '-q', '--bare', local, upstream);
+    const other = path.join(root, 'Tool - Headed clone');
+    git(root, 'clone', '-q', upstream, other);
+    git(other, 'config', 'user.name', 'Elvaria Test');
+    git(other, 'config', 'user.email', 'test@elvaria.invalid');
+    await commitFile(other, 'b.txt', 'b');
+    git(other, 'push', '-q', 'origin', 'main');
+    git(local, 'remote', 'add', 'origin', upstream);
+    const territory = territoryAt(local, { vcs: { type: 'git', default_branch: 'main', remote: 'origin' } });
+    const commit = git(other, 'rev-parse', 'HEAD');
+    expect(await territoryHeadOf({ territory, host: TEST_HOST })).toEqual({
+      commit,
+      tree: git(other, 'rev-parse', `${commit}^{tree}`),
+    });
+  });
+
+  it('names nothing without git, outside a repo, or without the default branch', async () => {
+    const headOf = (territory: Territory, host = TEST_HOST) => territoryHeadOf({ territory, host });
+    expect(await headOf(territoryAt(repo, { vcs: { type: 'none' } }))).toBeUndefined();
+    expect(await headOf(territoryAt(kingdom))).toBeUndefined();
+    expect(await headOf(territoryAt(repo, { vcs: { type: 'git', default_branch: 'nope' } }))).toBeUndefined();
+    const gitless = { ...TEST_HOST, resolve: () => Promise.resolve(undefined) };
+    expect(await headOf(territoryAt(repo), gitless)).toBeUndefined();
+    expect((await headOf(territoryAt(repo)))?.commit).toBe(head);
   });
 });

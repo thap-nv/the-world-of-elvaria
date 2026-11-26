@@ -142,4 +142,15 @@ describe('the red checks a probe names', () => {
     };
     expect(attributedHealth(first!, elsewhere)).toBe(first);
   });
+
+  it('(RC-04, R-B) flaky on the red head clears the checks it ran; flaky elsewhere only names them', () => {
+    const flaky = (data: Readonly<Record<string, unknown>>) =>
+      baseHealthOf([ran(T1, both), attributed(T2, { checks: ['unit'], cause: 'flaky', ...data })])[0];
+    expect(flaky({ commit: SHA_A })?.red.map(({ check: id }) => id)).toEqual(['lint']);
+    expect(flaky({ commit: SHA_B })?.red.map(({ attribution }) => attribution?.cause)).toEqual([
+      'flaky',
+      undefined,
+    ]);
+    expect(flaky({})?.red).toHaveLength(2);
+  });
 });

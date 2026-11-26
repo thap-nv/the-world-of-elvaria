@@ -171,6 +171,30 @@ describe('guest entries of the merge queue (CM-07)', () => {
     ]);
   });
 
+  it('(RC-04) refuses a guest the forge cannot merge before any try, and names the tree a green try checked', async () => {
+    const bench = await guestBench();
+    const steward = await bench.start({ plots: gitPlots(bench.kingdom.root, { ledger: true }) });
+    const guest = await session(bench, 'feat/guest', { 'guest.txt': 'guest\n' });
+    // R-D: GitHub's `mergeable` false, which the adapter reads as the state `conflict`.
+    bench.forge.answer({ state: 'conflict' });
+    await enqueue(bench, guest.pr);
+    await tickUntil(steward, bench.kingdom.clock, () => ended(bench, 1), 200);
+    expect((await bench.lines('delivery.guest_refused')).map(({ data }) => data)).toEqual([
+      { territory: TERRITORY, pr: guest.pr, reason: 'conflict', branch: 'feat/guest', head: guest.head },
+    ]);
+    expect(await bench.lines('check.start')).toEqual([]);
+    bench.forge.answer({ state: 'green' });
+    await enqueue(bench, guest.pr);
+    await tickUntil(steward, bench.kingdom.clock, () => ended(bench, 2), 200);
+    const [end] = await bench.lines('check.end');
+    // The try's merge and the forge's have one tree: the fact the patrol after the merge carries.
+    expect(end?.data).toMatchObject({
+      guest: guest.pr,
+      outcome: 'pass',
+      tree: git(bench.remote, 'rev-parse', 'main^{tree}'),
+    });
+  });
+
   it('tries two guests of one territory one after the other, in the order they came', async () => {
     const bench = await guestBench();
     const plots = gitPlots(bench.kingdom.root);

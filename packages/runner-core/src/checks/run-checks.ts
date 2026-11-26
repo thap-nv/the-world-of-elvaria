@@ -8,7 +8,7 @@
 // and, in a narrow run, ELVARIA_CHECK_BASE, the commit the plot's diff counts from (CM-01): what to check. A check the
 // Steward carries (RC-03, ADR 0035: green on this very tree with the same command) does not run: it passes in no
 // time, and its log says which run it stands for, so no older log of the same name speaks for it.
-import type { CarriedCheck, PartyRole, Territory, TerritoryCheck, VerdictCheck } from '@elvaria/domain';
+import type { CarriedCheck, PartyRole, Territory, TerritoryCheck, Ulid, VerdictCheck } from '@elvaria/domain';
 
 import { CHECK_BASE_ENV, checkLinesOf } from './check-mode.ts';
 import type { CheckRunMode } from './check-mode.ts';
@@ -97,7 +97,7 @@ export interface CheckRun {
    */
   readonly environment?: string;
   /** (RC-03) It did not run: carried from this line, whose green on the same tree it stands for. */
-  readonly carried_from?: string;
+  readonly carried_from?: Ulid;
 }
 
 /** Portable, relative to the kingdom. */
@@ -231,7 +231,7 @@ async function runExclusive(
 }
 
 /** A check carried, not run: passed in no time, its log a line that names the run it stands for. */
-async function carriedRun(check: TerritoryCheck, request: ChecksRequest, from: string): Promise<CheckRun> {
+async function carriedRun(check: TerritoryCheck, request: ChecksRequest, from: Ulid): Promise<CheckRun> {
   const logPath = checkLogOf(request.run_dir, check.id);
   const note = `elvaria: ${check.id} did not run: it passed with the same command on this very tree in ${from}`;
   const log = await openLog(request.kingdom, logPath, note);
