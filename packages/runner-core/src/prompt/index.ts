@@ -27,5 +27,6 @@ export { resumedPrompt } from './resumed.ts';
 export { letterReminderPrompt } from './letter-reminder.ts';
 export type { Answered } from './resumed.ts';
 export type { RefusedWork } from './refused-work.ts';
+export type { HealBrief, HealPatch } from './heal.ts';
 export { PROMPTS_DIR, PROMPT_TEMPLATES, loadPromptTemplates } from './templates.ts';
 export type { PromptTemplateName, PromptTemplates } from './templates.ts';

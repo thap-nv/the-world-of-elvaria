@@ -86,7 +86,7 @@ export interface PrepareOptions {
  * QueueMethods', in queue-methods.ts; the setup again before a commit (fix/plot-setup-on-lockfile) SetupMethods', in
  * setup.ts; the trees a healer's part is measured by (ADR 0034) HealMethods', in heal.ts.
  */
-export interface PlotManager extends ScratchMethods, QueueMethods, SetupMethods, HealMethods {
+export interface PlotManager extends ScratchMethods, QueueMethods, SetupMethods, Required<HealMethods> {
   /**
    * Idempotent: the same quest and territory give the same plot, and setup runs until it succeeds once, and again
    * once a file of commands.setup_when changed since; a folder plot has no setup and no branch to start from.

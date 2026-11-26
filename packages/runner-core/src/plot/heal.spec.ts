@@ -42,8 +42,10 @@ async function refusedWork(name: string, suffix: string) {
 describe('the heal trees', () => {
   it("measures the healer's one line against the doer's staged tree", async () => {
     const { plot, worktree } = await refusedWork('one line repo', 'a1b2c3');
-    const tree = await plots().stagedTree(plot);
-    expect(tree).toMatch(/^[0-9a-f]{40}$/u);
+    const staged = await plots().stagedTree(plot);
+    expect(staged?.tree).toMatch(/^[0-9a-f]{40}$/u);
+    expect(staged?.files).toEqual(['src/app.ts', 'src/new.ts']);
+    const tree = staged?.tree;
     await writeFile(path.join(worktree, 'src', 'app.ts'), 'export const a = 1;\nexport const b = 20;\n');
     const diff = await plots().healDiff(plot, tree!);
     expect(diff).toMatchObject({ files: ['src/app.ts'], lines: 1, outside: [] });
@@ -53,7 +55,7 @@ describe('the heal trees', () => {
 
   it('names the files outside the work, and puts the plot back on the tree, its new files gone', async () => {
     const { plot, worktree } = await refusedWork('outside repo', 'd4e5f6');
-    const tree = await plots().stagedTree(plot);
+    const tree = (await plots().stagedTree(plot))?.tree;
     await writeFile(path.join(worktree, 'src', 'other.ts'), 'export const c = 30;\n');
     await writeFile(path.join(worktree, 'src', 'added.ts'), 'export const e = 5;\n');
     await writeFile(path.join(worktree, 'src', 'new.ts'), 'export const d = 40;\n');
@@ -79,7 +81,7 @@ describe('the heal trees', () => {
 
   it('counts nothing for a healer that changed nothing, and has no tree for a plot without git', async () => {
     const { plot } = await refusedWork('unchanged repo', 'a7b8c9');
-    const tree = await plots().stagedTree(plot);
+    const tree = (await plots().stagedTree(plot))?.tree;
     expect(await plots().healDiff(plot, tree!)).toEqual({ files: [], lines: 0, outside: [], patch: '' });
     const folder = { type: 'folder', path: 'quests/q/work' } as const;
     expect(await plots().stagedTree(folder)).toBeNull();

@@ -21,9 +21,16 @@ export interface HealDiff {
   readonly patch: string;
 }
 
+/** The doer's staged work as a heal opens: the tree of the plot's index, and the files it changed since HEAD. */
+export interface StagedTree {
+  readonly tree: string;
+  /** The heal's part (K8): what the healer may change, relative to the plot with `/`. */
+  readonly files: readonly string[];
+}
+
 export interface HealMethods {
-  /** Stages the plot's changes and names the tree of its index: the doer's work as a heal opens; null without git. */
-  stagedTree?(plot: Plot): Promise<string | null>;
+  /** Stages the plot's changes and names the tree of its index and the files it changed; null without git. */
+  stagedTree?(plot: Plot): Promise<StagedTree | null>;
   /** What the plot changed since `tree`, its changes staged first; null for a plot without git. */
   healDiff?(plot: Plot, tree: string): Promise<HealDiff | null>;
   /** The plot's index and files back to exactly `tree`, what is not in it removed; HEAD stays where it is. */
@@ -47,14 +54,21 @@ function numstatOf(stdout: string): { files: string[]; lines: number } {
   return { files: rows.map((row) => row.slice(2).join('\t')), lines };
 }
 
+/** The files `tree` changed since the plot's HEAD: the doer's staged work. */
+const workOf = async (git: Git, worktree: string, tree: string): Promise<string[]> =>
+  zList(await gitOut(git, worktree, ['diff', ...NO_RENAMES, '--name-only', '-z', 'HEAD', tree]));
+
+async function stagedTreeIn(git: Git, worktree: string): Promise<StagedTree> {
+  const tree = await writeTreeIn(git, worktree);
+  return { tree, files: await workOf(git, worktree, tree) };
+}
+
 async function healDiffIn(git: Git, worktree: string, tree: string): Promise<HealDiff> {
   const after = await writeTreeIn(git, worktree);
   const counted = numstatOf(
     await gitOut(git, worktree, ['diff', ...NO_RENAMES, '--numstat', '-z', tree, after]),
   );
-  const work = new Set(
-    zList(await gitOut(git, worktree, ['diff', ...NO_RENAMES, '--name-only', '-z', 'HEAD', tree])),
-  );
+  const work = new Set(await workOf(git, worktree, tree));
   const patch = await gitOut(git, worktree, ['diff', ...NO_RENAMES, '--no-color', tree, after]);
   return { ...counted, outside: counted.files.filter((file) => !work.has(file)), patch };
 }
@@ -66,7 +80,7 @@ export function healMethods(git: () => Promise<Git>): Required<HealMethods> {
   return {
     stagedTree: async (plot) => {
       const worktree = worktreeOf(plot);
-      return worktree === undefined ? null : writeTreeIn(await git(), worktree);
+      return worktree === undefined ? null : stagedTreeIn(await git(), worktree);
     },
     healDiff: async (plot, tree) => {
       const worktree = worktreeOf(plot);
