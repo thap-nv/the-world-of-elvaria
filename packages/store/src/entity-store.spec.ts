@@ -257,7 +257,8 @@ describe('devices (P2-01, ADR 0037)', () => {
 
   it('refuses a device the schema refuses, and an id that names no device file', async () => {
     const device = DeviceSchema.parse(fixture('device'));
-    expect(await store.devices.write({ ...device, territories: [] })).toMatchObject({ ok: false });
+    const bare: Record<string, unknown> = { ...device, territories: [] };
+    expect(await store.devices.write(bare as never)).toMatchObject({ ok: false });
     expect(await store.devices.read('../kingdom' as never)).toMatchObject({
       ok: false,
       error: { code: 'invalid_id' },
