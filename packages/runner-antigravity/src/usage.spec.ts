@@ -137,7 +137,7 @@ describe('probeOf', () => {
     ];
     expect(probeOf(empty, ['gemini_models'])).toEqual({
       status: 'rate_limited',
-      detail: 'no mana left in gemini-5h, gemini-weekly',
+      note: { code: 'probe:window_empty', params: { windows: 'gemini-5h, gemini-weekly' } },
       resets_at: '2026-11-12T00:00:00Z',
     });
   });
@@ -152,7 +152,7 @@ describe('probeOf', () => {
     expect(probeOf(before ?? [], ['gemini_models', 'claude_gpt_models'])).toEqual({ status: 'ok' });
     expect(probeOf(drained ?? [], ['gemini_models', 'claude_gpt_models'])).toEqual({
       status: 'rate_limited',
-      detail: 'no mana left in 3p-5h',
+      note: { code: 'probe:window_empty', params: { windows: '3p-5h' } },
       resets_at: '2026-11-08T06:01:26Z',
     });
     expect(probeOf(drained ?? [], ['gemini_models'])).toEqual({ status: 'ok' });
@@ -184,7 +184,7 @@ describe('probeOf', () => {
     expect(probeOf([bucket('gemini-argon-wtu-weekly', 100)], ['gemini_models'])).toEqual({ status: 'ok' });
     expect(probeOf([bucket('3p-weekly', 100)], ['gemini_models', 'claude_gpt_models'])).toEqual({
       status: 'rate_limited',
-      detail: 'no mana left in 3p-weekly',
+      note: { code: 'probe:window_empty', params: { windows: '3p-weekly' } },
     });
   });
 });

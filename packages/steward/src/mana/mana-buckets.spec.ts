@@ -101,7 +101,7 @@ describe('a usage limit, per bucket (P1-22)', () => {
     const { kingdom, steward } = await open({
       cast: [{ id: 'kael', cls: 'knight' }, ...JUDGES],
       plays: { work: { 'Runs dry': ['rate_limit', 'submit'] } },
-      probes: { claude: () => ({ status: 'error', detail: 'no /usage' }) },
+      probes: { claude: () => ({ status: 'error', cli_text: 'no /usage' }) },
     });
     await kingdom.command('create_quest', questPayload('Runs dry'));
     await tickUntil(

@@ -45,3 +45,48 @@ describe('the timeline of a quest.infirmary line', () => {
     );
   });
 });
+
+const probe = (data: Record<string, unknown>) =>
+  EventSchema.parse({
+    v: EVENT_VERSION,
+    id: '01M6RQ5Y000000000000000001',
+    ts: '2026-11-06T09:00:00+07:00',
+    type: 'mana.probe',
+    actor: { kind: 'steward' },
+    data: { tribe: 'claude', result: 'error', ...data },
+  });
+
+describe('the timeline of mana.probe', () => {
+  it.each([
+    ['vi', 'Nhiếp chính thử mana của tộc claude: đã dùng hết hạn mức: weekly; CLI text verbatim'],
+    ['en', 'The Steward probes the mana of tribe claude: usage full: weekly; CLI text verbatim'],
+  ] as const)('translates notes in %s and preserves CLI text', (locale, expected) => {
+    const line = probe({
+      note: { code: 'probe:usage_full', params: { windows: 'weekly' } },
+      cli_text: 'CLI text verbatim',
+    });
+    expect(timeline({ t: translator(locale), locale })(line)).toBe(`09:00:00  ${expected}`);
+  });
+
+  it('keeps a historical detail verbatim and leaves a silent probe unchanged', () => {
+    const say = timeline({ t: translator('en'), locale: 'en' });
+    expect(say(probe({ detail: 'old detail: Keep CASE' }))).toBe(
+      '09:00:00  The Steward probes the mana of tribe claude: old detail: Keep CASE',
+    );
+    expect(say(probe({}))).toBe('09:00:00  The Steward probes the mana of tribe claude');
+  });
+
+  it.each([
+    null,
+    [],
+    { code: 'probe:future', params: {} },
+    { code: 'probe:usage_full', params: {} },
+    { code: 'probe:usage_full', params: { windows: [] } },
+    { code: 'probe:usage_full', params: null },
+  ])('ignores a malformed open-data note and preserves outside text: %j', (note) => {
+    const say = timeline({ t: translator('en'), locale: 'en' });
+    expect(say(probe({ note, cli_text: 'raw' }))).toBe(
+      '09:00:00  The Steward probes the mana of tribe claude: raw',
+    );
+  });
+});

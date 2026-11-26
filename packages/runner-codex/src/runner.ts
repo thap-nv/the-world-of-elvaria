@@ -168,7 +168,7 @@ async function probe(options: CodexOptions): Promise<ProbeResult> {
     timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS,
   };
   const read = await askAppServer(options.launch, [], [{ method: 'account/rateLimits/read' }], call);
-  return read.ok ? probeOf(read.results[0]) : { status: 'error', detail: read.problem };
+  return read.ok ? probeOf(read.results[0]) : { status: 'error', cli_text: read.problem };
 }
 
 function doctor(options: CodexOptions): Promise<ToolInfo> {

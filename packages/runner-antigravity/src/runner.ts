@@ -11,6 +11,7 @@ import {
   contextEnv,
   doctorNoteOf,
   hookNote,
+  probeNoteOf,
   programOf,
   runContextOf,
   runToEnd,
@@ -200,10 +201,19 @@ async function probe(options: AntigravityOptions): Promise<ProbeResult> {
   const call = { env: agyEnv(options.env, undefined), timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS };
   const ran = await runToEnd(programOf(options.launch), ['-p', '/usage', '--output-format', 'json'], call);
   // Stopped at its timeout or never started: runToEnd's words, not "exit null" ((b) of fix/busy-machine).
-  if (ran.problem !== undefined) return { status: 'error', detail: `agy -p /usage: ${ran.problem}` };
+  if (ran.problem !== undefined)
+    return {
+      status: 'error',
+      note: probeNoteOf('probe:usage_failed', { command: 'agy -p /usage' }),
+      cli_text: ran.problem,
+    };
   const buckets = ran.code === 0 ? usageBuckets(ran.stdout) : undefined;
   if (buckets === undefined) {
-    return { status: 'error', detail: `agy -p /usage: exit ${String(ran.code)} ${ran.stderr.trim()}`.trim() };
+    return {
+      status: 'error',
+      note: probeNoteOf('probe:usage_exit', { command: 'agy -p /usage', exit: String(ran.code) }),
+      ...(ran.stderr.trim() === '' ? {} : { cli_text: ran.stderr.trim() }),
+    };
   }
   // /usage costs no mana, so `ping: false` changes nothing here; the windows feed the mana gauge (P1-05).
   const windows = windowsOf(buckets);

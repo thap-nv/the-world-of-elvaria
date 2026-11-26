@@ -13,6 +13,7 @@ import type {
 import type { ToolPolicy } from '../policy/tool-policy.ts';
 import type { SpawnRole } from './roles.ts';
 import type { DoctorNote } from './doctor-notes.ts';
+import type { ProbeNote } from './probe-notes.ts';
 
 /**
  * `kingdom.tribes[].adapter`: a built-in adapter (`claude_code`, `antigravity`, `gemini_cli`, `codex_cli`), an owner
@@ -122,7 +123,8 @@ export interface RunningSession {
 /** A cheap call that tells whether the account answers (§3.5); real probes cost no or almost no mana. */
 export interface ProbeResult {
   readonly status: 'ok' | 'rate_limited' | 'error';
-  readonly detail?: string;
+  readonly note?: ProbeNote;
+  readonly cli_text?: string;
   readonly resets_at?: string;
   /** The account's windows the probe read on the way (`/usage`), for the mana gauge; absent when it read none. */
   readonly windows?: readonly ReportedWindow[];

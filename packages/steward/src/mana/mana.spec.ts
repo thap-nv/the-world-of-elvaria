@@ -210,7 +210,13 @@ describe('the gauges', () => {
             status: 'rate_limited',
             windows: [{ window: 'weekly', used_pct: 100, resets_at: '2026-11-08T13:00:00Z' }],
           }
-        : { status: 'ok' };
+        : calls.length === 2
+          ? {
+              status: 'error',
+              note: { code: 'probe:ping_failed', params: { exit: '1' } },
+              cli_text: 'CLI says no',
+            }
+          : { status: 'ok' };
     };
     const { kingdom, steward } = await open({ probes: { claude: spent } });
     await kingdom.command('create_quest', questPayload('Waits for the week'));
@@ -226,6 +232,15 @@ describe('the gauges', () => {
     await kingdom.command('wake', { tribe: 'claude' });
     await steward.tick();
     expect(calls).toEqual([false, true]);
+    expect((await lines(kingdom)).find(({ type }) => type === 'mana.probe')?.data).toEqual({
+      tribe: 'claude',
+      result: 'error',
+      note: { code: 'probe:ping_failed', params: { exit: '1' } },
+      cli_text: 'CLI says no',
+    });
+    await kingdom.command('wake', { tribe: 'claude' });
+    await steward.tick();
+    expect(calls).toEqual([false, true, true]);
     expect((await typesOf(kingdom)).filter((type) => type.startsWith('mana.')).slice(-2)).toEqual([
       'mana.probe',
       'mana.restored',

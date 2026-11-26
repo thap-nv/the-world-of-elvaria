@@ -92,7 +92,7 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): AgentRunner {
         const deps = { launch: await tool.launch(), env, cwd, model, timeoutMs, now };
         return await probeClaude(deps, probeOptions);
       } catch (error) {
-        return { status: 'error', detail: error instanceof Error ? error.message : String(error) };
+        return { status: 'error', cli_text: error instanceof Error ? error.message : String(error) };
       }
     },
     doctor: async () =>

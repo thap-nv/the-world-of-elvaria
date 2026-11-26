@@ -2,6 +2,27 @@
   "version": 1,
   "pairs": [
     {
+      "a": "apps/cli/src/doctor/note-text.ts",
+      "b": "apps/cli/src/sandbox/probe-note.ts",
+      "tokens": 87,
+      "status": "kept",
+      "reason": "LL-06 explicitly follows the doctor note pattern: each independent code union has an exhaustive MessageKey record and a translator. Combining the catalogs would couple separate contracts and require changing doctor rendering outside this quest."
+    },
+    {
+      "a": "packages/domain/src/memo/memo.ts",
+      "b": "packages/steward/src/mana/step.ts",
+      "tokens": 64,
+      "status": "kept",
+      "reason": "LL-06: optional object fields are omitted with conditional spreads. Memo data and mana probe event data have unrelated contracts and no shared behavior to extract."
+    },
+    {
+      "a": "packages/runner-core/src/runner/doctor-notes.ts",
+      "b": "packages/runner-core/src/runner/probe-notes.ts",
+      "tokens": 64,
+      "status": "kept",
+      "reason": "LL-06 requires the doctor-shaped tuple, code union, note interface and parameter catalog for probes. These independent public contracts share only their declaration shape; keeping them explicit avoids a generic registry abstraction."
+    },
+    {
       "a": "packages/runner-claude/src/launch/locate.ts",
       "b": "packages/runner-codex/src/locate.ts",
       "tokens": 83,
@@ -637,9 +658,9 @@
     {
       "a": "packages/runner-antigravity/src/usage.ts",
       "b": "packages/runner-claude/src/account/probe.ts",
-      "tokens": 64,
+      "tokens": 71,
       "status": "kept",
-      "reason": "AH-12: unchanged usage-probe shape relocated from runner-claude/src/probe.ts; retain the existing pair during this moves-only refactor. Sharing adapter probe handling belongs to AH-14."
+      "reason": "LL-06: both adapters return a coded rate limit and an optional latest reset. Their inputs and window selection differ; the shared note contract lives in runner-core, while adapter parsing stays independent (ADR 0006)."
     },
     {
       "a": "packages/runner-core/src/plot/merge.ts",

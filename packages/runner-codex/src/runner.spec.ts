@@ -181,7 +181,7 @@ describe('doctor and probe', () => {
     const gone = fakeRunner({ launch: { command: path.join(world.root, 'no codex'), args: [] } });
     expect(await gone.probe()).toMatchObject({
       status: 'error',
-      detail: expect.stringMatching(/did not start/) as unknown,
+      cli_text: expect.stringMatching(/did not start/) as unknown,
     });
   });
 });

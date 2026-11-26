@@ -194,7 +194,7 @@ describe('the conformance suite', () => {
 
   it('fails a runner that cannot run headless, or whose probe fails', async () => {
     const reports = await runConformance(
-      fake({ capabilities: { headless: false }, probe: { status: 'error', detail: 'not logged in' } }),
+      fake({ capabilities: { headless: false }, probe: { status: 'error', cli_text: 'not logged in' } }),
     );
     expect(
       reports.filter(({ outcome }) => outcome === 'failed').map(({ id, problem }) => [id, problem]),

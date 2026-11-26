@@ -60,7 +60,10 @@ describe('probe', () => {
     // The clock is pinned to the spike's, so the test does not turn red once these dates pass.
     const now = () => Date.parse('2026-11-06T14:40:00Z');
     const result = await fakeRunner({ ...withEnv({ FAKE_CLAUDE_USAGE_TEXT: text }), now }).probe();
-    expect(result).toMatchObject({ status: 'rate_limited', detail: 'usage full: five_hour, weekly' });
+    expect(result).toMatchObject({
+      status: 'rate_limited',
+      note: { code: 'probe:usage_full', params: { windows: 'five_hour, weekly' } },
+    });
     expect(result.resets_at).toBe('2026-11-08T13:00:00.000Z');
   });
 
@@ -74,17 +77,17 @@ describe('probe', () => {
   it('reports a ping that hit a limit (self-built 429) or failed', async () => {
     expect(await fakeRunner(withEnv({ FAKE_CLAUDE_PING: 'rate_limit' })).probe()).toMatchObject({
       status: 'rate_limited',
-      detail: 'the ping hit a usage limit',
+      note: { code: 'probe:ping_limited', params: {} },
     });
     const failed = await fakeRunner(withEnv({ FAKE_CLAUDE_PING: 'error' })).probe();
     expect(failed.status).toBe('error');
-    expect(failed.detail).toContain('claude-nonexistent-9');
+    expect(failed.cli_text).toContain('claude-nonexistent-9');
   });
 
   it('reports a CLI that does not start', async () => {
     const result = await fakeRunner({ executable: path.join(tmpdir(), 'no such claude.exe') }).probe();
     expect(result.status).toBe('error');
-    expect(result.detail).toMatch(/ENOENT/);
+    expect(result.cli_text).toMatch(/ENOENT/);
   });
 });
 
@@ -163,7 +166,7 @@ describe('doctor', () => {
     expect(info).toMatchObject({ path: '', version: '', auth_ok: false });
     expect(info.notes).toHaveLength(1);
     expect(info.notes?.[0]).toMatchObject({ code: 'doctor:not_found', params: { cli: 'Claude Code' } });
-    expect(await runner.probe()).toEqual({ status: 'error', detail: NOT_FOUND });
+    expect(await runner.probe()).toEqual({ status: 'error', cli_text: NOT_FOUND });
   });
 
   it('warns a week before the sign-in ends', async () => {

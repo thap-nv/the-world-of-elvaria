@@ -70,7 +70,8 @@ async function probeAsleep(ctx: Context, tribe: TribeId, runner: AgentRunner): P
   const data = {
     tribe,
     result: result.status,
-    ...(result.detail === undefined ? {} : { detail: result.detail }),
+    ...(result.note === undefined ? {} : { note: result.note }),
+    ...(result.cli_text === undefined ? {} : { cli_text: result.cli_text }),
     ...(result.resets_at === undefined ? {} : { resets_at: result.resets_at }),
   };
   await ctx.record.note({ type: 'mana.probe', actor: STEWARD, data });
