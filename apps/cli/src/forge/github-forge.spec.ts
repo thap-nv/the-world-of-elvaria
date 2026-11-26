@@ -22,6 +22,10 @@ const PULL = (number: number, state: string) => ({
 });
 const DRAFT = { head: BRANCH, base: 'main', title: 'Thêm script pnpm check', body: 'The delivery note.' };
 
+/** A problem of a forge that answered with an error: its reason, its detail and the HTTP status (RC-04). */
+const failed = (reason: 'forge_auth' | 'forge_error', detail: string, status: number) =>
+  err({ reason, detail, status });
+
 describe('githubForge.repoOf', () => {
   const { forge } = forgeOver({}, FAKE_TOKEN);
 
@@ -128,7 +132,7 @@ describe('githubForge.open', () => {
 
   it('gives back what stopped the search, the opening, or the second search', async () => {
     const down = forgeOver({ [pulls]: { status: 500, body: 'Bad gateway' } }, FAKE_TOKEN);
-    expect(await down.forge.open(REPO, DRAFT)).toEqual(err({ reason: 'forge_error', detail: 'HTTP 500' }));
+    expect(await down.forge.open(REPO, DRAFT)).toEqual(failed('forge_error', 'HTTP 500', 500));
     const refused = forgeOver(
       {
         [pulls]: { status: 200, body: [] },
@@ -137,7 +141,7 @@ describe('githubForge.open', () => {
       FAKE_TOKEN,
     );
     expect(await refused.forge.open(REPO, DRAFT)).toEqual(
-      err({ reason: 'forge_auth', detail: 'HTTP 403: Resource not accessible' }),
+      failed('forge_auth', 'HTTP 403: Resource not accessible', 403),
     );
     const lost = forgeOver(
       {
@@ -146,7 +150,7 @@ describe('githubForge.open', () => {
       },
       FAKE_TOKEN,
     );
-    expect(await lost.forge.open(REPO, DRAFT)).toEqual(err({ reason: 'forge_error', detail: 'HTTP 502' }));
+    expect(await lost.forge.open(REPO, DRAFT)).toEqual(failed('forge_error', 'HTTP 502', 502));
   });
 });
 
@@ -170,7 +174,7 @@ describe('githubForge.merge', () => {
       err({ reason: 'head_moved', detail: 'Head branch was modified' }),
     );
     expect(await merge({ status: 401, body: { message: 'Bad credentials' } }).merged).toEqual(
-      err({ reason: 'forge_auth', detail: 'HTTP 401: Bad credentials' }),
+      failed('forge_auth', 'HTTP 401: Bad credentials', 401),
     );
   });
 });
@@ -206,15 +210,13 @@ describe('githubForge.deleteBranch', () => {
 
   it('gives back a forge that could not answer either call', async () => {
     const down = forgeOver({ [ref]: { status: 503 } }, FAKE_TOKEN);
-    expect(await down.forge.deleteBranch(REPO, BRANCH, HEAD)).toEqual(
-      err({ reason: 'forge_error', detail: 'HTTP 503' }),
-    );
+    expect(await down.forge.deleteBranch(REPO, BRANCH, HEAD)).toEqual(failed('forge_error', 'HTTP 503', 503));
     const refused = forgeOver(
       { [ref]: { status: 200, body: { object: { sha: HEAD } } }, [refs]: { status: 403 } },
       FAKE_TOKEN,
     );
     expect(await refused.forge.deleteBranch(REPO, BRANCH, HEAD)).toEqual(
-      err({ reason: 'forge_auth', detail: 'HTTP 403' }),
+      failed('forge_auth', 'HTTP 403', 403),
     );
   });
 });
@@ -265,10 +267,10 @@ describe('githubForge: the credential and the secrets', () => {
       FAKE_TOKEN,
     );
     expect(await limited.forge.open(REPO, DRAFT)).toEqual(
-      err({ reason: 'forge_error', detail: 'HTTP 403: API rate limit exceeded' }),
+      failed('forge_error', 'HTTP 403: API rate limit exceeded', 403),
     );
     const refused = forgeOver({ [pulls]: { status: 403, body: {} } }, FAKE_TOKEN);
-    expect(await refused.forge.open(REPO, DRAFT)).toEqual(err({ reason: 'forge_auth', detail: 'HTTP 403' }));
+    expect(await refused.forge.open(REPO, DRAFT)).toEqual(failed('forge_auth', 'HTTP 403', 403));
   });
 });
 

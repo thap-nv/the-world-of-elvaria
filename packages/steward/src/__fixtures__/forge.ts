@@ -17,6 +17,7 @@ import type {
   ForgeCheck,
   ForgeProblem,
   ForgeRepo,
+  MergeProblem,
   PullRequest,
   PullRequestDraft,
   PullState,
@@ -50,6 +51,8 @@ export interface FakeForge extends Forge {
   readonly merged: Map<number, string>;
   /** Every `open` from now on fails with `problem`; undefined: they succeed again. */
   failOpen(problem: ForgeProblem | undefined): void;
+  /** (RC-04) The next `times` merges fail with `problem`, then merge again. */
+  failMerges(problem: MergeProblem, times: number): void;
   /** The next `open` waits until released, then goes on as any other. */
   holdOpen(): HeldOpen;
   /** What `status` answers from now on for a pull request not merged. */
@@ -91,6 +94,10 @@ export function fakeForge(remote?: string): FakeForge {
   const pulls: FakeForge['pulls'] = new Map();
   const merged = new Map<number, string>();
   let failure: ForgeProblem | undefined;
+  let mergeFailure: { problem: MergeProblem; times: number } = {
+    problem: { reason: 'forge_error' },
+    times: 0,
+  };
   let held: { readonly entered: () => void; readonly released: Promise<void> } | undefined;
   let answer: StatusAnswer = { state: 'green' };
   let holdStatus: (() => void) | undefined;
@@ -117,6 +124,9 @@ export function fakeForge(remote?: string): FakeForge {
     merged,
     failOpen: (problem) => {
       failure = problem;
+    },
+    failMerges: (problem, times) => {
+      mergeFailure = { problem, times };
     },
     holdOpen: () => {
       const entered = parked();
@@ -168,6 +178,10 @@ export function fakeForge(remote?: string): FakeForge {
     },
     merge: (repo, pr, { method, head }) => {
       calls.push({ method: 'merge', repo });
+      if (mergeFailure.times > 0) {
+        mergeFailure = { ...mergeFailure, times: mergeFailure.times - 1 };
+        return Promise.resolve(err(mergeFailure.problem));
+      }
       if (tipOf(branchOf(pr)) !== head) return Promise.resolve(err({ reason: 'head_moved' }));
       return Promise.resolve(ok(mergeOf(pr, method)));
     },

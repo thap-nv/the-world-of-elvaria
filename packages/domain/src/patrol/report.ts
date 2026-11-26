@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { PATROL_LINE_MAX_LENGTH } from '../constants.ts';
 import { jsonLineOf, scriptOutcomeOf } from '../script/outcome.ts';
+import type { CarriedCheck } from '../check-ledger/carry.ts';
 import type { ScriptId, TerritoryId } from '../core/ids.ts';
 import type { PatrolRanData, PatrolTrigger, ScanOutcome } from '../schema/event/patrol-data.ts';
 import type { TerritoryTrial } from '../scorecard/trial.ts';
@@ -28,7 +29,21 @@ export interface PatrolReport {
   readonly trigger: PatrolTrigger;
   readonly trial: TerritoryTrial;
   readonly scans: readonly PatrolScan[];
+  /** (RC-04, ADR 0035) The tree of the commit tried and the check config: a fact of the check ledger once green. */
+  readonly tree?: string;
+  readonly config?: string;
 }
+
+type TrialCheck = TerritoryTrial['checks'][number];
+
+/** (RC-04) A carried check names its line and has no log: it never ran. */
+const logOf = ({ carried_from: from, log_path: log }: TrialCheck) =>
+  from === undefined ? { log_path: log } : { carried_from: from };
+
+const factsOf = ({ tree, config }: Pick<PatrolReport, 'tree' | 'config'>) => ({
+  ...(tree === undefined ? {} : { tree }),
+  ...(config === undefined ? {} : { config }),
+});
 
 /** The data of the run's `patrol.ran`. */
 export function patrolRanOf(report: PatrolReport): PatrolRanData {
@@ -43,6 +58,7 @@ export function patrolRanOf(report: PatrolReport): PatrolRanData {
     territory,
     head: trial.base,
     trigger,
+    ...factsOf(report),
     ...failure,
     setup,
     checks: trial.checks.map((check) => ({
@@ -52,10 +68,38 @@ export function patrolRanOf(report: PatrolReport): PatrolRanData {
       timed_out: check.timed_out,
       environment: !check.pass && check.environment !== undefined,
       ...lineOf(check.error_line),
-      log_path: check.log_path,
+      ...logOf(check),
     })),
     scans: [...report.scans],
   };
+}
+
+export interface CarriedPatrol {
+  readonly territory: TerritoryId;
+  readonly trigger: PatrolTrigger;
+  /** The commit of the default branch the patrol would have tried, and its tree. */
+  readonly head: string;
+  readonly tree: string;
+  readonly config: string;
+  readonly carried: readonly CarriedCheck[];
+}
+
+/**
+ * (RC-04, ADR 0035) The `patrol.ran` of a patrol whose every check is carried and that has no scan: no plot was made
+ * and commands.setup did not run, each check green in no time from the line it stands for. The base branch's health,
+ * the probe's green head and the delegation breaker read it as any other patrol.
+ */
+export function carriedPatrolOf(patrol: CarriedPatrol): PatrolRanData {
+  const { territory, trigger, head, tree, config, carried } = patrol;
+  const checks = carried.map(({ id, from }) => ({
+    id,
+    pass: true,
+    duration_ms: 0,
+    timed_out: false,
+    environment: false,
+    carried_from: from,
+  }));
+  return { territory, head, trigger, tree, config, setup: null, checks, scans: [] };
 }
 
 const TotalSchema = z.object({ data: z.object({ total: z.int().min(0) }) });

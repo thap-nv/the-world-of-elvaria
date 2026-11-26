@@ -11,20 +11,21 @@
 // and `delivery.failed` names it; any other stop is the owner's `deliver`. A Steward that stops records nothing; the
 // next one finds the merge made (the plot's record says it is pending) and runs only what follows it. (CM-01, ADR
 // 0032) On a narrow territory the checks are those the quest's diff since the new base selects, narrow commands and
-// all, unless it touched what they cannot vouch for: the base branch's patrol is the full run (check-mode.ts).
+// all, unless it touched what they cannot vouch for: the base branch's patrol is the full run (check-mode.ts). (RC-04)
+// Checks green on the merge's tree are carried, and red ones run once more before anything else (queue-rerun.ts).
 import { environmentFailureOf } from '@elvaria/domain';
 import { createRedactor } from '@elvaria/eventlog';
-import type { DeliveryFailure, QuestId } from '@elvaria/domain';
-import type { BaseUpdate, CheckRun } from '@elvaria/runner-core';
+import type { DeliveryFailure } from '@elvaria/domain';
+import type { BaseUpdate } from '@elvaria/runner-core';
 
 import { plotOptionsOf } from '../party/plot.ts';
-import { STEWARD } from '../quest/record.ts';
 import { checkModeFor, modeMarkOf } from '../review/check-mode.ts';
 import { questSecretsOf } from '../sessions/secrets.ts';
 import { baseRedAt } from './base-trial.ts';
-import { detailOf, messageOf, stopped } from './delivery.ts';
+import { deliveryNote, detailOf, messageOf, stopped } from './delivery.ts';
 import { lateFailAt } from './late-fail.ts';
 import { openQueueMerge, redChecksOf } from './queue-merge.ts';
+import { queueChecksOf } from './queue-rerun.ts';
 import type { Context } from '../context.ts';
 import type { QueueChecks } from './checked-head.ts';
 import type { Delivery } from './delivery.ts';
@@ -36,9 +37,6 @@ type Merged = Extract<BaseUpdate, { state: 'merged' }>;
 /** A stop of the update; with `resolvable`, one the merge queue's merge quest resolves (PS-09b). */
 type Stop = Failure & { readonly resolvable?: Resolvable };
 
-/** Portable, relative to the kingdom: the delivery's run folder, whose `checks/` holds the queue's check logs. */
-export const deliveryRunOf = (quest: QuestId): string => `.runs/${quest}-delivery`;
-
 const failureOf = (d: Delivery, reason: DeliveryFailure, more: Partial<Failure> = {}): Failure => ({
   stage: 'update',
   reason,
@@ -47,30 +45,6 @@ const failureOf = (d: Delivery, reason: DeliveryFailure, more: Partial<Failure> 
 });
 
 const roleOf = ({ party_role: role }: Delivery['quest']) => (role === undefined ? {} : { party_role: role });
-
-/** A line of the log; one that cannot be written costs the owner a line, never the delivery. */
-async function note(ctx: Context, d: Delivery, line: { type: string; data: Record<string, unknown> }) {
-  try {
-    await ctx.record.note({ ...line, actor: STEWARD, quest: d.quest });
-  } catch (error) {
-    ctx.deps.log.warn(`steward: ${d.quest.id}: no ${line.type} line: ${messageOf(error)}`);
-  }
-}
-
-/** What `check.end` says of the queue's checks: what each gave, or that they could not run or were stopped. */
-function endOf(runs: readonly CheckRun[] | undefined, signal: AbortSignal) {
-  if (signal.aborted) return { delivery: true, outcome: 'stopped', checks: [] };
-  if (runs === undefined) return { delivery: true, outcome: 'error', checks: [] };
-  const environment = environmentFailureOf(runs);
-  return {
-    delivery: true,
-    outcome: runs.every(({ pass }) => pass) ? 'pass' : 'fail',
-    checks: runs.map(({ id, pass, duration_ms }) => ({ id, pass, duration_ms })),
-    ...(environment === undefined
-      ? {}
-      : { environment: { check: environment.check, line: environment.line } }),
-  };
-}
 
 /**
  * The checks of the updated branch, every one of the territory's unless its check mode is narrow (CM-01); red ones
@@ -82,18 +56,10 @@ async function checkUpdate(
   merged: Merged,
   secrets: Secrets,
 ): Promise<Stop | QueueChecks | undefined> {
-  const request = { plot: d.quest.plot, territory: d.territory, run_dir: deliveryRunOf(d.quest.id) };
   const mode = modeMarkOf(await checkModeFor(ctx, d.quest, d.territory, 'queue'));
   // In full, every check, as a merge quest runs them (K4); a narrow run selects by the quest's diff and role.
   const role = mode.mode === undefined ? { party_role: 'merge' as const } : roleOf(d.quest);
-  await note(ctx, d, { type: 'check.start', data: { delivery: true, ...mode } });
-  let runs: readonly CheckRun[] | undefined;
-  try {
-    runs = await ctx.deps.plots.check({ ...request, signal: d.signal, secrets, ...role, ...mode });
-  } catch (error) {
-    ctx.deps.log.warn(`steward: ${d.quest.id}: the checks of its update did not run: ${messageOf(error)}`);
-  }
-  await note(ctx, d, { type: 'check.end', data: { ...endOf(runs, d.signal), ...mode } });
+  const runs = await queueChecksOf(ctx, d, { secrets, mode, role });
   if (stopped(d)) return undefined;
   if (runs === undefined) return failureOf(d, 'update_failed', { detail: 'the checks did not run' });
   const red = runs.filter(({ pass }) => !pass);
@@ -128,7 +94,7 @@ async function generateAfter(ctx: Context, d: Delivery, merged: Merged, secrets:
     ...(merged.resolved.length === 0 ? {} : { resolved: [...merged.resolved] }),
     ...(restored.length === 0 ? {} : { restored: [...restored] }),
   };
-  await note(ctx, d, { type: 'plot.merged', data });
+  await deliveryNote(ctx, d, { type: 'plot.merged', data });
   if (restored.length > 0)
     ctx.deps.log.warn(
       `steward: ${d.quest.id}: commands.generate changed files outside shared_paths: ${restored.join(', ')}`,

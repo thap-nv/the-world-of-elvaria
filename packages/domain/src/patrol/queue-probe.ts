@@ -77,3 +77,16 @@ export function queueAttributionOf({ territory, quest, checks, run }: QueueProbe
     done: { kind: 'done', cause, ...culprit },
   });
 }
+
+/**
+ * (RC-04, K5, ADR 0035) The queue's red checks run once more on the same tree, in the same run, before it asks the base
+ * branch or the quest's own head: green then, they are `flaky` and the delivery goes on, no merge quest opened. `run`
+ * is that second run on the queue's merged head; undefined when it is red again or cannot say, and the queue goes on as
+ * before.
+ */
+export function queueFlakyOf(probe: Required<Omit<QueueProbe, 'quest'>>): CheckAttributedData | undefined {
+  const { territory, checks, run } = probe;
+  if (run.red !== false) return undefined;
+  const done = { kind: 'done', cause: 'flaky', commit: run.commit } as const;
+  return attributionOf({ territory, source: 'queue', checks, runs: [run], done });
+}

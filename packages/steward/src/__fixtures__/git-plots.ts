@@ -7,12 +7,15 @@ import process from 'node:process';
 import { git } from '@elvaria/testkit';
 import { TerritorySchema, ok } from '@elvaria/domain';
 import {
+  checkPointIn,
   commitLinksOf,
   createPlotManager,
+  gitOf,
   patrolIdOf,
   probeIdOf,
   scratchAgain,
   trialInScratch,
+  territoryHeadOf,
   tryGuest,
   tryTerritory,
 } from '@elvaria/runner-core';
@@ -48,7 +51,7 @@ export { git, gitRepo as gitRepoWith } from '@elvaria/testkit';
  */
 export function gitPlots(
   kingdom: string,
-  options: { readonly release?: boolean; readonly probe?: boolean } = {},
+  options: { readonly release?: boolean; readonly probe?: boolean; readonly ledger?: boolean } = {},
 ): Plots {
   const host = {
     resolve: (name: string) => Promise.resolve({ file: name === 'node' ? process.execPath : name, args: [] }),
@@ -105,10 +108,26 @@ export function gitPlots(
     },
     releaseScratch: (quest, territory) => manager.releaseScratch(quest, territory),
     // The patrol as `elvaria run` makes it (PS-26): the territory's trial under its own plot name, the scans in it.
-    patrol: async (territory, { signal, scan }) => {
+    patrol: async (territory, { signal, scan, commit, carried }) => {
       const name = patrolIdOf(territory.id);
-      return (await tryTerritory({ kingdom, territory, host, name, signal, inPlot: scan })).trial;
+      const given = {
+        ...(commit === undefined ? {} : { commit }),
+        ...(carried === undefined ? {} : { carried }),
+      };
+      return (await tryTerritory({ kingdom, territory, host, name, signal, inPlot: scan, ...given })).trial;
     },
+    // (RC-04) The check ledger's points as `elvaria run` gives them, when asked: a spec without them carries nothing.
+    ...(options.ledger === true
+      ? {
+          checkPoint: async (plot, mode) => {
+            const run = plot.type === 'worktree' ? await gitOf(host) : undefined;
+            return run === undefined
+              ? {}
+              : checkPointIn(run, fromPortable(plot.path ?? ''), mode === 'narrow');
+          },
+          patrolHead: (territory) => territoryHeadOf({ territory, host }),
+        }
+      : {}),
     // The probe as `elvaria run` makes it (CM-04), when asked: a spec without it runs no probe.
     ...(options.probe === true
       ? {

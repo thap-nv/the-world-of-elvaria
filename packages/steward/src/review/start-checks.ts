@@ -12,6 +12,7 @@
 import { currentRun, err, ok } from '@elvaria/domain';
 import type { EventData, Quest, QuestId, Result, Territory } from '@elvaria/domain';
 
+import { checkPointOf, factsOf, ranEndOf } from '../check-ledger/carry.ts';
 import { mergePartsBeforeChecks } from '../party/plot.ts';
 import { STEWARD } from '../quest/record.ts';
 import { secretsBreaker } from '../sessions/breaker.ts';
@@ -35,14 +36,7 @@ const messageOf = (error: unknown): string => (error instanceof Error ? error.me
 function endOf(ran: Result<RunChecks, string>, signal: AbortSignal): EventData<'check.end'> {
   if (signal.aborted) return { outcome: 'stopped', checks: [] };
   if (!ran.ok) return { outcome: 'error', checks: [] };
-  const { checks, environment } = ran.value;
-  return {
-    outcome: checks.every(({ pass }) => pass) ? 'pass' : 'fail',
-    checks: checks.map(({ id, pass, duration_ms }) => ({ id, pass, duration_ms })),
-    ...(environment === undefined
-      ? {}
-      : { environment: { check: environment.check, line: environment.line } }),
-  };
+  return ranEndOf(ran.value.checks, ran.value.environment);
 }
 
 /** A `check.*` line; one that cannot be written costs the owner a line, never the checks. */
@@ -100,9 +94,13 @@ export async function startChecks(ctx: Context, questId: QuestId): Promise<Resul
     const started = noteChecks(ctx, quest, 'check.start', modeMarkOf(mode));
     // Read before they run: a commit made while they run makes them stale.
     const head = await headOf(ctx, quest);
+    // (RC-04, ADR 0035) The tree they run on, a fact for the ledger; this run reads none (plans/recheck.md §2.2). A
+    // scratch plot is the judge's, not the quest's: its run names no tree.
+    const point = inScratch(ctx, quest) ? undefined : await checkPointOf(ctx, quest, mode);
     const checks = await checksOf(ctx, quest, territory, n, { signal, secrets, mode });
     await started;
-    await noteChecks(ctx, quest, 'check.end', { ...endOf(checks, signal), ...modeMarkOf(mode) });
+    const facts = checks.ok ? factsOf(territory, point) : {};
+    await noteChecks(ctx, quest, 'check.end', { ...endOf(checks, signal), ...modeMarkOf(mode), ...facts });
     if (!checks.ok) return undefined;
     // Checks that ran (to their end, or stopped) in the quest's own plot leave it as its commit has it (P1-47); a
     // trial ran in its scratch plot, and checks that could not run touched nothing.

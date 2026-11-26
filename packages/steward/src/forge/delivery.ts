@@ -6,6 +6,7 @@ import { deliveryOf, err, ok } from '@elvaria/domain';
 import { fromPortable } from '@elvaria/store';
 import type { Quest, Result, Territory } from '@elvaria/domain';
 
+import { STEWARD } from '../quest/record.ts';
 import type { Context } from '../context.ts';
 import type { DeliveryGit } from './git.ts';
 import type { Forge, ForgeRepo } from './forge.ts';
@@ -56,3 +57,16 @@ export const detailOf = (detail: string | undefined) =>
   detail === undefined || detail === '' ? {} : { detail };
 
 export const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/** A line of the log about the delivery's quest; one that cannot be written costs the owner a line, never the delivery. */
+export async function deliveryNote(
+  ctx: Context,
+  d: Delivery,
+  line: { readonly type: string; readonly data: Record<string, unknown> },
+): Promise<void> {
+  try {
+    await ctx.record.note({ ...line, actor: STEWARD, quest: d.quest });
+  } catch (error) {
+    ctx.deps.log.warn(`steward: ${d.quest.id}: no ${line.type} line: ${messageOf(error)}`);
+  }
+}

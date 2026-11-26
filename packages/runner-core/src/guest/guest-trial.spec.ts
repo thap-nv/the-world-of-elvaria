@@ -6,6 +6,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { CheckIdSchema, UlidSchema } from '@elvaria/domain';
 import { tempDir } from '@elvaria/testkit';
 import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -91,6 +92,7 @@ describe('tryGuest', () => {
     const tried = await guest('feat/green', sha.green ?? '');
     if (tried.state !== 'tried') throw new Error(`not tried: ${JSON.stringify(tried)}`);
     expect(tried).toMatchObject({ base: sha.main, mode: 'narrow' });
+    expect(tried.tree).toBe(git(repo, 'rev-parse', `${tried.commit}^{tree}`));
     expect(started.splice(0)).toEqual(['narrow']);
     expect(git(repo, 'rev-list', '--parents', '-n', '1', tried.commit).split(' ').slice(1)).toEqual([
       sha.main,
@@ -109,6 +111,27 @@ describe('tryGuest', () => {
     const tried = await guest('feat/red', sha.red ?? '');
     expect(tried.state === 'tried' && tried.run.trial.checks.map(({ pass }) => pass)).toEqual([false]);
     expect(started.splice(0)).toHaveLength(1);
+  });
+
+  it("(RC-04) carries what the Steward names for the merge's tree and narrow base: a red check carried passes", async () => {
+    const from = UlidSchema.parse('01JC0000000000000000000007');
+    const asked: unknown[] = [];
+    const tried = await tryGuest({
+      kingdom,
+      territory: territory(),
+      host: TEST_HOST,
+      branch: 'feat/red',
+      head: sha.red ?? '',
+      carry: (point) => {
+        asked.push(point);
+        return Promise.resolve([{ id: CheckIdSchema.parse('state'), from }]);
+      },
+    });
+    if (tried.state !== 'tried') throw new Error(`not tried: ${JSON.stringify(tried)}`);
+    expect(asked).toEqual([{ tree: tried.tree, base: sha.main }]);
+    expect(tried.run.trial.checks.map(({ id, pass, carried_from }) => [id, pass, carried_from])).toEqual([
+      ['state', true, from],
+    ]);
   });
 
   it("names the files of a head that conflicts with origin's main, and makes no plot", async () => {

@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { EventSchema } from '../schema/event/event.ts';
-import { ownRunChecksOf, queueAttributionOf, sessionModeOf } from './queue-probe.ts';
+import { ownRunChecksOf, queueAttributionOf, queueFlakyOf, sessionModeOf } from './queue-probe.ts';
 import type { QuestId, TerritoryId } from '../core/ids.ts';
 import type { Event } from '../schema/event/event.ts';
 import type { OwnRunInput } from './queue-probe.ts';
@@ -106,5 +106,22 @@ describe('queueAttributionOf', () => {
     });
     expect(unknown.cause).toBe('unknown');
     expect(unknown).not.toHaveProperty('culprit');
+  });
+});
+
+describe('queueFlakyOf', () => {
+  const again = (red: boolean | undefined) => ({ commit: SHA, red, duration_ms: 900 });
+
+  it('(RC-04, K5) red checks green on their second run are flaky; red again, or a run that cannot say, is not', () => {
+    expect(queueFlakyOf({ territory: TERRITORY, checks: ['test'], run: again(false) })).toEqual({
+      territory: TERRITORY,
+      source: 'queue',
+      checks: ['test'],
+      runs: [{ commit: SHA, pass: true, duration_ms: 900 }],
+      commit: SHA,
+      cause: 'flaky',
+    });
+    expect(queueFlakyOf({ territory: TERRITORY, checks: ['test'], run: again(true) })).toBeUndefined();
+    expect(queueFlakyOf({ territory: TERRITORY, checks: ['test'], run: again(undefined) })).toBeUndefined();
   });
 });

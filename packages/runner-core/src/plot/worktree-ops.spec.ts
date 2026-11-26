@@ -9,7 +9,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { plotCommitMessage } from './commit-message.ts';
+import { gitOf } from './git.ts';
 import { createPlotManager } from './plot-manager.ts';
+import { checkPointIn } from './worktree-ops.ts';
 import type { ForgetWorktree } from './worktree-ops.ts';
 
 let root = '';
@@ -60,6 +62,19 @@ describe('status and touched', () => {
     // The head is the commit, whatever the worktree holds uncommitted (P1-38).
     expect(await plots().head(plot)).toBe(git(worktree, 'rev-parse', 'HEAD'));
     expect(await plots().checkBase(plot)).toBe(fork);
+  });
+
+  it('(RC-04) name the tree a run of the checks is about, a narrow run its base too; nothing once dirty', async () => {
+    const { repo, worktree } = await preparedPlot('point repo', 'a2b3c5');
+    const fork = git(repo, 'rev-parse', 'HEAD');
+    await commitFile(worktree, 'src/feature.ts', 'export const feature = 1;\n');
+    const run = await gitOf(TEST_HOST);
+    if (run === undefined) throw new Error('no git');
+    const tree = git(worktree, 'rev-parse', 'HEAD^{tree}');
+    expect(await checkPointIn(run, worktree, false)).toEqual({ tree });
+    expect(await checkPointIn(run, worktree, true)).toEqual({ tree, base: fork });
+    await writeFile(path.join(worktree, 'src', 'app.ts'), 'export const app = 2;\n');
+    expect(await checkPointIn(run, worktree, true)).toEqual({});
   });
 
   it('say nothing for plots without git, and list a folder plot whole', async () => {

@@ -44,7 +44,8 @@ function problemOf(response: Response, body: unknown): ForgeProblem {
   const limited = response.headers.get('x-ratelimit-remaining') === '0';
   const refused = response.status === HTTP_UNAUTHORIZED || response.status === HTTP_FORBIDDEN;
   const detail = `HTTP ${response.status}${messageOf(body) === '' ? '' : `: ${messageOf(body)}`}`;
-  return { reason: refused && !limited ? 'forge_auth' : 'forge_error', detail };
+  // (RC-04) The status goes with it: the merge queue asks again after a 5xx, the forge's own trouble.
+  return { reason: refused && !limited ? 'forge_auth' : 'forge_error', detail, status: response.status };
 }
 
 const bodyOf = async (response: Response): Promise<unknown> => {

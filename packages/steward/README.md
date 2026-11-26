@@ -501,6 +501,9 @@
   remote tip is still that head (a removal that fails is a warning, `branch_deleted: false`), one `delivery.merged`;
   red, a conflict, a moved head, a closed pull request, or `checks_timeout_minutes` past the push's line: one
   `delivery.failed`, the quest stays done. The digest drops the `delivery_waits` of such a quest (`ownerDeliveries`).
+  (RC-04) A merge the forge answers with its own error (a 5xx, `ForgeProblem.status`) records nothing and is asked
+  again at the next poll, up to `FORGE_MERGE_RETRIES` times (counted in the forge book's `retries`, in memory),
+  then fails as before.
 - Carries out the delegation of the royal seal (PS-08b, `src/delegation/seal.ts`, ADR 0023): the inbox's `create_quest` and the
   snapshot get the domain's `sealPolicyOf` (`kingdom.delegation.seal`, the territories the breaker suspended); a submit (a session's,
   or the owner's `submit`) measures the branch of a quest with `seal_delegated` (`Plots.diffLines`, the territory's
@@ -590,10 +593,20 @@
   the guests that wait, rebuilt from the log at start and following each line the recorder writes, and the tries
   running; the snapshot gives planTick `guests` and `BackgroundWork.guests`. Each of `plan.guest_runs`
   (`src/forge/guest.ts`) runs outside the tick: the forge's `status` (its `branch` and `head`; merged or closed:
-  `not_open`), `Plots.guest` with its `check.start`/`check.end` (`delivery`, `guest`), then the forge's merge
+  `not_open`; (RC-04, R-D) `conflict`, GitHub's `mergeable` false: refused `conflict` before any try), `Plots.guest` with its `check.start`/`check.end` (`delivery`, `guest`), then the forge's merge
   at the head tried and `delivery.guest_merged` (the patrol after a merge follows), or `delivery.guest_refused`
   (`conflict` with the files, `checks_red` with the red checks, `head_moved`, `forge_error`, `update_failed`).
   The Steward's stop aborts a try and records nothing but the `check.end` of the checks it killed.
+- The check ledger (RC-04, ADR 0035, `src/check-ledger/carry.ts`): every run of the checks names on its `check.end`
+  (or `patrol.ran`) the tree it ran on, the territory's check config and a narrow run's base (`Plots.checkPoint`,
+  `Plots.patrolHead`), and the merge queue (`src/forge/queue-rerun.ts`), a guest's try and the patrol read the ledger
+  (the domain's `checkLedgerOf`, read anew from the log each time, so a restart keeps it) before they run: a check
+  green with the same command on the same tree is carried (`carried_from`), not run. A patrol that carries every
+  check and has no scan makes no plot and writes its `patrol.ran` all the same (`carriedPatrolOf`); the owner's
+  patrol carries nothing (K4). The run after a session writes the ledger, never reads it; a judge's scratch plot
+  names no tree. The queue's red checks, not set aside, run once more on the same tree in the same run, before the
+  base branch or the quest's own head is asked: green then, `check.attributed` from the queue, cause `flaky`
+  (`queueFlakyOf`), and the delivery goes on.
 - Adds the machine check `screens` after the territory's for a quest whose ritual asks for eyes (`judgedByEye`, PS-11b, `src/review/screens.ts`): it fails when the checks captured no screen or one breaks the image contract, its log says why; that quest's judge gets exactly the valid screens of the run, by policy (`ToolPolicy.images`) and in its prompt (`src/sessions/request.ts`).
 - Runs a healer's session (HL-05, ADR 0034, `src/heal/`): for `plan.heals` it keeps the doer's staged tree in
   `.runs/<quest>-<n>/heal/staged-tree` and opens the healer in the quest's plot (`open.ts`, the move `heal`, role
@@ -743,3 +756,9 @@ the branch pushed and one pull request, found again after a stop, a shared patte
 forges, nothing on a manual territory, and `deliver` refused where the Steward would refuse it; `forge-party.spec.ts`
 pushes only the merge quest of a party; `forge-stop.spec.ts` (one case on Windows, one on macOS) stops the Steward
 while a pre-push hook runs and finds the hook's grandchild killed and nothing recorded. No spec reaches a real forge.
+`flows/check-ledger.spec.ts` (RC-04) runs the ledger on the forge bench with checks and patrols that record what
+they ran and carried (`src/__fixtures__/ledger.ts`, `gitPlots(…, { ledger: true })`): a run in full then a merge,
+a Steward started anew between, and the patrol after the merge makes no plot; the owner's patrol runs every check;
+a narrow run before leaves the checks with a narrow command to the patrol; a red check in the queue green the second
+time is `flaky` and the delivery goes on. `forge-merge.spec.ts` asks a merge again after a 5xx, then fails it once
+`FORGE_MERGE_RETRIES` are spent; `forge-guest.spec.ts` refuses a guest the forge says conflicts, before any try.
