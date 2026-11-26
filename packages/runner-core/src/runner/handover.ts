@@ -42,8 +42,11 @@ export function sectionOf(
 
 /** The question the character asks the owner, if any. */
 export function questionOf(letter: string): string | undefined {
-  const text = sectionOf(letter, 'Question');
-  return text === undefined || NO_QUESTION.test(text) ? undefined : text;
+  const lines = sectionOf(letter, 'Question')?.split('\n');
+  if (lines === undefined) return undefined;
+  const end = lines.findIndex((line) => line.trim() === '---');
+  const text = (end === -1 ? lines : lines.slice(0, end)).join('\n').trim();
+  return NO_QUESTION.test(text) ? undefined : text;
 }
 
 /** The memos of a letter, and the lines of its Memos section that follow no grammar the assignee prompt gives. */
