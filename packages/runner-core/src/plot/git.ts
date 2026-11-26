@@ -42,5 +42,37 @@ export async function gitOut(git: Git, cwd: string, args: readonly string[]): Pr
   return run.stdout;
 }
 
+/** The one line a git command that may fail prints (an id), trimmed; undefined when it exits non-zero. */
+export async function gitLine(git: Git, cwd: string, args: readonly string[]): Promise<string | undefined> {
+  const run = await git(cwd, args);
+  return run.code === 0 ? run.stdout.trim() : undefined;
+}
+
+/**
+ * (RC-03, ADR 0035) The id of `commit`'s tree: two commits of the same content share it, as a forge's merge commit
+ * and the queue's trial merge do, so a green check is a fact about it. Argv, never a shell, so `^{tree}` reaches git
+ * as is on Windows and POSIX alike. Undefined when git cannot name it (no such commit, no commit yet).
+ */
+export const treeOf = (git: Git, cwd: string, commit: string): Promise<string | undefined> =>
+  gitLine(git, cwd, ['rev-parse', '--verify', '--quiet', `${commit}^{tree}`]);
+
+/**
+ * The id of the tree staged in `cwd`: `git write-tree` writes it to the object store and changes nothing else, not
+ * the index, not the work tree, not a ref. Undefined when it cannot (a conflict still in the index).
+ */
+export const stagedTreeOf = (git: Git, cwd: string): Promise<string | undefined> =>
+  gitLine(git, cwd, ['write-tree']);
+
+/**
+ * The tree a run of the checks in `cwd` is a fact about (ADR 0035): HEAD's, when nothing but ignored files differs
+ * from it. Undefined with a change not committed, an untracked file among them (named, whatever the territory's
+ * status.showUntrackedFiles says), or no commit: such a run is no fact.
+ */
+export async function checkedTreeOf(git: Git, cwd: string): Promise<string | undefined> {
+  const status = await git(cwd, ['status', '--porcelain', '--untracked-files=normal']);
+  if (status.code !== 0 || status.stdout !== '') return undefined;
+  return treeOf(git, cwd, 'HEAD');
+}
+
 /** The NUL-separated list a `-z` command prints. */
 export const zList = (stdout: string): string[] => stdout.split('\0').filter((entry) => entry !== '');

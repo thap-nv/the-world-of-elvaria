@@ -74,5 +74,37 @@
       "culprit": "q_20261106_7k3m2a",
       "cause": "own_change"
     }
+  },
+  {
+    "v": 2,
+    "id": "01JCFBRC03CHECKTREE0000001",
+    "ts": "2026-11-26T09:20:00+07:00",
+    "type": "check.end",
+    "actor": {
+      "kind": "steward"
+    },
+    "quest": "q_20261106_7k3m2a",
+    "territory": "dc1-se-team",
+    "data": {
+      "delivery": true,
+      "mode": "narrow",
+      "tree": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+      "base": "9f2c1e7a3b5d4c6e8f0a1b2c3d4e5f6a7b8c9d0e",
+      "config": "3f9a1c0e5b7d2a46",
+      "outcome": "pass",
+      "checks": [
+        {
+          "id": "lint",
+          "pass": true,
+          "duration_ms": 0,
+          "carried_from": "01JCF9A2B3C4D5E6F7G8H9J0KY"
+        },
+        {
+          "id": "unit",
+          "pass": true,
+          "duration_ms": 38200
+        }
+      ]
+    }
   }
 ]

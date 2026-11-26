@@ -4,6 +4,13 @@ import { z } from 'zod';
 
 import { QuestIdSchema, REGISTRY_ID_PATTERN, TerritoryIdSchema } from '../../core/ids.ts';
 import { NonEmptyStringSchema } from '../common.ts';
+import {
+  CARRIED_PASSED,
+  CarriedFromSchema,
+  CheckConfigSchema,
+  TreeIdSchema,
+  carriedPassed,
+} from './check-tree.ts';
 import { CommitShaSchema } from './upgrade-data.ts';
 
 const describe = (description: string) => ({ description });
@@ -59,40 +66,66 @@ export const CheckStartDataSchema = z
 export const CHECK_OUTCOMES = ['pass', 'fail', 'error', 'stopped'] as const;
 export type CheckOutcome = (typeof CHECK_OUTCOMES)[number];
 
-export const CheckEndDataSchema = z.strictObject({
-  delivery: DeliveryMarkSchema,
-  mode: CheckRunModeSchema,
-  guest: GuestMarkSchema,
-  outcome: z
-    .enum(CHECK_OUTCOMES)
-    .meta(
+// (RC-03, ADR 0035) One check of the line, run or carried: a carried one names the line of its real run.
+const CheckEndCheckSchema = z
+  .strictObject({
+    id: SnakeIdSchema,
+    pass: z.boolean(),
+    duration_ms: DurationMsSchema,
+    carried_from: CarriedFromSchema.optional(),
+  })
+  .refine(carriedPassed, { message: CARRIED_PASSED });
+
+export const CheckEndDataSchema = z
+  .strictObject({
+    delivery: DeliveryMarkSchema,
+    mode: CheckRunModeSchema,
+    guest: GuestMarkSchema,
+    // Optional and added in v2 (RC-03, ADR 0035): what makes the line's green checks facts the check ledger keeps; a
+    // line without `tree`, as every line before RC-03, keeps none.
+    tree: TreeIdSchema.optional(),
+    base: CommitShaSchema.optional().meta(
       describe(
-        'pass: every check passed, or none applied; fail: at least one failed; error: they could not run, a later tick runs them again; stopped: killed because the Steward stopped or the quest moved on.',
+        "mode narrow only: the commit the narrow commands' diff counted from (ELVARIA_CHECK_BASE); a narrow green is carried only to a run from the same one. Absent: a run in full, or a line older than RC-03.",
       ),
     ),
-  checks: z
-    .array(z.strictObject({ id: SnakeIdSchema, pass: z.boolean(), duration_ms: DurationMsSchema }))
-    .meta(
-      describe(
-        'The checks that ran, in order (verdict.checks without their logs); empty unless pass or fail.',
+    config: CheckConfigSchema.optional(),
+    outcome: z
+      .enum(CHECK_OUTCOMES)
+      .meta(
+        describe(
+          'pass: every check passed, or none applied; fail: at least one failed; error: they could not run, a later tick runs them again; stopped: killed because the Steward stopped or the quest moved on.',
+        ),
       ),
-    ),
-  // Optional and added after v1 (PS-01b, (b) of P1-54): a line written before it, or of checks set aside for no
-  // environment, has none, so `v` stays 1.
-  environment: z
-    .strictObject({
-      check: SnakeIdSchema.meta(describe('The first failing check whose log showed its environment failed.')),
-      line: NonEmptyStringSchema.meta(
-        describe("The line of its log that one of the territory's environment_errors found, masked."),
+    checks: z
+      .array(CheckEndCheckSchema)
+      .meta(
+        describe(
+          'The checks that ran, in order (verdict.checks without their logs); empty unless pass or fail.',
+        ),
       ),
-    })
-    .optional()
-    .meta(
-      describe(
-        "fail only: the Steward set the run's checks aside because their environment failed (P1-54: Docker down, a container gone), so no judge reads them and they run again later. Without it a restarted Steward, the world and the metrics ledger could not tell such a run from a failing one.",
+    // Optional and added after v1 (PS-01b, (b) of P1-54): a line written before it, or of checks set aside for no
+    // environment, has none, so `v` stays 1.
+    environment: z
+      .strictObject({
+        check: SnakeIdSchema.meta(
+          describe('The first failing check whose log showed its environment failed.'),
+        ),
+        line: NonEmptyStringSchema.meta(
+          describe("The line of its log that one of the territory's environment_errors found, masked."),
+        ),
+      })
+      .optional()
+      .meta(
+        describe(
+          "fail only: the Steward set the run's checks aside because their environment failed (P1-54: Docker down, a container gone), so no judge reads them and they run again later. Without it a restarted Steward, the world and the metrics ledger could not tell such a run from a failing one.",
+        ),
       ),
-    ),
-});
+  })
+  .refine((data) => data.base === undefined || data.mode === 'narrow', {
+    message: "base is a narrow run's",
+    path: ['base'],
+  });
 
 // (CM-04, ADR 0032) The probe after a red patrol (later the merge queue's and the train's): which commit of the default
 // branch first turned the red checks red, and why. A new type: older readers never meet it in an older log, so `v`
