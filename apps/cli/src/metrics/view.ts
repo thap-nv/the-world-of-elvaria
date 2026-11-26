@@ -246,6 +246,7 @@ export const metricsSections = (
   t: Translate,
   metrics: Metrics,
   sentences: ReadonlyMap<string, string> = new Map(),
+  disruptions?: MetricsSection,
 ): MetricsSection[] => [
   summarySection(t, metrics),
   reworkSection(t, metrics.rework),
@@ -257,6 +258,7 @@ export const metricsSections = (
   reportedEscapesSection(t, metrics),
   baseRedSection(t, metrics),
   checkModesSection(t, metrics),
+  ...(disruptions === undefined ? [] : [disruptions]),
   sealedSection(t, metrics),
   unsealedSection(t, metrics),
   statusTimesSection(t, metrics),

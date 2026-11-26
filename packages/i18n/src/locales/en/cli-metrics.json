@@ -1,6 +1,17 @@
 {
   "version": 1,
   "messages": {
+    "cli.metrics.title.disruptions": "Operational disruptions",
+    "cli.metrics.disruptions.kind": "Kind",
+    "cli.metrics.disruptions.count": "Count",
+    "cli.metrics.disruptions.minutes": "Total minutes",
+    "cli.metrics.disruptions.latest": "Event ids of the three latest occurrences",
+    "cli.metrics.disruptions.issue": "{file} ({path}): {issue}: {message}",
+    "cli.metrics.disruptions.read": "Cannot read file",
+    "cli.metrics.disruptions.json": "Invalid JSON",
+    "cli.metrics.disruptions.invalid": "Invalid data",
+    "cli.metrics.disruptions.duplicate_id": "Duplicate id",
+    "cli.metrics.disruptions.unknown_event": "Unknown event type",
     "cli.metrics.summary": "Metrics ledger: runs, rework by cause, first-pass rate, escaped defects, owner interventions. Reads the kingdom only, spends no mana.",
     "cli.metrics.option.since": "From this day on, that day included (yyyy-mm-dd).",
     "cli.metrics.option.until": "Up to this day, that day included (yyyy-mm-dd).",

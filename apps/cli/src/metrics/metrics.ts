@@ -9,6 +9,8 @@ import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { renderTable } from '../table.ts';
 import { readMetricsSource } from './read.ts';
+import { readDisruptions } from './read-disruptions.ts';
+import { disruptionsSection } from './view-disruptions.ts';
 import { planSections } from './view-plan.ts';
 import { metricsSections } from './view.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
@@ -100,8 +102,14 @@ async function runMetrics(input: CommandInput, cli: CliContext): Promise<ExitCod
   for (const where of source.skipped) ctx.io.err(ctx.t('cli.metrics.skipped', { where }));
   if (plan !== undefined) return printPlan(input, ctx, source, plan);
   const metrics = metricsOf(source.input, window);
-  if (flagOption(input, 'json') === true) ctx.io.out(JSON.stringify(metrics, null, JSON_INDENT));
-  else printSections(ctx, metricsSections(ctx.t, metrics, source.sentences));
+  const reading = await readDisruptions(ctx.store.root, source.input.events, window);
+  if (flagOption(input, 'json') === true) {
+    const disruptions = reading.ok
+      ? { disruptions: reading.disruptions }
+      : { disruption_issues: { file: reading.file, issues: reading.issues } };
+    ctx.io.out(JSON.stringify({ ...metrics, ...disruptions }, null, JSON_INDENT));
+  } else
+    printSections(ctx, metricsSections(ctx.t, metrics, source.sentences, disruptionsSection(ctx.t, reading)));
   return EXIT.ok;
 }
 

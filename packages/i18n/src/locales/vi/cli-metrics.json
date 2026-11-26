@@ -1,6 +1,17 @@
 {
   "version": 1,
   "messages": {
+    "cli.metrics.title.disruptions": "Sự cố vận hành",
+    "cli.metrics.disruptions.kind": "Loại",
+    "cli.metrics.disruptions.count": "Số lần",
+    "cli.metrics.disruptions.minutes": "Tổng phút",
+    "cli.metrics.disruptions.latest": "Id event của ba lần gần nhất",
+    "cli.metrics.disruptions.issue": "{file} ({path}): {issue}: {message}",
+    "cli.metrics.disruptions.read": "Không đọc được file",
+    "cli.metrics.disruptions.json": "JSON không hợp lệ",
+    "cli.metrics.disruptions.invalid": "Dữ liệu không hợp lệ",
+    "cli.metrics.disruptions.duplicate_id": "Id trùng",
+    "cli.metrics.disruptions.unknown_event": "Loại event không tồn tại",
     "cli.metrics.summary": "Sổ đo: lượt, làm lại theo nguyên nhân, đạt lượt đầu, lỗi lọt, lần cần chủ nhân. Chỉ đọc vương quốc, không tốn mana.",
     "cli.metrics.option.since": "Từ ngày này, tính cả ngày đó (yyyy-mm-dd).",
     "cli.metrics.option.until": "Tới ngày này, tính cả ngày đó (yyyy-mm-dd).",
