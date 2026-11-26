@@ -4,7 +4,7 @@
 // becomes a RunResult and the one line only the stream knows, `agent.session.end` (the run log), written whatever
 // happened, since a killed run has no end line of its own. The adapter gives the argv, its stream's reader and the
 // verdict of the end; this frame was copied in both adapters before AH-09. Claude Code's session also checks its
-// SessionStart hook and keeps its own frame (runner-claude/src/session.ts).
+// SessionStart hook and keeps its own frame (runner-claude/src/session/session.ts).
 import { startChild } from '../process/child.ts';
 import { readQuestion } from '../runner/handover.ts';
 import { openRunLog } from '../runner/run-log.ts';
