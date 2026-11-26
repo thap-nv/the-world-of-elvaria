@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { TerritorySchema } from '@elvaria/domain';
+import { CheckIdSchema, TerritorySchema, UlidSchema } from '@elvaria/domain';
 import { acquireLock, inKingdom } from '@elvaria/store';
 import { tempDir } from '@elvaria/testkit';
 import type { TempDir } from '@elvaria/testkit';
@@ -89,6 +89,42 @@ describe('runChecks', () => {
       duration_ms: runs[1]!.duration_ms,
       log_path: '.runs/q_20261107_a1b2c3-1/checks/unit.log',
     });
+  });
+
+  it('(RC-03) passes a carried check in no time without running it, its log naming the run it stands for', async () => {
+    await resetTrace();
+    const runDir = '.runs/queue-carried';
+    const from = UlidSchema.parse('01JC0000000000000000000007');
+    await mkdir(inKingdom(kingdom, `${runDir}/checks`), { recursive: true });
+    await writeFile(inKingdom(kingdom, `${runDir}/checks/unit.log`), 'FAIL from an older run\n');
+    const checks = [
+      { id: 'lint', run: 'node step.mjs lint', when: ['**/*.ts'], timeout_minutes: 1 },
+      { id: 'unit', run: 'node step.mjs unit 1', when: ['src/**'], timeout_minutes: 1, exclusive: true },
+      { id: 'docs', run: 'node step.mjs docs 1', when: ['docs/**'], timeout_minutes: 1 },
+    ];
+    const carried = [
+      { id: CheckIdSchema.parse('unit'), from },
+      { id: CheckIdSchema.parse('docs'), from },
+    ];
+    const runs = await runChecks({ ...request(checks, ['src/app.ts'], runDir), carried }, TEST_HOST);
+
+    expect(runs.map(({ id, pass }) => ({ id, pass }))).toEqual([
+      { id: 'lint', pass: true },
+      { id: 'unit', pass: true },
+    ]);
+    expect(runs[1]).toEqual({
+      id: 'unit',
+      pass: true,
+      duration_ms: 0,
+      log_path: `${runDir}/checks/unit.log`,
+      exit_code: null,
+      timed_out: false,
+      carried_from: '01JC0000000000000000000007',
+    });
+    expect(await trace()).toEqual(['start lint', 'end lint', '']);
+    expect(await log(`${runDir}/checks/unit.log`)).toBe(
+      'elvaria: unit did not run: it passed with the same command on this very tree in 01JC0000000000000000000007\n',
+    );
   });
 
   it("runs a check's commands in order until one fails, as CI's && does (P1-20)", async () => {

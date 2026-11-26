@@ -35,7 +35,7 @@ Từng kiểu lặp, đối chiếu với năm mục A–E của (556):
 ### 2.1 Sổ kiểm và luật cùng cây
 
 - **Một lần check xanh là một sự thật về một cây git**, không về một commit hay một nhánh. "Cùng cây" đo bằng mã cây (`git rev-parse <commit>^{tree}`): commit merge do forge tạo, commit ghép thử không ref của làn khách và đầu nhánh quest sau khi ghép có commit khác nhau mà cùng mã cây khi nội dung giống hệt. Không dùng cặp "nhánh gốc + đầu nhánh": hai cặp khác nhau có thể cho cùng một cây, và cây forge tạo ra khi merge mới là thứ tuần tra thấy. Forge ghép khác git ở máy thì mã cây khác, không gì được mang sang: sai lệch chỉ tốn một lượt chạy.
-- **Sổ kiểm** (`check_ledger`) là hàm thuần của event log, như `forgeOutcomesOf`: mỗi dòng `check.end` và `patrol.ran` (sau này `train.ran`) mang thêm `tree`, `config` và, với lượt hẹp, `base`. Từ đó suy ra các dòng sổ: lãnh thổ, check, loại lệnh (`run` hay `narrow`), mã cây, gốc diff (chỉ với `narrow`), giờ chạy, dòng nguồn. Không file mới; Nhiếp chính dựng lại sổ lúc khởi động và thêm từng dòng nó ghi. Sổ không nằm trong `forge/book.ts` (theo quest) hay `guest-book.ts` (theo PR): nó theo cây, và hàng đợi, làn khách, tuần tra, tàu cùng đọc.
+- **Sổ kiểm** (`check_ledger`) là hàm thuần của event log, như `forgeOutcomesOf`: mỗi dòng `check.end` và `patrol.ran` (sau này `train.ran`) mang thêm `tree`, `config` và, với lượt hẹp, `base`. Từ đó suy ra các dòng sổ: lãnh thổ, check, mã cây, `config`, gốc diff (chỉ với lượt `narrow`), giờ chạy, dòng nguồn. (Sửa 2026-11-26, RC-03: loại lệnh (`run` hay `narrow`) không lưu trên dòng sổ mà suy ra lúc mang sang (`checkCommandOf`) từ việc dòng có gốc diff hay không và từ định nghĩa check hiện tại, đúng vì `config` phải bằng nhau; `check.end` không ghi check nào chạy lệnh nào. Dòng `narrow` thiếu `base` không vào sổ.) Không file mới; Nhiếp chính dựng lại sổ lúc khởi động và thêm từng dòng nó ghi. Sổ không nằm trong `forge/book.ts` (theo quest) hay `guest-book.ts` (theo PR): nó theo cây, và hàng đợi, làn khách, tuần tra, tàu cùng đọc.
 - **Luật cùng cây:** trước khi chạy một check, Nhiếp chính hỏi sổ. Check được **mang sang** (không chạy) khi sổ có một lần xanh của **đúng lệnh đó** trên **đúng mã cây đó**, với `narrow` thì thêm đúng gốc diff đó. Lần `run` xanh không thay được lần `narrow` và ngược lại.
 - **Không vào sổ:** check đỏ; check bị gạt vì môi trường; lượt trên đất còn thay đổi chưa commit (dòng không có `tree`); check được mang sang (nó không phải lần chạy mới, nên tuổi tính từ lần chạy thật).
 - **Hết hạn:**
@@ -109,7 +109,7 @@ Hệ quả cho phiên task: một lần `pnpm check:changed` sau `git merge orig
 
 ## 3. Hợp đồng dữ liệu đổi
 
-Mọi đổi là thêm trường tùy chọn: `version` của file giữ nguyên, `v` của event giữ 2, **không migration**; mỗi schema thêm ví dụ ở `packages/domain/examples/**`, dòng mẫu ở `packages/eventlog/src/migrations/v1.jsonl`, thuật ngữ mới vào glossary.
+Mọi đổi là thêm trường tùy chọn: `version` của file giữ nguyên, `v` của event giữ 2, **không migration**; mỗi schema thêm ví dụ ở `packages/domain/examples/**`, thuật ngữ mới vào glossary. (Sửa 2026-11-26, RC-03: không thêm dòng mẫu vào `packages/eventlog/src/migrations/v1.jsonl`: file đó giữ dòng `v: 1` cần migrate, mà trường mới chỉ có ở `v: 2`; dòng cũ không có trường mới vẫn đọc được là chính các dòng sẵn có của nó, cùng spec `check-tree.spec.ts` và `ledger.spec.ts`.)
 
 | Chỗ | Đổi | Task |
 |---|---|---|

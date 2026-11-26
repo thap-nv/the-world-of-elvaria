@@ -1,6 +1,6 @@
 export { HEAD_LINES, LINE_CHARS, hookOutputHead } from './hook-output.ts';
 export type { HookOutputHead } from './hook-output.ts';
-export { gitOf, zList } from './git.ts';
+export { checkedTreeOf, gitOf, stagedTreeOf, treeOf, zList } from './git.ts';
 export type { Git, GitRun } from './git.ts';
 export { plotCommitMessage } from './commit-message.ts';
 export { folderPlotOf } from './folder.ts';

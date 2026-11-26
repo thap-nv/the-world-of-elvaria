@@ -84,13 +84,21 @@ type WatchView = Omit<Watch, 'health'> & { readonly health: Pick<TerritoryHealth
 
 const NO_WATCH: WatchView = { health: { red: [] }, greens: {}, merges: [], seen: 0 };
 
-/** One result of a run: red, green, or nothing known (a check that failed for its environment). */
-interface Result {
+/** One result of a run that ran: red, green, or nothing known (a check that failed for its environment). */
+interface Ran {
   readonly check: string;
   readonly red: boolean | undefined;
   readonly error_line?: string;
   readonly log_path: string;
 }
+
+/** (RC-03, ADR 0035) A check the patrol carried: green on this very tree before, so green now, with no log of its own. */
+interface Carried {
+  readonly check: string;
+  readonly red: false;
+}
+
+type Result = Ran | Carried;
 
 function resultsOf(data: PatrolRanData): Result[] {
   const line = (text: string | undefined) => (text === undefined ? {} : { error_line: text });
@@ -105,17 +113,21 @@ function resultsOf(data: PatrolRanData): Result[] {
             log_path: data.setup.log_path,
           },
         ];
-  const checks = data.checks.map((check) => ({
-    check: check.id,
-    red: check.pass ? false : check.environment ? undefined : true,
-    ...line(check.error_line),
-    log_path: check.log_path,
-  }));
+  const checks = data.checks.map((check): Result =>
+    check.log_path === undefined
+      ? { check: check.id, red: false }
+      : {
+          check: check.id,
+          red: check.pass ? false : check.environment ? undefined : true,
+          ...line(check.error_line),
+          log_path: check.log_path,
+        },
+  );
   return [...setup, ...checks];
 }
 
 /** A check red in this run: kept from the last run when it was red already, else turned red now. */
-function redOf(watch: WatchView, result: Result, ts: string, head: string | null): RedCheck {
+function redOf(watch: WatchView, result: Ran, ts: string, head: string | null): RedCheck {
   const { check, log_path: logPath } = result;
   const line = result.error_line === undefined ? {} : { error_line: result.error_line };
   const was = watch.health.red.find((red) => red.check === check);
