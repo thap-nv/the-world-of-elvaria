@@ -304,6 +304,7 @@ Tác nhân: **U** người dùng (qua inbox), **S** Nhiếp chính, **R** runner
 | healing | `crash` |  | S | infirmary | CLI của Y sư hỏng hay phiên mất: chuông (`heal:session_ended`); lượt kết thúc `crash` |
 | healing | `mana_out` |  | M | returned | lần chữa không tính: lượt kết thúc `paused`, `attempts` không đổi; nhịp sau `selectHealer` chọn lại (Y sư khác, chờ, hay người làm tự chữa cùng lượt) |
 | healing | `release` |  | S | returned | phiên Y sư kết thúc trong lúc không có Nhiếp chính nào chạy (như P1-44): lượt kết thúc `cancelled`, `attempts` không đổi (phiên chữa không lấy lượt thử); nhịp sau chọn lại như hàng trên |
+| healing | `suspend` |  | U | returned |  |
 | healing | `cancel` |  | U | archived |  |
 | awaiting_seal | `seal` |  | U | done | `seal`, verdict `by_human = true` (nặng ×3) |
 | awaiting_seal | `return` | `tier = session`, có `assignee` | U | returned | lệnh `return` kèm ghi chú; bỏ `verifier` |
