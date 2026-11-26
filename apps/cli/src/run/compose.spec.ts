@@ -88,9 +88,7 @@ describe('plots over PlotManager', () => {
   const unused = () => Promise.reject(new Error('unused'));
   const manager = (result: Awaited<ReturnType<PlotManager['prepare']>>): PlotManager => ({
     prepare: () => Promise.resolve(result),
-    status: () => Promise.reject(new Error('unused')),
-    head: () => Promise.reject(new Error('unused')),
-    touched: () => Promise.reject(new Error('unused')),
+    ...{ status: unused, head: unused, touched: unused },
     commitAll: () => Promise.reject(new Error('unused')),
     restore: () => Promise.reject(new Error('unused')),
     applyPatch: () => Promise.reject(new Error('unused')),
@@ -99,7 +97,8 @@ describe('plots over PlotManager', () => {
     unmerged: () => Promise.reject(new Error('unused')),
     release: () => Promise.reject(new Error('unused')),
     ...{ prepareScratch: unused, checkoutScratch: unused, releaseScratch: unused, scratchOf: unused },
-    ...{ update: unused, generate: unused, settle: unused, mergesClean: unused, diffLines: unused },
+    ...{ update: unused, generate: unused, settle: unused, takeBack: unused },
+    ...{ mergesClean: unused, diffLines: unused },
     ...{ refreshSetup: unused, stagedTree: unused, healDiff: unused, restoreTree: unused },
   });
   const kingdom = path.resolve('kingdom root');

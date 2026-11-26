@@ -16,7 +16,14 @@ import {
   runDirOf,
 } from '@elvaria/domain';
 import { toVerdictCheck } from '@elvaria/runner-core';
-import type { EnvironmentFailure, Quest, Result, Territory, VerdictCheck } from '@elvaria/domain';
+import type {
+  CarriedCheck,
+  EnvironmentFailure,
+  Quest,
+  Result,
+  Territory,
+  VerdictCheck,
+} from '@elvaria/domain';
 import type { CheckRunMode } from '@elvaria/runner-core';
 
 import { partyChecks } from '../party/check.ts';
@@ -34,6 +41,8 @@ export interface ChecksOptions {
   readonly secrets?: Readonly<Record<string, string>>;
   /** (CM-01) The run's check mode (checkModeFor); absent: full. A trial in a scratch plot always runs in full. */
   readonly mode?: CheckRunMode;
+  /** (RC-05) The checks the ledger carries on this tree, not run: a run again after an early merge was taken back. */
+  readonly carried?: readonly CarriedCheck[];
 }
 
 /** What the checks of a run gave, and the first failing one whose environment failed (P1-54). */
@@ -57,10 +66,11 @@ export async function checksOf(
 ): Promise<Result<RunChecks, string>> {
   try {
     const runDir = runDirOf(quest, n, 'assignee');
-    const { signal, secrets } = options;
+    const { signal, secrets, carried = [] } = options;
     const given = {
       ...(signal === undefined ? {} : { signal }),
       ...(secrets === undefined || Object.keys(secrets).length === 0 ? {} : { secrets }),
+      ...(carried.length === 0 ? {} : { carried }),
     };
     // A party's merge quest runs every check, its parts leave the deferred ones to it (P1-18, §3.15).
     const role = quest.party_role === undefined ? {} : { party_role: quest.party_role };

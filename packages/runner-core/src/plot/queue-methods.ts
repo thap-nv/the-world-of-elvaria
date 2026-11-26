@@ -6,7 +6,7 @@
 import type { Plot, Territory } from '@elvaria/domain';
 import { fromPortable } from '@elvaria/store';
 
-import { mergesCleanIn, settleUpdate, updateFromBase } from './base-update.ts';
+import { mergesCleanIn, settleUpdate, takeBackUpdate, updateFromBase } from './base-update.ts';
 import { generateIn } from './generate.ts';
 import { forkPoint } from './worktree.ts';
 import type { BaseUpdate } from './base-update.ts';
@@ -25,8 +25,13 @@ export interface GenerateRequest {
 }
 
 export interface QueueMethods {
-  /** The base branch where a new quest would start (forkPoint, fetched) merged into the plot's branch (PS-09). */
-  update(plot: Plot, territory: Territory): Promise<BaseUpdate>;
+  /**
+   * The base branch where a new quest would start (forkPoint, fetched) merged into the plot's branch (PS-09). With
+   * `run` (RC-05): early, before the checks of that run of the quest, its way back kept for takeBack.
+   */
+  update(plot: Plot, territory: Territory, run?: number): Promise<BaseUpdate>;
+  /** (RC-05) The early update of `run` taken back after its red checks; false when none of that run is pending. */
+  takeBack(plot: Plot, run: number): Promise<boolean>;
   /** commands.generate in the plot after an update, and the commit of the hot files it rewrote. */
   generate(plot: Plot, territory: Territory, request: GenerateRequest): Promise<GenerateOutcome>;
   /** The update's checks passed: nothing pending in the plot any more. */
@@ -49,7 +54,7 @@ export interface QueueOptions {
 
 export function queueMethods(options: QueueOptions, git: () => Promise<Git>): QueueMethods {
   return {
-    update: async (plot, territory) => {
+    update: async (plot, territory, run) => {
       const at = worktreeOf(plot);
       const branch = territory.vcs.default_branch;
       if (at === undefined || branch === undefined) return { state: 'current' };
@@ -57,7 +62,11 @@ export function queueMethods(options: QueueOptions, git: () => Promise<Git>): Qu
       const fork = await forkPoint({ git: resolved, repo: fromPortable(territory.path), vcs: territory.vcs });
       if (!fork.ok) return { state: 'refused', detail: fork.error.detail };
       const target = { branch, commit: fork.value };
-      return updateFromBase(resolved, at.cwd, at.branch, target, territory.shared_paths ?? []);
+      return updateFromBase(resolved, at.cwd, at.branch, target, territory.shared_paths ?? [], run);
+    },
+    takeBack: async (plot, run) => {
+      const at = worktreeOf(plot);
+      return at === undefined ? false : takeBackUpdate(await git(), at.cwd, run);
     },
     generate: async (plot, territory, request) => {
       const at = worktreeOf(plot);

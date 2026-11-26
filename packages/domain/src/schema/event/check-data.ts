@@ -90,6 +90,15 @@ export const CheckEndDataSchema = z
       ),
     ),
     config: CheckConfigSchema.optional(),
+    // Optional and added in v2 (RC-05, ADR 0035): a run on the base branch merged in early, the merge taken back.
+    taken_back: z
+      .literal(true)
+      .optional()
+      .meta(
+        describe(
+          "fail only: the checks ran on the quest's branch with the base branch merged in before them (ADR 0035), and their red took the merge back; the red checks ran again on the head as submitted, so no judge reads this run. Its green checks are still facts of its tree. Absent: the run stands.",
+        ),
+      ),
     outcome: z
       .enum(CHECK_OUTCOMES)
       .meta(
@@ -125,6 +134,10 @@ export const CheckEndDataSchema = z
   .refine((data) => data.base === undefined || data.mode === 'narrow', {
     message: "base is a narrow run's",
     path: ['base'],
+  })
+  .refine((data) => data.taken_back === undefined || data.outcome === 'fail', {
+    message: 'only a run that failed is taken back',
+    path: ['taken_back'],
   });
 
 // (CM-04, ADR 0032) The probe after a red patrol (later the merge queue's and the train's): which commit of the default

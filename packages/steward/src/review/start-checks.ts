@@ -8,50 +8,26 @@
 // What their commands wrote in the quest's own plot (a generator) goes once they ended, before the judge opens
 // (P1-47, (b) of P1-44; restore.ts), as it goes after a judge. Checks whose environment failed (P1-54) are set aside
 // for a later run, out of every judge's reach (environment.ts). A narrow territory's run is narrow unless the quest
-// touched what its narrow commands cannot vouch for, and both lines say so (CM-01, check-mode.ts).
+// touched what its narrow commands cannot vouch for, and both lines say so (CM-01, check-mode.ts). (RC-05, ADR 0035)
+// Where the merge queue would update the branch, the base branch goes in first, kept only when the checks on it are
+// green; red, it is taken back and the checks run again on the head as submitted (early-merge.ts).
 import { currentRun, err, ok } from '@elvaria/domain';
-import type { EventData, Quest, QuestId, Result, Territory } from '@elvaria/domain';
+import type { Quest, QuestId, Result, Territory } from '@elvaria/domain';
 
-import { checkPointOf, factsOf, ranEndOf } from '../check-ledger/carry.ts';
 import { mergePartsBeforeChecks } from '../party/plot.ts';
-import { STEWARD } from '../quest/record.ts';
 import { secretsBreaker } from '../sessions/breaker.ts';
 import { questSecretsOf, secretsLacking } from '../sessions/secrets.ts';
-import { checkModeFor, modeMarkOf } from './check-mode.ts';
-import { checksOf, headOf, lockWaitOf } from './checks.ts';
+import { runOnce } from './check-run.ts';
+import { headOf, lockWaitOf } from './checks.ts';
+import { againAsSubmitted, keepOrTakeBack, mergeBaseEarly } from './early-merge.ts';
 import { setAside } from './environment.ts';
 import { restorePlot } from './restore.ts';
 import { inScratch } from './scratch.ts';
-import type { RunChecks } from './checks.ts';
+import type { Ran, RunGiven } from './check-run.ts';
 import type { CheckedRun } from '../background/background.ts';
 import type { Context } from '../context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
-
-/**
- * What `check.end` says of checks that ended (P1-10b): killed, unable to run, or what each gave, and which check's
- * environment failed when the run is set aside for it (PS-01b, (b) of P1-54): the bell alone told it before, to the
- * terminal of `elvaria run`, and nothing was left of it once the Steward restarted.
- */
-function endOf(ran: Result<RunChecks, string>, signal: AbortSignal): EventData<'check.end'> {
-  if (signal.aborted) return { outcome: 'stopped', checks: [] };
-  if (!ran.ok) return { outcome: 'error', checks: [] };
-  return ranEndOf(ran.value.checks, ran.value.environment);
-}
-
-/** A `check.*` line; one that cannot be written costs the owner a line, never the checks. */
-async function noteChecks(
-  ctx: Context,
-  quest: Quest,
-  type: 'check.start' | 'check.end',
-  data: Readonly<Record<string, unknown>>,
-): Promise<void> {
-  try {
-    await ctx.record.note({ type, actor: STEWARD, data, quest });
-  } catch (error) {
-    ctx.deps.log.warn(`steward: ${quest.id}: no ${type} line: ${messageOf(error)}`);
-  }
-}
 
 /**
  * Starts the checks of the quest's current run outside the tick (TickPlan.checks); results wait for takeChecks.
@@ -89,27 +65,42 @@ export async function startChecks(ctx: Context, questId: QuestId): Promise<Resul
       // Stopped while its plot was made again: nobody waits for a trial any more.
       if (reused !== undefined || signal.aborted) return reused;
     }
-    const mode = await checkModeFor(ctx, quest, territory, 'session');
-    // The checks start within the tick, the line beside them; the end's line always follows the start's.
-    const started = noteChecks(ctx, quest, 'check.start', modeMarkOf(mode));
-    // Read before they run: a commit made while they run makes them stale.
-    const head = await headOf(ctx, quest);
-    // (RC-04, ADR 0035) The tree they run on, a fact for the ledger; this run reads none (plans/recheck.md §2.2). A
-    // scratch plot is the judge's, not the quest's: its run names no tree.
-    const point = inScratch(ctx, quest) ? undefined : await checkPointOf(ctx, quest, mode);
-    const checks = await checksOf(ctx, quest, territory, n, { signal, secrets, mode });
-    await started;
-    const facts = checks.ok ? factsOf(territory, point) : {};
-    await noteChecks(ctx, quest, 'check.end', { ...endOf(checks, signal), ...modeMarkOf(mode), ...facts });
-    if (!checks.ok) return undefined;
-    // Checks that ran (to their end, or stopped) in the quest's own plot leave it as its commit has it (P1-47); a
-    // trial ran in its scratch plot, and checks that could not run touched nothing.
-    if (!inScratch(ctx, quest)) await restorePlot(ctx, quest, { by: 'checks' });
-    const { environment } = checks.value;
-    if (environment === undefined || signal.aborted) return { checks: checks.value.checks, head };
-    return { checks: checks.value.checks, head, environment: await setAside(ctx, quest, environment, told) };
+    const given = { quest, territory, n, secrets, signal };
+    // (RC-05, ADR 0035) The base branch first, where the queue would merge it; kept only when the checks are green.
+    const early = await mergeBaseEarly(ctx, given);
+    const ran = await runOnce(
+      ctx,
+      given,
+      early === undefined ? {} : { ended: keepOrTakeBack(ctx, given, early) },
+    );
+    return endedRun(
+      ctx,
+      given,
+      ran.added.taken_back === true ? await againAsSubmitted(ctx, given, ran) : ran,
+      told,
+    );
   });
   return ok(undefined);
+}
+
+/**
+ * What the judge or the machine gets of the run that ended. Checks that ran (to their end, or stopped) in the quest's
+ * own plot leave it as its commit has it (P1-47); a trial ran in its scratch plot, and checks that could not run
+ * touched nothing.
+ */
+async function endedRun(
+  ctx: Context,
+  given: RunGiven,
+  ran: Ran,
+  told: boolean,
+): Promise<CheckedRun | undefined> {
+  const { quest, signal } = given;
+  const { checks, head } = ran;
+  if (!checks.ok) return undefined;
+  if (!inScratch(ctx, quest)) await restorePlot(ctx, quest, { by: 'checks' });
+  const { environment } = checks.value;
+  if (environment === undefined || signal.aborted) return { checks: checks.value.checks, head };
+  return { checks: checks.value.checks, head, environment: await setAside(ctx, quest, environment, told) };
 }
 
 /** What the run's next judge in a scratch plot may reuse, and what its plot is made again with. */
