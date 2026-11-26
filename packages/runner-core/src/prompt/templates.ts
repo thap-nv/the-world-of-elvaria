@@ -37,6 +37,9 @@ export const PROMPT_TEMPLATES = [
   'refused-patch',
   // fix/session-notes: the commit git refused while the quest waited on the doer's amendment, for its next session.
   'refused-commit',
+  // HL-05: a healer's session on the doer's refused work (ADR 0034); the healer's change, for the run's judge.
+  'heal',
+  'heal-patch',
   'memory',
   'memos',
   'answer',

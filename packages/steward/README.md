@@ -8,7 +8,7 @@
   (`record.ts`, the only writer of quest and character files) and the infirmary's causes; `bell/` the notices and
   `move-and-ring.ts`; `waits/` the quests nobody can claim or judge; `background/` the work outside the tick and
   the code graphs; `plot/` the Steward's view of a plot and `folder-plots.ts`; `texts/` the kingdom's text files a
-  session is built from; `delegation/seal.ts` the delegation of the seal; `review/verdicts.ts` what a verdict does.
+  session is built from; `delegation/seal.ts` the delegation of the seal; `review/verdicts.ts` what a verdict does; `heal/` a healer's session.
 - Records runner-reported `turns` alongside tokens in each session's attempt entry, leaving missing turns absent.
   Uses `calibrationOf` over current quest and character files for soft warnings and runner turn budgets; domain
   `planTick` computes the same calibration for hard stops on every tick. Token factors and turn ceilings learn
@@ -595,6 +595,14 @@
   (`conflict` with the files, `checks_red` with the red checks, `head_moved`, `forge_error`, `update_failed`).
   The Steward's stop aborts a try and records nothing but the `check.end` of the checks it killed.
 - Adds the machine check `screens` after the territory's for a quest whose ritual asks for eyes (`judgedByEye`, PS-11b, `src/review/screens.ts`): it fails when the checks captured no screen or one breaks the image contract, its log says why; that quest's judge gets exactly the valid screens of the run, by policy (`ToolPolicy.images`) and in its prompt (`src/sessions/request.ts`).
+- Runs a healer's session (HL-05, ADR 0034, `src/heal/`): for `plan.heals` it keeps the doer's staged tree in
+  `.runs/<quest>-<n>/heal/staged-tree` and opens the healer in the quest's plot (`open.ts`, the move `heal`, role
+  `assignee`, run folder `heal/`, kingdom.heal's ceilings); at its end it measures what the healer changed
+  (`settle.ts`: unchanged, outside the work, over `max_files`/`max_lines`, in that order), writes `heal.patch` for
+  the judge (`patch.ts`) and commits through the hooks, so the quest is submitted with `heal` or goes to the
+  infirmary with a `heal:*` reason and the healer's `## Heal` note on the bell (`note.ts`). A refused heal, a
+  healer out of mana, suspended, cut past its ceiling (`cut.ts`, `tripHealers`) or lost with the last Steward puts
+  the plot back on the doer's tree (`tree.ts`). A commit that timed out opens no heal.
 
 ## Does not
 

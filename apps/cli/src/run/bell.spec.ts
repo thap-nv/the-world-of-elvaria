@@ -2,7 +2,7 @@
 // pool or the cap of one model, in the owner's language. The quest notices are in compose.spec.ts, but for a quest
 // that waits for a judge who reads images (PS-11), a merge quest's merge that stopped (PS-08e) and a delivery to the
 // forge (PS-08c), here as compose.spec.ts is at its size limit.
-import { QuestIdSchema, TribeIdSchema } from '@elvaria/domain';
+import { CharacterIdSchema, QuestIdSchema, TribeIdSchema } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
 
@@ -123,6 +123,23 @@ describe('the console bell on a quest sent to the infirmary', () => {
         '      fix it\n' +
         '    Commit WIP cũng bị từ chối, việc vẫn nằm trong đất riêng: index.lock',
     );
+  });
+
+  // HL-05: a healer's heal that ended there rings with the `## Heal` section of its letter.
+  it("prints the healer's note under the reason, one line each", () => {
+    const reason = { code: 'heal:out_of_work', params: { count: 1 } } as const;
+    const heal = {
+      healer: CharacterIdSchema.parse('mira'),
+      text: 'Removed `let unused;`.\nsrc/other.ts needed a rename too.',
+    } as const;
+    const notice: Notice = { kind: 'infirmary', quest, reason, trip: 'commit', heal_note: heal };
+    const lines = lineOf(vi, notice).split('\n');
+    expect(lines.slice(-3)).toEqual([
+      '    Y sư mira viết:',
+      '      Removed `let unused;`.',
+      '      src/other.ts needed a rename too.',
+    ]);
+    expect(lineOf(en, { kind: 'infirmary', quest, reason, trip: 'commit' })).not.toContain('wrote:');
   });
 
   it('does not say again the script its reason named', () => {

@@ -3,7 +3,7 @@ export { DOCTOR_NOTES, DOCTOR_NOTE_PARAMS, doctorNoteOf, callNote, hookNote } fr
 export type { DoctorNoteCode, DoctorNote } from './doctor-notes.ts';
 export { FAKE_ADAPTER, FAKE_TOKENS, createFakeRunner, scenarioFromEnv } from './fake-runner.ts';
 export type { FakeRunner, FakeRunnerOptions } from './fake-runner.ts';
-export { HANDOVER_SECTIONS, memosOf, questionOf, readQuestion, sectionOf } from './handover.ts';
+export { HANDOVER_SECTIONS, HEAL_SECTION, memosOf, questionOf, readQuestion, sectionOf } from './handover.ts';
 export type { HandoverSection, LetterMemos } from './handover.ts';
 export { POLICY_FILE, POLICY_VERSION, policyFileOf, writePolicyFile } from './policy-file.ts';
 export type { PolicyExtras, PolicyFile } from './policy-file.ts';

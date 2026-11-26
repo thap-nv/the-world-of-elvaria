@@ -5,7 +5,7 @@
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
-import { FAIL_KINDS, calibrationOf, judgedByEye, runDirOf, turnCeilingOf } from '@elvaria/domain';
+import { FAIL_KINDS, calibrationOf, healDueIn, judgedByEye, runDirOf, turnCeilingOf } from '@elvaria/domain';
 import { screensOf, secretValuesOf, toolPolicyOf } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
 import type { LoadTrace, Memo } from '@elvaria/domain';
@@ -84,10 +84,20 @@ function budgetOf(ctx: Context, input: SessionInput): SpawnRequest['budget'] {
     calibration.get(character.tribe),
   );
   const hard = breakers.hard_pct;
+  // A heal session's minutes are kingdom.heal's, as its breakers read them (ADR 0034): the doer's own after its
+  // `due`, and a healer's.
+  const heals = role === 'assignee' && healDueIn(quest.attempt_log, input.n);
+  const minutes = heals ? ctx.world.kingdom.heal.minutes : quest.budget.max_minutes;
   return {
     max_turns: Math.round((turns * hard) / PERCENT),
-    max_minutes: (quest.budget.max_minutes * hard) / PERCENT,
+    max_minutes: (minutes * hard) / PERCENT,
   };
+}
+
+/** A healer's session works in its run's `heal/` folder, as its attempt_log entry says (ADR 0034, HL-04). */
+function runFolderOf(input: SessionInput): string {
+  const dir = runDirOf(input.quest, input.n, input.role);
+  return input.continuation?.reason === 'heal' ? `${dir}/heal` : dir;
 }
 
 /**
@@ -155,7 +165,7 @@ export async function requestOf(
 ): Promise<SessionRequest> {
   const { quest, character, territory, role } = input;
   const characterClass = classOf(ctx, character);
-  const runDir = inKingdom(ctx.root, runDirOf(quest, input.n, role));
+  const runDir = inKingdom(ctx.root, runFolderOf(input));
   await mkdir(runDir, { recursive: true });
   const graph = await sessionGraphOf(ctx, quest, territory);
   const own = await sessionEnvOf(ctx, input, envOf(ctx, input));

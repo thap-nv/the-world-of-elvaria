@@ -74,6 +74,26 @@ describe("a quest in its run's heal", () => {
     expect(rowOf(await out('list'))).toContain('(healing)');
   });
 
+  // HL-05: a healer's session (`healing`), and a run whose healer's session ended without the heal (awaitsHeal).
+  it("is marked while a healer heals it, and again when the healer's session ended without the heal", async () => {
+    const healer = { ...entry('session', false), character: 'mira', run_dir: `.runs/${QUEST_ID}-1/heal` };
+    const healing = questFixture('healing', QUEST_ID, {
+      assignee: 'thorn',
+      attempts: 1,
+      attempt_log: [entry('due', true), healer],
+    });
+    await plantQuests(kingdom, healing);
+    expect(rowOf(await out('list'))).toContain('(healing)');
+    const ended = { ...healer, ended_at: '2026-11-06T08:30:00+07:00', outcome: 'paused' };
+    const again = questFixture('returned', QUEST_ID, {
+      assignee: 'thorn',
+      attempts: 1,
+      attempt_log: [entry('due', true), ended],
+    });
+    await plantQuests(kingdom, again);
+    expect(rowOf(await out('list'))).toContain('(awaits a heal)');
+  });
+
   it('is not marked once the heal session ended, nor in a run without a heal', async () => {
     const ended = questFixture('review', QUEST_ID, {
       assignee: 'thorn',

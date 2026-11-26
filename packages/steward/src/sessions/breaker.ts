@@ -37,9 +37,11 @@ function wipLeft(wip: PlotCommit | undefined): { wip?: string } {
 /**
  * The reason on the breaker event, which the domain's heal reads (ADR 0034): named only while kingdom.heal.enabled
  * holds, so with the heal turned off every refused commit goes to the infirmary as before. The domain reads no setting.
+ * A commit git gave up on (`timed_out`: past GIT_TIMEOUT_MS, or it never started) has no hook's error to mend, so it
+ * names none either (HL-05; quest zatpdc, 2026-11-25).
  */
-const healReasonOf = (ctx: Context, reason: InfirmaryReason) =>
-  ctx.world.kingdom.heal.enabled ? { reason: reason.code } : {};
+const healReasonOf = (ctx: Context, reason: InfirmaryReason, breaker: AssigneeBreaker) =>
+  ctx.world.kingdom.heal.enabled && breaker.refused?.timed_out !== true ? { reason: reason.code } : {};
 
 /**
  * An assignee meets a breaker: the character sinks into the swamp while `end` ends the session (the kill tree, or
@@ -94,7 +96,7 @@ export async function breakAssignee(
       type: 'breaker',
       trip,
       ...(progress === undefined ? {} : { progress }),
-      ...healReasonOf(ctx, reason),
+      ...healReasonOf(ctx, reason, breaker),
       ...runOf(running, result),
     },
     actor: 'steward',
@@ -120,6 +122,22 @@ interface AssigneeBreaker {
   readonly before?: Partial<Quest>;
 }
 
+/** Why the Steward's commit was refused: the hooks' first lines and their log, or commands.setup before them. */
+export function refusalReasonOf(quest: Quest, refused: Refusal): InfirmaryReason {
+  // (fix/plot-setup-on-lockfile) commands.setup, run again before the commit, kept it from being made: its own reason.
+  if (refused.setup !== undefined) return infirmaryReasonOf('breaker:setup', { ...refused.setup });
+  const { head, log } = refused;
+  const params = {
+    lines: head.lines.join('\n'),
+    total_lines: head.total_lines,
+    // A heal's own refusal names its log, beside the first one (commitDirOf).
+    log: `${commitDirOf(quest)}/${log ?? 'pre-commit.log'}`,
+  };
+  return head.errors === 0
+    ? infirmaryReasonOf('breaker:commit', params)
+    : infirmaryReasonOf('breaker:commit_errors', { ...params, errors: head.errors });
+}
+
 /** Structured causes keep hook output separate from Elvaria's own wording. */
 function assigneeReason(
   ctx: Context,
@@ -133,21 +151,7 @@ function assigneeReason(
     return infirmaryReasonOf('breaker:patch', { file: 'elvaria.patch', why: breaker.patch });
   if (breaker.paths !== undefined)
     return infirmaryReasonOf('breaker:forbidden_paths', { count: breaker.paths.length });
-  // (fix/plot-setup-on-lockfile) commands.setup, run again before the commit, kept it from being made: its own reason.
-  if (breaker.refused?.setup !== undefined)
-    return infirmaryReasonOf('breaker:setup', { ...breaker.refused.setup });
-  if (breaker.refused !== undefined) {
-    const { head, log } = breaker.refused;
-    const params = {
-      lines: head.lines.join('\n'),
-      total_lines: head.total_lines,
-      // A heal's own refusal names its log, beside the first one (commitDirOf).
-      log: `${commitDirOf(quest)}/${log ?? 'pre-commit.log'}`,
-    };
-    return head.errors === 0
-      ? infirmaryReasonOf('breaker:commit', params)
-      : infirmaryReasonOf('breaker:commit_errors', { ...params, errors: head.errors });
-  }
+  if (breaker.refused !== undefined) return refusalReasonOf(quest, breaker.refused);
   // A ceiling reaches the infirmary only as the second cut in a row of the run without progress (`cutCallOf`, ADR 0030);
   // a cut that went on never rings, so its reason is unused.
   if (isCapTrip(breaker.trip))
@@ -181,7 +185,7 @@ export async function apprenticeLeft(
 }
 
 /** Kills the session's tree; what it left behind loses its secret values like any end (§3.9). */
-async function stopped(ctx: Context, running: Running, reason: string): Promise<RunResult> {
+export async function stopped(ctx: Context, running: Running, reason: string): Promise<RunResult> {
   const result = await ctx.sessions.stop(running, reason);
   return (await maskFinished(ctx, { running, result })).result;
 }
@@ -229,6 +233,8 @@ export async function tripBreakers(ctx: Context, breakers: readonly Breaker[]): 
     if (running?.role !== breaker.role) continue;
     const reason = `breaker:${breaker.trip}: ${breaker.detail}`;
     const stop = () => stopped(ctx, running, reason);
+    // A healer's session is tripHealers' (heal/cut.ts): its work is never committed as WIP.
+    if (ctx.world.quests.get(running.quest)?.status === 'healing') continue;
     const moved =
       running.role === 'assignee'
         ? await breakAssignee(ctx, running, breaker, stop)

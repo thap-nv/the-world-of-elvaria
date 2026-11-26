@@ -39,6 +39,9 @@ const managerOf = (checkBase?: PlotManager['checkBase']): PlotManager => ({
   mergesClean: unused,
   diffLines: unused,
   refreshSetup: unused,
+  stagedTree: unused,
+  healDiff: unused,
+  restoreTree: unused,
 });
 
 describe("plots' checks in a narrow run (CM-01)", () => {

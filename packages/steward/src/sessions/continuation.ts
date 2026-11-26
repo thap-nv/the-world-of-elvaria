@@ -7,9 +7,9 @@ import { readFile } from 'node:fs/promises';
 import { stripVTControlCharacters } from 'node:util';
 
 import {
+  awaitsHeal,
   currentRun,
   endedInCut,
-  endedInHealDue,
   isEventOf,
   lateVerdictIdOf,
   ownerVerdictIdOf,
@@ -17,7 +17,7 @@ import {
 } from '@elvaria/domain';
 import { createRedactor, openJournal } from '@elvaria/eventlog';
 import { inKingdom } from '@elvaria/store';
-import type { Attempt, EventOf, Quest, Verdict } from '@elvaria/domain';
+import type { EventOf, InfirmaryReason, Quest, Verdict } from '@elvaria/domain';
 import type { Continuation, Memory, RefusedWork } from '@elvaria/runner-core';
 
 import { handoverPath, readHandover, readJournal } from '../texts/files.ts';
@@ -33,9 +33,10 @@ export const HEAL_LOG_MAX_CHARS = 4000;
 
 /**
  * Whether the next assignee session goes on in the run of the last one, in its `.runs/<quest>-<n>`: after a cut that
- * goes on (ADR 0030), or a refused commit sent back for a heal (ADR 0034).
+ * goes on (ADR 0030), or while the run waits for its heal (ADR 0034): its refused commit just went back, or a healer's
+ * session of it ended without the heal (awaitsHeal, HL-04).
  */
-export const goesOnInRun = (log: readonly Attempt[]): boolean => endedInCut(log) || endedInHealDue(log);
+export const goesOnInRun = (quest: Quest): boolean => endedInCut(quest.attempt_log) || awaitsHeal(quest);
 
 /** The non-blank lines of `text`, uncoloured, from the first, within `max` characters; a longer first line is cut. */
 function headOf(text: string, max: number): string {
@@ -46,15 +47,16 @@ function headOf(text: string, max: number): string {
   return lines.join('\n').slice(0, max);
 }
 
-/** The log the run's `quest.heal_due` line names: the refused commit's, relative to the kingdom. */
-async function healDueLogOf(ctx: Context, quest: Quest): Promise<string | undefined> {
+/**
+ * Why the run's refused commit went back for a heal: the reason on its `quest.heal_due` line, whose `log` names the
+ * refused commit's log, relative to the kingdom. A journal that cannot be read throws.
+ */
+export async function healDueReasonOf(ctx: Context, quest: Quest): Promise<InfirmaryReason | undefined> {
   const n = currentRun(quest);
   const { events } = await openJournal(ctx.root, quest.id).read();
-  const line = events.findLast(
+  return events.findLast(
     (event): event is EventOf<'quest.heal_due'> => isEventOf(event, 'quest.heal_due') && event.attempt === n,
-  );
-  const log = line?.data.reason.params.log;
-  return typeof log === 'string' ? log : undefined;
+  )?.data.reason;
 }
 
 /**
@@ -64,10 +66,10 @@ async function healDueLogOf(ctx: Context, quest: Quest): Promise<string | undefi
  * session finds the errors by running the territory's lint itself.
  */
 async function healLogOf(ctx: Context, quest: Quest, known: readonly string[]): Promise<RefusedWork> {
-  if (!endedInHealDue(quest.attempt_log)) return {};
+  if (!awaitsHeal(quest)) return {};
   try {
-    const log = await healDueLogOf(ctx, quest);
-    if (log === undefined) return {};
+    const log = (await healDueReasonOf(ctx, quest))?.params.log;
+    if (typeof log !== 'string') return {};
     const said = createRedactor(known)(await readFile(inKingdom(ctx.root, log), 'utf8'));
     return { refused_commit: headOf(said, HEAL_LOG_MAX_CHARS) };
   } catch {
@@ -205,7 +207,7 @@ export async function continuationFor(
     ...(await healLogOf(ctx, quest, known)),
     ...(apprentice ? { apprentice_left: true as const } : {}),
   };
-  if (continuation.reason === 'revive') return { ...continuation, ...memory };
+  if (continuation.reason !== 'returned') return { ...continuation, ...memory };
   const checks = await withLogTails(ctx.root, continuation.verdict.checks, known);
   return { ...continuation, ...memory, checks };
 }

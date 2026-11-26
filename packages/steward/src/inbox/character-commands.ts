@@ -2,7 +2,7 @@
 // status but suspended, `release` brings a suspended one back idle. The quest goes on without the character (§2.5):
 // returned when it was the assignee, back in review without a verifier when it was the verifier, open again when it
 // was only claimed for it or the character slept on it paused for mana (P1-22). The roster never counts a suspended character, so planTick gives it nothing (P1-26).
-import { findTransition } from '@elvaria/domain';
+import { findTransition, healerOf } from '@elvaria/domain';
 import { plotCommitMessage } from '@elvaria/runner-core';
 import type { Character, CharacterId, Quest, RunEnd } from '@elvaria/domain';
 
@@ -10,6 +10,7 @@ import { moveAndRing } from '../bell/move-and-ring.ts';
 import { OWNER, step } from '../quest/record.ts';
 import { runOf } from '../review/judge.ts';
 import { commitPlot, warnUncommitted } from '../sessions/commit.ts';
+import { putBack } from '../heal/tree.ts';
 import { maskFinished } from '../sessions/secrets.ts';
 import { APPLIED, rejected } from './quest-commands.ts';
 import type { Context } from '../context.ts';
@@ -20,7 +21,9 @@ function heldQuest(ctx: Context, character: Character): Quest | undefined {
   const held = character.current ?? undefined;
   const quest = held === undefined ? undefined : ctx.world.quests.get(held.quest);
   if (held === undefined || quest === undefined) return undefined;
-  const holder = held.role === 'assignee' ? quest.assignee : quest.verifier;
+  // A healer holds its `healing` quest as a doer that is not its assignee (ADR 0034).
+  const doer = quest.status === 'healing' ? healerOf(quest) : quest.assignee;
+  const holder = held.role === 'assignee' ? doer : quest.verifier;
   return holder === character.id && findTransition(quest, 'suspend').ok ? quest : undefined;
 }
 
@@ -32,7 +35,9 @@ async function stopSession(ctx: Context, quest: Quest, why: string): Promise<Run
   const running = ctx.sessions.get(quest.id);
   if (running === undefined) return {};
   const { result } = await maskFinished(ctx, { running, result: await ctx.sessions.stop(running, why) });
-  if (running.role === 'assignee')
+  // A healer's heal does not count (`healing.suspend`, HL-05): no WIP, the plot back on the doer's work.
+  if (quest.status === 'healing') await putBack(ctx, quest);
+  else if (running.role === 'assignee')
     warnUncommitted(
       ctx,
       quest.id,

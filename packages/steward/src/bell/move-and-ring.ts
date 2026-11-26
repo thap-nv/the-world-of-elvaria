@@ -15,8 +15,11 @@ function noticeOf(before: Quest, after: Quest, cause: InfirmaryCause | undefined
   if (after.status === before.status) return undefined;
   const quest = noticeQuest(after);
   if (after.status === 'awaiting_seal') return { kind: 'awaiting_seal', quest };
-  if (after.status === 'infirmary')
-    return { kind: 'infirmary', quest, ...infirmaryData(cause ?? OUT_OF_ATTEMPTS) };
+  if (after.status === 'infirmary') {
+    // A healer's note rings with it (HL-05): what it changed, or why it could not mend the work.
+    const note = cause?.heal_note === undefined ? {} : { heal_note: cause.heal_note };
+    return { kind: 'infirmary', quest, ...infirmaryData(cause ?? OUT_OF_ATTEMPTS), ...note };
+  }
   // An amendment its author decides asks nothing of the owner yet (PS-22b): the bell rings if it is handed on.
   if (after.status === 'blocked' && after.blocked !== undefined && after.blocked.amendment?.by !== 'author')
     return { kind: 'question', quest, question: after.blocked.question };

@@ -27,7 +27,7 @@ import type { Resume, SessionInput } from './input.ts';
 import type { Running } from './running.ts';
 
 /** The quest, the character and the runner a session needs; a gap is a reason not to open it. */
-function partsOf(ctx: Context, questId: QuestId, characterId: CharacterId | null | undefined) {
+export function partsOf(ctx: Context, questId: QuestId, characterId: CharacterId | null | undefined) {
   const quest = ctx.world.quests.get(questId);
   if (quest === undefined) return err('unknown_quest');
   const character = typeof characterId === 'string' ? ctx.world.characters.get(characterId) : undefined;
@@ -60,7 +60,7 @@ async function plotFor(ctx: Context, input: Pick<SessionInput, 'quest' | 'territ
 }
 
 /** A session whose quest moved: the Steward keeps it until it ends, and counts it among this tick's starts. */
-function keep(ctx: Context, running: Running): void {
+export function keep(ctx: Context, running: Running): void {
   ctx.sessions.add(running);
   ctx.counts.started += 1;
 }
@@ -79,7 +79,7 @@ interface Spawned extends Pick<SessionRequest, 'load_trace' | 'advisories'> {
  * by the gauge (§3.5). A failure is logged whole and says, for the owner, who could not open a session and why
  * (no-session.ts).
  */
-async function spawnFor(
+export async function spawnFor(
   ctx: Context,
   runner: AgentRunner,
   input: Omit<SessionInput, 'cwd'>,
@@ -116,7 +116,7 @@ export type Opening =
 const goesOn = (opening: Opening): boolean => opening.kind === 'answer' || opening.kind === 'wake';
 
 const sameRun = (quest: Quest, opening: Opening): boolean =>
-  goesOn(opening) || (opening.kind === 'redispatch' && goesOnInRun(quest.attempt_log));
+  goesOn(opening) || (opening.kind === 'redispatch' && goesOnInRun(quest));
 
 async function continuationFor(ctx: Context, quest: Quest, opening: Opening): Promise<Continuation | null> {
   // The decision on an amendment ends a wait that may have begun with the run's work refused (fix/session-notes).

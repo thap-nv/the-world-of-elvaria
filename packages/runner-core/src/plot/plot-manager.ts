@@ -29,6 +29,8 @@ import { queueMethods } from './queue-methods.ts';
 import type { QueueMethods } from './queue-methods.ts';
 import { scratchMethods } from './scratch-methods.ts';
 import type { ScratchMethods } from './scratch-methods.ts';
+import { healMethods } from './heal/trees.ts';
+import type { HealMethods } from './heal/trees.ts';
 import { runSetup, setupMethods } from './setup.ts';
 import type { SetupMethods, SetupRun } from './setup.ts';
 import {
@@ -82,9 +84,9 @@ export interface PrepareOptions {
 /**
  * The scratch plot's methods (P1-20, ADR 0022) are ScratchMethods', in scratch-methods.ts; the merge queue's (PS-09)
  * QueueMethods', in queue-methods.ts; the setup again before a commit (fix/plot-setup-on-lockfile) SetupMethods', in
- * setup.ts.
+ * setup.ts; the trees a healer's part is measured by (ADR 0034) HealMethods', in heal.ts.
  */
-export interface PlotManager extends ScratchMethods, QueueMethods, SetupMethods {
+export interface PlotManager extends ScratchMethods, QueueMethods, SetupMethods, Required<HealMethods> {
   /**
    * Idempotent: the same quest and territory give the same plot, and setup runs until it succeeds once, and again
    * once a file of commands.setup_when changed since; a folder plot has no setup and no branch to start from.
@@ -226,6 +228,7 @@ const laterMethods = (
   ...scratchMethods(options, git),
   ...queueMethods(options, git),
   ...setupMethods(options, git),
+  ...healMethods(git),
 });
 
 /** The manager with every optional method: drift, baseTips and inBase are only optional for stand-ins. */

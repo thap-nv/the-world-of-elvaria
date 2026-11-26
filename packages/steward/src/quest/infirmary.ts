@@ -3,6 +3,8 @@ import { PATCH_FILE } from '@elvaria/runner-core';
 import { infirmaryReasonOf } from '@elvaria/domain';
 import type { EventData, InfirmaryDetail, InfirmaryReason, InfirmaryTrip } from '@elvaria/domain';
 
+import type { HealNote } from '../bell/notice.ts';
+
 const PATHS_SAID = 10;
 
 export function pathsSaid(paths: readonly string[]): string {
@@ -14,6 +16,8 @@ export interface InfirmaryCause {
   readonly reason: InfirmaryReason;
   readonly trip: InfirmaryTrip;
   readonly detail?: InfirmaryDetail;
+  /** (HL-05) The healer's note from the letter, for the bell only: the quest.infirmary line keeps the letter's path. */
+  readonly heal_note?: HealNote;
 }
 
 type InfirmaryWhy = Pick<EventData<'quest.infirmary'>, 'reason' | 'trip' | 'detail'>;
