@@ -29,8 +29,8 @@ import { queueMethods } from './queue-methods.ts';
 import type { QueueMethods } from './queue-methods.ts';
 import { scratchMethods } from './scratch-methods.ts';
 import type { ScratchMethods } from './scratch-methods.ts';
-import { healMethods } from './heal.ts';
-import type { HealMethods } from './heal.ts';
+import { healMethods } from './heal/trees.ts';
+import type { HealMethods } from './heal/trees.ts';
 import { runSetup, setupMethods } from './setup.ts';
 import type { SetupMethods, SetupRun } from './setup.ts';
 import {

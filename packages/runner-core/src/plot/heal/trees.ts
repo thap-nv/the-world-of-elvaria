@@ -6,8 +6,8 @@
 import { fromPortable } from '@elvaria/store';
 import type { Plot } from '@elvaria/domain';
 
-import { gitOut, zList } from './git.ts';
-import type { Git } from './git.ts';
+import { gitOut, stagedTreeOf, zList } from '../git.ts';
+import type { Git } from '../git.ts';
 
 /** What the healer changed between the doer's tree and its own, every path relative to the plot with `/`. */
 export interface HealDiff {
@@ -41,7 +41,9 @@ const NO_RENAMES = ['--no-renames', '--no-ext-diff', '--no-textconv'] as const;
 
 async function writeTreeIn(git: Git, worktree: string): Promise<string> {
   await gitOut(git, worktree, ['add', '--all']);
-  return (await gitOut(git, worktree, ['write-tree'])).trim();
+  const tree = await stagedTreeOf(git, worktree);
+  if (tree === undefined) throw new Error(`git write-tree failed in ${worktree}`);
+  return tree;
 }
 
 /** `--numstat -z` lines: added, removed and the path, tab-separated; `-` for a binary file. */

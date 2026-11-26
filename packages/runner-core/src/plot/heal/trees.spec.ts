@@ -9,8 +9,8 @@ import { tempDir } from '@elvaria/testkit';
 import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
-import { createPlotManager } from './plot-manager.ts';
+import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../../__fixtures__/git-repo.ts';
+import { createPlotManager } from '../plot-manager.ts';
 
 let root = '';
 let temp: TempDir;
