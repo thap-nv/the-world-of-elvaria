@@ -2,7 +2,7 @@ import type { MessageKey, Translate } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
 
 import { COMMANDS } from '../apps/cli/src/commands.ts';
-import type { CommandSpec } from '../apps/cli/src/command.ts';
+import type { CommandSpec } from '../apps/cli/src/command-table/command.ts';
 
 import { CLI_SOURCE, renderCli, usageOf } from './docs-cli.mjs';
 

@@ -17,9 +17,9 @@ import type { ConformanceTarget, SpawnRequest, Workspace } from '@elvaria/runner
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { TRIBE, minimalEnv } from './__fixtures__/harness.ts';
-import { locateClaude } from './locate.ts';
+import { locateClaude } from './launch/locate.ts';
 import { createClaudeRunner } from './runner.ts';
-import type { ApprenticeConfig } from './agents.ts';
+import type { ApprenticeConfig } from './run-files/agents.ts';
 
 const LIVE = process.env.ELVARIA_LIVE === '1';
 /** The built hook of @elvaria/hooks, by path: the adapter's specs may not import that package (§1.3). */

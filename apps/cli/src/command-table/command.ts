@@ -2,7 +2,7 @@
 // same table (commands.ts) and a new command cannot forget its help text.
 import type { Locale, MessageKey, Translate } from '@elvaria/i18n';
 
-import type { CliIo } from './io.ts';
+import type { CliIo } from '../io.ts';
 
 export interface OptionSpec {
   readonly type: 'string' | 'boolean';

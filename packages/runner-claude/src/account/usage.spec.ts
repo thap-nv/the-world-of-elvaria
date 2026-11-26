@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { parseJsonLine } from '@elvaria/runner-core';
 import type { JsonObject } from '@elvaria/runner-core';
-import { FIXTURES } from './__fixtures__/harness.ts';
+import { FIXTURES } from '../__fixtures__/harness.ts';
 import { rateLimitWindowsOf, rejectionOf, spentWindowOf, usageWindowsOf } from './usage.ts';
 
 const linesOf = (file: string): JsonObject[] =>

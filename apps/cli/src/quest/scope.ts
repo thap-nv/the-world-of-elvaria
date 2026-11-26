@@ -4,7 +4,7 @@ import { SCOPE_WAITING_STATUSES, scopeHolderOf } from '@elvaria/domain';
 import type { Quest, QuestId, ScopeWait, Territory } from '@elvaria/domain';
 
 import { textOptions } from '../args.ts';
-import type { CommandInput } from '../command.ts';
+import type { CommandInput } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** `--scope`, repeated: the globs in the order given, each once; none when absent. */

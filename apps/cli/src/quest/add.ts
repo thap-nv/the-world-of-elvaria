@@ -13,14 +13,14 @@ import {
 import type { Character, InboxCommandInput, Kind, Rank, Registry, Territory } from '@elvaria/domain';
 
 import { flagOption, textOption, textOptions } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { registryIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { assigneeFor, ceilingLines } from './assignee.ts';
 import { readScope } from './scope.ts';
 import { questsMissing, readTerritory } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 const isRank = (value: string): value is Rank => (RANKS as readonly string[]).includes(value);

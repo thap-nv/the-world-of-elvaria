@@ -4,11 +4,11 @@ import { DEFAULT_LOCALE, LOCALES, isLocale, translator } from '@elvaria/i18n';
 import type { Translate } from '@elvaria/i18n';
 
 import { parseCommandArgs } from './args.ts';
-import { EXIT } from './command.ts';
+import { EXIT } from './command-table/command.ts';
 import { COMMANDS } from './commands.ts';
-import { commandHelp, overviewHelp } from './help.ts';
+import { commandHelp, overviewHelp } from './command-table/help.ts';
 import type { ArgsError } from './args.ts';
-import type { CliContext, CommandSpec, ExitCode } from './command.ts';
+import type { CliContext, CommandSpec, ExitCode } from './command-table/command.ts';
 import type { CliIo } from './io.ts';
 
 export type Lookup =

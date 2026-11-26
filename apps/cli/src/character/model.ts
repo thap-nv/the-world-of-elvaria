@@ -4,12 +4,12 @@
 // as the Steward does (setModelLine), so a command it would refuse is refused at the terminal.
 import { ModelSlugSchema, poolEnabled, poolKeyOf, setModelLine } from '@elvaria/domain';
 
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { commandHeader, sendCommand } from '../quest/send-command.ts';
 import { namedCharacter } from './read.ts';
 import { declaredModelsOf } from './served.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
 async function runModel(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);

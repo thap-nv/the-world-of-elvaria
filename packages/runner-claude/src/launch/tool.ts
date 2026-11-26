@@ -1,12 +1,12 @@
 // Which Claude Code to start and how, shared by the runner and by `forget` (implementation-plan §3.3, §3.7): the
 // pinned path or the one locate.ts finds, started without a shell, with the minimal env and no git variable, in the
-// tribe's config folder when it names one (./account.ts, PS-27).
+// tribe's config folder when it names one (../account/account.ts, PS-27).
 import { tmpdir } from 'node:os';
 
 import { childEnvOf } from '@elvaria/runner-core';
 
-import { accountEnv } from './account.ts';
-import { NOT_FOUND } from './doctor.ts';
+import { accountEnv } from '../account/account.ts';
+import { NOT_FOUND } from '../account/doctor.ts';
 import { launchOf } from './launch.ts';
 import { locateClaude } from './locate.ts';
 import type { Launch } from './launch.ts';

@@ -4,14 +4,14 @@
 import { translator } from '@elvaria/i18n';
 
 import { GLOBAL_OPTIONS } from '../apps/cli/src/args.ts';
-import { EXIT } from '../apps/cli/src/command.ts';
+import { EXIT } from '../apps/cli/src/command-table/command.ts';
 import { COMMANDS } from '../apps/cli/src/commands.ts';
-import { optionLabel } from '../apps/cli/src/help.ts';
+import { optionLabel } from '../apps/cli/src/command-table/help.ts';
 
 import { code, generatedNote, markdownDocument, table } from './docs-markdown.mjs';
 
-/** @typedef {import('../apps/cli/src/command.ts').CommandSpec} CommandSpec */
-/** @typedef {import('../apps/cli/src/command.ts').OptionSpec} OptionSpec */
+/** @typedef {import('../apps/cli/src/command-table/command.ts').CommandSpec} CommandSpec */
+/** @typedef {import('../apps/cli/src/command-table/command.ts').OptionSpec} OptionSpec */
 /** @typedef {import('@elvaria/i18n').Translate} Translate */
 
 export const CLI_SOURCE = 'apps/cli/src/commands.ts';

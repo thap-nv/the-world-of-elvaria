@@ -51,8 +51,8 @@
 - `docs-cli.mjs` (`docs-cli.spec.ts`): `renderCli()` renders every `elvaria` command, its arguments, and its
   options in Vietnamese through `translator('vi')` from `@elvaria/i18n` so `docs/cli.md` stays in step with the
   command table that drives parsing and `--help` (implementation-plan §5.4). Called by `docs-gen.mjs`. Reads
-  `apps/cli/src/commands.ts` (`COMMANDS`), `apps/cli/src/args.ts` (`GLOBAL_OPTIONS`), `apps/cli/src/command.ts`
-  (`EXIT`), `apps/cli/src/help.ts` (`optionLabel`), and `packages/i18n/src/locales/vi/*.json` (via
+  `apps/cli/src/commands.ts` (`COMMANDS`), `apps/cli/src/args.ts` (`GLOBAL_OPTIONS`), `apps/cli/src/command-table/command.ts`
+  (`EXIT`), `apps/cli/src/command-table/help.ts` (`optionLabel`), and `packages/i18n/src/locales/vi/*.json` (via
   `@elvaria/i18n`); `docs-gen.mjs` writes `docs/cli.md`.
 - `docs-tier-report.mjs` (`docs-tier-report.spec.ts`): `readKingdomEvents(kingdom)` reads every valid event line
   of `<kingdom>/events/YYYY-MM-DD.jsonl` through the CLI's `readMetricsSource` and `openEventLog`, upgrading
@@ -232,7 +232,7 @@
   `LOCALE_FILES`, `DEFAULT_LOCALE`, `translator`, `bannedWords`, `glossaryTable`, `idsOf`, `isGlossaryTable`,
   `isIdList`, `glossaryProblems`, `localeProblems`), `dependency-cruiser` (`docs-graph.mjs`), `typescript`
   (`docs-identifiers.mjs`, `shape-detect.mjs`), `ajv` + `ajv-formats` (`gen-schemas.spec.ts`), and `knip` (`knip-gate.spec.ts`).
-- `apps/cli` (`src/commands.ts`, `src/args.ts`, `src/command.ts`, `src/help.ts`), imported by `docs-cli.mjs` to
+- `apps/cli` (`src/commands.ts`, `src/args.ts`, `src/command-table/command.ts`, `src/command-table/help.ts`), imported by `docs-cli.mjs` to
   render `docs/cli.md`; `src/metrics/read.ts` and `src/metrics/view.ts`, imported by `docs-metrics-report.mjs`.
 - Node built-ins (`node:child_process`, `node:fs`, `node:path`, `node:process`, `node:url`) and `git`
   (`docs-repo.mjs`, `docs-note.mjs`, `check-stamp.mjs`, `check-changed.mjs`).

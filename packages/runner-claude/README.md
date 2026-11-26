@@ -52,11 +52,11 @@
   model's weekly cap), sent in the same `mana` signal at 100 % until its `resetsAt`, so the Steward sleeps that
   gauge until then; `overage` or a type it does not know names none.
 - Turns the policy's `graph_commands` (PS-21) into one `Bash(<command>:*)` allow rule each, and adds `Bash` to
-  `--tools` for a class without it (`src/graph-rules.ts`); the hook refuses any other line there.
+  `--tools` for a class without it (`src/run-files/graph-rules.ts`); the hook refuses any other line there.
 - Declares `vision` (vision spike 2026-11-17) and opens each screen of a judge's review by one rule, `Read(//e/…/screens/home.png)` (`imageRules`, the form of `absoluteRulePath`), never the run folder (PS-11b); the fake CLI plays the conformance suite's `image` through the hooks and those rules (`fixtures/fake-claude-image.mjs`).
-- Finds Claude Code by runner-core's `locateTool` from its `ToolSearch` (`src/locate.ts`), and reads its JSON with
-  runner-core's accessors (`textOf`, `parseJsonLine`…; `src/json.ts` keeps only the token sums) (AH-09).
-- Runs a tribe in its own account (PS-27, `src/account.ts`, the folder variable and the hash by runner-core's
+- Finds Claude Code by runner-core's `locateTool` from its `ToolSearch` (`src/launch/locate.ts`), and reads its JSON with
+  runner-core's accessors (`textOf`, `parseJsonLine`…; `src/session/json.ts` keeps only the token sums) (AH-09).
+- Runs a tribe in its own account (PS-27, `src/account/account.ts`, the folder variable and the hash by runner-core's
   `configDirEnv` and `accountSaidOf`): `ClaudeToolOptions.configDir` (`tribes[].tool.config_dir` in the machine's
   form) becomes `CLAUDE_CONFIG_DIR` of every process of the tribe, set last over any other source, a treasury secret
   of that name included (`accountEnv`: the session in `launchChild`, `/usage`, the ping, `auth status` and `purge`

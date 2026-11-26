@@ -4,7 +4,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { parseJsonLine } from '@elvaria/runner-core';
-import { FIXTURES } from './__fixtures__/harness.ts';
+import { FIXTURES } from '../__fixtures__/harness.ts';
 import { outcomeOf, permissionDenialsOf, structuredOf, turnsOf } from './outcome.ts';
 import { createStreamReader } from './stream.ts';
 import type { Observation } from './stream.ts';

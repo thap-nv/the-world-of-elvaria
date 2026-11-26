@@ -18,7 +18,7 @@ import type { AgentRunner, ConformanceReport } from '@elvaria/runner-core';
 import { fromPortable, toPortable } from '@elvaria/store';
 
 import { flagOption, textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { accountFindingsAgainst } from '../doctor/check-accounts.ts';
 import { authFindings, loginFindingsOf } from '../doctor/check-tribe.ts';
 import { configDirFindings } from '../doctor/config-dir.ts';
@@ -30,7 +30,7 @@ import { capabilityLines } from './check-declared.ts';
 import { keepFailed, liveToolOf, pinChecked } from './check-live.ts';
 import { recordSpent, withTokens } from './check-spent.ts';
 import { namedTribe, setEnabled } from './save.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { CliIo } from '../io.ts';
 import type { Finding } from '../doctor/finding.ts';

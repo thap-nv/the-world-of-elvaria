@@ -15,14 +15,14 @@ import {
 import type { Character, CharacterClass, CharacterId, Registry, Tribe, TribeModel } from '@elvaria/domain';
 
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
-import { recordCharacterCreated } from '../events.ts';
+import { EXIT } from '../command-table/command.ts';
+import { recordCharacterCreated } from '../event/events.ts';
 import { registryIssueLines, storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { nameIn } from '../labels.ts';
 import { levelOfText } from './level.ts';
 import { declaredModelsOf, unservedLine } from './served.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** `2026-11-06`: the date part of an ISO time, which `stats.tokens_day` stores. */

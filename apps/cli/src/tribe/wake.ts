@@ -1,10 +1,10 @@
 // `elvaria wake <tribe>`: "I signed in again" (implementation-plan §3.5, ADR 0009). The Steward probes the tribe's
 // account at its next tick instead of waiting for the probe's own time; the CLI only drops the command in the
 // inbox (ADR 0005), after checking the tribe is one of the kingdom's.
-import { EXIT } from './command.ts';
-import { openKingdomContext } from './kingdom-context.ts';
-import { commandHeader, sendCommand } from './quest/send-command.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from './command.ts';
+import { EXIT } from '../command-table/command.ts';
+import { openKingdomContext } from '../kingdom-context.ts';
+import { commandHeader, sendCommand } from '../quest/send-command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
 async function runWake(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);

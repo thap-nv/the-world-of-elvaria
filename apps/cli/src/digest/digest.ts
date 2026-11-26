@@ -23,11 +23,11 @@ import type { Event, TempleNotices } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { digestStateOf, readUnclaimable } from '@elvaria/steward';
 
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { upgradeOffer } from '../upgrade/offer.ts';
 import { digestMarkdown } from './markdown.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** The files the digest reads; a file that does not parse is left out, as the Steward leaves it out. */

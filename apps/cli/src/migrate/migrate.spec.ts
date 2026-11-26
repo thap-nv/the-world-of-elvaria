@@ -4,9 +4,9 @@ import path from 'node:path';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { RM_TEMP, foundKingdom, printed, run, tempDir, testIo } from './__fixtures__/cli.ts';
+import { RM_TEMP, foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { backupStamp } from './migrate.ts';
-import type { TempDir } from './__fixtures__/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 type Entry = Record<string, unknown> & { id: string };
 

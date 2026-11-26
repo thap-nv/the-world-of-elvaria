@@ -16,9 +16,9 @@ import {
   fakeRunner,
   minimalEnv,
 } from './__fixtures__/harness.ts';
-import { NOT_FOUND, signInEnding, versionOf } from './doctor.ts';
-import { launchOf } from './launch.ts';
-import { claudeCandidates, locateClaude } from './locate.ts';
+import { NOT_FOUND, signInEnding, versionOf } from './account/doctor.ts';
+import { launchOf } from './launch/launch.ts';
+import { claudeCandidates, locateClaude } from './launch/locate.ts';
 import { createClaudeForget, createClaudeRunner } from './runner.ts';
 
 const withEnv = (extra: Record<string, string>) => ({ env: { ...minimalEnv(), ...extra } });

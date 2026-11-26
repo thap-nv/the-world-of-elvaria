@@ -14,10 +14,10 @@ import {
 import type { CheckMode, Territory, TerritoryCheck } from '@elvaria/domain';
 
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 const isMode = (value: string): value is CheckMode => (CHECK_MODES as readonly string[]).includes(value);

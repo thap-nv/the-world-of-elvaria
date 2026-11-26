@@ -7,13 +7,13 @@
 import { promptMaxOf, shellOf, tribeLimitsOf } from '@elvaria/domain';
 import type { Tribe, TribeLookPool } from '@elvaria/domain';
 
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { NONE, printListing } from '../listing.ts';
 import { handOf } from '../run/crew.ts';
 import { declaredCapabilities } from './check-declared.ts';
 import { kingdomPool, lookCellOf, lookViewOf } from './look-view.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** Max rank, guarded territories, declared capabilities, shell and prompt limit of the tribe's runner, or why none. */

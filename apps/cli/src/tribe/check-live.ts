@@ -15,7 +15,7 @@ import { inKingdom } from '@elvaria/store';
 import { locateTribeTool } from '../doctor/check-tribe.ts';
 import { findingLines } from '../doctor/finding.ts';
 import { checkedToolOf } from '../doctor/pin-tool.ts';
-import { backupStamp } from '../migrate.ts';
+import { backupStamp } from '../migrate/migrate.ts';
 import { isAdapterFile } from './adapter-file.ts';
 import { refuse, saveTribes } from './save.ts';
 import type { KingdomContext } from '../kingdom-context.ts';

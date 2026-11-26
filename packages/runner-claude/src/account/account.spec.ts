@@ -10,9 +10,9 @@ import { tempDir } from '@elvaria/testkit';
 import type { TempDir } from '@elvaria/testkit';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { FAKE_CLAUDE, fakeRunner, minimalEnv, prepare } from './__fixtures__/harness.ts';
+import { FAKE_CLAUDE, fakeRunner, minimalEnv, prepare } from '../__fixtures__/harness.ts';
 import { accountEnv, accountOf } from './account.ts';
-import { createClaudeForget } from './runner.ts';
+import { createClaudeForget } from '../runner.ts';
 
 describe('accountEnv', () => {
   const env = { PATH: '/bin', CLAUDE_CONFIG_DIR: 'D:/other', claude_config_dir: 'D:/lower' };

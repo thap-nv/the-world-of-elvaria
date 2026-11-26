@@ -5,7 +5,7 @@ import { CharacterIdSchema } from '@elvaria/domain';
 import type { Character } from '@elvaria/domain';
 
 import { storeIssueLines } from '../issues.ts';
-import type { CommandInput } from '../command.ts';
+import type { CommandInput } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** The character file, or the lines that say why it cannot be read. */

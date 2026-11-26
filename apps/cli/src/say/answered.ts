@@ -5,7 +5,7 @@
 import type { ChancellorMatter } from '@elvaria/domain';
 import type { ChancellorSession } from '@elvaria/chancellor';
 
-import { recordChancellorAnswered } from '../events.ts';
+import { recordChancellorAnswered } from '../event/events.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));

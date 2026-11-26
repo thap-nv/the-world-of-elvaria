@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { flagOption, parseCommandArgs, textOption, textOptions } from './args.ts';
-import { EXIT } from './command.ts';
-import type { CommandSpec } from './command.ts';
+import { EXIT } from './command-table/command.ts';
+import type { CommandSpec } from './command-table/command.ts';
 
 const SPEC: CommandSpec = {
   name: ['quest', 'add'],

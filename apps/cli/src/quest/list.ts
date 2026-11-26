@@ -7,7 +7,7 @@ import { QUEST_STATUSES } from '@elvaria/domain';
 import type { Quest, QuestId, QuestStatus, Registry, ScopeWait } from '@elvaria/domain';
 
 import { textOptions, textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { QUEST_STATUS_LABEL, nameIn } from '../labels.ts';
 import { NONE, printListing } from '../listing.ts';
@@ -16,7 +16,7 @@ import { healMark } from './heal.ts';
 import { partyCell } from './party.ts';
 import { scopeWaitText, scopeWaitsOf } from './scope.ts';
 import { unclaimableOf } from './unclaimable.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 const isStatus = (value: string): value is QuestStatus =>

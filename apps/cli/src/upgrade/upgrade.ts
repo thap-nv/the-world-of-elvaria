@@ -8,8 +8,8 @@
 import { inKingdom } from '@elvaria/store';
 
 import { flagOption, textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
-import { recordUpgrade } from '../events.ts';
+import { EXIT } from '../command-table/command.ts';
+import { recordUpgrade } from '../event/events.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { warnIfBehind } from './behind.ts';
 import { buildCli } from './build-cli.ts';
@@ -27,7 +27,7 @@ import { refreshDefaults } from './registry-defaults.ts';
 import { holdKingdom, rollbackKingdom } from './rollback.ts';
 import { SELF_ROOT } from './self.ts';
 import { buildTrial } from './trial.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { StepFailure, Tools } from './build.ts';
 import type { BuildPointer } from './pointer.ts';

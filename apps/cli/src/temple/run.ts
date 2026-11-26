@@ -2,13 +2,13 @@
 // on or due: the Monk reads the evidence pack in one session (it spends mana) and its report goes to the inbox, which a
 // running Steward applies at its next tick; with nothing to decide no model is called. Like `elvaria triage` it asks the
 // tribes' CLIs first: a Monk of a held tribe opens no session. `temple.ran` says the owner ran it (trigger `owner`).
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { crewOf } from '../run/crew.ts';
 import { tribeHoldsOf } from '../run/tool-found.ts';
 import { listeningLine, reportTemple } from './report.ts';
 import { runTemple } from './run-temple.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { TriageDeps } from '../triage/triage.ts';
 

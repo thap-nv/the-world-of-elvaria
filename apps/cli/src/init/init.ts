@@ -9,11 +9,11 @@ import type { Locale } from '@elvaria/i18n';
 import { REGISTRY_ROOT, registryFiles } from '@elvaria/registry-default';
 import { initKingdom, toPortable } from '@elvaria/store';
 
-import { textOption } from './args.ts';
-import { EXIT } from './command.ts';
-import { storeIssueLines } from './issues.ts';
-import { kingdomDir } from './kingdom-context.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from './command.ts';
+import { textOption } from '../args.ts';
+import { EXIT } from '../command-table/command.ts';
+import { storeIssueLines } from '../issues.ts';
+import { kingdomDir } from '../kingdom-context.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
 const PROFESSIONS = ['developer', 'ba', 'marketing', 'researcher', 'other'] as const;
 type Profession = (typeof PROFESSIONS)[number];
