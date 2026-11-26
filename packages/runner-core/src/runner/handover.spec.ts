@@ -42,6 +42,22 @@ describe('questionOf', () => {
       expect(questionOf(withQuestion(text))).toBeUndefined();
     },
   );
+
+  it.each(['', 'None'])('ignores an old report after an empty question "%s"', (text) => {
+    expect(questionOf(withQuestion(`${text}\n---\nOld report.`))).toBeUndefined();
+  });
+
+  it('stops a real question at the first trimmed separator line', () => {
+    const letter = withQuestion('Which branch?\r\n \t--- \t\r\nOld report.\r\n---\r\nMore.');
+    expect(questionOf(letter)).toBe('Which branch?');
+    expect(sectionOf(letter, 'Question')).toBe('Which branch?\n \t--- \t\nOld report.\n---\nMore.');
+  });
+
+  it('keeps dashes that are not an exact separator line', () => {
+    expect(questionOf(withQuestion('Use --- here?\n----\n--- report'))).toBe(
+      'Use --- here?\n----\n--- report',
+    );
+  });
 });
 
 describe('memosOf (PS-02)', () => {
