@@ -22,6 +22,12 @@ import type {
   WaitGauge,
 } from '@elvaria/domain';
 
+/** A healer's note on the bell (HL-05): the `## Heal` section of the letter, masked and cut (heal/note.ts). */
+export interface HealNote {
+  readonly healer: CharacterId;
+  readonly text: string;
+}
+
 /** Why a merge into a merge quest's plot stopped at a branch it tried (the `stop` of `plot.merged`). */
 export type MergeStopReason = (typeof PLOT_MERGE_STOPS)[number];
 
@@ -85,6 +91,8 @@ export type Notice =
       readonly reason: InfirmaryReason;
       readonly trip: InfirmaryTrip;
       readonly detail?: InfirmaryDetail;
+      /** (HL-05) The `## Heal` section of the letter, when a healer's heal ended there (ADR 0034). */
+      readonly heal_note?: HealNote;
     }
   | { readonly kind: 'question'; readonly quest: NoticeQuest; readonly question: string }
   /**

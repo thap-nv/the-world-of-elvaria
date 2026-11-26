@@ -69,6 +69,10 @@ export function gitPlots(
     check: () => Promise.resolve([]),
     head: (plot) => manager.head(plot),
     touched: (plot) => manager.touched(plot),
+    // A healer's part (ADR 0034): the doer's staged tree, what the healer changed since, the way back to it.
+    stagedTree: (plot) => manager.stagedTree(plot),
+    healDiff: (plot, tree) => manager.healDiff(plot, tree),
+    restoreTree: (plot, tree) => manager.restoreTree(plot, tree),
     scriptChecks: () => Promise.resolve([]),
     diff: (plot, scope) => manager.diff(plot, scope),
     merge: (plot, branches, base, options) => manager.merge(plot, branches, base, options),

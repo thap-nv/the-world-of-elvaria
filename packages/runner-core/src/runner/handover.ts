@@ -18,12 +18,18 @@ export const HANDOVER_SECTIONS = [
 ] as const;
 export type HandoverSection = (typeof HANDOVER_SECTIONS)[number];
 
+/** The section a healer adds at the end of the letter (prompts/heal.md, ADR 0034); the bell copies it (HL-05). */
+export const HEAL_SECTION = 'Heal';
+
 const HEADING = /^##\s+(.+?)\s*#*\s*$/;
 /** What a character leaves in a Question section it does not use (the template says: leave it empty). */
 const NO_QUESTION = /^(?:[-–—_.*]*|none|no|n\/a|nothing|không|không có)\.?$/i;
 
 /** The text under `## <section>` up to the next `##` heading, trimmed; undefined when absent or empty. */
-export function sectionOf(letter: string, section: HandoverSection): string | undefined {
+export function sectionOf(
+  letter: string,
+  section: HandoverSection | typeof HEAL_SECTION,
+): string | undefined {
   const lines = letter.split(/\r?\n/);
   const wanted = section.toLowerCase();
   const start = lines.findIndex((line) => HEADING.exec(line)?.[1]?.toLowerCase() === wanted);

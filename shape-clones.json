@@ -821,6 +821,13 @@
       "tokens": 70,
       "status": "kept",
       "reason": "CM-06: the Steward making a quest of its own (questFromCommand against the kingdom, then record.put, each refusal logged under the quest it stands for), as the flaky and script follow-ups, the patrol draft and the merge queue quest do; their pairs are listed unreviewed, and AH-14 gathers the family into one helper at once rather than the late fix apart."
+    },
+    {
+      "a": "packages/steward/src/heal/open.ts",
+      "b": "packages/steward/src/sessions/open.ts",
+      "tokens": 255,
+      "status": "kept",
+      "reason": "HL-05: the healer's opening walks the verifier's (parts, secrets, spawn, the quest's move, keep), each step already a helper of sessions/open.ts (partsOf, secretsLacking, spawnFor, keep); what stays alike is the move and the Running kept, whose event, edits, before and checks differ per opening. sessions/open.ts is at its 300 lines and sessions/ at its 30 files, so one opener gathers the assignee's, the verifier's and the healer's at once (AH-14), not one pair apart."
     }
   ]
 }

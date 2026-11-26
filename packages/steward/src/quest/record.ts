@@ -7,10 +7,8 @@ import {
   EventSchema,
   characterViewOf,
   currentRun,
-  endedInHealDue,
   err,
   ok,
-  questLogTypeOf,
   questViewOf,
   transition,
   transitionCharacter,
@@ -23,22 +21,19 @@ import type {
   CharacterId,
   Event,
   IdSource,
-  LoadTrace,
   Quest,
   QuestActor,
   QuestEvent,
   QuestId,
-  QuestLogType,
   Result,
   TerritoryId,
 } from '@elvaria/domain';
 import type { EventLog } from '@elvaria/eventlog';
-import type { RefusedWork } from '@elvaria/runner-core';
 import type { KingdomStore } from '@elvaria/store';
 
-import { OUT_OF_ATTEMPTS, infirmaryData } from './infirmary.ts';
+import { lineTypeOf, moveDataOf } from './move-line.ts';
+import type { MoveLineFields } from './move-line.ts';
 import { describeIssue } from '../tick/world.ts';
-import type { InfirmaryCause } from './infirmary.ts';
 import type { Logger } from '../types.ts';
 import type { World } from '../tick/world.ts';
 
@@ -50,29 +45,13 @@ export type Edits = Readonly<Partial<Record<CharacterId, CharacterEdit>>>;
 type WithoutAt<T> = T extends unknown ? Omit<T, 'at'> : never;
 export type MovePayload = WithoutAt<QuestEvent>;
 
-export interface Move {
+export interface Move extends MoveLineFields {
   readonly quest: QuestId;
   readonly event: MovePayload;
   readonly actor: QuestActor;
   readonly edits?: Edits;
   /** Fields set before the event, e.g. the plot a start prepared (no event of the table writes it). */
   readonly before?: Partial<Quest>;
-  /** Why, should the move land in the infirmary (§3.4, P1-32); OUT_OF_ATTEMPTS when it does not say. */
-  readonly infirmary?: InfirmaryCause;
-  /**
-   * What the prompt of the session this move opens carried (PS-01b, §3.16.1): on the line only, as `sequels` is; the
-   * quest file and attempt_log stay as they were.
-   */
-  readonly load_trace?: LoadTrace;
-  /** On a submit, the files the work changed outside the quest's scope (PS-05): on the line only, as `load_trace`. */
-  readonly out_of_scope?: readonly string[];
-  /** On a submit of a quest the delegation spared the seal, its branch's size (PS-08b): on the line only. */
-  readonly diff_lines?: number;
-  /**
-   * On the blocked line of a run that ended on its amendment, what the Steward could not take of its work and why
-   * (fix/session-notes): on the line only, as `out_of_scope`; the doer's next session reads it (continuation.ts).
-   */
-  readonly refused?: RefusedWork;
 }
 
 /** A line about something the files do not keep: verdict.*, command.*. */
@@ -202,22 +181,6 @@ async function save(
   return ok(undefined);
 }
 
-/**
- * The line of a move. A breaker that sent the doer's refused commit back for a heal (its entry now `due`, ADR 0034)
- * is `quest.heal_due`, which questLogTypeOf cannot tell from a cut that goes on: same event, same statuses.
- */
-const lineTypeOf = (event: QuestEvent, from: Quest, after: Quest): QuestLogType =>
-  event.type === 'breaker' && after.status === 'returned' && endedInHealDue(after.attempt_log)
-    ? 'quest.heal_due'
-    : questLogTypeOf(event.type, from.status, after.status);
-
-/** Why the quest went where it did: the infirmary's cause, or the refusal a heal answers (as the infirmary says it). */
-function causeOf(type: QuestLogType, request: Move) {
-  const cause = request.infirmary ?? OUT_OF_ATTEMPTS;
-  if (type === 'quest.infirmary') return infirmaryData(cause);
-  return type === 'quest.heal_due' ? { reason: cause.reason } : {};
-}
-
 async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, string>> {
   const at = deps.stamp();
   const found = deps.world.quests.get(request.quest);
@@ -234,20 +197,7 @@ async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, st
   }
   const type = lineTypeOf(event, found, after.value);
   const session = 'session_id' in event ? event.session_id : undefined;
-  // The sessions that followed the first in the run that ends here (P1-49): attempt_log keeps one entry for them all.
-  const sequels = 'sequels' in event ? event.sequels : undefined;
-  const data = {
-    ...causeOf(type, request),
-    quest: questViewOf(after.value),
-    ...(moved.value.length > 0 ? { characters: moved.value.map(characterViewOf) } : {}),
-    ...(sequels === undefined || sequels.length === 0 ? {} : { sequels }),
-    ...(request.load_trace === undefined ? {} : { load_trace: request.load_trace }),
-    ...(request.out_of_scope === undefined || request.out_of_scope.length === 0
-      ? {}
-      : { out_of_scope: request.out_of_scope }),
-    ...(request.diff_lines === undefined ? {} : { diff_lines: request.diff_lines }),
-    ...request.refused,
-  };
+  const data = moveDataOf(type, event, after.value, moved.value, request);
   await append(deps, { type, actor: actorOf(request.actor, found), data, quest: after.value, session }, at);
   return ok(after.value);
 }

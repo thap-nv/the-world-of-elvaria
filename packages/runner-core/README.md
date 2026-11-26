@@ -411,6 +411,14 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   diff, and runs the territory's trial on that commit under `guest-<id>` (`TerritoryTrialRequest.narrow`). The
   session's branch is never written; the plot goes in the trial's `finally`.
 - Gives every check of a round `ELVARIA_SCREENS_DIR`, the round's `.runs/<quest>-<n>/screens/` outside the plot, emptied before the round (PS-11b, `src/checks/screens.ts`); `screensOf` lists the PNGs there in pairs (`<name>.png`, `.ref.png`, `.diff.png`) and says what breaks the ceilings (`SCREEN_MAX_FILES` 12, `SCREEN_MAX_BYTES` 2 MiB, PNG only, kebab-case names). `ToolPolicy.images` holds the screens a judge reads (verifier only), `policy.json` hands them to the hook, and the judge's review lists them by path (`prompts/screens.md`); the images never go into a prompt. The conformance suite's `image` check (live too) has a judge of a runner that declares `vision` name the stripes of a PNG outside its plot, made by the vision spike's generator (`src/conformance/stripes.ts`); FakeRunner plays it.
+- Measures a healer's part (HL-05, ADR 0034, `src/plot/heal/trees.ts`): `PlotManager.stagedTree(plot)` stages the
+  doer's work and names its tree (`stagedTreeOf` of `plot/git.ts`) and the files it changed since HEAD;
+  `healDiff(plot, tree)` stages again and gives the files the healer changed, lines added plus removed, those outside
+  the doer's work and the patch, plumbing only (`--no-renames`, no ext-diff or textconv); `restoreTree(plot, tree)`
+  puts the index and files back on that tree (`read-tree --reset -u`), HEAD where it is. A healer's session reads
+  `prompts/heal.md` (`Continuation` `{ reason: 'heal' }`: whose work, the hooks' reason, the staged files, the
+  limits) and its judge the healer's change under `prompts/heal-patch.md` (`{{heal_patch}}` of `review.md`, cut at
+  60 lines; `src/prompt/heal.ts`); the letter's `## Heal` section is the healer's word to the owner.
 
 ## Does not
 

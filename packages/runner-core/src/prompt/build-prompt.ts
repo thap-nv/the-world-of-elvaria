@@ -27,6 +27,8 @@ import { contextFilesBlock } from './context-files.ts';
 import type { DraftingTerms } from './drafting.ts';
 import type { ContextFile } from './context-files.ts';
 import { graphBlock } from './graph-block.ts';
+import { healPatchBlock } from './heal.ts';
+import type { HealPatch } from './heal.ts';
 import type { PromptGraph } from './graph-block.ts';
 import { memosBlock } from './memory.ts';
 import { objectionBlock } from './objection.ts';
@@ -145,6 +147,8 @@ export interface VerifierPromptInput extends PromptBase {
    * law 3 follow that run. Absent: a run in full, as before.
    */
   readonly narrow_checks?: readonly TerritoryCheck[];
+  /** (HL-05) The healer's change to the run's work, heal.patch (ADR 0034); absent or null, no block. */
+  readonly heal_patch?: HealPatch | null;
 }
 
 /**
@@ -273,6 +277,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
         : fenced(input.handover, 'markdown'),
     out_of_scope: outOfScopeBlock(quest, input.out_of_scope ?? [], t),
     protected_changes: protectedChangesBlock(quest, t),
+    heal_patch: healPatchBlock(input.heal_patch, quest.assignee ?? 'the assignee', t),
     plan_links: planLinksBlock(input.plan_links, t),
     diff: diffBlock(input.diff, input.territory),
   });

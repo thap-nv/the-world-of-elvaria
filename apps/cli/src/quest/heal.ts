@@ -2,7 +2,7 @@
 // work, and the quest went back, with no bell, for one fresh session of the same run that mends what they named.
 // `quest list` marks it while it waits for that session and while the session runs; `quest show` says why, from the
 // journal's `quest.heal_due` line, since the quest file keeps no reason.
-import { currentRun, endedInHealDue, isEventOf } from '@elvaria/domain';
+import { awaitsHeal, currentRun, isEventOf } from '@elvaria/domain';
 import type { Event, EventOf, Quest } from '@elvaria/domain';
 import type { MessageKey, Translate } from '@elvaria/i18n';
 
@@ -10,12 +10,16 @@ import { whyLines } from './infirmary.ts';
 
 type HealState = 'due' | 'session';
 
-/** Waiting for the heal session (`returned`, its last entry `due`), or in it (`working`, its open entry `session`). */
+/**
+ * Waiting for the heal session (`returned`, awaitsHeal: its last entry `due`, or a healer's session of the run that
+ * ended without the heal, HL-04), or in it (`working` for the doer's own, `healing` for a healer's; its open entry
+ * `session`).
+ */
 function healStateOf(quest: Quest): HealState | undefined {
-  if (quest.status === 'returned' && endedInHealDue(quest.attempt_log)) return 'due';
+  if (quest.status === 'returned' && awaitsHeal(quest)) return 'due';
   const open = quest.attempt_log.at(-1);
   const heals = open?.role === 'assignee' && open.heal === 'session' && open.ended_at === undefined;
-  return quest.status === 'working' && heals ? 'session' : undefined;
+  return (quest.status === 'working' || quest.status === 'healing') && heals ? 'session' : undefined;
 }
 
 const MARK: Readonly<Record<HealState, MessageKey>> = {

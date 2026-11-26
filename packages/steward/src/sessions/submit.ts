@@ -6,7 +6,7 @@
 // PS-07 report: filed after the commit only, such an amendment was lost and the quest went to the infirmary).
 import { amendmentDeciderOf, protectedMarkOf, submitEndOf } from '@elvaria/domain';
 import { plotCommitMessage } from '@elvaria/runner-core';
-import type { Memo, Quest, Result } from '@elvaria/domain';
+import type { Memo, Quest, QuestId, Result } from '@elvaria/domain';
 import type { PatchOutcome, RefusedWork, RunResult } from '@elvaria/runner-core';
 
 import { fileMemos } from '../memos/file.ts';
@@ -77,21 +77,34 @@ export async function submitWork(
   // objection its letter filed for the review after (PS-22).
   if (end.end === 'breaker')
     return breakAssignee(ctx, running, { trip: 'commit', ...end.refused, before }, ended(result));
-  const submitted = ctx.world.quests.get(quest);
-  const changes =
-    committed !== undefined && 'protected_changes' in committed ? committed.protected_changes : [];
-  const mark = submitted === undefined ? undefined : protectedMarkOf(submitted, changes);
-  const seal = submitted === undefined ? undefined : await submitSealOf(ctx, submitted, changes);
+  const { before: marked, ...line } = await submitMarksOf(ctx, quest, committed);
   return moveAndRing(ctx, {
     quest,
     event: { type: 'submit', ...runOf(running, result) },
     actor: 'runner',
     edits: { [running.character]: step('submit') },
-    // The quest's pending objection (PS-22), the protected paths the work changed (PS-04), and the seal the
-    // delegation's limits raise (PS-08b).
-    before: { ...before, ...mark, ...seal?.before },
-    ...(seal === undefined ? {} : lineOf(seal)),
+    // The quest's pending objection (PS-22), then what the commit asks of the quest (submitMarksOf).
+    before: { ...before, ...marked },
+    ...line,
   });
+}
+
+/**
+ * What a submit's commit asks of the quest: the mark of the protected paths the work changed, which asks for the
+ * stronger judge (PS-04, ADR 0026), and the seal the delegation's limits raise, with what its line says (PS-08b).
+ */
+export async function submitMarksOf(
+  ctx: Context,
+  questId: QuestId,
+  committed: PlotCommit | undefined,
+): Promise<{ readonly before: Partial<Quest> } & Partial<ReturnType<typeof lineOf>>> {
+  const submitted = ctx.world.quests.get(questId);
+  if (submitted === undefined) return { before: {} };
+  const changes =
+    committed !== undefined && 'protected_changes' in committed ? committed.protected_changes : [];
+  const mark = protectedMarkOf(submitted, changes);
+  const seal = await submitSealOf(ctx, submitted, changes);
+  return { before: { ...mark, ...seal.before }, ...lineOf(seal) };
 }
 
 /** What the blocked line says of refused work: the patch's reason, or what git said of the commit. */

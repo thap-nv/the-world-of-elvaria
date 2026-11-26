@@ -100,7 +100,7 @@ describe('plots over PlotManager', () => {
     release: () => Promise.reject(new Error('unused')),
     ...{ prepareScratch: unused, checkoutScratch: unused, releaseScratch: unused, scratchOf: unused },
     ...{ update: unused, generate: unused, settle: unused, mergesClean: unused, diffLines: unused },
-    refreshSetup: unused,
+    ...{ refreshSetup: unused, stagedTree: unused, healDiff: unused, restoreTree: unused },
   });
   const kingdom = path.resolve('kingdom root');
   const HOST = processHostOf(testIo());

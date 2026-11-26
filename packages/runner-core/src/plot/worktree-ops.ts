@@ -47,6 +47,11 @@ export type CommitOutcome =
       readonly log?: string;
       readonly patch?: string;
       readonly files?: readonly string[];
+      /**
+       * git was killed at its timeout (GIT_TIMEOUT_MS) or could not start: no hook named an error, so the refusal is
+       * no work to mend (HL-05, plans/healer.md 4.2); the Steward does not send it back for a heal.
+       */
+      readonly timed_out?: true;
     } & Rescued)
   | { readonly status: 'no_git' };
 
@@ -156,8 +161,17 @@ export async function commitWorktree(
     const head = hookOutputHead(said);
     const kept = rescue === undefined ? {} : await saveStaged(git, worktree, rescue.dir);
     const log = rescue === undefined ? {} : { log: 'pre-commit.log' };
+    const timedOut = commit.code === null ? { timed_out: true as const } : {};
     if (rescue !== undefined) await writeFile(path.join(rescue.dir, 'pre-commit.log'), said, 'utf8');
-    return { status: 'refused', detail: head.lines.join('\n'), head, ...log, ...kept, ...rescued };
+    return {
+      status: 'refused',
+      detail: head.lines.join('\n'),
+      head,
+      ...log,
+      ...kept,
+      ...timedOut,
+      ...rescued,
+    };
   }
   const sha = (await gitOut(git, worktree, ['rev-parse', 'HEAD'])).trim();
   return { status: 'committed', sha, ...rescued };

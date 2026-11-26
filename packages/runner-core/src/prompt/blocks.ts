@@ -5,6 +5,8 @@ import { amendmentAnswerBlock } from './amendment-answer.ts';
 import { SHELL_TOOL, WRITE_TOOLS } from '../policy/constants.ts';
 import { checksAheadBlock, failedChecksBlock } from './checks.ts';
 import { memoryBlock } from './memory.ts';
+import { healBlock } from './heal.ts';
+import type { HealBrief } from './heal.ts';
 import { finalVerdictBlock } from './objection.ts';
 import { readSentence } from './read-sentence.ts';
 import { refusedWorkBlock } from './refused-work.ts';
@@ -46,6 +48,8 @@ export type Continuation = (
       readonly contested?: Verdict;
     }
   | { readonly reason: 'revive' }
+  /** A healer's session on the doer's refused work (ADR 0034): what it mends; the log comes as refused_commit. */
+  | { readonly reason: 'heal'; readonly heal: HealBrief }
 ) &
   RefusedWork & {
     /**
@@ -265,16 +269,18 @@ export function continuationBlock(
   const intro =
     continuation.reason === 'revive'
       ? t.revive
-      : joinBlocks([
-          fill(t.returned, {
-            rejudge: continuation.verdict.rejudge === true ? t.rejudge : '',
-            final: finalVerdictBlock(continuation.contested, t),
-            result: continuation.verdict.result,
-            fail_kind: continuation.verdict.fail_kind ?? 'none',
-            notes: continuation.verdict.notes?.trim() ?? '',
-          }),
-          failedChecksBlock(continuation.checks ?? continuation.verdict.checks, t),
-        ]);
+      : continuation.reason === 'heal'
+        ? healBlock(continuation.heal, t)
+        : joinBlocks([
+            fill(t.returned, {
+              rejudge: continuation.verdict.rejudge === true ? t.rejudge : '',
+              final: finalVerdictBlock(continuation.contested, t),
+              result: continuation.verdict.result,
+              fail_kind: continuation.verdict.fail_kind ?? 'none',
+              notes: continuation.verdict.notes?.trim() ?? '',
+            }),
+            failedChecksBlock(continuation.checks ?? continuation.verdict.checks, t),
+          ]);
   return joinBlocks([
     intro,
     continuation.apprentice_left === true
