@@ -6,6 +6,7 @@
     "cli.digest.counts": "{must} to decide for the work to go on, {can_wait} that can wait.",
     "cli.digest.empty": "Nothing waits for you.",
     "cli.digest.heals": "Heals: {total} total, {healed} healed.",
+    "cli.digest.carried_red": "Carried then red: {count} checks carried on the same tree failed at patrol; review K3/K7 of plans/recheck.md.",
     "cli.digest.group.must": "Decide for the work to go on",
     "cli.digest.group.can_wait": "Can wait",
     "cli.digest.gauge": "pool {pool} of tribe {tribe}",

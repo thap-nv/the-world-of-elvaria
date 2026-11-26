@@ -1,5 +1,6 @@
 export * from './advice.ts';
 export * from './check-mode/escapes.ts';
+export { carriedThenRedOf } from './check-mode/recheck.ts';
 export * from './after-wrap-up.ts';
 export * from './causes.ts';
 export * from './fail-kind-rates.ts';

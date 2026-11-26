@@ -24,7 +24,7 @@ describe('check modes ledger (CM-09a)', () => {
     ]);
     expect(metrics.full_by_day).toEqual([{ day: '2026-11-08', count: 4 }]);
     expect(metrics.merged_cost).toEqual({
-      quests: [{ quest: FIRST.id, minutes: 9 }],
+      quests: [{ quest: FIRST.id, minutes: 9, push_minutes: 0 }],
       median_minutes: 9,
       total_minutes: 9,
     });
@@ -43,6 +43,7 @@ describe('check modes ledger (CM-09a)', () => {
 
   it('has no invented samples or minutes for an empty log', () => {
     expect(checkModesOf([], {})).toEqual({
+      recheck: { runs_per_check: [], carried_by_day: [], carried_then_red: [] },
       escapes: [],
       has_attributions: false,
       durations: [
@@ -122,8 +123,8 @@ describe('check modes ledger (CM-09a)', () => {
     expect(data.full_by_day).toEqual([{ day: '2026-11-09', count: 2 }]);
     expect(data.merged_cost).toEqual({
       quests: [
-        { quest: FIRST.id, minutes: 3 },
-        { quest: SECOND.id, minutes: 0 },
+        { quest: FIRST.id, minutes: 3, push_minutes: 0 },
+        { quest: SECOND.id, minutes: 0, push_minutes: 0 },
       ],
       median_minutes: 1.5,
       total_minutes: 3,

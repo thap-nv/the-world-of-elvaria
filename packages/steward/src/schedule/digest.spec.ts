@@ -4,6 +4,7 @@ import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
+import { carriedRedHistory } from './__fixtures__/carried-red.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Digest, DigestRequest, Steward } from '../types.ts';
 import {
@@ -110,6 +111,23 @@ const narrowHistory = (): Event[] =>
   }).flat();
 
 describe('the digest', () => {
+  it.each(['2026-11-07', '2026-11-06', undefined])(
+    'includes only today’s carried regressions (%s)',
+    async (day) => {
+      const port = recordingPort();
+      current = await bench({ cast: [] });
+      if (day !== undefined) {
+        await openEventLog(current.root).append(carriedRedHistory(day));
+      }
+      running = current.steward({ digest: port });
+      expect(await running.start({ loop: false })).toEqual({ ok: true });
+      await running.tick();
+      expect(port.asked).toHaveLength(1);
+      if (day === '2026-11-07') expect(port.asked[0]).toHaveProperty('carried_red', 1);
+      else expect(port.asked[0]).not.toHaveProperty('carried_red');
+    },
+  );
+
   it.each(['2026-11-07', '2026-11-06', undefined])('counts only heals due today (%s)', async (day) => {
     const port = recordingPort();
     current = await bench({ cast: [] });

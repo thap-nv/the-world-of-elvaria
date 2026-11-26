@@ -6,6 +6,8 @@ import { questPeaksOf } from './concurrency.ts';
 import { distributionOf } from './distribution.ts';
 import { everyCarried, measuredRunsOf } from './runs.ts';
 import { checkEscapesOf } from './escapes.ts';
+import { firstMergesOf, recheckOf } from './recheck.ts';
+import type { Recheck } from './recheck.ts';
 import type { TerritoryEscapes } from './escapes.ts';
 import type { Quest } from '../../schema/quest/quest.ts';
 import type { Verdict } from '../../schema/quest/verdict.ts';
@@ -17,12 +19,17 @@ import type { QuestPeak } from './concurrency.ts';
 import type { CheckDistribution } from './distribution.ts';
 
 export interface CheckModes {
+  readonly recheck: Recheck;
   readonly has_attributions: boolean;
   readonly escapes: readonly TerritoryEscapes[];
   readonly durations: readonly (CheckDistribution & { readonly mode: 'full' | 'narrow' | 'patrol' })[];
   readonly full_by_day: readonly { readonly day: string; readonly count: number }[];
   readonly merged_cost: {
-    readonly quests: readonly { readonly quest: QuestId; readonly minutes: number }[];
+    readonly quests: readonly {
+      readonly quest: QuestId;
+      readonly minutes: number;
+      readonly push_minutes: number;
+    }[];
     readonly median_minutes: number | null;
     readonly total_minutes: number;
   };
@@ -53,23 +60,34 @@ function machineCost(events: readonly Event[], quest: QuestId, before: string): 
   }, 0);
 }
 
+function pushCost(events: readonly Event[], quest: QuestId, before: string): number {
+  return events.reduce((sum, event) => {
+    if (!isEventOf(event, 'delivery.pushed') || event.data.quest !== quest) return sum;
+    return Date.parse(event.ts) <= Date.parse(before) ? sum + (event.data.push_ms ?? 0) : sum;
+  }, 0);
+}
+
 function mergedMetrics(events: readonly Event[], window: MetricsWindow) {
   const submitted = new Map<QuestId, string>();
   const costs = new Map<QuestId, number>();
+  const quests: { quest: QuestId; minutes: number; push_minutes: number }[] = [];
   const waits: number[] = [];
+  const merges = new Set(firstMergesOf(events, window));
   for (const event of events) {
     if (isEventOf(event, 'quest.submitted') && event.quest !== undefined && !submitted.has(event.quest))
       submitted.set(event.quest, event.ts);
-    if (!isEventOf(event, 'delivery.merged') || !inWindow(window, event.ts) || costs.has(event.data.quest))
-      continue;
+    if (!isEventOf(event, 'delivery.merged') || !merges.has(event)) continue;
     const { quest } = event.data;
-    costs.set(quest, machineCost(events, quest, event.ts));
+    const push = pushCost(events, quest, event.ts);
+    const cost = machineCost(events, quest, event.ts) + push;
+    costs.set(quest, cost);
+    quests.push({ quest, minutes: cost / MS_PER_MINUTE, push_minutes: push / MS_PER_MINUTE });
     const start = submitted.get(quest);
     if (start !== undefined) waits.push(Math.max(0, Date.parse(event.ts) - Date.parse(start)));
   }
   return {
     merged_cost: {
-      quests: [...costs].map(([quest, ms]) => ({ quest, minutes: ms / MS_PER_MINUTE })),
+      quests,
       median_minutes: distributionOf([...costs.values()]).median_minutes,
       total_minutes: [...costs.values()].reduce((sum, ms) => sum + ms, 0) / MS_PER_MINUTE,
     },
@@ -95,6 +113,7 @@ export function checkModesOf(
     return [event.data.checks.reduce((sum, check) => sum + check.duration_ms, 0)];
   });
   return {
+    recheck: recheckOf(events, window),
     has_attributions: events.some(
       (event) => isEventOf(event, 'check.attributed') && inWindow(window, event.ts),
     ),
