@@ -2,7 +2,7 @@
 // folder whose name has a space, with git run without the caller's GIT_* variables (the pre-push hook that runs
 // these tests exports GIT_DIR; implementation-plan §6).
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
@@ -11,7 +11,7 @@ import { tempDir } from '@elvaria/testkit';
 import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { changedPaths, DEFAULT_BASE, parseArgs, plan } from './check-changed.mjs';
+import { changedPaths, DEFAULT_BASE, parseArgs, plan, ROOT_PACKAGE } from './check-changed.mjs';
 import { pnpmInvocation, toolEnv } from './check-changed-run.mjs';
 
 const SCRIPT = path.join(import.meta.dirname, 'check-changed.mjs');
@@ -31,7 +31,7 @@ describe('plan', () => {
 
   it('runs the tests of the package and of every package that depends on it, in one pnpm run', () => {
     expect(lines(['packages/store/src/a.ts', 'packages/runner-core/src/b.ts', 'docs/cli.md'])).toEqual([
-      '--filter ...@elvaria/store --filter ...@elvaria/runner-core test',
+      '--filter ...@elvaria/store --filter ...@elvaria/runner-core --filter !the-world-of-elvaria test',
       'boundaries',
       'layout',
       'knip',
@@ -40,16 +40,27 @@ describe('plan', () => {
     ]);
   });
 
+  it("leaves out the root package, whose own test would run every suite again beside the filter's", async () => {
+    const root = path.join(import.meta.dirname, '..', 'package.json');
+    const { name } = JSON.parse(await readFile(root, 'utf8')) as { name: string };
+    expect(ROOT_PACKAGE).toBe(name);
+    expect(plan(['packages/i18n/src/glossary.json']).commands[0]?.slice(-3)).toEqual([
+      '--filter',
+      `!${name}`,
+      'test',
+    ]);
+  });
+
   it('runs one package test for another package, keyed by its folder', () => {
     expect(lines(['packages/runner-core/src/a.ts', 'packages/runner-core/src/b.ts'])).toEqual([
-      '--filter ...@elvaria/runner-core test',
+      '--filter ...@elvaria/runner-core --filter !the-world-of-elvaria test',
       'boundaries',
       'layout',
       'knip',
       'dup',
     ]);
     expect(lines(['apps/cli/src/cli.ts'])).toEqual([
-      '--filter ...@elvaria/cli test',
+      '--filter ...@elvaria/cli --filter !the-world-of-elvaria test',
       'boundaries',
       'layout',
       'knip',
@@ -87,7 +98,7 @@ describe('plan', () => {
 
   it('checks docs and generated output for i18n', () => {
     expect(lines(['packages/i18n/src/glossary.json'])).toEqual([
-      '--filter ...@elvaria/i18n test',
+      '--filter ...@elvaria/i18n --filter !the-world-of-elvaria test',
       'boundaries',
       'docs:gen --check',
       'docs:check',
@@ -105,7 +116,7 @@ describe('plan', () => {
 
   it('checks the boundaries when a workspace manifest or the boundary table moves', () => {
     expect(lines(['packages/store/package.json'])).toEqual([
-      '--filter ...@elvaria/store test',
+      '--filter ...@elvaria/store --filter !the-world-of-elvaria test',
       'boundaries',
       'docs:gen --check',
       'layout',
@@ -118,7 +129,7 @@ describe('plan', () => {
   it('checks the boundaries once for workspace code, where an import cycle inside one package can hide', () => {
     expect(lines(['packages/domain/src/quest/a.ts'])).toContain('boundaries');
     expect(lines(['packages/store/src/a.ts', 'packages/steward/src/b.ts', 'apps/cli/src/c.ts'])).toEqual([
-      '--filter ...@elvaria/store --filter ...@elvaria/steward --filter ...@elvaria/cli test',
+      '--filter ...@elvaria/store --filter ...@elvaria/steward --filter ...@elvaria/cli --filter !the-world-of-elvaria test',
       'boundaries',
       'layout',
       'knip',
@@ -145,7 +156,7 @@ describe('plan', () => {
     expect(lines(['knip.json'])).toEqual(['knip']);
     expect(lines(['package.json'])).toEqual(['knip']);
     expect(lines(['packages/store/src/io/atomic.ts'])).toEqual([
-      '--filter ...@elvaria/store test',
+      '--filter ...@elvaria/store --filter !the-world-of-elvaria test',
       'boundaries',
       'layout',
       'knip',

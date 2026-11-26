@@ -249,9 +249,13 @@ const probe: ConformanceCheck = {
   live: true,
   run: async (target) => {
     const result = await (await target.createRunner()).probe();
+    const parts = [
+      ...(result.note === undefined ? [] : [result.note.code, JSON.stringify(result.note.params)]),
+      ...(result.cli_text === undefined ? [] : [result.cli_text]),
+    ];
     assert.ok(
       ['ok', 'rate_limited'].includes(result.status),
-      `probe failed: ${result.detail ?? result.status}`,
+      `probe failed: ${parts.length === 0 ? result.status : parts.join(' ')}`,
     );
     return 'passed';
   },

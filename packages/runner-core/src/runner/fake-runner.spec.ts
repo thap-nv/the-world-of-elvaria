@@ -125,8 +125,14 @@ describe('createFakeRunner', () => {
   });
 
   it('answers probe and doctor', async () => {
-    const runner = createFakeRunner({ probe: { status: 'rate_limited', detail: 'empty' } });
-    expect(await runner.probe()).toEqual({ status: 'rate_limited', detail: 'empty' });
+    const runner = createFakeRunner({
+      probe: { status: 'rate_limited', note: { code: 'probe:ping_limited', params: {} }, cli_text: 'empty' },
+    });
+    expect(await runner.probe()).toEqual({
+      status: 'rate_limited',
+      note: { code: 'probe:ping_limited', params: {} },
+      cli_text: 'empty',
+    });
     expect(await createFakeRunner().probe()).toEqual({ status: 'ok' });
     const pinged: boolean[] = [];
     const waking = createFakeRunner({

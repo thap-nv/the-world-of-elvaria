@@ -104,7 +104,7 @@ function rejecting(runner: AgentRunner, window: ReportedWindow): AgentRunner {
 
 /** /usage cannot be read: only what the session said tells which gauge ran out. */
 const unread = ({ ping = true }: ProbeOptions): ProbeResult =>
-  ping ? { status: 'rate_limited' } : { status: 'error', detail: 'no /usage' };
+  ping ? { status: 'rate_limited' } : { status: 'error', cli_text: 'no /usage' };
 
 describe('a usage limit that names its window (P1-48, P1-22 (d))', () => {
   const play = { work: { 'Week runs dry': ['rate_limit', 'submit'] } } as const;

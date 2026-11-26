@@ -1,6 +1,7 @@
 // `agy -p /usage --output-format json` (0 tokens, ~3 s; spike P1-12a §7, implementation-plan §3.5): the
 // mana buckets of the account. The format is not promised stable, so the parser says when it cannot read it.
 import type { ProbeResult } from '@elvaria/runner-core';
+import { probeNoteOf } from '@elvaria/runner-core';
 
 export interface UsageBucket {
   readonly id: string;
@@ -116,7 +117,7 @@ export function probeOf(buckets: readonly UsageBucket[], pools: readonly string[
   const latest = resets.at(-1);
   return {
     status: 'rate_limited',
-    detail: `no mana left in ${empty.map((bucket) => bucket.id).join(', ')}`,
+    note: probeNoteOf('probe:window_empty', { windows: empty.map((bucket) => bucket.id).join(', ') }),
     ...(latest === undefined ? {} : { resets_at: latest }),
   };
 }

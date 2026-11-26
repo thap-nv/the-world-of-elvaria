@@ -1,7 +1,7 @@
 // probe(): does the account answer (implementation-plan §3.5, ADR 0009; spike P1-02)? First `claude -p "/usage"`,
 // which calls no model; if a window of the whole account is full, the tribe stays asleep until the latest reset.
 // Otherwise one turn of the cheapest model with no tool, which costs ≈ 0.00005 USD, proves a call goes through.
-import { parseJsonLine, textOf } from '@elvaria/runner-core';
+import { parseJsonLine, probeNoteOf, textOf } from '@elvaria/runner-core';
 import { pingArgv, usageArgv } from '../launch/argv.ts';
 import { runOnce } from '../launch/run-once.ts';
 import { createStreamReader } from '../session/stream.ts';
@@ -43,7 +43,7 @@ function asleep(full: readonly UsageWindow[]): ProbeResult {
   const latest = resets.at(-1);
   return {
     status: 'rate_limited',
-    detail: `usage full: ${full.map((window) => window.window).join(', ')}`,
+    note: probeNoteOf('probe:usage_full', { windows: full.map((window) => window.window).join(', ') }),
     ...(latest === undefined ? {} : { resets_at: latest }),
   };
 }
@@ -54,10 +54,11 @@ async function ping(deps: ProbeDeps): Promise<ProbeResult> {
   const ran = await runOnce(deps.launch, pingArgv(deps.model), deps);
   const reader = readStream(ran);
   if (reader.result !== undefined && reader.result.is_error !== true) return { status: 'ok' };
-  if (reader.rateLimited) return { status: 'rate_limited', detail: 'the ping hit a usage limit' };
-  const detail =
-    textOf(reader.result, 'result') ?? ran.problem ?? (firstLine(ran.stderr) || `exit ${String(ran.code)}`);
-  return { status: 'error', detail };
+  if (reader.rateLimited) return { status: 'rate_limited', note: probeNoteOf('probe:ping_limited') };
+  const text = textOf(reader.result, 'result') ?? ran.problem ?? (firstLine(ran.stderr) || undefined);
+  return text === undefined
+    ? { status: 'error', note: probeNoteOf('probe:ping_failed', { exit: String(ran.code) }) }
+    : { status: 'error', cli_text: text };
 }
 
 /**
@@ -72,8 +73,15 @@ export async function probeClaude(deps: ProbeDeps, options: ProbeOptions = {}): 
   const full = fullWindows(windows);
   if (full.length > 0) return { ...asleep(full), ...read };
   if (options.ping === false) {
-    const detail = usage.problem ?? (firstLine(usage.stderr) || 'claude -p /usage printed no usage');
-    return text === undefined ? { status: 'error', detail } : { status: 'ok', ...read };
+    const cliText = usage.problem ?? (firstLine(usage.stderr) || undefined);
+    return text === undefined
+      ? {
+          status: 'error',
+          ...(cliText === undefined
+            ? { note: probeNoteOf('probe:usage_unprinted', { command: 'claude -p /usage' }) }
+            : { cli_text: cliText }),
+        }
+      : { status: 'ok', ...read };
   }
   // An unreadable /usage (a changed text, a CLI that failed) falls back to the ping (§3.5).
   return { ...(await ping(deps)), ...read };

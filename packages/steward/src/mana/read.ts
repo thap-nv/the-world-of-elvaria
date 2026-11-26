@@ -3,6 +3,7 @@
 // and the next tick's mana step takes the windows in.
 import type { TribeId } from '@elvaria/domain';
 import type { AgentRunner, ProbeOptions, ProbeResult } from '@elvaria/runner-core';
+import { probeNoteOf } from '@elvaria/runner-core';
 
 import { nextRead } from './pools.ts';
 import type { Context } from '../context.ts';
@@ -14,7 +15,7 @@ export async function probeOf(runner: AgentRunner, options: ProbeOptions): Promi
   try {
     return await runner.probe(options);
   } catch (error) {
-    return { status: 'error', detail: messageOf(error) };
+    return { status: 'error', note: probeNoteOf('probe:threw'), cli_text: messageOf(error) };
   }
 }
 

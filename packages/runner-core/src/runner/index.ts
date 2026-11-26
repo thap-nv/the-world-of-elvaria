@@ -1,6 +1,8 @@
 export { hookMissing, hookProblem, hookScriptOf, withHookProblem } from './hook-built.ts';
 export { DOCTOR_NOTES, DOCTOR_NOTE_PARAMS, doctorNoteOf, callNote, hookNote } from './doctor-notes.ts';
 export type { DoctorNoteCode, DoctorNote } from './doctor-notes.ts';
+export { PROBE_NOTES, PROBE_NOTE_PARAMS, probeNoteOf } from './probe-notes.ts';
+export type { ProbeNoteCode, ProbeNote } from './probe-notes.ts';
 export { FAKE_ADAPTER, FAKE_TOKENS, createFakeRunner, scenarioFromEnv } from './fake-runner.ts';
 export type { FakeRunner, FakeRunnerOptions } from './fake-runner.ts';
 export { HANDOVER_SECTIONS, HEAL_SECTION, memosOf, questionOf, readQuestion, sectionOf } from './handover.ts';
