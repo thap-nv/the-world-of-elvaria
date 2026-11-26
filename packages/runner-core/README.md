@@ -274,7 +274,11 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   conflict names the base branch's commit it met (`BaseUpdate.base`): the Steward's merge quest is made from it.
   `generate` runs `commands.generate` with the quest's secrets, gives back what it changed outside `shared_paths`
   and commits the rest (`plot/generate.ts`); `mergesClean` says whether an open branch still merges cleanly into
-  the tips a look saw. A party's merge quest gets the same rules for its parts and base branch
+  the tips a look saw. (RC-05, ADR 0035) `update(plot, territory, run)` makes the same merge early, before the
+  checks of a run of the quest: the record keeps the way back (`update_from`: head, base, run), and
+  `takeBack(plot, run)` resets the branch to that head (the Steward's own commits, never pushed), the base with it,
+  setup to run again; a pending update of another run is the branch's history, neither resumed nor taken back.
+  A party's merge quest gets the same rules for its parts and base branch
   (`MergeOptions.shared`), counts from the base branch even when it did not move, and is set up again once a part
   is in (PS-08e (6), (7)). A generated file (`regenerate`) one of its merges left in a conflict for the knight, or
   resolved by the rule before a later merge stopped, stays in the plot's record (`regenerate_pending`) until the
@@ -462,7 +466,9 @@ base branch into a merge quest's plot: main moved, unchanged, in conflict, reset
 setup run again once main is in. (PS-09) `src/plot/shared-merge.spec.ts` covers the rules; `base-update.spec.ts`
 and `generate.spec.ts` (`src/__fixtures__/queue-repo.ts`) the update on real git: nothing when main did not move,
 regenerate and union resolved, a conflict leaving the plot as it was, a stop resumed without a second merge, a hook
-refusing the commit, line endings kept, and the generators' commit and given-back files.
+refusing the commit, line endings kept, and the generators' commit and given-back files; (RC-05)
+`base-update-take-back.spec.ts` the early update of a run, its way back, its take back, and another run's pending
+update counted as history.
 The `src/process/` specs kill real node process trees (`src/__fixtures__/tree.ts`: a node that starts an idle
 grandchild) on this machine: the CI matrix, started by hand since 2026-11-10, runs them on Windows and macOS, and the
 SIGTERM-then-SIGKILL case on POSIX only.
