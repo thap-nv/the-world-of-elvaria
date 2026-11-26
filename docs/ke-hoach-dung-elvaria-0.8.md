@@ -544,8 +544,15 @@ Runner dịch output của mọi CLI về cùng schema sự kiện ở mục 4. 
 - **Low-poly giữ nguyên.** Vẻ hùng tráng đến từ ánh sáng và không khí, không từ số đa giác: nắng thấp chiếu ngược, sương có màu theo khoảng cách, núi xa xếp lớp mờ xanh, quy mô theo chiều dọc (vách đá, thác, tháp nhọn, tượng canh cửa), bảng màu và cờ hiệu riêng từng vùng. Mọi thứ đó nằm trong "Luật nhẹ" ở trên.
 - **Nền văn hóa theo kiểu lãnh thổ** (gắn với "Mở cõi"): code là thành đá trắng trong thung lũng có thác và cầu vòm; docs là thành thư viện trên cao nguyên giữa cây lá vàng, cầu thang quanh thân cây, đèn lồng; data là đài thiên văn tạc vào núi tuyết, cửa núi có hai tượng canh; giao hàng là bến cảng đá trắng, một PR được merge là một con thuyền rời bến; trung tâm là lâu đài của vua giữa đồng ruộng, đường tỏa ra các vùng.
 - **Tộc có nét riêng** (kiến trúc phụ, cờ, bảng màu), nhưng là dữ liệu của theme qua kho ngoại hình của tộc, không viết cứng theo tên tộc.
+- **Cảnh mở, không dừng ở bộ đầu tiên** (chủ nhân bổ sung 2026-11-26). Các cảnh của moodboard chỉ là bộ khởi đầu; thế giới mọc thêm cảnh theo tình hình vương quốc để luôn sống động, rộng lớn và hùng vĩ:
+  - theo lãnh thổ: kiểu lãnh thổ mới mang nền văn hóa mới; lãnh thổ lớn lên thì công trình lớn theo (tháp thêm tầng, thành thêm vòng tường, bến thêm cầu tàu), suy từ khảo sát điền địa;
+  - theo sự kiện: nghi thức, trận đánh và chiến dịch, Rồng canh vùng đất mới, mở cõi (đường mới mọc, sương lui khỏi biên), thuyền rời bến khi giao hàng, lễ hội khi xong một mốc, bóng tối phủ và điêu tàn sau sự cố, và cảnh cho những sự kiện chưa có hôm nay;
+  - theo thời gian: ngày đêm, có thể cả mùa (lá thu, tuyết đông) bằng bảng màu;
+  - rộng lớn: bản đồ không có kích thước cố định; giữa các lãnh thổ có vùng hoang (rừng, núi, biển) để toàn cảnh luôn có chân trời xa.
+
+  Mỗi cảnh là dữ liệu của theme (bảng màu, công trình, decal, sprite, điều kiện kích hoạt từ event hay trạng thái), cùng chỗ với `kinds`, `rituals`, `buildings`: thêm cảnh không sửa lõi (ADR 0016), và mỗi cảnh vẫn nằm trong "Luật nhẹ".
 - **Đọc được trước, đẹp sau.** Ở mức `full`, nghề và trạng thái nhân vật phải đọc được ngay (màu theo nghề rõ, nhân vật có thể lớn hơn tỉ lệ thật một chút); vẻ hùng tráng dành cho tầm xa, toàn cảnh và chế độ điện ảnh.
-- **Moodboard**: bảy ảnh AI làm ngày 2026-11-26 (toàn cảnh, thung lũng code, cùng thung lũng khi bóng tối phủ, thư viện trên cây, đài thiên văn, bến cảng, và một ảnh kiểu đảo đồ chơi không chọn). Chủ nhân giữ ngoài repo; ảnh là cảm hứng, không là tài sản. Trang định hướng mỹ thuật chi tiết (bảng màu từng vùng, luật ánh sáng, danh sách công trình biểu tượng) do một phiên kế hoạch viết trước khi làm tài sản.
+- **Moodboard**: bảy ảnh AI làm ngày 2026-11-26 (toàn cảnh, thung lũng code, cùng thung lũng khi bóng tối phủ, thư viện trên cây, đài thiên văn, bến cảng, và một ảnh kiểu đảo đồ chơi không chọn). Chủ nhân giữ ngoài repo; ảnh là cảm hứng, không là tài sản. Trang định hướng mỹ thuật chi tiết (bảng màu từng vùng, luật ánh sáng, danh sách công trình biểu tượng, danh mục cảnh mở và cách thêm một cảnh) do một phiên kế hoạch viết trước khi làm tài sản.
 
 ### Tài sản
 
@@ -663,6 +670,7 @@ Không còn câu hỏi mở trước giai đoạn 0.
 | 2026-11-11 | Kế hoạch chi tiết giai đoạn 1.5 (`docs/plans/phase-1.5.md`): khảo sát gộp vào quest kế hoạch của pháp sư; thư mang tên `memo` trong dữ liệu; vùng file được giữ tới khi quest lưu trữ; bài thử của mốc 1.5 là mã lý do cộng chuỗi VI/EN cho trạm xá và `doctor`; Tể tướng phân loại thư theo lịch mỗi ngày một lần |
 | 2026-11-16 | (161) Vương quốc của ai người nấy giữ, bài học chia sẻ được giữa các vương quốc: hai cửa vào (bản phát hành là mặc định; file gói do người dùng nhập, nhận từng dòng), không server, không đồng bộ, không tự tải; mặc định không gì rời vương quốc; chưa dựng lệnh xuất hay nhập trước Đền bản đầu; địa chí đi theo repo (`docs/plans/lesson-sharing.md`) |
 | 2026-11-26 | Định hướng mỹ thuật: high fantasy hùng tráng kiểu Trung Địa trong khung low-poly, tự thiết kế, không dùng tài sản trí tuệ của Tolkien; mỗi kiểu lãnh thổ một nền văn hóa; ánh sáng nướng ở giờ vàng, ngày đêm chỉ đổi màu; "bóng tối phủ" lãnh thổ có sự cố; CC0 cho đồ nền, công trình biểu tượng tự làm; trang định hướng chi tiết do phiên kế hoạch viết trước khi làm tài sản (mục 9) |
+| 2026-11-26 | Cảnh mở: thế giới mọc thêm cảnh theo lãnh thổ, sự kiện và thời gian, không dừng ở bộ moodboard đầu tiên; mỗi cảnh là dữ liệu theme, thêm không sửa lõi, trong ngân sách "Luật nhẹ" (mục 9) |
 
 ---
 
