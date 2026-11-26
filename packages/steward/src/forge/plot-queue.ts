@@ -6,12 +6,17 @@ import type { Quest, Territory } from '@elvaria/domain';
 import type { BaseTips, BaseUpdate, GenerateOutcome, GenerateRequest } from '@elvaria/runner-core';
 
 export interface PlotQueue {
-  /** The base branch merged into a done quest's branch, hot files resolved by their rule (PlotManager.update). */
-  update?(plot: Quest['plot'], territory: Territory): Promise<BaseUpdate>;
+  /**
+   * The base branch merged into a done quest's branch, hot files resolved by their rule (PlotManager.update); with
+   * `run` (RC-05), early, before the checks of that run after its session.
+   */
+  update?(plot: Quest['plot'], territory: Territory, run?: number): Promise<BaseUpdate>;
   /** commands.generate after an update, and the commit of the hot files it rewrote (PlotManager.generate). */
   generate?(plot: Quest['plot'], territory: Territory, request: GenerateRequest): Promise<GenerateOutcome>;
   /** The update's checks passed: nothing pending in the plot any more. */
   settle?(plot: Quest['plot']): Promise<void>;
+  /** (RC-05) `run`'s early update taken back after its red checks (PlotManager.takeBack); false: none pending. */
+  takeBack?(plot: Quest['plot'], run: number): Promise<boolean>;
   /** Whether an open pull request's branch still merges cleanly into the base branch `tips` hold. */
   mergesClean?(plot: Quest['plot'], tips: BaseTips): Promise<boolean | undefined>;
   /** (PS-08b) Lines added and removed since the plot forked, the `exclude` globs aside (PlotManager.diffLines). */

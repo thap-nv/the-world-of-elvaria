@@ -3,13 +3,17 @@
 // hot files resolved by their rule, the merge concluded by a commit of the Steward. Nothing when the branch holds the
 // base branch already: the judge's checks ran on this very commit. The record marks the update pending from the merge
 // until the generators and the checks passed on it (settleUpdate), so a Steward stopped in between runs only what
-// follows the merge, on the same merge commit; a merge stopped before its commit is undone and made again.
+// follows the merge, on the same merge commit; a merge stopped before its commit is undone and made again. (RC-05,
+// ADR 0035) The Steward makes the same update early, before the checks of a run after its session: the record keeps
+// the way back (update_from), and a red run takes the merge back to the head as submitted (takeBackUpdate).
 import { dryMerge, mergeResolved, resolvedOf } from './dry-merge.ts';
 import { inHead } from './merge.ts';
+import { gitOut } from './git.ts';
 import { changePlotRecord, plotRecordOf } from './plot-record.ts';
-import { restoreWorktree } from './worktree-ops.ts';
+import { restoreWorktree, worktreeHead } from './worktree-ops.ts';
 import type { ResolvedFile, SharedPaths } from './dry-merge.ts';
 import type { Git } from './git.ts';
+import type { PlotRecord, UpdateFrom } from './plot-record.ts';
 import type { BaseTips } from './in-base.ts';
 import type { BaseTarget } from './merge.ts';
 
@@ -40,9 +44,10 @@ export async function updateFromBase(
   into: string,
   target: BaseTarget,
   shared: SharedPaths,
+  run?: number,
 ): Promise<BaseUpdate> {
   await cleanSlate(git, worktree);
-  const record = await plotRecordOf(git, worktree);
+  const record = await recordForRun(git, worktree, run);
   if (await inHead(git, worktree, target.commit)) {
     if (record.update_pending !== true) return { state: 'current' };
     if (record.base !== target.commit) await changePlotRecord(git, worktree, { base: target.commit });
@@ -52,7 +57,10 @@ export async function updateFromBase(
   if (dry.state === 'conflict') return { state: 'conflict', base: target.commit, paths: dry.paths };
   if (dry.state === 'failed') return { state: 'refused', detail: dry.detail };
   const files = dry.state === 'resolvable' ? dry.files : [];
-  await changePlotRecord(git, worktree, { update_pending: true });
+  await changePlotRecord(git, worktree, {
+    update_pending: true,
+    ...(await wayBack(git, worktree, record, run)),
+  });
   const stop = await mergeResolved(git, worktree, { into, ...target }, files);
   if (stop !== undefined) {
     await changePlotRecord(git, worktree, { update_pending: record.update_pending === true });
@@ -60,6 +68,44 @@ export async function updateFromBase(
   }
   await changePlotRecord(git, worktree, { base: target.commit, setup_done: false });
   return { state: 'merged', base: target.commit, resolved: resolvedOf(files) };
+}
+
+/**
+ * (RC-05) The record an update of `run`'s checks starts from: a pending update of another (the queue's merge left red,
+ * an earlier run's) is part of the branch's history now, since work went on over it, so nothing of it is resumed or
+ * taken back. The queue's update (no run) resumes whatever is pending, as before.
+ */
+async function recordForRun(git: Git, worktree: string, run: number | undefined): Promise<PlotRecord> {
+  const record = await plotRecordOf(git, worktree);
+  if (run === undefined || record.update_pending !== true || record.update_from?.run === run) return record;
+  return changePlotRecord(git, worktree, { update_pending: false });
+}
+
+/** (RC-05) The way back an early update records before its merge; a merge over its own pending one keeps the first. */
+async function wayBack(
+  git: Git,
+  worktree: string,
+  record: PlotRecord,
+  run: number | undefined,
+): Promise<{ update_from?: UpdateFrom }> {
+  if (run === undefined) return {};
+  if (record.update_pending === true && record.update_from !== undefined) return {};
+  return { update_from: { head: await worktreeHead(git, worktree), base: record.base, run } };
+}
+
+/**
+ * (RC-05, ADR 0035) The early update of `run`'s checks was red: the branch goes back to its head before the merge (the
+ * Steward's own commits, never pushed), `base` with it, and setup runs again for the lockfile it holds. False, nothing
+ * touched, when no update of that run is pending.
+ */
+export async function takeBackUpdate(git: Git, worktree: string, run: number): Promise<boolean> {
+  const record = await plotRecordOf(git, worktree);
+  const from = record.update_from;
+  if (record.update_pending !== true || from?.run !== run) return false;
+  await cleanSlate(git, worktree);
+  await gitOut(git, worktree, ['reset', '--hard', '--quiet', from.head]);
+  await changePlotRecord(git, worktree, { base: from.base, setup_done: false, update_pending: false });
+  return true;
 }
 
 /** The generators and the checks passed on the update: nothing is pending any more. */

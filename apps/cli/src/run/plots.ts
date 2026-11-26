@@ -112,10 +112,12 @@ const baseLooksOf = (manager: PlotManager): Pick<Plots, 'drift' | 'baseTips' | '
  */
 const queueOf = (
   manager: PlotManager,
-): Pick<Plots, 'update' | 'generate' | 'settle' | 'mergesClean' | 'diffLines'> => ({
-  update: (plot, territory) => manager.update(plot, territory),
+): Pick<Plots, 'update' | 'generate' | 'settle' | 'takeBack' | 'mergesClean' | 'diffLines'> => ({
+  update: (plot, territory, run) => manager.update(plot, territory, run),
   generate: (plot, territory, request) => manager.generate(plot, territory, request),
   settle: (plot) => manager.settle(plot),
+  // (RC-05) The early update of a run after its session, taken back once its checks are red.
+  takeBack: (plot, run) => manager.takeBack(plot, run),
   mergesClean: (plot, tips) => manager.mergesClean(plot, tips),
   diffLines: (plot, exclude) => manager.diffLines(plot, exclude),
 });
