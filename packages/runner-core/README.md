@@ -313,7 +313,12 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   exclusive run first (P1-54), so a short one never waits out the lock. A check that cannot run (shell syntax, program
   not found, lock never freed) fails. A failing check whose log ends with a line of the territory's
   `environment_errors` (or that never got the lock) carries that line as `CheckRun.environment` (P1-54,
-  `src/checks/environment.ts`): its environment failed, not the work.
+  `src/checks/environment.ts`): its environment failed, not the work. (RC-03, ADR 0035) `ChecksRequest.carried` (the
+  domain's `carryOf`) names checks that do not run: each comes back passed in 0 ms with `CheckRun.carried_from`,
+  its log one line naming the run it stands for. `checkConfigOf` (`src/checks/check-config.ts`) is the `config` of
+  `check.end` and `patrol.ran`: sha256 of `commands.setup` and each check's id, `run`, `narrow`, cut to 16 hex
+  digits. `treeOf`, `stagedTreeOf` and `checkedTreeOf` (`src/plot/git.ts`) give a commit's tree, the staged tree
+  (`git write-tree`) and the tree a run is a fact about: HEAD's on a clean plot, none with uncommitted changes.
   `ChecksRequest.signal` (P1-25: the Steward runs checks outside its tick) kills the running check and starts no
   other when it aborts, the log saying so; `runProgram` takes the same `signal`. `ChecksRequest.secrets` (P1-10b:
   the quest's `secrets_required`, treasury name → value) puts them in each check's env over the host's minimal env

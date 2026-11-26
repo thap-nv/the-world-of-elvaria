@@ -5,8 +5,10 @@
 // whose log shows its environment failed (territory.environment_errors) says so (P1-54): its run says nothing of the
 // work. The checks that are not exclusive run first, so a check of seconds never waits out the lock (P1-54). Each
 // gets ELVARIA_SCREENS_DIR, where it leaves the screens its judge reads (PS-11b, screens.ts), emptied once a round,
-// and, in a narrow run, ELVARIA_CHECK_BASE, the commit the plot's diff counts from (CM-01): what to check.
-import type { PartyRole, Territory, TerritoryCheck, VerdictCheck } from '@elvaria/domain';
+// and, in a narrow run, ELVARIA_CHECK_BASE, the commit the plot's diff counts from (CM-01): what to check. A check the
+// Steward carries (RC-03, ADR 0035: green on this very tree with the same command) does not run: it passes in no
+// time, and its log says which run it stands for, so no older log of the same name speaks for it.
+import type { CarriedCheck, PartyRole, Territory, TerritoryCheck, VerdictCheck } from '@elvaria/domain';
 
 import { CHECK_BASE_ENV, checkLinesOf } from './check-mode.ts';
 import type { CheckRunMode } from './check-mode.ts';
@@ -67,6 +69,11 @@ export interface ChecksRequest {
    * run only: a run in full keeps the env it had before CM-01. Absent: none, as without git.
    */
   readonly base?: string;
+  /**
+   * (RC-03, ADR 0035) The checks the Steward carries instead of running (the domain's carryOf). One the paths do not
+   * select stays out, as if not carried. Absent: every selected check runs.
+   */
+  readonly carried?: readonly CarriedCheck[];
 }
 
 export interface ChecksOptions {
@@ -89,6 +96,8 @@ export interface CheckRun {
    * territory's environment_errors, or the machine's own lockBusyLine. Never on a passing check.
    */
   readonly environment?: string;
+  /** (RC-03) It did not run: carried from this line, whose green on the same tree it stands for. */
+  readonly carried_from?: string;
 }
 
 /** Portable, relative to the kingdom. */
@@ -221,6 +230,23 @@ async function runExclusive(
   return { ...run, timed_out: false, environment: ran.error };
 }
 
+/** A check carried, not run: passed in no time, its log a line that names the run it stands for. */
+async function carriedRun(check: TerritoryCheck, request: ChecksRequest, from: string): Promise<CheckRun> {
+  const logPath = checkLogOf(request.run_dir, check.id);
+  const note = `elvaria: ${check.id} did not run: it passed with the same command on this very tree in ${from}`;
+  const log = await openLog(request.kingdom, logPath, note);
+  await log.close();
+  return {
+    id: check.id,
+    pass: true,
+    duration_ms: 0,
+    log_path: logPath,
+    exit_code: null,
+    timed_out: false,
+    carried_from: from,
+  };
+}
+
 /**
  * Runs the checks `request.touched` selects, one at a time: those that are not exclusive first, in the territory's
  * order, then the exclusive ones, each after it takes the territory's lock, so two quests never run their Docker or
@@ -238,14 +264,14 @@ export async function runChecks(
     ...selected.filter((check) => !check.exclusive),
     ...selected.filter((check) => check.exclusive),
   ];
+  const carried = new Map((request.carried ?? []).map(({ id, from }) => [id, from]));
   const runs: CheckRun[] = [];
   for (const check of ordered) {
     if (request.signal?.aborted === true) break;
-    runs.push(
-      check.exclusive
-        ? await runExclusive(check, request, host, waitMs)
-        : await runCheck(check, request, host, undefined, { lock_wait_ms: waitMs }),
-    );
+    const from = carried.get(check.id);
+    if (from !== undefined) runs.push(await carriedRun(check, request, from));
+    else if (check.exclusive) runs.push(await runExclusive(check, request, host, waitMs));
+    else runs.push(await runCheck(check, request, host, undefined, { lock_wait_ms: waitMs }));
   }
   return runs;
 }
