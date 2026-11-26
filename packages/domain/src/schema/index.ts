@@ -4,6 +4,7 @@ export * from './character/constants.ts';
 export * from './command/inbox-command.ts';
 export * from './command/memo-payloads.ts';
 export * from './command/payloads.ts';
+export * from './device/device.ts';
 export * from './common.ts';
 export * from './contracts.ts';
 export * from './amendments.ts';

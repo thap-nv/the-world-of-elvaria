@@ -138,6 +138,10 @@
       "web_push": false,
       "messaging": null
     },
+    "herald": {
+      "port": 7411,
+      "origins": []
+    },
     "tunnel": {
       "enabled": false
     },

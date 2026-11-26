@@ -7,6 +7,8 @@ import type {
   CampaignId,
   Character,
   CharacterId,
+  Device,
+  DeviceId,
   Kingdom,
   Memo,
   MemoId,
@@ -23,6 +25,7 @@ import type {
 import {
   CAMPAIGN_SPEC,
   CHARACTER_SPEC,
+  DEVICE_SPEC,
   KINGDOM_SPEC,
   MEMO_SPEC,
   QUEST_SPEC,
@@ -49,6 +52,8 @@ export interface KingdomStore {
   readonly campaigns: EntityStore<Campaign, CampaignId>;
   readonly verdicts: EntityStore<Verdict, VerdictId>;
   readonly memos: EntityStore<Memo, MemoId>;
+  /** The devices paired with the Herald and their roles (P2-01, ADR 0037). */
+  readonly devices: EntityStore<Device, DeviceId>;
   readonly inbox: InboxStore;
   /** The temple's and each character's scripture with its ledger (PS-12c). */
   readonly scriptures: ScriptureStore;
@@ -67,6 +72,7 @@ export function openKingdom(dir: string): KingdomStore {
     campaigns: entityStore(root, CAMPAIGN_SPEC),
     verdicts: entityStore(root, VERDICT_SPEC),
     memos: entityStore(root, MEMO_SPEC),
+    devices: entityStore(root, DEVICE_SPEC),
     inbox: inboxStore(root),
     scriptures: scriptureStore(root),
     loadRegistry: () => loadRegistry(root),

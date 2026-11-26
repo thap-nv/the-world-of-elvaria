@@ -2,7 +2,7 @@
 // refused it. Apart from event-data.ts since PS-03b.
 import { z } from 'zod';
 
-import { REGISTRY_ID_PATTERN, UlidSchema } from '../../core/ids.ts';
+import { DeviceIdSchema, REGISTRY_ID_PATTERN, UlidSchema } from '../../core/ids.ts';
 import { COMMAND_SOURCES } from '../command/inbox-command.ts';
 
 const describe = (description: string) => ({ description });
@@ -31,4 +31,11 @@ export const CommandResultDataSchema = z.strictObject({
         "`chancellor` when the command came from the Chancellor's triage (PS-03b), `monk` from the temple (PS-12c): the metrics ledger leaves it out of the owner's steps. Absent for the owner's commands (CLI, Herald, phone).",
       ),
     ),
+  // Optional and added after v1 (P2-01): the command's own `device`, so the log says which paired device asked
+  // (threat model N10) and the Herald hands the answer to that device only.
+  device: DeviceIdSchema.optional().meta(
+    describe(
+      'The paired device a command of source herald or lite came from (InboxCommand.device), when it named one.',
+    ),
+  ),
 });

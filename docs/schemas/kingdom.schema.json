@@ -555,6 +555,30 @@
         }
       }
     },
+    "herald": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "description": "The loopback port the Herald listens on.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 7411
+        },
+        "origins": {
+          "description": "Origins the Herald accepts besides its own loopback origin, which it always accepts: the tunnel's (e.g. https://elvaria.example.ts.net), added by the owner. A request through one of them is source lite; through loopback, source herald (ADR 0031 item 5).",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^https?://[a-z0-9.-]+(?::[0-9]{1,5})?$"
+          },
+          "default": []
+        }
+      },
+      "default": {}
+    },
     "tunnel": {
       "type": "object",
       "additionalProperties": false,
@@ -997,6 +1021,10 @@
         "desktop": true,
         "web_push": false,
         "messaging": null
+      },
+      "herald": {
+        "port": 7411,
+        "origins": []
       },
       "tunnel": {
         "enabled": false

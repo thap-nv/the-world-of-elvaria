@@ -16,6 +16,7 @@ import { AmendmentsSchema } from './amendments.ts';
 import { CouncilSchema } from './council.ts';
 import { DelegationSchema } from './delegation.ts';
 import { HealSchema } from './kingdom-heal.ts';
+import { HeraldSchema } from './kingdom-herald.ts';
 import { ProgramsSchema } from './program.ts';
 import { ScheduleSchema } from './kingdom-schedule.ts';
 import { TribeSchema } from './tribe.ts';
@@ -215,6 +216,7 @@ export const KingdomSchema = z
         .default(null)
         .meta(describe('Messaging channel, chosen in stage 2; null until then.')),
     }),
+    herald: HeraldSchema,
     tunnel: z.strictObject({
       enabled: z.boolean().default(false),
       kind: z.enum(['tailscale', 'cloudflare']).optional(),

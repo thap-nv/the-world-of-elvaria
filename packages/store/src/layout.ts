@@ -5,6 +5,7 @@ import { journalOf } from '@elvaria/eventlog';
 import type {
   CampaignId,
   CharacterId,
+  DeviceId,
   MemoId,
   QuestId,
   RegistryFile,
@@ -21,6 +22,8 @@ export const KINGDOM_DIRS = [
   'campaigns',
   'verdicts',
   'memos',
+  // P2-01 (ADR 0037): the paired devices and their roles; only the owner's commands write them.
+  'devices',
   'events',
   'chronicle',
   'temple',
@@ -68,6 +71,8 @@ export const kingdomLayout = {
   verdict: (id: VerdictId): string => `verdicts/${id}.json`,
   /** A memo the Steward filed from a handover letter (PS-02, ADR 0024). */
   memo: (id: MemoId): string => `memos/${id}.json`,
+  /** A device paired with the Herald and its role (P2-01, ADR 0037). */
+  device: (id: DeviceId): string => `devices/${id}.json`,
   /** The digest of a local day `yyyy-mm-dd` (PS-03): apps/cli writes it when the Steward says so. */
   digest: (day: string): string => `digest/${day}.md`,
   inboxCommand: (name: string): string => `${INBOX_DIR}/${name}.json`,

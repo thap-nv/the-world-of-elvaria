@@ -4,6 +4,7 @@ import { CampaignSchema } from './campaign/campaign.ts';
 import { CharacterSchema } from './character/character.ts';
 import { DisruptionsFileSchema } from './disruption/disruption-kind.ts';
 import { InboxCommandSchema } from './command/inbox-command.ts';
+import { DeviceSchema } from './device/device.ts';
 import { EventSchema } from './event/event.ts';
 import { KingdomSchema } from './kingdom.ts';
 import { LessonSchema } from './lesson/lesson.ts';
@@ -41,6 +42,7 @@ export const CONTRACTS = {
   memo: MemoSchema,
   event: EventSchema,
   'inbox-command': InboxCommandSchema,
+  device: DeviceSchema,
   kind: KindsFileSchema,
   class: ClassesFileSchema,
   ritual: RitualsFileSchema,

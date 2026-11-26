@@ -40,6 +40,7 @@ Một phần của [kế hoạch triển khai](../implementation-plan.md), tách
   temple/scripture.json      # sổ kinh của kinh chung, chỉ Nhiếp chính ghi (PS-12c)
   temple/skills/<id>/SKILL.md # bí kíp (+ file kèm), nạp theo tag; giai đoạn 1 chưa có (§3.13)
   inbox/<ulid>.json          # lệnh của người dùng (CLI, Sứ giả, điện thoại) chờ Nhiếp chính xử lý; inbox/done/ sau khi áp dụng
+  devices/<id>.json          # thiết bị ghép đôi với Sứ giả và vai của nó (P2-01, ADR 0037); chỉ lệnh của chủ nhân ghi
   world/map.json             # giai đoạn 3
   .runs/<quest>-<n>/         # stdout/stderr thô của CLI (đã che secret), settings.json sinh ra, prompt đã dựng, checks/*.log
   adapters/<name>.mjs        # adapter tộc do người dùng viết (tùy chọn, §3.14)
@@ -66,6 +67,7 @@ Hợp đồng chính xác (kiểu, mẫu id, mặc định, bất biến, ví d�
 | [scripture](../schemas/scripture.schema.json) | `temple/scripture.json`, `characters/<id>/scripture.json` (sổ kinh, PS-12c) |
 | [event](../schemas/event.schema.json) | một dòng `events/*.jsonl`, `journal.jsonl` |
 | [inbox-command](../schemas/inbox-command.schema.json) | `inbox/<ulid>.json` |
+| [device](../schemas/device.schema.json) | `devices/<id>.json` (thiết bị ghép đôi với Sứ giả, vai và lãnh thổ, P2-01, ADR 0037) |
 | [kind](../schemas/kind.schema.json), [class](../schemas/class.schema.json), [ritual](../schemas/ritual.schema.json), [script](../schemas/script.schema.json), [tag](../schemas/tag.schema.json) | `registry/{kinds,classes,rituals,scripts,tags}.json` |
 | [skill](../schemas/skill.schema.json) | front matter của `temple/skills/<id>/SKILL.md` |
 | [quest-draft](../schemas/quest-draft.schema.json) | structured output của Tể tướng (`--json-schema`) |

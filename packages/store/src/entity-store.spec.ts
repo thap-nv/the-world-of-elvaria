@@ -1,7 +1,15 @@
 import { mkdir, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
-import { KingdomSchema, QuestIdSchema, QuestSchema, TerritorySchema, err, ok } from '@elvaria/domain';
+import {
+  DeviceSchema,
+  KingdomSchema,
+  QuestIdSchema,
+  QuestSchema,
+  TerritorySchema,
+  err,
+  ok,
+} from '@elvaria/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { fixture, plant, tempKingdom } from './__fixtures__/kingdom.ts';
@@ -231,6 +239,29 @@ describe('list', () => {
     const listing = await store.characters.list();
     expect(listing.items.map((item) => item.id)).toEqual([character.id]);
     expect(listing.issues).toMatchObject([{ code: 'not_found', file: 'characters/lone/character.json' }]);
+  });
+});
+
+describe('devices (P2-01, ADR 0037)', () => {
+  it('keeps each paired device in devices/<id>.json, and a kingdom paired with none has none', async () => {
+    expect(await store.devices.list()).toEqual({ items: [], issues: [] });
+    const device = DeviceSchema.parse(fixture('device'));
+    expect(await store.devices.write(device)).toEqual({ ok: true, value: device });
+    expect(
+      JSON.parse(await readFile(path.join(kingdom.root, 'devices', `${device.id}.json`), 'utf8')),
+    ).toEqual(fixture('device'));
+    const revoked = { ...device, revoked_at: '2026-11-26T18:00:00+07:00' };
+    expect(await store.devices.update(device.id, () => ok(revoked))).toEqual({ ok: true, value: revoked });
+    expect((await store.devices.list()).items).toEqual([revoked]);
+  });
+
+  it('refuses a device the schema refuses, and an id that names no device file', async () => {
+    const device = DeviceSchema.parse(fixture('device'));
+    expect(await store.devices.write({ ...device, territories: [] })).toMatchObject({ ok: false });
+    expect(await store.devices.read('../kingdom' as never)).toMatchObject({
+      ok: false,
+      error: { code: 'invalid_id' },
+    });
   });
 });
 

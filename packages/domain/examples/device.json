@@ -1,0 +1,26 @@
+[
+  {
+    "version": 1,
+    "id": "dev_20261126_7pzkfv",
+    "label": "Owner's laptop",
+    "role": "full",
+    "created_at": "2026-11-26T09:12:40+07:00"
+  },
+  {
+    "version": 1,
+    "id": "dev_20261126_4k2pqz",
+    "label": "Phone at the office",
+    "role": "scoped",
+    "territories": ["dc1-se-team"],
+    "created_at": "2026-11-26T09:20:03+07:00"
+  },
+  {
+    "version": 1,
+    "id": "dev_20261126_9tw3hx",
+    "label": "Tablet of the BA",
+    "role": "inquiry",
+    "territories": ["dc1-se-team", "handbook"],
+    "created_at": "2026-11-26T10:02:18+07:00",
+    "revoked_at": "2026-11-26T17:45:00+07:00"
+  }
+]

@@ -4,7 +4,7 @@
 // both accept exactly the same files, because every branch fixes `kind` to one value.
 import { z } from 'zod';
 
-import { UlidSchema } from '../../core/ids.ts';
+import { DeviceIdSchema, UlidSchema } from '../../core/ids.ts';
 import { DateTimeSchema, GENERATED_NOTE } from '../common.ts';
 import {
   AnswerPayloadSchema,
@@ -52,6 +52,11 @@ const command = <K extends string, P extends z.ZodType>(kind: K, payload: P) =>
     ts: DateTimeSchema,
     kind: z.literal(kind),
     source: SourceSchema,
+    // Optional and added after v1 (P2-01, ADR 0037): only the Herald writes it, on a command of source herald or lite.
+    device: DeviceIdSchema.optional().meta({
+      description:
+        "The paired device the command came from (devices/<id>.json), set by the Herald with source herald or lite; the Steward checks the command against that device's role again (deviceMay) and refuses it when the device is missing, unknown or revoked. Absent from every other source.",
+    }),
     payload,
   });
 
