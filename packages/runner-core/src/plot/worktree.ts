@@ -10,7 +10,7 @@ import type { Result, Territory } from '@elvaria/domain';
 import { comparePath } from '@elvaria/store';
 
 import { fetchBase } from './fetch.ts';
-import { gitOut } from './git.ts';
+import { gitOut, refCommitsOf } from './git.ts';
 import type { Git } from './git.ts';
 import { gitDirOf, readPlotRecord, writePlotRecord } from './plot-record.ts';
 import type { PlotRecord } from './plot-record.ts';
@@ -118,8 +118,11 @@ export async function forkPoint(
   if (branch === undefined) return failure('git_failed', 'the territory has no default_branch');
   const fetched =
     vcs.remote !== undefined && (target.fetch === false || (await fetchBase(git, repo, branch)));
-  const local = await commitOf(git, repo, `refs/heads/${branch}`);
-  const remote = fetched ? await commitOf(git, repo, `refs/remotes/origin/${branch}`) : undefined;
+  // One look at both tips (RC-10); origin's is read only after a fetch that succeeded, or when told not to fetch.
+  const [localRef, remoteRef] = [`refs/heads/${branch}`, `refs/remotes/origin/${branch}`];
+  const tips = await refCommitsOf(git, repo, fetched ? [localRef, remoteRef] : [localRef]);
+  const local = tips.get(localRef);
+  const remote = tips.get(remoteRef);
   if (local === undefined)
     return remote === undefined ? failure('git_failed', `no branch ${branch}`) : ok(remote);
   if (remote === undefined) return ok(local);

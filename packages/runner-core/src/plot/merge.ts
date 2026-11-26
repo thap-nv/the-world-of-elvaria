@@ -15,7 +15,7 @@ import { fromPortable } from '@elvaria/store';
 
 import { dryMerge, mergeResolved, resolvedOf } from './dry-merge.ts';
 import { generateLater } from './generate-later.ts';
-import { gitOut, zList } from './git.ts';
+import { gitOut, refCommitsOf, zList } from './git.ts';
 import { plotCommitMessage } from './commit-message.ts';
 import { changePlotRecord, movePlotBase, plotRecordOf } from './plot-record.ts';
 import { forkPoint } from './worktree.ts';
@@ -67,6 +67,8 @@ export interface MergeOptions {
 /** How much of a refusal to keep: the end of git's output says why. */
 const DETAIL_CHARS = 2000;
 
+const headRef = (branch: string): string => `refs/heads/${branch}`;
+
 async function headOf(git: Git, worktree: string, ref: string): Promise<string | undefined> {
   const run = await git(worktree, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]);
   return run.code === 0 ? run.stdout.trim() : undefined;
@@ -75,14 +77,13 @@ async function headOf(git: Git, worktree: string, ref: string): Promise<string |
 export const inHead = async (git: Git, worktree: string, commit: string): Promise<boolean> =>
   (await git(worktree, ['merge-base', '--is-ancestor', commit, 'HEAD'])).code === 0;
 
-/** The branches of `branches` the plot's HEAD does not hold; a branch that does not exist is not held. */
+/**
+ * The branches of `branches` the plot's HEAD does not hold; a branch that does not exist is not held. (RC-10) One
+ * git for them all (`for-each-ref --merged HEAD`), where each branch cost a rev-parse and a merge-base.
+ */
 export async function unmergedIn(git: Git, worktree: string, branches: readonly string[]): Promise<string[]> {
-  const missing: string[] = [];
-  for (const branch of branches) {
-    const head = await headOf(git, worktree, `refs/heads/${branch}`);
-    if (head === undefined || !(await inHead(git, worktree, head))) missing.push(branch);
-  }
-  return missing;
+  const held = await refCommitsOf(git, worktree, branches.map(headRef), { merged: true });
+  return branches.filter((branch) => !held.has(headRef(branch)));
 }
 
 /** Why nothing can be merged now: a merge in progress, or changes not committed. */
@@ -229,9 +230,8 @@ export async function mergeDependencies(
   into: string,
   branches: readonly string[],
 ): Promise<MergeOutcome> {
-  const present: string[] = [];
-  for (const branch of branches)
-    if ((await headOf(git, worktree, `refs/heads/${branch}`)) !== undefined) present.push(branch);
+  const heads = await refCommitsOf(git, worktree, branches.map(headRef));
+  const present = branches.filter((branch) => heads.has(headRef(branch)));
   const pending = await unmergedIn(git, worktree, present);
   const record = await plotRecordOf(git, worktree);
   if (pending.length === 0 || (await headOf(git, worktree, 'HEAD')) !== record.base)

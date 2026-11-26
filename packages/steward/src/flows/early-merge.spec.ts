@@ -226,6 +226,41 @@ describe('the base branch merged in before the checks after a session (RC-05)', 
     expect(ends[1]?.data.tree).not.toBe(ends[0]?.data.tree);
   });
 
+  it('merges nothing early again after a restart once a run of the same session was taken back', async () => {
+    // Unit is red on every tree of the quest: the merge is taken back, the red check runs again.
+    const red: RedOf = (id, runDir) => id === 'unit' && !runDir.endsWith('-delivery');
+    const { bench, checks, start, until } = await earlyBench(sourceWithIndex('alpha.ts'), MAIN_MOVES, red);
+    let entered = (): void => undefined;
+    const inAgain = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    // The red check again on the head as submitted runs until the Steward stops, as a long one would.
+    const check: Plots['check'] = (request) =>
+      request.territory.checks.length > 1
+        ? checks.check(request)
+        : new Promise((resolve) => {
+            entered();
+            request.signal?.addEventListener('abort', () => {
+              resolve([]);
+            });
+          });
+    const first = await start({ check });
+    await create(bench, 'Alpha');
+    const waiting = until(first, async () => (await bench.lines('quest.returned')).length === 1);
+    await inAgain;
+    await first.stop();
+    await waiting.catch(() => undefined);
+
+    const second = await start();
+    await until(second, async () => (await bench.lines('quest.returned')).length === 1);
+    const { branch } = await branchOf(bench, 'Alpha');
+    const [submitted] = git(bench.repo, 'log', '--format=%T', '--grep=^chore: submit', branch).split('\n');
+    const ends = (await sessionEnds(bench)).filter(({ attempt }) => attempt === 1);
+    expect(ends.filter(({ data }) => data.taken_back === true)).toHaveLength(1);
+    expect(ends.at(-1)?.data).toMatchObject({ outcome: 'fail', tree: submitted });
+    expect(await bench.lines('plot.merged')).toEqual([]);
+  });
+
   it('finds the merge a stopped Steward left pending, and makes no second merge commit', async () => {
     const { bench, start, until } = await earlyBench(sourceWithIndex('alpha.ts'), MAIN_MOVES);
     let entered = (): void => undefined;

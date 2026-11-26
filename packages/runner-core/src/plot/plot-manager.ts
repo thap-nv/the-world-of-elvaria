@@ -170,8 +170,9 @@ async function prepareGitPlot(
   const repo = fromPortable(territory.path);
   const common = await git(repo, ['rev-parse', '--path-format=absolute', '--git-common-dir']);
   if (common.code !== 0) return err({ reason: 'not_a_repo', detail: `${repo}: ${common.stderr.trim()}` });
-  await ensurePlotExcludes(common.stdout.trim());
-  await ensureLongPaths(git, repo, options.platform ?? process.platform);
+  const commonDir = common.stdout.trim();
+  await ensurePlotExcludes(commonDir);
+  await ensureLongPaths(git, repo, commonDir, options.platform ?? process.platform);
   const worktree = worktreePathOf(repo, territory.worktree_dir, quest.id);
   const branch = `quest/${quest.id}`;
   const target = { git, repo, worktree, branch, vcs: territory.vcs, ...(from === undefined ? {} : { from }) };

@@ -74,5 +74,30 @@ export async function checkedTreeOf(git: Git, cwd: string): Promise<string | und
   return treeOf(git, cwd, 'HEAD');
 }
 
+/**
+ * (RC-10) The commit each of `refs` (full names: `refs/heads/…`) is at, one git for them all where a `rev-parse
+ * --verify` each spawned one per ref; a ref git does not have is absent, as is every ref when git fails. `merged`:
+ * only the refs HEAD holds (`--merged HEAD`), what `merge-base --is-ancestor <ref> HEAD` asked one by one. A pattern
+ * of for-each-ref also matches the refs below it (`refs/heads/a/b` for `refs/heads/a`): only exact names count.
+ */
+export async function refCommitsOf(
+  git: Git,
+  cwd: string,
+  refs: readonly string[],
+  { merged = false }: { readonly merged?: boolean } = {},
+): Promise<ReadonlyMap<string, string>> {
+  const found = new Map<string, string>();
+  if (refs.length === 0) return found;
+  const held = merged ? ['--merged', 'HEAD'] : [];
+  const run = await git(cwd, ['for-each-ref', '--format=%(refname) %(objectname)', ...held, ...refs]);
+  if (run.code !== 0) return found;
+  const wanted = new Set(refs);
+  for (const line of run.stdout.split(/\r?\n/)) {
+    const [name, commit] = line.split(' ');
+    if (name !== undefined && commit !== undefined && wanted.has(name)) found.set(name, commit);
+  }
+  return found;
+}
+
 /** The NUL-separated list a `-z` command prints. */
 export const zList = (stdout: string): string[] => stdout.split('\0').filter((entry) => entry !== '');

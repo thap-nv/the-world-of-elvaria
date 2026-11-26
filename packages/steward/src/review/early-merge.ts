@@ -12,6 +12,7 @@
 // the merge later. A run stopped, unable to run or set aside for its environment leaves the merge pending in the plot's
 // record: the next run of the same session's checks finds it made and goes on from the generators, never merging twice.
 import { baseRedOf, deliveryOf, isEventOf } from '@elvaria/domain';
+import { openJournal } from '@elvaria/eventlog';
 import type { Quest, Result, Territory } from '@elvaria/domain';
 import type { ResolvedFile } from '@elvaria/runner-core';
 
@@ -45,9 +46,13 @@ function earlyDue(ctx: Context, quest: Quest, territory: Territory): boolean {
   return baseRedOf(ctx.patrol.health, [territory], []).length === 0;
 }
 
-/** Whether a run of this session's checks was taken back already (a Steward restarted since): it runs as before. */
+/**
+ * Whether a run of this session's checks was taken back already (a Steward restarted since): it runs as before. (RC-10)
+ * The quest's journal holds its own `check.end` lines (the recorder appends each line to both), so the look reads them alone,
+ * not the kingdom's whole log at each run of the checks.
+ */
 async function takenBackBefore(ctx: Context, quest: Quest, n: number): Promise<boolean> {
-  const { events } = await ctx.deps.events.read();
+  const { events } = await openJournal(ctx.root, quest.id).read();
   return events.some(
     (event) =>
       isEventOf(event, 'check.end') &&

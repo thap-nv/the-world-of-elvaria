@@ -1,6 +1,7 @@
 // What Elvaria remembers about one worktree plot, in the worktree's private git folder (`.git/worktrees/<id>/`):
 // never committed, removed with `git worktree remove`, and found from the plot path alone, so status and touched
 // need no territory. Quest files are the Steward's (ADR 0005); this is the plot's own bookkeeping.
+import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import { readTextFile, writeFileAtomic } from '@elvaria/store';
@@ -64,9 +65,33 @@ const isPlotRecord = (value: unknown): value is PlotRecord =>
   'setup_done' in value &&
   typeof value.setup_done === 'boolean';
 
-/** The worktree's private git folder, absolute. */
+/** What git said of each worktree's git folder, beside the `.git` file it read then (gitDirOf). */
+const gitDirs = new Map<string, { readonly link: string; readonly gitDir: string }>();
+
+/** The text of a linked worktree's `.git` file; undefined when it is a folder (a main checkout) or missing. */
+const linkOf = (worktree: string): Promise<string | undefined> =>
+  readFile(path.join(worktree, '.git'), 'utf8').catch(() => undefined);
+
+const isFolder = (folder: string): Promise<boolean> =>
+  stat(folder).then(
+    (found) => found.isDirectory(),
+    () => false,
+  );
+
+/**
+ * The worktree's private git folder, absolute. (RC-10) A linked worktree's `.git` file names that folder, so while
+ * the file says what it said when git answered, and the folder is still there, the answer is the same: a plot's
+ * dozens of looks at its record spawn git once, not once each. The file is read before git runs, so an edit in
+ * between only costs another spawn. A `.git` folder, or none, asks git every time.
+ */
 export async function gitDirOf(git: Git, worktree: string): Promise<string> {
-  return (await gitOut(git, worktree, ['rev-parse', '--path-format=absolute', '--git-dir'])).trim();
+  const link = await linkOf(worktree);
+  const seen = gitDirs.get(worktree);
+  if (link !== undefined && seen?.link === link && (await isFolder(seen.gitDir))) return seen.gitDir;
+  const gitDir = (await gitOut(git, worktree, ['rev-parse', '--path-format=absolute', '--git-dir'])).trim();
+  if (link === undefined) gitDirs.delete(worktree);
+  else gitDirs.set(worktree, { link, gitDir });
+  return gitDir;
 }
 
 /** undefined when the worktree has no record, or one Elvaria cannot read. */
