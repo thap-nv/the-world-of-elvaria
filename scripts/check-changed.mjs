@@ -32,6 +32,13 @@ const REPO = resolve(import.meta.dirname, '..');
 export const DEFAULT_BASE = 'origin/main';
 
 /**
+ * The repo's own root package (package.json `name`). It devDepends on domain, i18n, testkit and config, so
+ * `...@elvaria/<pkg>` selects it, and its `test` (`vitest run && pnpm -r test`) ran every package suite a second time
+ * beside the filtered run: two Vitest processes on one coverage folder, refused (quest LL-06, 2026-11-26).
+ */
+export const ROOT_PACKAGE = 'the-world-of-elvaria';
+
+/**
  * Path → checks, the "Change impact" table of CLAUDE.md as data. Every rule whose `pattern` matches a path adds its
  * `run` commands; `$1` in a command is that match's first capture group (the workspace folder, which is also its
  * `@elvaria/<key>` name). A package README is documentation, not code: it asks for `docs:check` only.
@@ -147,7 +154,7 @@ export function plan(paths) {
 
 /**
  * The package tests as one `pnpm --filter … --filter … test`, where the first of them stood: two changed packages
- * often share dependents, and one pnpm run selects each package once.
+ * often share dependents, and one pnpm run selects each package once. The root package is left out (ROOT_PACKAGE).
  * @param {Command[]} commands
  * @returns {Command[]}
  */
@@ -157,7 +164,7 @@ function mergeFilters(commands) {
   const at = commands.findIndex(isFilterTest);
   if (at < 0) return commands;
   const rest = commands.filter((c) => !isFilterTest(c));
-  return [...rest.slice(0, at), [...filters, 'test'], ...rest.slice(at)];
+  return [...rest.slice(0, at), [...filters, '--filter', `!${ROOT_PACKAGE}`, 'test'], ...rest.slice(at)];
 }
 
 /**
