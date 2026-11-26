@@ -522,7 +522,7 @@ Runner dịch output của mọi CLI về cùng schema sự kiện ở mục 4. 
 - Render-on-demand: vẽ khi có sự kiện, khi camera đổi, khi hoạt hình đang chạy; không có gì thì không vẽ.
 - Trần 30 fps khi hoạt động; tab ẩn → dừng hẳn.
 - Cây, đá, nhà: instancing; rừng là một draw call.
-- Ánh sáng nướng sẵn + một đèn hướng; không bóng đổ thời gian thực (tối đa một bóng rẻ cho nhân vật đang chọn).
+- Ánh sáng nướng sẵn + một đèn hướng; không bóng đổ thời gian thực (tối đa một bóng rẻ cho nhân vật đang chọn). Ánh sáng và bóng nướng ở giờ vàng (nắng thấp, bóng dài); ngày đêm theo giờ thật chỉ đổi màu trời, màu sương, màu và cường độ đèn hướng, bóng nướng không xoay theo mặt trời.
 - Sương mù theo khoảng cách; 3 mức chi tiết theo khoảng cách camera.
 - Chế độ tiết kiệm (pin): 15 fps, tắt thời tiết và điện ảnh.
 - Ngân sách mỗi lãnh thổ: ≤ 150 draw call ở mức full; mức icon gần như miễn phí. Nội thất không tồn tại trong scene khi mái đóng.
@@ -532,14 +532,26 @@ Runner dịch output của mọi CLI về cùng schema sự kiện ở mục 4. 
 
 - Mỗi nghi thức là một kịch bản hoạt hình ngắn (≤ 10 giây) kích hoạt bởi sự kiện verdict; không chặn thế giới.
 - Thời tiết theo `territory.health`: CI đỏ → mây đen, sự cố → sấm, backlog già → sương.
+- **Bóng tối phủ** (bậc trên cùng của thời tiết): khi lãnh thổ có sự cố, bảng màu của lãnh thổ ngả tối (đất tro, vết nứt lửa, trời xanh lục pha đen, khói, cờ rách); sửa xong thì sáng lại. Chỉ đổi bảng màu, bầu trời, decal và sprite trên cùng hình khối, không thêm mô hình riêng. Mức nhẹ hơn vẫn là mây đen và sương ở trên, để nhìn từ xa biết ngay lãnh thổ nào đang nguy.
 - Ngày đêm theo giờ thật.
 - Trận đánh: một đơn vị trên màn hình = một nhóm việc (mặc định 5), tối đa 40 sprite động; đám đông xa là texture lặp; lửa/khói là vài tile hoạt hình; máu và xác vẽ một lần lên nền tĩnh; replay từ event log với tốc độ tùy chọn.
 - Điêu tàn: xác quái phai sau 3 ngày; bia mộ, đổ nát tồn tại tới khi quest tương ứng xong.
 
+### Định hướng mỹ thuật
+
+(Chủ nhân chốt 2026-11-26.) Cảm hứng là high fantasy kiểu Trung Địa: hùng tráng, mỗi vùng một nền văn hóa nhìn là nhận ra. Thế giới vẫn tự thiết kế (quyết định 2026-11-05): không dùng tên, huy hiệu hay công trình đặc trưng của Tolkien và các bản phim (Con Mắt trên tháp, Cây Trắng, cờ ngựa trắng, thuyền mũi thiên nga…); mô-típ chung của thể loại (tộc tiên, người lùn trong núi, kỵ sĩ đồng cỏ, vùng đất tối) thì dùng được.
+
+- **Low-poly giữ nguyên.** Vẻ hùng tráng đến từ ánh sáng và không khí, không từ số đa giác: nắng thấp chiếu ngược, sương có màu theo khoảng cách, núi xa xếp lớp mờ xanh, quy mô theo chiều dọc (vách đá, thác, tháp nhọn, tượng canh cửa), bảng màu và cờ hiệu riêng từng vùng. Mọi thứ đó nằm trong "Luật nhẹ" ở trên.
+- **Nền văn hóa theo kiểu lãnh thổ** (gắn với "Mở cõi"): code là thành đá trắng trong thung lũng có thác và cầu vòm; docs là thành thư viện trên cao nguyên giữa cây lá vàng, cầu thang quanh thân cây, đèn lồng; data là đài thiên văn tạc vào núi tuyết, cửa núi có hai tượng canh; giao hàng là bến cảng đá trắng, một PR được merge là một con thuyền rời bến; trung tâm là lâu đài của vua giữa đồng ruộng, đường tỏa ra các vùng.
+- **Tộc có nét riêng** (kiến trúc phụ, cờ, bảng màu), nhưng là dữ liệu của theme qua kho ngoại hình của tộc, không viết cứng theo tên tộc.
+- **Đọc được trước, đẹp sau.** Ở mức `full`, nghề và trạng thái nhân vật phải đọc được ngay (màu theo nghề rõ, nhân vật có thể lớn hơn tỉ lệ thật một chút); vẻ hùng tráng dành cho tầm xa, toàn cảnh và chế độ điện ảnh.
+- **Moodboard**: bảy ảnh AI làm ngày 2026-11-26 (toàn cảnh, thung lũng code, cùng thung lũng khi bóng tối phủ, thư viện trên cây, đài thiên văn, bến cảng, và một ảnh kiểu đảo đồ chơi không chọn). Chủ nhân giữ ngoài repo; ảnh là cảm hứng, không là tài sản. Trang định hướng mỹ thuật chi tiết (bảng màu từng vùng, luật ánh sáng, danh sách công trình biểu tượng) do một phiên kế hoạch viết trước khi làm tài sản.
+
 ### Tài sản
 
 - Giai đoạn xám: hộp, nón, viên nang có màu theo nghề.
-- Bộ low-poly miễn phí: Kenney (CC0), Quaternius (CC0); hoạt hình nhân vật từ thư viện sẵn có (ví dụ Mixamo). Ghi giấy phép từng gói vào `world/themes/fantasy/LICENSES.md` trước khi dùng.
+- Bộ low-poly miễn phí cho đồ nền lặp nhiều (cây, đá, hàng rào, đồ nội thất, thân nhân vật cơ bản): Kenney (CC0), Quaternius (CC0); hoạt hình nhân vật từ thư viện sẵn có (ví dụ Mixamo). Ghi giấy phép từng gói vào `world/themes/fantasy/LICENSES.md` trước khi dùng. Bộ CC0 là mặc định cho rẻ, không phải lựa chọn phong cách: ánh sáng, sương và bảng màu kéo chúng về cùng một chất.
+- Công trình biểu tượng của từng nền văn hóa (thành, tháp, cửa núi, tượng, bến cảng) và cờ hiệu: tự làm hoặc tùy biến nặng, theo trang định hướng mỹ thuật.
 - Trang bị theo cấp: 4 bậc dùng chung chất liệu và màu; mỗi nghề 1–2 món riêng mỗi bậc (xem mục 6). Nội thất: 1 bộ bàn ghế/kệ/lò cho mỗi loại tòa nhà, ghép lại thành nhiều phòng.
 
 ### Khách nhẹ cho điện thoại
@@ -650,6 +662,7 @@ Không còn câu hỏi mở trước giai đoạn 0.
 | 2026-11-10 | Vùng bảo vệ cần dấu vua; Quản sự chạy bản đã ghim, nâng cấp có thử và đường lùi; thao trường để thử thay đổi prompt, bí kíp, model trước khi dùng thật |
 | 2026-11-11 | Kế hoạch chi tiết giai đoạn 1.5 (`docs/plans/phase-1.5.md`): khảo sát gộp vào quest kế hoạch của pháp sư; thư mang tên `memo` trong dữ liệu; vùng file được giữ tới khi quest lưu trữ; bài thử của mốc 1.5 là mã lý do cộng chuỗi VI/EN cho trạm xá và `doctor`; Tể tướng phân loại thư theo lịch mỗi ngày một lần |
 | 2026-11-16 | (161) Vương quốc của ai người nấy giữ, bài học chia sẻ được giữa các vương quốc: hai cửa vào (bản phát hành là mặc định; file gói do người dùng nhập, nhận từng dòng), không server, không đồng bộ, không tự tải; mặc định không gì rời vương quốc; chưa dựng lệnh xuất hay nhập trước Đền bản đầu; địa chí đi theo repo (`docs/plans/lesson-sharing.md`) |
+| 2026-11-26 | Định hướng mỹ thuật: high fantasy hùng tráng kiểu Trung Địa trong khung low-poly, tự thiết kế, không dùng tài sản trí tuệ của Tolkien; mỗi kiểu lãnh thổ một nền văn hóa; ánh sáng nướng ở giờ vàng, ngày đêm chỉ đổi màu; "bóng tối phủ" lãnh thổ có sự cố; CC0 cho đồ nền, công trình biểu tượng tự làm; trang định hướng chi tiết do phiên kế hoạch viết trước khi làm tài sản (mục 9) |
 
 ---
 
