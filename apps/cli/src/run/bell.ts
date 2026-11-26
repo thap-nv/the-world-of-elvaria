@@ -43,7 +43,17 @@ function infirmaryLine(t: Translate, notice: Extract<Notice, { kind: 'infirmary'
   const { quest, trip, detail = {}, reason } = notice;
   const [why = '', ...hook] = whyLines(t, reason, trip);
   const head = t('cli.run.notice.infirmary', { quest: quest.id, title: quest.title, reason: why });
-  return [head, ...[...hook, ...detailLines(t, detail, reason)].map((line) => `    ${line}`)].join('\n');
+  // A healer's note rings with it (HL-05): the section it added to the letter, under a line of its own.
+  const note = notice.heal_note;
+  const healed =
+    note === undefined
+      ? []
+      : [
+          t('cli.run.notice.heal_note', { healer: note.healer }),
+          ...note.text.split(/\r?\n/u).map((line) => `  ${line}`),
+        ];
+  const lines = [...hook, ...detailLines(t, detail, reason), ...healed];
+  return [head, ...lines.map((line) => `    ${line}`)].join('\n');
 }
 
 type ManaNotice = Extract<Notice, { kind: 'mana_asleep' | 'mana_awake' | 'mana_warning' }>;
