@@ -14,6 +14,7 @@ import type { Locale, MessageKey, Params, Translate } from '@elvaria/i18n';
 import { nameIn } from '../labels.ts';
 import { NONE } from '../listing.ts';
 import { reasonText } from '../quest/infirmary-reason.ts';
+import { probeDataText } from './probe-note.ts';
 
 export interface TimelineContext {
   readonly t: Translate;
@@ -218,6 +219,8 @@ export function timeline(context: TimelineContext): (event: Event) => string {
       ...(character === undefined ? {} : characterParams(lookup, character)),
       ...(territory === undefined ? {} : territoryParams(territory)),
     };
-    return `${event.ts.slice(TIME.from, TIME.to)}  ${context.t(keyOf(event, quest), params)}`;
+    const probe = event.type === 'mana.probe' ? probeDataText(context.t, event.data) : '';
+    const suffix = probe === '' ? '' : `: ${probe}`;
+    return `${event.ts.slice(TIME.from, TIME.to)}  ${context.t(keyOf(event, quest), params)}${suffix}`;
   };
 }

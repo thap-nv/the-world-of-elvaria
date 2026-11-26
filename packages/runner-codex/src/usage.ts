@@ -2,6 +2,7 @@
 // `primary` is the 5-hour window, `secondary` the weekly one, each with `usedPercent` and `resetsAt` (epoch seconds).
 // A limit with `normalModelSlug` caps one model only. The answer also names the account: none of it is kept.
 import type { ProbeResult } from '@elvaria/runner-core';
+import { probeNoteOf } from '@elvaria/runner-core';
 
 type ReportedWindow = NonNullable<ProbeResult['windows']>[number];
 type Json = Record<string, unknown>;
@@ -55,7 +56,8 @@ export function windowsOf(answer: unknown): ReportedWindow[] {
  * usage is not allowed; the latest reset of the spent windows is when to look again.
  */
 export function probeOf(answer: unknown): ProbeResult {
-  if (!isRecord(answer)) return { status: 'error', detail: 'account/rateLimits/read: no answer' };
+  if (!isRecord(answer))
+    return { status: 'error', note: probeNoteOf('probe:no_answer', { request: 'account/rateLimits/read' }) };
   const windows = windowsOf(answer);
   const spent = windows.filter((window) => window.model === undefined && window.used_pct >= 100);
   const type = isRecord(answer.rateLimits) ? answer.rateLimits.rateLimitReachedType : undefined;
@@ -71,10 +73,10 @@ export function probeOf(answer: unknown): ProbeResult {
   const which = spent.map((window) => window.window).join(', ');
   return {
     status: 'rate_limited',
-    detail:
+    note:
       spent.length === 0
-        ? `the account allows no usage now (${reached ?? 'no reason given'})`
-        : `no mana left in the ${which} window`,
+        ? probeNoteOf('probe:account_blocked', { reason: reached ?? 'unknown' })
+        : probeNoteOf('probe:window_empty', { windows: which }),
     ...(latest === undefined ? {} : { resets_at: latest }),
     ...base,
   };

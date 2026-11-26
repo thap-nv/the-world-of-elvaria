@@ -1,6 +1,16 @@
 {
   "version": 1,
   "messages": {
+    "cli.sandbox.probe.account_blocked": "tài khoản hiện không cho phép sử dụng ({reason})",
+    "cli.sandbox.probe.no_answer": "{request}: không có câu trả lời",
+    "cli.sandbox.probe.ping_failed": "ping thoát với mã {exit}",
+    "cli.sandbox.probe.ping_limited": "ping gặp giới hạn sử dụng",
+    "cli.sandbox.probe.threw": "phép dò phát sinh ngoại lệ",
+    "cli.sandbox.probe.usage_exit": "{command}: thoát với mã {exit}",
+    "cli.sandbox.probe.usage_failed": "{command} thất bại",
+    "cli.sandbox.probe.usage_full": "đã dùng hết hạn mức: {windows}",
+    "cli.sandbox.probe.usage_unprinted": "{command} không in mức sử dụng",
+    "cli.sandbox.probe.window_empty": "không còn mana trong {windows}",
     "cli.sandbox.bad_date": "--date phải là một ngày có thật dạng YYYY-MM-DD, ví dụ 2026-11-06.",
     "cli.sandbox.bad_line": "Dòng ở byte {offset} bị bỏ qua ({code}): {message}",
     "cli.sandbox.bad_seed": "--seed phải là số nguyên từ 0 đến {max}.",

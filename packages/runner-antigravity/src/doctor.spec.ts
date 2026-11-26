@@ -41,7 +41,11 @@ describe('doctor and probe, when agy does not answer', () => {
 
   it('says /usage ran out of time, not that agy exited with no code', async () => {
     const result = await fakeRunner({ launch: await silentAgy(), timeout_ms: 1000 }).probe();
-    expect(result).toEqual({ status: 'error', detail: `agy -p /usage: ${noAnswerWithin(1000)}` });
+    expect(result).toEqual({
+      status: 'error',
+      note: { code: 'probe:usage_failed', params: { command: 'agy -p /usage' } },
+      cli_text: noAnswerWithin(1000),
+    });
   });
 });
 

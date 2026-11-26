@@ -53,7 +53,7 @@ describe('probeOf', () => {
     const answer = { rateLimits: limit(100, 40) };
     expect(probeOf(answer)).toMatchObject({
       status: 'rate_limited',
-      detail: 'no mana left in the five_hour window',
+      note: { code: 'probe:window_empty', params: { windows: 'five_hour' } },
       resets_at: '2026-11-12T16:47:53.000Z',
     });
   });
@@ -65,11 +65,14 @@ describe('probeOf', () => {
     };
     expect(probeOf(answer)).toMatchObject({
       status: 'rate_limited',
-      detail: 'the account allows no usage now (workspace_owner_credits_depleted)',
+      note: { code: 'probe:account_blocked', params: { reason: 'workspace_owner_credits_depleted' } },
     });
     expect(probeOf({ ordinaryUsageAllowed: false })).toMatchObject({
-      detail: expect.stringMatching(/no reason given/) as unknown,
+      note: { code: 'probe:account_blocked', params: { reason: 'unknown' } },
     });
-    expect(probeOf(undefined)).toEqual({ status: 'error', detail: 'account/rateLimits/read: no answer' });
+    expect(probeOf(undefined)).toEqual({
+      status: 'error',
+      note: { code: 'probe:no_answer', params: { request: 'account/rateLimits/read' } },
+    });
   });
 });
