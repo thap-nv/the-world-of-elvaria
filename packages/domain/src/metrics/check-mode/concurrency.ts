@@ -11,11 +11,13 @@ export interface QuestPeak {
   readonly territory: TerritoryId;
   readonly working: number;
   readonly review: number;
+  readonly healing: number;
 }
 
 interface TerritoryCount {
   working: number;
   review: number;
+  healing: number;
 }
 
 function viewOf(event: Event): QuestView | undefined {
@@ -26,7 +28,7 @@ function viewOf(event: Event): QuestView | undefined {
 function countOf(counts: Map<TerritoryId, TerritoryCount>, territory: TerritoryId): TerritoryCount {
   const existing = counts.get(territory);
   if (existing !== undefined) return existing;
-  const fresh = { working: 0, review: 0 };
+  const fresh = { working: 0, review: 0, healing: 0 };
   counts.set(territory, fresh);
   return fresh;
 }
@@ -42,11 +44,13 @@ function touchPeak(
     territory,
     working: Math.max(before?.working ?? 0, count.working),
     review: Math.max(before?.review ?? 0, count.review),
+    healing: Math.max(before?.healing ?? 0, count.healing),
   });
 }
 
 function adjust(count: TerritoryCount, view: QuestView, sign: 1 | -1): void {
   count.working += sign * Number(view.status === 'working');
+  count.healing += sign * Number(view.status === 'healing');
   count.review += sign * Number(view.status === 'review' && view.verifier !== null);
 }
 

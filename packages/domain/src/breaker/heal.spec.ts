@@ -15,7 +15,7 @@ import {
 import { planTick } from '../dispatch/plan-tick.ts';
 import { breakersOf } from './breakers.ts';
 import { calibrationOf } from './calibration.ts';
-import { healCallOf } from './heal.ts';
+import { healCallOf, healedIn } from './heal.ts';
 import type { Attempt } from '../schema/quest/quest-parts.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
@@ -34,6 +34,12 @@ const entry = (n: number, heal?: Attempt['heal']): Attempt => ({
 const REFUSED = { trip: 'commit', reason: 'breaker:commit_errors' } as const;
 
 describe('healCallOf', () => {
+  it('recognizes a submitted heal of either character, only in its own run', () => {
+    expect(healedIn([{ ...entry(1, 'session'), outcome: 'submitted' }], 1)).toBe(true);
+    expect(healedIn([{ ...entry(1, 'due'), outcome: 'submitted' }], 1)).toBe(false);
+    expect(healedIn([entry(1, 'session')], 1)).toBe(false);
+    expect(healedIn([{ ...entry(2, 'session'), outcome: 'submitted' }], 1)).toBe(false);
+  });
   it('heals the first refusal of a run for a healable reason, and only that', () => {
     expect(healCallOf([entry(1)], REFUSED)).toBe('heal');
     expect(healCallOf([entry(1)], { trip: 'commit', reason: 'breaker:commit' })).toBe('heal');

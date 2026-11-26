@@ -11,6 +11,10 @@ import { measuredRunsOf } from './runs.ts';
 import { distributionOf } from './distribution.ts';
 
 describe('check modes ledger (CM-09a)', () => {
+  it('keeps healing slots separate from working and review slots', () => {
+    const events = [move(0, 'working'), move(1, 'healing'), move(2, 'healing', SECOND), move(3, 'review')];
+    expect(questPeaksOf(events, {})).toEqual([{ territory: 'elvaria', working: 1, review: 0, healing: 2 }]);
+  });
   it('reads all four baselines from one log, without counting an error as a completed check run', () => {
     const metrics = metricsOf({ events: LOG, quests: [], verdicts: [], commands: [] }).check_modes;
     expect(metrics.durations).toEqual([
@@ -34,7 +38,7 @@ describe('check modes ledger (CM-09a)', () => {
       },
     ]);
     expect(metrics.submit_to_merge).toEqual({ count: 1, median_minutes: 20, p90_minutes: 20 });
-    expect(metrics.peaks).toEqual([{ territory: 'elvaria', working: 2, review: 2 }]);
+    expect(metrics.peaks).toEqual([{ territory: 'elvaria', working: 2, review: 2, healing: 0 }]);
   });
 
   it('has no invented samples or minutes for an empty log', () => {
@@ -171,12 +175,12 @@ describe('check modes ledger (CM-09a)', () => {
       { ...move(3, 'done'), ts: at(3, '2026-11-10') },
     ];
     expect(checkModesOf(events, { since: '2026-11-09', until: '2026-11-09' }).peaks).toEqual([
-      { territory: 'another', working: 1, review: 0 },
-      { territory: 'elvaria', working: 2, review: 2 },
+      { territory: 'another', working: 1, review: 0, healing: 0 },
+      { territory: 'elvaria', working: 2, review: 2, healing: 0 },
     ]);
     expect(checkModesOf(events.slice(0, 3), { since: '2026-11-09' }).peaks).toEqual([
-      { territory: 'another', working: 1, review: 0 },
-      { territory: 'elvaria', working: 2, review: 0 },
+      { territory: 'another', working: 1, review: 0, healing: 0 },
+      { territory: 'elvaria', working: 2, review: 0, healing: 0 },
     ]);
   });
 
@@ -194,8 +198,8 @@ describe('check modes ledger (CM-09a)', () => {
       { ...move(5, 'done', q3Other), ts: at(0, '2026-11-10') },
     ];
     expect(questPeaksOf(events, { since: '2026-11-09', until: '2026-11-09' })).toEqual([
-      { territory: 'another', working: 1, review: 0 },
-      { territory: 'elvaria', working: 1, review: 1 },
+      { territory: 'another', working: 1, review: 0, healing: 0 },
+      { territory: 'elvaria', working: 1, review: 1, healing: 0 },
     ]);
   });
 
@@ -216,8 +220,8 @@ describe('check modes ledger (CM-09a)', () => {
 
     const peaks = questPeaksOf(events, {});
     expect(peaks).toEqual([
-      { territory: 'another', working: 13, review: 7 },
-      { territory: 'elvaria', working: 11, review: 6 },
+      { territory: 'another', working: 13, review: 7, healing: 0 },
+      { territory: 'elvaria', working: 11, review: 6, healing: 0 },
     ]);
   });
 });
