@@ -44,6 +44,13 @@ describe('check.end', () => {
     expect(pathsOf(end({ base: 'b'.repeat(40) }))).toEqual(['data.base']);
   });
 
+  it('reads a failed run taken back (RC-05), and refuses taken_back on a run that passed', () => {
+    const red = { outcome: 'fail', checks: [{ id: 'lint', pass: false, duration_ms: 5 }] };
+    const data = { ...red, tree: TREE, config: CONFIG, taken_back: true };
+    expect(EventSchema.parse(end(data)).data).toEqual(data);
+    expect(pathsOf(end({ taken_back: true }))).toEqual(['data.taken_back']);
+  });
+
   it('refuses a tree or a config that is no hex digest of their length', () => {
     expect(pathsOf(end({ tree: 'HEAD', config: CONFIG }))).toEqual(['data.tree']);
     expect(pathsOf(end({ tree: TREE, config: `${CONFIG}0` }))).toEqual(['data.config']);

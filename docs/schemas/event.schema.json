@@ -3422,6 +3422,10 @@
                 "type": "string",
                 "pattern": "^[0-9a-f]{16}$"
               },
+              "taken_back": {
+                "description": "fail only: the checks ran on the quest's branch with the base branch merged in before them (ADR 0035), and their red took the merge back; the red checks ran again on the head as submitted, so no judge reads this run. Its green checks are still facts of its tree. Absent: the run stands.",
+                "const": true
+              },
               "outcome": {
                 "description": "pass: every check passed, or none applied; fail: at least one failed; error: they could not run, a later tick runs them again; stopped: killed because the Steward stopped or the quest moved on.",
                 "enum": [

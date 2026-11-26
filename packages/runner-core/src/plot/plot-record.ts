@@ -10,6 +10,14 @@ import type { Git } from './git.ts';
 
 export const PLOT_RECORD_FILE = 'elvaria-plot.json';
 
+/** The way back from an early update (RC-05): the head and base before its merge, and the run it came before. */
+export interface UpdateFrom {
+  readonly head: string;
+  readonly base: string;
+  /** The quest's run whose checks the merge came before: only that run resumes or takes it back. */
+  readonly run: number;
+}
+
 export interface PlotRecord {
   readonly version: 1;
   /**
@@ -33,6 +41,11 @@ export interface PlotRecord {
    * a Steward stopped there finds the merge made and runs only what follows it. Absent or false: nothing pending.
    */
   readonly update_pending?: boolean;
+  /**
+   * (RC-05, ADR 0035) Where the branch and `base` stood before the pending update of a run's checks merged the base
+   * branch in early: a red run takes the merge back to them (takeBackUpdate). Read only while `update_pending`.
+   */
+  readonly update_from?: UpdateFrom;
   /**
    * (fix/merge-quest-followups (n)) Generated files (a `regenerate` rule of shared_paths) that a merge quest's merge
    * left for later: in a conflict left in progress for the knight, or resolved by the rule before a later merge

@@ -87,9 +87,10 @@ export function gitPlots(
     baseTips: (territory) => manager.baseTips(territory),
     inBase: (plot, tips) => manager.inBase(plot, tips),
     // The merge queue as `elvaria run` makes it (PS-09); its checks are the spec's `check`.
-    update: (plot, territory) => manager.update(plot, territory),
+    update: (plot, territory, run) => manager.update(plot, territory, run),
     generate: (plot, territory, request) => manager.generate(plot, territory, request),
     settle: (plot) => manager.settle(plot),
+    takeBack: (plot, run) => manager.takeBack(plot, run),
     mergesClean: (plot, tips) => manager.mergesClean(plot, tips),
     // PS-08b: the size of a branch, as `elvaria run` measures it.
     diffLines: (plot, exclude) => manager.diffLines(plot, exclude),

@@ -36,6 +36,7 @@ const managerOf = (checkBase?: PlotManager['checkBase']): PlotManager => ({
   update: unused,
   generate: unused,
   settle: unused,
+  takeBack: unused,
   mergesClean: unused,
   diffLines: unused,
   refreshSetup: unused,
