@@ -27,7 +27,7 @@ describe('checks by mode in the ledger', () => {
         'do-an/test: red from 2026-11-06T08:20:00+07:00 to 2026-11-06T08:30:00+07:00; 10.00 minutes.',
         'do-an/test: red from 2026-11-06T08:40:00+07:00 to still red; — minutes.',
         'First submit to main: 1 quests; median 20.00, p90 20.00 minutes.',
-        'do-an: peak working 2, review held by a judge 2.',
+        'do-an: peak working 2, review held by a judge 2, healing 0.',
         'No check attributions yet.',
       ]),
     );

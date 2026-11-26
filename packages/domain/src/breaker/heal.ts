@@ -45,6 +45,10 @@ export const endedInHealDue = (log: readonly Attempt[]): boolean => {
 export const healDueIn = (log: readonly Attempt[], n: number): boolean =>
   log.some((entry) => entry.n === n && entry.heal === 'due');
 
+/** Whether a heal session of the run submitted, including the assignee's own heal. */
+export const healedIn = (log: readonly Attempt[], n: number): boolean =>
+  log.some((entry) => entry.n === n && entry.heal === 'session' && entry.outcome === 'submitted');
+
 /**
  * Whether a returned quest's run still waits for its heal: its refused commit just went back (`due`), or a healer's
  * session of the run ended without one, its mana out or lost while no Steward ran (`healing.mana_out`,

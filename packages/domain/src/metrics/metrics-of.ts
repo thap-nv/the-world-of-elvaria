@@ -2,6 +2,8 @@
 // verdicts, the event log and the handled inbox commands. `elvaria metrics` prints it and docs/metrics-report.md
 // renders it; nothing here writes, so a kingdom is measured without a Steward and without mana.
 import { adviceOf } from './advice.ts';
+import { healsOf } from './heals.ts';
+import type { Heals } from './heals.ts';
 import { checkModesOf } from './check-mode/check-modes.ts';
 import type { CheckModes } from './check-mode/check-modes.ts';
 import { afterWrapUpOf } from './after-wrap-up.ts';
@@ -84,6 +86,7 @@ export interface CommandCount {
 }
 
 export interface Metrics {
+  readonly heals: Heals;
   readonly check_modes: CheckModes;
   readonly window: MetricsWindow;
   readonly runs: RunCounts;
@@ -207,6 +210,7 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
   );
   return {
     window,
+    heals: healsOf(input, window),
     check_modes: checkModesOf(input.events, window, input.quests, input.verdicts),
     runs: runCountsOf(trails, input, window),
     rework,
