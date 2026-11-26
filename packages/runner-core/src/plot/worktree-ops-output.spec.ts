@@ -17,9 +17,9 @@ beforeAll(async () => {
 afterAll(() => temp.remove());
 
 /** Git's captured streams, without starting a shell: persistence is tested independently of hook execution. */
-function refusedGit(stderr: string, stdout: string): Git {
+function refusedGit(stderr: string, stdout: string, code: number | null = 1): Git {
   return (_cwd, args) => {
-    if (args[0] === 'commit') return Promise.resolve({ code: 1, stderr, stdout });
+    if (args[0] === 'commit') return Promise.resolve({ code, stderr, stdout });
     if (args[0] === 'rev-parse' || args.includes('--quiet'))
       return Promise.resolve({ code: 1, stderr: '', stdout: '' });
     const out = args.includes('--name-only') ? 'src/app.ts\0' : '';
@@ -57,5 +57,12 @@ describe('commitWorktree captured hook output', () => {
       head: { lines: [], errors: 0, total_lines: 0 },
       detail: '',
     });
+  });
+
+  it('marks a commit git was killed at its timeout: no hook named an error, so no heal is sent (HL-05)', async () => {
+    const stderr = 'git commit --quiet --message submit: timed out';
+    const outcome = await commitWorktree(refusedGit(stderr, '', null), root, 'submit');
+    expect(outcome).toMatchObject({ status: 'refused', timed_out: true, detail: stderr });
+    expect(await commitWorktree(refusedGit('error', ''), root, 'submit')).not.toHaveProperty('timed_out');
   });
 });
