@@ -1,9 +1,9 @@
-import { metricsOf } from '@elvaria/domain';
+import { isEventOf, metricsOf } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
 
 import { OTHER_QUEST_ID, QUEST_ID, questFixture } from '../__fixtures__/quest.ts';
-import { attributedLog, checkLog, lateJudgements } from './__fixtures__/check-log.ts';
+import { attributedLog, checkLog, lateJudgements, recheckLog } from './__fixtures__/check-log.ts';
 import { metricsSections } from './view.ts';
 import { checkModesSection } from './view-check-modes.ts';
 
@@ -32,6 +32,16 @@ describe('checks by mode in the ledger', () => {
       ]),
     );
     expect(checkModesSection(translator('vi'), metrics).title).toBe('Kiểm theo chế độ');
+  });
+
+  it('prints push-only merged cost when there are no check runs', () => {
+    const events = recheckLog(questFixture('archived')).filter(
+      (event) => isEventOf(event, 'delivery.pushed') || isEventOf(event, 'delivery.merged'),
+    );
+    const metrics = metricsOf({ quests: [], verdicts: [], commands: [], events });
+    const lines = checkModesSection(translator('en'), metrics).lines;
+    expect(lines).toContain('q_20261106_7k3m2a: 2.00 machine check minutes, including 2.00 push minutes.');
+    expect(lines).not.toContain('No check runs yet.');
   });
 
   it('says there are no check runs in an empty log', () => {

@@ -41,6 +41,23 @@ describe('check modes ledger (CM-09a)', () => {
     expect(metrics.peaks).toEqual([{ territory: 'elvaria', working: 2, review: 2, healing: 0 }]);
   });
 
+  it('keeps the first merge in the window even when the quest merged earlier', () => {
+    const events = [
+      move(0, 'review'),
+      check('check.end', 1, { outcome: 'pass', checks: [{ id: 'test', pass: true, duration_ms: 120000 }] }),
+      merged(at(5), FIRST.id),
+      merged(at(10, '2026-11-09'), FIRST.id),
+      merged(at(20, '2026-11-09'), FIRST.id),
+    ];
+    const data = checkModesOf(events, { since: '2026-11-09' });
+    expect(data.merged_cost).toEqual({
+      quests: [{ quest: FIRST.id, minutes: 2, push_minutes: 0 }],
+      median_minutes: 2,
+      total_minutes: 2,
+    });
+    expect(data.submit_to_merge).toEqual({ count: 1, median_minutes: 1450, p90_minutes: 1450 });
+  });
+
   it('has no invented samples or minutes for an empty log', () => {
     expect(checkModesOf([], {})).toEqual({
       recheck: { runs_per_check: [], carried_by_day: [], carried_then_red: [] },

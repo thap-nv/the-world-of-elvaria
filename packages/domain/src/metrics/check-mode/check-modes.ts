@@ -6,7 +6,7 @@ import { questPeaksOf } from './concurrency.ts';
 import { distributionOf } from './distribution.ts';
 import { everyCarried, measuredRunsOf } from './runs.ts';
 import { checkEscapesOf } from './escapes.ts';
-import { firstMergesOf, recheckOf } from './recheck.ts';
+import { recheckOf } from './recheck.ts';
 import type { Recheck } from './recheck.ts';
 import type { TerritoryEscapes } from './escapes.ts';
 import type { Quest } from '../../schema/quest/quest.ts';
@@ -72,11 +72,11 @@ function mergedMetrics(events: readonly Event[], window: MetricsWindow) {
   const costs = new Map<QuestId, number>();
   const quests: { quest: QuestId; minutes: number; push_minutes: number }[] = [];
   const waits: number[] = [];
-  const merges = new Set(firstMergesOf(events, window));
   for (const event of events) {
     if (isEventOf(event, 'quest.submitted') && event.quest !== undefined && !submitted.has(event.quest))
       submitted.set(event.quest, event.ts);
-    if (!isEventOf(event, 'delivery.merged') || !merges.has(event)) continue;
+    if (!isEventOf(event, 'delivery.merged') || !inWindow(window, event.ts) || costs.has(event.data.quest))
+      continue;
     const { quest } = event.data;
     const push = pushCost(events, quest, event.ts);
     const cost = machineCost(events, quest, event.ts) + push;
@@ -95,7 +95,7 @@ function mergedMetrics(events: readonly Event[], window: MetricsWindow) {
   };
 }
 
-/** End-day run distributions; merged quests include their historical check cost up to their first merge. */
+/** End-day distributions; costs include history up to each quest's first merge in the window. */
 export function checkModesOf(
   events: readonly Event[],
   window: MetricsWindow,
