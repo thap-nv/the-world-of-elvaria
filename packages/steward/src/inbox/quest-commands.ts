@@ -7,6 +7,7 @@ import {
   editQuest,
   err,
   formatDatedId,
+  healerOf,
   namedAssignee,
   parseInstant,
   partyOf,
@@ -112,10 +113,10 @@ async function givenTo(ctx: Context, quest: Quest, assignee: string | undefined)
   return reassign(ctx, quest, assignee);
 }
 
-/** The quest's holders let go of it: the assignee and the verifier whose `current` is this quest. */
+/** The quest's holders let go of it: the assignee, a healer (ADR 0034) and the verifier whose `current` is it. */
 function letGo(ctx: Context, quest: Quest): Edits {
   const edits: Record<string, ReturnType<typeof step>> = {};
-  for (const id of [quest.assignee, quest.verifier]) {
+  for (const id of [quest.assignee, healerOf(quest), quest.verifier]) {
     const holder = typeof id === 'string' ? ctx.world.characters.get(id) : undefined;
     if (holder?.current?.quest !== quest.id) continue;
     edits[holder.id] = step(holder.status === 'sleeping_mana' ? 'unassign' : 'cancel');

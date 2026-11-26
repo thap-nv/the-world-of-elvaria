@@ -20,6 +20,8 @@ import { step } from '../quest/record.ts';
 import { startChecks } from '../review/start-checks.ts';
 import { machineReview } from '../review/machine.ts';
 import { judgeScript, runScriptQuest } from '../script/script-quest.ts';
+import { openHealer } from '../heal/open.ts';
+import { tripHealers } from '../heal/cut.ts';
 import { tripBreakers } from '../sessions/breaker.ts';
 import { openAssignee, openVerifier } from '../sessions/open.ts';
 import type { Context } from '../context.ts';
@@ -53,8 +55,17 @@ async function reassignAsleep(ctx: Context, { quest, assignee, level }: Reassign
   else warnIfRefused(ctx, `${quest} reassign`, moved);
 }
 
+/** Returned quests go back: a healer's heal of a refused commit first (ADR 0034), then the doers' own sessions. */
+async function sendBack(ctx: Context, plan: TickPlan): Promise<void> {
+  for (const { quest, healer } of plan.heals)
+    warnIfRefused(ctx, `${quest} heal by ${healer}`, await openHealer(ctx, quest, healer));
+  for (const quest of plan.redispatches)
+    warnIfRefused(ctx, `${quest} redispatch`, await openAssignee(ctx, quest, { kind: 'redispatch' }));
+}
+
 export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
   await tripBreakers(ctx, plan.breakers);
+  await tripHealers(ctx, plan.breakers);
   for (const id of plan.suspensions) await suspend(ctx, id);
   // A paused quest whose pool woke goes on before new work: the same character, the same attempt (§3.5).
   for (const quest of plan.wakes)
@@ -70,8 +81,7 @@ export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
   // Script runs a Steward stopped in the middle of: judged from what they saved, before any new script runs.
   for (const quest of plan.script_verdicts)
     warnIfRefused(ctx, `${quest} script verdict`, await judgeScript(ctx, quest));
-  for (const quest of plan.redispatches)
-    warnIfRefused(ctx, `${quest} redispatch`, await openAssignee(ctx, quest, { kind: 'redispatch' }));
+  await sendBack(ctx, plan);
   for (const { quest, assignee, level } of plan.claims) {
     // A stop killed the setup of the last plot (P1-49): no new claim would get past its own, only a release.
     if (ctx.stopping.aborted) break;

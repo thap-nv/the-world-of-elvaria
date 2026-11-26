@@ -15,6 +15,7 @@ import { plotsWith, statusIs } from '../__fixtures__/review.ts';
 import { HEAL_LOG_MAX_CHARS } from './continuation.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Steward } from '../types.ts';
+import { hookOutputHead } from '@elvaria/runner-core';
 import type { CommitOutcome } from '@elvaria/runner-core';
 
 let current: Bench | undefined;
@@ -122,5 +123,29 @@ describe('a submit the hooks refuse, with kingdom.heal off', () => {
     expect(assigneeRequests(kingdom)).toHaveLength(1);
     expect(quest.attempt_log.every(({ heal }) => heal === undefined)).toBe(true);
     expect(kingdom.notices).toEqual([expect.objectContaining({ kind: 'infirmary', trip: 'commit' })]);
+  });
+});
+
+// HL-05, from the coordinator's run (quest zatpdc, 2026-11-25 12:47): a commit git gave up on (killed at
+// GIT_TIMEOUT_MS, or it never started) carries breaker:commit like a hook's refusal, but names no error to mend.
+describe('a submit commit git gave up on, with kingdom.heal on', () => {
+  it('goes to the infirmary as before, with the bell, and no session heals it', async () => {
+    current = await bench();
+    const said = 'git commit timed out after 120000 ms';
+    const commit = (): Promise<CommitOutcome> =>
+      Promise.resolve({ status: 'refused', detail: said, head: hookOutputHead(said), timed_out: true });
+    running = current.steward({ plots: plotsWith(current.root, { head: movingTip(), commit }) });
+    expect(await running.start({ loop: false })).toEqual({ ok: true });
+    await current.command('create_quest', questPayload('Linted'));
+    await tickUntil(running, current.clock, statusIs(current, 'Linted', 'infirmary'));
+    const quest = await current.quest('Linted');
+    expect(assigneeRequests(current)).toHaveLength(1);
+    expect(quest.attempt_log.every(({ heal }) => heal === undefined)).toBe(true);
+    expect(current.notices).toHaveLength(1);
+    expect(current.notices[0]).toMatchObject({
+      kind: 'infirmary',
+      trip: 'commit',
+      reason: { code: 'breaker:commit' },
+    });
   });
 });
