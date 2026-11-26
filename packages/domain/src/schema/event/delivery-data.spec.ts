@@ -52,6 +52,8 @@ describe('delivery.* data', () => {
   });
 
   it.each([
+    ['delivery.pushed', { ...PUSHED, push_ms: 0 }],
+    ['delivery.pushed', { ...PUSHED, push_ms: 123 }],
     ['delivery.pushed', PUSHED],
     ['delivery.pushed', { ...PUSHED, warnings: ['docs/spec.md'] }],
     ['delivery.merged', MERGED],
@@ -86,6 +88,7 @@ describe('delivery.* data', () => {
     ['delivery.pushed', { ...PUSHED, forge: 'gitlab' }, 'data.forge'],
     ['delivery.pushed', { ...PUSHED, pr: { number: 0, url: PR.url } }, 'data.pr.number'],
     ['delivery.pushed', { ...PUSHED, warnings: [] }, 'data.warnings'],
+    ['delivery.pushed', { ...PUSHED, push_ms: -1 }, 'data.push_ms'],
     ['delivery.merged', { ...MERGED, method: 'rebase' }, 'data.method'],
     ['delivery.merged', { ...MERGED, sealed: undefined }, 'data.sealed'],
     ['delivery.merged', { ...MERGED, merge_sha: undefined }, 'data.merge_sha'],

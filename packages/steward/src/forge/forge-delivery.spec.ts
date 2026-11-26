@@ -87,6 +87,7 @@ describe('a done quest on a territory that delivers by pull request', () => {
       head,
       forge: 'github',
       pr: { number: 1, url: PULL_1 },
+      push_ms: expect.any(Number) as unknown,
     });
     expect(await current.lines('delivery.failed')).toEqual([]);
     const log = await readFile(inKingdom(kingdom.root, pushLogOf(quest.id)), 'utf8');

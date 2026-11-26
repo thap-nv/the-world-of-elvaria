@@ -65,6 +65,15 @@ export const DeliveryPushedDataSchema = z
     head: HeadSchema,
     forge: z.enum(DELIVERY_FORGES),
     pr: PullRequestSchema,
+    push_ms: z
+      .int()
+      .min(0)
+      .optional()
+      .meta(
+        describe(
+          "Time spent in git push, including the territory's pre-push hook, in milliseconds; absent in older lines.",
+        ),
+      ),
     warnings: PathsSchema.optional().meta(
       describe(
         'Files whose added lines match a shared pattern of redact (a bearer token, credentials in a URL, a secret assignment): pushed all the same, for the owner to look at. Absent: none.',

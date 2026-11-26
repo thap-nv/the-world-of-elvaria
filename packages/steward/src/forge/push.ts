@@ -10,12 +10,13 @@
 // the Steward records nothing: the next one delivers anew.
 import { readFile } from 'node:fs/promises';
 
-import { currentRun, deliveryOf, err, ok } from '@elvaria/domain';
+import { currentRun, deliveryOf, err, ok, verdictIdOf } from '@elvaria/domain';
 import { createRedactor } from '@elvaria/eventlog';
 import { inKingdom, writeFileAtomic } from '@elvaria/store';
 import type { Quest, QuestId, Result } from '@elvaria/domain';
 
 import { deliveryNoteOf } from '../deliver/note.ts';
+import { checkedHeadEnv } from './checked-head.ts';
 import { detailOf, forgeError, foundOf, messageOf, stopped } from './delivery.ts';
 import { runDeliveryGit } from './git.ts';
 import { recordFailed, recordPushed } from './outcome.ts';
@@ -105,16 +106,24 @@ function secretFailure(d: Delivery, scan: ScanResult, known: readonly string[]):
 }
 
 /** `git push` of the branch alone, its output masked into push.log; the output's end when git refused. */
-async function push(ctx: Context, d: Delivery, known: readonly string[]): Promise<Result<void, string>> {
+async function push(
+  ctx: Context,
+  d: Delivery,
+  known: readonly string[],
+  env: Readonly<Record<string, string>>,
+): Promise<Result<number, string>> {
   const refspec = `${d.branch}:refs/heads/${d.branch}`;
   const args = ['push', 'origin', refspec];
+  const started = ctx.deps.clock.now();
   const run = await runDeliveryGit(d.git, d.worktree, args, {
     timeout_ms: PUSH_TIMEOUT_MS,
     signal: d.signal,
+    env,
   });
+  const push_ms = Math.max(0, ctx.deps.clock.now() - started);
   const masked = createRedactor(known)(`$ git ${args.join(' ')}\n${run.output}\n`);
   await writeFileAtomic(inKingdom(ctx.root, pushLogOf(d.quest.id)), masked);
-  if (run.code === 0) return ok(undefined);
+  if (run.code === 0) return ok(push_ms);
   return err(
     run.stopped && !d.signal.aborted ? `${masked}\nstopped after ${PUSH_TIMEOUT_MINUTES} minutes` : masked,
   );
@@ -147,7 +156,8 @@ function endsQuietly(
 async function deliverChecked(ctx: Context, d: Delivery): Promise<Failure | undefined> {
   const updated = await updateBranch(ctx, d);
   if (endsQuietly(ctx, d, updated)) return undefined;
-  if (updated !== undefined || stopped(d)) return stopped(d) ? undefined : updated;
+  if (stopped(d)) return undefined;
+  if (typeof updated === 'object') return updated;
   const base = await baseOf(d);
   const ahead = await localGit(d, ['rev-list', '--count', `${base}..HEAD`]);
   const head = await localGit(d, ['rev-parse', 'HEAD']);
@@ -170,10 +180,16 @@ async function deliverChecked(ctx: Context, d: Delivery): Promise<Failure | unde
   const beforePush = await checkRepoConfig(d);
   if (stopped(d)) return undefined;
   if (beforePush !== undefined) return beforePush;
-  const pushed = await push(ctx, d, known);
+  const env = await checkedHeadEnv(head, updated, async () => {
+    const verdict = await ctx.deps.store.verdicts.read(verdictIdOf(d.quest, currentRun(d.quest)));
+    const committed_at = await localGit(d, ['log', '-1', '--format=%cI', 'HEAD']);
+    return { verdict: verdict.ok ? verdict.value : undefined, committed_at };
+  });
+  if (stopped(d)) return undefined;
+  const pushed = await push(ctx, d, known, env);
   if (stopped(d)) return undefined;
   if (!pushed.ok) return { stage: 'push', reason: 'push_refused', branch: d.branch, detail: pushed.error };
-  return openPullRequest(ctx, d, { head, known, warnings: scan.warnings });
+  return openPullRequest(ctx, d, { head, known, warnings: scan.warnings, push_ms: pushed.value });
 }
 
 /** The territory and the plot can each have their own worktree config (SEC-02b). */
@@ -189,7 +205,12 @@ async function checkRepoConfig(d: Delivery): Promise<Failure | undefined> {
 async function openPullRequest(
   ctx: Context,
   d: Delivery,
-  pushed: { readonly head: string; readonly known: readonly string[]; readonly warnings: readonly string[] },
+  pushed: {
+    readonly head: string;
+    readonly known: readonly string[];
+    readonly warnings: readonly string[];
+    readonly push_ms: number;
+  },
 ): Promise<Failure | undefined> {
   const note = await readFile(inKingdom(ctx.root, deliveryNoteOf(d.quest)), 'utf8');
   const body = createRedactor(pushed.known)(note);
@@ -211,6 +232,7 @@ async function openPullRequest(
     head,
     forge,
     pr: opened.value,
+    push_ms: pushed.push_ms,
     ...(warnings.length === 0 ? {} : { warnings: [...warnings] }),
   });
   return undefined;
