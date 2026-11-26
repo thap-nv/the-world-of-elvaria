@@ -4,7 +4,7 @@ import { dayOf, inWindow } from '../window.ts';
 import { baseRedTimesOf } from './base-red.ts';
 import { questPeaksOf } from './concurrency.ts';
 import { distributionOf } from './distribution.ts';
-import { measuredRunsOf } from './runs.ts';
+import { everyCarried, measuredRunsOf } from './runs.ts';
 import { checkEscapesOf } from './escapes.ts';
 import type { TerritoryEscapes } from './escapes.ts';
 import type { Quest } from '../../schema/quest/quest.ts';
@@ -37,6 +37,7 @@ function fullByDay(events: readonly Event[], window: MetricsWindow): CheckModes[
     if (!inWindow(window, event.ts)) continue;
     if (!isEventOf(event, 'patrol.ran') && !(isEventOf(event, 'check.end') && event.data.mode === undefined))
       continue;
+    if (everyCarried(event.data.checks)) continue;
     const day = dayOf(event.ts);
     days.set(day, (days.get(day) ?? 0) + 1);
   }
@@ -85,7 +86,10 @@ export function checkModesOf(
 ): CheckModes {
   const runs = measuredRunsOf(events);
   const completed = runs.filter((run) => inWindow(window, run.at));
-  const patrols = events.filter((event) => isEventOf(event, 'patrol.ran') && inWindow(window, event.ts));
+  const patrols = events.filter(
+    (event) =>
+      isEventOf(event, 'patrol.ran') && inWindow(window, event.ts) && !everyCarried(event.data.checks),
+  );
   const patrolMs = patrols.flatMap((event) => {
     if (!isEventOf(event, 'patrol.ran') || event.data.checks.length === 0) return [];
     return [event.data.checks.reduce((sum, check) => sum + check.duration_ms, 0)];

@@ -9,6 +9,13 @@ export interface MeasuredCheckRun {
   readonly elapsed_ms: number;
 }
 
+/**
+ * (RC-04, ADR 0035) A run whose every check was carried ran nothing: it takes no time, so it stays out of the
+ * durations and of the full runs by day, where a run of 0 s would only skew the numbers.
+ */
+export const everyCarried = (checks: readonly { readonly carried_from?: string | undefined }[]): boolean =>
+  checks.length > 0 && checks.every(({ carried_from: from }) => from !== undefined);
+
 const keyOf = (event: Event, delivery: boolean | undefined): string =>
   JSON.stringify([event.quest, event.attempt, delivery === true]);
 
@@ -24,6 +31,7 @@ export function measuredRunsOf(events: readonly Event[]): MeasuredCheckRun[] {
     const start = starts.get(key);
     starts.delete(key);
     if (start === undefined || (event.data.outcome !== 'pass' && event.data.outcome !== 'fail')) continue;
+    if (everyCarried(event.data.checks)) continue;
     runs.push({
       quest: event.quest,
       at: event.ts,

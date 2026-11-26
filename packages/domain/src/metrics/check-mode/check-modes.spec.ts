@@ -221,3 +221,38 @@ describe('check modes ledger (CM-09a)', () => {
     ]);
   });
 });
+
+describe('carried checks in the check modes ledger (RC-04)', () => {
+  const FROM = '01KAAAAAAAAAAAAAAAAAAAAAAA';
+  const carried = { id: 'test', pass: true, duration_ms: 0, carried_from: FROM };
+  const patrol = (checks: readonly Record<string, unknown>[]) =>
+    lineOf(
+      'patrol.ran',
+      { territory: 'elvaria', head: null, trigger: 'merged', setup: null, checks, scans: [] },
+      at(30),
+    );
+
+  it('a run or a patrol whose every check was carried is no sample of time and no full run of the day', () => {
+    const log = [
+      check('check.start', 0),
+      check('check.end', 0, { outcome: 'pass', checks: [carried] }),
+      check('check.start', 1, {}, 2),
+      check(
+        'check.end',
+        4,
+        { outcome: 'pass', checks: [carried, { id: 'lint', pass: true, duration_ms: 1000 }] },
+        2,
+      ),
+      patrol([
+        { id: 'test', pass: true, duration_ms: 0, timed_out: false, environment: false, carried_from: FROM },
+      ]),
+    ];
+    const metrics = checkModesOf(log, {});
+    expect(metrics.durations).toEqual([
+      { mode: 'full', count: 1, median_minutes: 3, p90_minutes: 3 },
+      { mode: 'narrow', count: 0, median_minutes: null, p90_minutes: null },
+      { mode: 'patrol', count: 0, median_minutes: null, p90_minutes: null },
+    ]);
+    expect(metrics.full_by_day).toEqual([{ day: '2026-11-08', count: 1 }]);
+  });
+});

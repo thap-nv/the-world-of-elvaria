@@ -3,12 +3,15 @@ import { describe, expect, it } from 'vitest';
 
 import { PATROL_LINE_MAX_LENGTH } from '../constants.ts';
 import { PatrolRanDataSchema } from '../schema/event/patrol-data.ts';
-import { patrolRanOf, scanOf } from './report.ts';
-import type { CheckId, ScriptId, TerritoryId } from '../core/ids.ts';
+import { carriedPatrolOf, patrolRanOf, scanOf } from './report.ts';
+import type { CheckId, ScriptId, TerritoryId, Ulid } from '../core/ids.ts';
 import type { TerritoryTrial, TrialCheck } from '../scorecard/trial.ts';
 
 const TERRITORY = 'elvaria' as TerritoryId;
 const LINK = 'link-check' as ScriptId;
+const TREE = 'c'.repeat(40);
+const CONFIG = '0123456789abcdef';
+const FROM = '01KAAAAAAAAAAAAAAAAAAAAAAA' as Ulid;
 const step = { command: 'pnpm i', pass: true, duration_ms: 5, timed_out: false, exit_code: 0, log_path: 'l' };
 const check = (extra: Partial<TrialCheck>): TrialCheck => ({
   ...step,
@@ -54,6 +57,48 @@ describe('patrolRanOf', () => {
     expect(told).toMatchObject({ head: null, plot_failure: 'fatal: x', setup: null, checks: [] });
     const silent = patrolRanOf({ territory: TERRITORY, trigger: 'schedule', trial: trial(' '), scans: [] });
     expect(silent.plot_failure).toBe('no plot could be made');
+  });
+
+  it('(RC-04) names the tree and config it ran on, and a carried check by its line, without a log', () => {
+    const trial: TerritoryTrial = {
+      base: 'a'.repeat(40),
+      setup: null,
+      checks: [check({}), check({ id: 'lint' as CheckId, duration_ms: 0, carried_from: FROM })],
+    };
+    const report = { territory: TERRITORY, trigger: 'merged', trial, scans: [] } as const;
+    const data = patrolRanOf({ ...report, tree: TREE, config: CONFIG });
+    expect(PatrolRanDataSchema.parse(data)).toEqual(data);
+    expect(data).toMatchObject({ tree: TREE, config: CONFIG });
+    expect(data.checks.map(({ log_path: log, carried_from: from }) => [log, from])).toEqual([
+      ['l', undefined],
+      [undefined, FROM],
+    ]);
+    expect(patrolRanOf(report)).not.toHaveProperty('tree');
+  });
+});
+
+describe('carriedPatrolOf', () => {
+  it('a patrol with every check carried: no setup, each check green in no time from its line', () => {
+    const data = carriedPatrolOf({
+      territory: TERRITORY,
+      trigger: 'schedule',
+      head: 'b'.repeat(40),
+      tree: TREE,
+      config: CONFIG,
+      carried: [{ id: 'unit' as CheckId, from: FROM }],
+    });
+    expect(PatrolRanDataSchema.parse(data)).toEqual({
+      territory: TERRITORY,
+      head: 'b'.repeat(40),
+      trigger: 'schedule',
+      tree: TREE,
+      config: CONFIG,
+      setup: null,
+      checks: [
+        { id: 'unit', pass: true, duration_ms: 0, timed_out: false, environment: false, carried_from: FROM },
+      ],
+      scans: [],
+    });
   });
 });
 

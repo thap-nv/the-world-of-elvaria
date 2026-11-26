@@ -9,6 +9,7 @@ import { CARRY_MAX_AGE_HOURS } from './constants.ts';
 import type { CheckLedgerRow } from './ledger.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CheckId, TerritoryId, Ulid } from '../core/ids.ts';
+import type { PatrolTrigger } from '../schema/event/patrol-data.ts';
 import type { TerritoryCheck } from '../schema/territory.ts';
 
 const CARRY_MAX_AGE_MS = CARRY_MAX_AGE_HOURS * MINUTES_PER_HOUR * MS_PER_MINUTE;
@@ -75,3 +76,14 @@ export function carryOf(ledger: readonly CheckLedgerRow[], request: CarryRequest
   }
   return { run, carried };
 }
+
+/**
+ * (RC-04, K4) What a patrol carries: by the schedule, after a merge, after a move of a red branch or for the queue, as
+ * carryOf says; nothing at the owner's word, which is a full run and the way to run again a ledger in doubt.
+ */
+export const patrolCarryOf = (
+  ledger: readonly CheckLedgerRow[],
+  request: CarryRequest,
+  trigger: PatrolTrigger,
+): Carry =>
+  trigger === 'owner' ? { run: request.checks.map(({ id }) => id), carried: [] } : carryOf(ledger, request);
