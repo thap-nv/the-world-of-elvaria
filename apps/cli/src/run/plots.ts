@@ -8,12 +8,15 @@
 // judge gets the plot made again, with commands.reset once (scratchAgain, P1-42, P1-47).
 import {
   argvOf,
+  checkPointIn,
   createPlotManager,
   commitLinksOf,
+  gitOf,
   patrolIdOf,
   probeIdOf,
   runChecks,
   scratchAgain,
+  territoryHeadOf,
   trialInScratch,
   tryGuest,
   tryTerritory,
@@ -124,11 +127,18 @@ const queueOf = (
 const patrolPlots = (
   kingdom: string,
   host: ProcessHost,
-): Pick<Plots, 'patrol' | 'probe' | 'commitLinks' | 'guest'> => ({
-  patrol: async (territory, { signal, scan }) => {
+): Pick<Plots, 'patrol' | 'patrolHead' | 'probe' | 'commitLinks' | 'guest'> => ({
+  // (RC-04) On the commit patrolHead named, the checks the ledger carries passed without running.
+  patrol: async (territory, { signal, scan, commit, carried }) => {
     const name = patrolIdOf(territory.id);
-    return (await tryTerritory({ kingdom, territory, host, name, signal, inPlot: scan })).trial;
+    const given = {
+      ...(commit === undefined ? {} : { commit }),
+      ...(carried === undefined ? {} : { carried }),
+    };
+    return (await tryTerritory({ kingdom, territory, host, name, signal, inPlot: scan, ...given })).trial;
   },
+  // (RC-04, ADR 0035) The commit a patrol would try, origin fetched, and its tree: what the ledger is asked about.
+  patrolHead: (territory) => territoryHeadOf({ territory, host }),
   // (CM-04) The probe of a red branch: the same trial under `probe-<id>`, on a commit the patrol fetched, red checks only.
   probe: async (territory, commit, checks, signal) => {
     const name = probeIdOf(territory.id);
@@ -146,7 +156,11 @@ const patrolPlots = (
  * commands of a narrow run read the diff's base in ELVARIA_CHECK_BASE (CM-01); a run in full gets none, so a `run`
  * that reads it (check-changed.mjs turns narrow on it) runs as before CM-01.
  */
-const checkPlots = (kingdom: string, manager: PlotManager, host: ProcessHost): Pick<Plots, 'check'> => ({
+const checkPlots = (
+  kingdom: string,
+  manager: PlotManager,
+  host: ProcessHost,
+): Pick<Plots, 'check' | 'checkPoint'> => ({
   check: async ({
     plot,
     territory,
@@ -156,6 +170,7 @@ const checkPlots = (kingdom: string, manager: PlotManager, host: ProcessHost): P
     party_role: role,
     lock_wait_ms: wait,
     mode,
+    carried,
   }) => {
     const touched = await manager.touched(plot);
     const base = mode === 'narrow' ? ((await manager.checkBase?.(plot)) ?? undefined) : undefined;
@@ -167,8 +182,15 @@ const checkPlots = (kingdom: string, manager: PlotManager, host: ProcessHost): P
       ...(signal === undefined ? {} : { signal }),
       ...(secrets === undefined ? {} : { secrets }),
       ...(role === undefined ? {} : { party_role: role }),
+      ...(carried === undefined ? {} : { carried }),
     };
     return runChecks({ kingdom, territory, touched, cwd: cwdOf(kingdom, plot), run_dir, ...given }, host);
+  },
+  // (RC-04, ADR 0035) What a run in a worktree plot is a fact about: HEAD's tree while nothing else differs, and a
+  // narrow run's base, the one `check` gives it. A folder plot has no tree of its own (it may sit in a kingdom repo).
+  checkPoint: async (plot, mode) => {
+    const git = plot.type === 'worktree' ? await gitOf(host) : undefined;
+    return git === undefined ? {} : checkPointIn(git, cwdOf(kingdom, plot), mode === 'narrow');
   },
 });
 

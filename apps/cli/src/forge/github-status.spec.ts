@@ -127,13 +127,13 @@ describe('githubForge.status', () => {
   it('gives back a forge that could not say where the pull request or its checks stand', async () => {
     const down: Reply = { status: 502 };
     expect(await statusOf({}, ['ci'], {}, { [pull]: down })).toEqual(
-      err({ reason: 'forge_error', detail: 'HTTP 502' }),
+      err({ reason: 'forge_error', detail: 'HTTP 502', status: 502 }),
     );
     expect(await statusOf({ mergeable: true }, ['ci'], {}, { [runs]: { status: 401 } })).toEqual(
-      err({ reason: 'forge_auth', detail: 'HTTP 401' }),
+      err({ reason: 'forge_auth', detail: 'HTTP 401', status: 401 }),
     );
     expect(await statusOf({ mergeable: true }, ['ci'], {}, { [statuses]: down })).toEqual(
-      err({ reason: 'forge_error', detail: 'HTTP 502' }),
+      err({ reason: 'forge_error', detail: 'HTTP 502', status: 502 }),
     );
   });
 
