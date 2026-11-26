@@ -162,16 +162,23 @@ function groupLines(t: Translate, group: AttentionGroup, items: readonly Attenti
 /** The digest of `day` (`yyyy-mm-dd`) for the kingdom `name`, as Markdown ending in a newline. */
 export function digestMarkdown(
   t: Translate,
-  digest: { readonly day: string; readonly name: string; readonly items: readonly AttentionItem[] },
+  digest: {
+    readonly day: string;
+    readonly name: string;
+    readonly items: readonly AttentionItem[];
+    readonly heals?: { readonly total: number; readonly healed: number };
+  },
 ): string {
   const { day, name, items } = digest;
   const must = items.filter(({ group }) => group === 'must').length;
   const head = [`# ${t('cli.digest.title', { day, kingdom: name })}`, ''];
+  const heals = digest.heals === undefined ? [] : [t('cli.digest.heals', digest.heals)];
   const body =
     items.length === 0
-      ? [t('cli.digest.empty')]
+      ? [t('cli.digest.empty'), ...heals]
       : [
           t('cli.digest.counts', { must, can_wait: items.length - must }),
+          ...heals,
           ...ATTENTION_GROUPS.flatMap((group) => groupLines(t, group, items)),
         ];
   return `${[...head, ...body].join('\n')}\n`;

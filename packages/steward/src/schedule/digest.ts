@@ -6,6 +6,7 @@ import {
   baseRedOf,
   deliveringOf,
   heldQuestsOf,
+  healsOf,
   attentionQueue,
   judgedByEye,
   ownerDeliveries,
@@ -181,7 +182,23 @@ export const digestJob = (digest: Digest): StewardJob => ({
     };
     const notices = upgrade === undefined ? unsealed : { ...unsealed, upgrade };
     const items = attentionQueue(state, ctx.deps.clock.now(), notices);
-    const file = await digest.write({ day: run.day, items });
+    const heals = healsOf(
+      {
+        quests: [...ctx.world.quests.values()],
+        characters: [...ctx.world.characters.values()],
+        verdicts: verdicts.items,
+        events: log.events,
+        commands: [],
+      },
+      { since: run.day, until: run.day },
+    );
+    const file = await digest.write({
+      day: run.day,
+      items,
+      ...(heals.total > 0
+        ? { heals: { total: heals.total, healed: heals.by_healer.reduce((sum, row) => sum + row.healed, 0) } }
+        : {}),
+    });
     const must = items.filter(({ group }) => group === 'must').length;
     const counts = { must, can_wait: items.length - must };
     await ctx.record.note({
