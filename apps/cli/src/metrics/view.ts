@@ -14,6 +14,7 @@ import { failKindsSection, lessonsSection, repeatsSection } from './view-lessons
 import { limitsSection } from './view-limits.ts';
 import { afterWrapUpSection } from './view-wrap-ups.ts';
 import { checkModesSection } from './view-check-modes.ts';
+import { recheckSection } from './view-recheck.ts';
 import { healsSection } from './view-heals.ts';
 import type { MetricsSection } from './section.ts';
 
@@ -258,6 +259,7 @@ export const metricsSections = (
   escapedSection(t, metrics),
   reportedEscapesSection(t, metrics),
   baseRedSection(t, metrics),
+  recheckSection(t, metrics),
   checkModesSection(t, metrics),
   ...(disruptions === undefined ? [] : [disruptions]),
   healsSection(t, metrics),

@@ -102,3 +102,39 @@ export const checkLog = (first: Quest, second: Quest) => [
   patrol(30, true),
   patrol(40, false),
 ];
+
+/** RC-07: one log exercises actual runs, a carried check, push time and a same-tree patrol regression. */
+export const recheckLog = (quest: Quest) => {
+  const log = checkLog(quest, quest);
+  const carried = { id: 'test', pass: true, duration_ms: 0, carried_from: '01KAAAAAAAAAAAAAAAAAAAAAAA' };
+  const carry = line('check.end', 19, { outcome: 'pass', checks: [carried] });
+  const push = line('delivery.pushed', 24, {
+    quest: QUEST_ID,
+    territory: 'do-an',
+    branch: `quest/${QUEST_ID}`,
+    head: 'a'.repeat(40),
+    forge: 'github',
+    pr: { number: 1, url: 'https://github.com/o/r/pull/1' },
+    push_ms: 120000,
+  });
+  const patrols = [true, false].map((carryCheck, index) =>
+    line('patrol.ran', 41 + index, {
+      territory: 'do-an',
+      head: 'a'.repeat(40),
+      tree: 'b'.repeat(40),
+      trigger: 'schedule',
+      setup: null,
+      scans: [],
+      checks: [
+        {
+          timed_out: false,
+          environment: false,
+          ...(carryCheck
+            ? carried
+            : { id: 'test', pass: false, duration_ms: 60000, log_path: '.runs/test.log' }),
+        },
+      ],
+    }),
+  );
+  return [...log.slice(0, 9), carry, push, ...log.slice(9), ...patrols];
+};

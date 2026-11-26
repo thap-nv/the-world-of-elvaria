@@ -83,6 +83,7 @@ export interface DigestRequest {
   readonly day: string;
   readonly items: readonly AttentionItem[];
   readonly heals?: { readonly total: number; readonly healed: number };
+  readonly carried_red?: number;
 }
 
 /**

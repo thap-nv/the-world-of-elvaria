@@ -14,7 +14,8 @@ export function checkModesSection(t: Translate, metrics: Metrics): MetricsSectio
   if (
     data.full_by_day.length === 0 &&
     data.durations.every((row) => row.count === 0) &&
-    data.escapes.length === 0
+    data.escapes.length === 0 &&
+    data.merged_cost.quests.length === 0
   )
     return {
       title,
@@ -46,6 +47,7 @@ export function checkModesSection(t: Translate, metrics: Metrics): MetricsSectio
         t('cli.metrics.check_modes.quest_cost', {
           quest: row.quest,
           minutes: minutes(row.minutes),
+          push: minutes(row.push_minutes),
         }),
       ),
       ...data.base_red.map((row) =>

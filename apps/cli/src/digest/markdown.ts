@@ -167,18 +167,22 @@ export function digestMarkdown(
     readonly name: string;
     readonly items: readonly AttentionItem[];
     readonly heals?: { readonly total: number; readonly healed: number };
+    readonly carried_red?: number;
   },
 ): string {
   const { day, name, items } = digest;
   const must = items.filter(({ group }) => group === 'must').length;
   const head = [`# ${t('cli.digest.title', { day, kingdom: name })}`, ''];
   const heals = digest.heals === undefined ? [] : [t('cli.digest.heals', digest.heals)];
+  const carried =
+    digest.carried_red === undefined ? [] : [t('cli.digest.carried_red', { count: digest.carried_red })];
   const body =
     items.length === 0
-      ? [t('cli.digest.empty'), ...heals]
+      ? [t('cli.digest.empty'), ...heals, ...carried]
       : [
           t('cli.digest.counts', { must, can_wait: items.length - must }),
           ...heals,
+          ...carried,
           ...ATTENTION_GROUPS.flatMap((group) => groupLines(t, group, items)),
         ];
   return `${[...head, ...body].join('\n')}\n`;

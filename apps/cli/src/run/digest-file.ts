@@ -10,11 +10,17 @@ import { digestMarkdown } from '../digest/markdown.ts';
 /** `root`: the kingdom folder; `name`: the kingdom's name, the digest's heading. */
 export function fileDigest(t: Translate, root: string, name: string): Digest {
   return {
-    write: async ({ day, items, heals }) => {
+    write: async ({ day, items, heals, carried_red }) => {
       const file = kingdomLayout.digest(day);
       await writeFileAtomic(
         inKingdom(root, file),
-        digestMarkdown(t, { day, name, items, ...(heals === undefined ? {} : { heals }) }),
+        digestMarkdown(t, {
+          day,
+          name,
+          items,
+          ...(heals === undefined ? {} : { heals }),
+          ...(carried_red === undefined ? {} : { carried_red }),
+        }),
       );
       return file;
     },

@@ -7,6 +7,7 @@ import {
   deliveringOf,
   heldQuestsOf,
   healsOf,
+  carriedThenRedOf,
   attentionQueue,
   judgedByEye,
   ownerDeliveries,
@@ -192,9 +193,11 @@ export const digestJob = (digest: Digest): StewardJob => ({
       },
       { since: run.day, until: run.day },
     );
+    const carriedRed = carriedThenRedOf(log.events, { since: run.day, until: run.day }).length;
     const file = await digest.write({
       day: run.day,
       items,
+      ...(carriedRed > 0 ? { carried_red: carriedRed } : {}),
       ...(heals.total > 0
         ? { heals: { total: heals.total, healed: heals.by_healer.reduce((sum, row) => sum + row.healed, 0) } }
         : {}),
