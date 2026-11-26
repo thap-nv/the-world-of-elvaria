@@ -232,7 +232,7 @@
   `LOCALE_FILES`, `DEFAULT_LOCALE`, `translator`, `bannedWords`, `glossaryTable`, `idsOf`, `isGlossaryTable`,
   `isIdList`, `glossaryProblems`, `localeProblems`), `dependency-cruiser` (`docs-graph.mjs`), `typescript`
   (`docs-identifiers.mjs`, `shape-detect.mjs`), `ajv` + `ajv-formats` (`gen-schemas.spec.ts`), and `knip` (`knip-gate.spec.ts`).
-- `apps/cli` (`src/commands.ts`, `src/args.ts`, `src/command.ts`, `src/help.ts`), imported by `docs-cli.mjs` to
+- `apps/cli` (`src/commands.ts`, `src/args.ts`, `src/command-table/command.ts`, `src/command-table/help.ts`), imported by `docs-cli.mjs` to
   render `docs/cli.md`; `src/metrics/read.ts` and `src/metrics/view.ts`, imported by `docs-metrics-report.mjs`.
 - Node built-ins (`node:child_process`, `node:fs`, `node:path`, `node:process`, `node:url`) and `git`
   (`docs-repo.mjs`, `docs-note.mjs`, `check-stamp.mjs`, `check-changed.mjs`).
