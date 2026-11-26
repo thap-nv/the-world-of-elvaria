@@ -7,14 +7,16 @@
 // plot `guest-<territory>`: commands.setup, then the checks of the territory's check mode for the merge's diff
 // (checkModeOf, the queue's pass): narrow commands on the paths it touched, or every check in full. The plot goes in
 // the trial's `finally`, whatever happened, a stop included; only its logs stay in `.runs/guest-<territory>/`. 0 mana.
+import type { CarriedCheck } from '@elvaria/domain';
 import { fromPortable } from '@elvaria/store';
 
 import { checkModeOf } from '../checks/check-mode.ts';
+import type { CheckPoint } from '../checks/check-config.ts';
 import type { CheckRunMode } from '../checks/check-mode.ts';
 import { plotCommitMessage } from '../plot/commit-message.ts';
 import { conflictPathsOf, saidBy } from '../plot/dry-merge.ts';
 import { fetchBase } from '../plot/fetch.ts';
-import { gitOf, gitOut, zList } from '../plot/git.ts';
+import { gitOf, gitOut, treeOf, zList } from '../plot/git.ts';
 import type { Git } from '../plot/git.ts';
 import { tryTerritory } from '../plot/territory-trial.ts';
 import type { TerritoryTrialRequest, TerritoryTrialRun } from '../plot/territory-trial.ts';
@@ -24,7 +26,7 @@ export const guestIdOf = (territory: string): string => `guest-${territory}`;
 
 export interface GuestTrialRequest extends Omit<
   TerritoryTrialRequest,
-  'name' | 'commit' | 'checks' | 'narrow' | 'inPlot' | 'stamp'
+  'name' | 'commit' | 'checks' | 'narrow' | 'inPlot' | 'stamp' | 'carried'
 > {
   /** The pull request's branch on origin, as the forge names it. */
   readonly branch: string;
@@ -32,6 +34,13 @@ export interface GuestTrialRequest extends Omit<
   readonly head: string;
   /** Told once the merge is made, right before its checks run, with their mode: the Steward's `check.start`. */
   readonly started?: (mode: CheckRunMode) => Promise<void>;
+  /**
+   * (RC-04, ADR 0035) Asked once the merge is made, with its tree and a narrow run's base: the checks to carry
+   * instead of running (the Steward's ledger). Absent, or a merge git cannot name the tree of: every check runs.
+   */
+  readonly carry?: (
+    point: Required<Pick<CheckPoint, 'tree'>> & CheckPoint,
+  ) => Promise<readonly CarriedCheck[]>;
 }
 
 export type GuestTrial =
@@ -46,6 +55,8 @@ export type GuestTrial =
       readonly commit: string;
       readonly mode: CheckRunMode;
       readonly run: TerritoryTrialRun;
+      /** (RC-04) The merge's tree, the fact its green checks are about; absent when git cannot name it. */
+      readonly tree?: string;
     };
 
 const failed = (detail: string): GuestTrial => ({ state: 'failed', detail });
@@ -103,7 +114,11 @@ export async function tryGuest(request: GuestTrialRequest): Promise<GuestTrial> 
   const touched = zList(await gitOut(git, repo, ['diff', '--name-only', '--no-renames', '-z', base, commit]));
   const mode = checkModeOf(territory, touched, { pass: 'queue' });
   const narrow = mode === 'narrow' ? { narrow: { touched, base } } : {};
+  const tree = await treeOf(git, repo, commit);
   await request.started?.(mode);
-  const run = await tryTerritory({ ...request, name: guestIdOf(territory.id), commit, ...narrow });
-  return { state: 'tried', base, commit, mode, run };
+  const point = { tree, ...(mode === 'narrow' ? { base } : {}) };
+  const carried = tree === undefined ? [] : ((await request.carry?.({ ...point, tree })) ?? []);
+  const given = { ...narrow, ...(carried.length === 0 ? {} : { carried }) };
+  const run = await tryTerritory({ ...request, name: guestIdOf(territory.id), commit, ...given });
+  return { state: 'tried', base, commit, mode, run, ...(tree === undefined ? {} : { tree }) };
 }

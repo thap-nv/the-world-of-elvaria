@@ -38,6 +38,7 @@ export {
   commitsSinceStamp,
   patrolIdOf,
   probeIdOf,
+  territoryHeadOf,
   trialIdOf,
   trialRunDirOf,
   tryTerritory,
@@ -45,6 +46,7 @@ export {
 export type {
   CommitLinksRequest,
   StampCountRequest,
+  TerritoryHead,
   TerritoryTrialRequest,
   TerritoryTrialRun,
 } from './territory-trial.ts';

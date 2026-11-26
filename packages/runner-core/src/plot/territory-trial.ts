@@ -17,9 +17,9 @@ import { fromPortable } from '@elvaria/store';
 import { withEnvironment } from '../checks/environment.ts';
 import { openLog, runLine } from '../checks/logged-run.ts';
 import { runChecks } from '../checks/run-checks.ts';
-import type { CheckRun } from '../checks/run-checks.ts';
+import type { CheckRun, ChecksRequest } from '../checks/run-checks.ts';
 import type { ProcessHost } from '../process/program.ts';
-import { gitOf } from './git.ts';
+import { gitOf, treeOf } from './git.ts';
 import type { Git } from './git.ts';
 import { ensureLongPaths, ensurePlotExcludes } from './repo-settings.ts';
 import { removeScratch } from './scratch.ts';
@@ -66,6 +66,8 @@ export interface TerritoryTrialRequest {
    * command where it has one, `base` as ELVARIA_CHECK_BASE. Absent: every check, its `run`, as a merge quest runs them.
    */
   readonly narrow?: { readonly touched: readonly string[]; readonly base: string };
+  /** (RC-04, ADR 0035) The checks the Steward carries instead of running (runChecks' `carried`). */
+  readonly carried?: ChecksRequest['carried'];
 }
 
 export interface TerritoryTrialRun {
@@ -127,6 +129,7 @@ async function checkStep(kingdom: string, territory: Territory, run: CheckRun): 
     exit_code: run.exit_code,
     log_path: run.log_path,
     ...(run.environment === undefined ? {} : { environment: run.environment }),
+    ...(run.carried_from === undefined ? {} : { carried_from: run.carried_from }),
   };
   return withLog(kingdom, step);
 }
@@ -142,7 +145,7 @@ async function stepsIn(request: TerritoryTrialRequest, worktree: string) {
   const setup = await setupStep(request, worktree);
   if (setup !== null && !setup.pass) return { setup, checks: [] };
   // A party's merge quest runs every check whatever it touched (select-checks.ts): so does the trial, unless narrow.
-  const { narrow } = request;
+  const { narrow, carried } = request;
   const selection =
     narrow === undefined
       ? ({ touched: [], party_role: 'merge' } as const)
@@ -155,6 +158,7 @@ async function stepsIn(request: TerritoryTrialRequest, worktree: string) {
       cwd: worktree,
       run_dir: `.runs/${nameOf(request)}`,
       ...(signal === undefined ? {} : { signal }),
+      ...(carried === undefined ? {} : { carried }),
     },
     host,
   );
@@ -183,13 +187,37 @@ export interface StampCountRequest {
  * nothing could be counted (no git, not a repo, no default branch), which the card reads as "not counted".
  */
 export async function commitsSinceStamp(request: StampCountRequest): Promise<number | null | undefined> {
-  const { territory, host, stamp } = request;
+  const fork = await forkOf(request, false);
+  return fork === undefined ? undefined : commitsSince(fork.git, fork.repo, request.stamp, fork.commit);
+}
+
+/** git, the repo and where a new quest would fork from; undefined without git, a repo or a default branch. */
+async function forkOf({ territory, host }: Pick<StampCountRequest, 'territory' | 'host'>, fetch: boolean) {
   if (territory.vcs.type !== 'git') return undefined;
   const git = await gitOf(host);
   if (git === undefined) return undefined;
   const repo = fromPortable(territory.path);
-  const fork = await forkPoint({ git, repo, vcs: territory.vcs, fetch: false });
-  return fork.ok ? commitsSince(git, repo, stamp, fork.value) : undefined;
+  const fork = await forkPoint({ git, repo, vcs: territory.vcs, fetch });
+  return fork.ok ? { git, repo, commit: fork.value } : undefined;
+}
+
+/** Where a new quest would fork from, origin fetched first, and its tree unless git cannot name it. */
+export interface TerritoryHead {
+  readonly commit: string;
+  readonly tree?: string;
+}
+
+/**
+ * (RC-04, ADR 0035) What a patrol asks before it makes a plot, so the Steward carries the checks green on that tree,
+ * and makes no plot when it carries them all. Undefined without git, a repo or a default branch: the trial says why.
+ */
+export async function territoryHeadOf(
+  request: Pick<StampCountRequest, 'territory' | 'host'>,
+): Promise<TerritoryHead | undefined> {
+  const fork = await forkOf(request, true);
+  if (fork === undefined) return undefined;
+  const tree = await treeOf(fork.git, fork.repo, fork.commit);
+  return { commit: fork.commit, ...(tree === undefined ? {} : { tree }) };
 }
 
 /** The trial in its detached worktree at `base`, made here; the caller removes it. */

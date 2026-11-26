@@ -1,9 +1,18 @@
 // The Steward's view of the quest's ground (implementation-plan §3.3): the plot it prepares, the checks it resolves
 // and runs there, and Plots, what the composition root gives it. types.ts re-exports the public part.
-import type { CommitLink, PartyRole, Quest, Result, Territory, TerritoryTrial } from '@elvaria/domain';
+import type {
+  CarriedCheck,
+  CommitLink,
+  PartyRole,
+  Quest,
+  Result,
+  Territory,
+  TerritoryTrial,
+} from '@elvaria/domain';
 import type {
   BaseBranch,
   BaseTips,
+  CheckPoint,
   CheckRun,
   CheckRunMode,
   CommitOutcome,
@@ -19,6 +28,7 @@ import type {
   PrepareOptions,
   ReleasedPlot,
   SetupRun,
+  TerritoryHead,
 } from '@elvaria/runner-core';
 
 import type { PlotQueue } from '../forge/plot-queue.ts';
@@ -50,6 +60,8 @@ export interface PlotCheck {
   readonly lock_wait_ms?: number;
   /** (CM-01) `narrow`: each check runs its narrow command where it has one (checkModeOf); absent: `full`. */
   readonly mode?: CheckRunMode;
+  /** (RC-04, ADR 0035) The checks carried instead of run, from the check ledger (runChecks' `carried`). */
+  readonly carried?: readonly CarriedCheck[];
 }
 
 /**
@@ -135,6 +147,12 @@ export interface Plots extends PlotQueue {
    */
   head(plot: Quest['plot']): Promise<string | null>;
   /**
+   * (RC-04, ADR 0035) What a run of the checks in the quest's plot would be a fact about: the tree of its HEAD when
+   * nothing but ignored files differs (checkedTreeOf), and in `narrow` the diff's base the run gets. Absent: no run
+   * there names a tree, and none is carried.
+   */
+  checkPoint?(plot: Quest['plot'], mode?: CheckRunMode): Promise<CheckPoint>;
+  /**
    * The paths the quest changed in its plot (PlotManager.touched), by which `check` picks the territory's checks: a
    * continuing assignee's prompt names the checks they pick (P1-43). Throws when the plot cannot be read.
    */
@@ -177,6 +195,8 @@ export interface Plots extends PlotQueue {
   drift?(plot: Quest['plot'], from: string): Promise<Drift | null>;
   /** The patrol (PS-26): tryTerritory under `patrol-<id>`, then `scan` in its plot. Absent: no patrol runs. */
   patrol?(territory: Territory, options: PatrolOptions): Promise<TerritoryTrial>;
+  /** (RC-04) The commit a patrol would try, origin fetched, and its tree (territoryHeadOf); absent: no carry. */
+  patrolHead?(territory: Territory): Promise<TerritoryHead | undefined>;
   /**
    * (CM-04) One run of the probe of a red default branch: tryTerritory under `probe-<id>` on `commit`, no fetch, with
    * commands.setup and the checks of `checks` only. Absent: no probe runs.
@@ -200,7 +220,7 @@ export interface Plots extends PlotQueue {
    */
   guest?(
     territory: Territory,
-    pull: Pick<GuestTrialRequest, 'branch' | 'head' | 'started'>,
+    pull: Pick<GuestTrialRequest, 'branch' | 'head' | 'started' | 'carry'>,
     signal: AbortSignal,
   ): Promise<GuestTrial>;
   /** At archive only: removes a worktree (its branch stays) and what the tribes' CLIs kept about it. */
