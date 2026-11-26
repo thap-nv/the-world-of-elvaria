@@ -21,6 +21,8 @@ export interface ForgeRepo {
 export interface ForgeProblem {
   readonly reason: 'no_credential' | 'forge_auth' | 'forge_error';
   readonly detail?: string;
+  /** (RC-04) The HTTP status of a forge that answered with an error: 5xx is the forge's own trouble, asked again. */
+  readonly status?: number;
 }
 
 export type ForgeResult<T> = Promise<Result<T, ForgeProblem>>;
@@ -63,6 +65,8 @@ export interface PullStatus {
 export interface MergeProblem {
   readonly reason: ForgeProblem['reason'] | 'conflict' | 'head_moved';
   readonly detail?: string;
+  /** (RC-04) As ForgeProblem's: the HTTP status of the forge's error answer. */
+  readonly status?: number;
 }
 
 /**

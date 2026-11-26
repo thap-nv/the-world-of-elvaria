@@ -5,10 +5,33 @@
 // tree carries. No tree (uncommitted changes, no git) is no fact and carries nothing.
 import { carryOf, checkLedgerOf, patrolCarryOf } from '@elvaria/domain';
 import { checkConfigOf } from '@elvaria/runner-core';
-import type { CarriedCheck, Carry, CarryRequest, PatrolTrigger, Territory } from '@elvaria/domain';
-import type { CheckPoint } from '@elvaria/runner-core';
+import type {
+  CarriedCheck,
+  Carry,
+  CarryRequest,
+  PatrolTrigger,
+  Quest,
+  Territory,
+  Ulid,
+} from '@elvaria/domain';
+import type { CheckPoint, CheckRunMode } from '@elvaria/runner-core';
 
 import type { Context } from '../context.ts';
+
+/** What a run in the quest's plot is a fact about (Plots.checkPoint); none when Plots cannot say: no carry, no fact. */
+export async function checkPointOf(
+  ctx: Context,
+  quest: Quest,
+  mode: CheckRunMode | undefined,
+): Promise<CheckPoint | undefined> {
+  try {
+    return await ctx.deps.plots.checkPoint?.(quest.plot, mode);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    ctx.deps.log.warn(`steward: ${quest.id}: no tree for its checks: ${message}`);
+    return undefined;
+  }
+}
 
 /** What a line of the checks says they ran on: the tree, the config, a narrow run's base; nothing without a tree. */
 export function factsOf(territory: Territory, point: CheckPoint | undefined): Record<string, string> {
@@ -54,7 +77,7 @@ export async function patrolCarryFor(
 
 /** The checks of a run as `check.end` writes them: a carried one names the line it stands for. */
 export const endChecksOf = (
-  runs: readonly { id: string; pass: boolean; duration_ms: number; carried_from?: string | undefined }[],
+  runs: readonly { id: string; pass: boolean; duration_ms: number; carried_from?: Ulid | undefined }[],
 ) =>
   runs.map(({ id, pass, duration_ms, carried_from: from }) => ({
     id,
@@ -62,3 +85,16 @@ export const endChecksOf = (
     duration_ms,
     ...(from === undefined ? {} : { carried_from: from }),
   }));
+
+/** A check that failed for its environment (environmentFailureOf): `check.end` names it and the line that said so. */
+interface Environment {
+  readonly check: string;
+  readonly line: string;
+}
+
+/** What `check.end` says of checks that ran to their end: pass or fail, each check, the environment that failed. */
+export const ranEndOf = (runs: Parameters<typeof endChecksOf>[0], environment: Environment | undefined) => ({
+  outcome: runs.every(({ pass }) => pass) ? ('pass' as const) : ('fail' as const),
+  checks: endChecksOf(runs),
+  ...(environment === undefined ? {} : { environment: { check: environment.check, line: environment.line } }),
+});

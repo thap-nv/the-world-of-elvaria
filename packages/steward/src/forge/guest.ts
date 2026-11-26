@@ -1,6 +1,7 @@
 // A guest entry's turn in its territory's merge queue (CM-07, ADR 0032, plans/check-modes.md "mục khách"), outside
 // the tick (planTick's guest_runs), in order: the forge asked where the pull request stands, so its branch and head are
-// the forge's word, not the owner's (merged or closed already: refused `not_open`); then the try (Plots.guest,
+// the forge's word, not the owner's (merged or closed already: refused `not_open`; (RC-04, R-D) one the forge says
+// cannot merge cleanly: refused `conflict`, no check run); then the try (Plots.guest,
 // runner-core's tryGuest): the head merged into origin's default branch as a commit no ref names, its checks run in the
 // territory's check mode in the plot guest-<territory>, their `check.*` lines marked `delivery` and `guest` so the
 // metrics leave them out. A conflict, git's failure, commands.setup or a check red refuse the guest; a check set aside
@@ -8,17 +9,21 @@
 // while its head is the one tried, `delivery.guest_merged`, and the patrol after a merge follows (CM-03). The
 // Steward never writes to the session's branch (ADR 0023: it merges through the forge only). A stop records nothing
 // but the `check.end` of the checks it killed: the next Steward tries the guest from the start.
+// (RC-04, ADR 0035) The checks green on the merge's tree are carried (the check ledger), so a guest queued again with
+// the same head on the same base runs only the checks that were red; `check.end` names the tree for the next one.
 import { DELIVERY_DETAIL_MAX_LENGTH, deliveryOf, environmentFailureOf } from '@elvaria/domain';
 import { fromPortable } from '@elvaria/store';
-import type { CheckRunMode, GuestTrial } from '@elvaria/runner-core';
+import type { CheckRunMode, GuestTrial, GuestTrialRequest } from '@elvaria/runner-core';
 import type { EventData, GuestEntry, Territory, TerritoryTrial } from '@elvaria/domain';
 
+import { carriedFor, endChecksOf, factsOf } from '../check-ledger/carry.ts';
 import { STEWARD } from '../quest/record.ts';
 import { detailOf, messageOf } from './delivery.ts';
 import type { Context } from '../context.ts';
 import type { Forge, ForgeRepo, PullStatus } from './forge.ts';
 
 type Refused = EventData<'delivery.guest_refused'>;
+type GuestCarry = NonNullable<GuestTrialRequest['carry']>;
 type Merged = EventData<'delivery.guest_merged'>;
 /** What a turn ends with, beyond the guest's territory and number; undefined: stopped, nothing to record. */
 type Ending =
@@ -76,14 +81,26 @@ function endOf(trial: TerritoryTrial | undefined, signal: AbortSignal) {
   const environment = environmentFailureOf(checks);
   return {
     outcome: setup?.pass !== false && checks.every(({ pass }) => pass) ? 'pass' : 'fail',
-    checks: checks.map(({ id, pass, duration_ms }) => ({ id, pass, duration_ms })),
+    checks: endChecksOf(checks),
     ...(environment === undefined
       ? {}
       : { environment: { check: environment.check, line: environment.line } }),
   };
 }
 
-/** The try, with its `check.start` once the merge is made and its `check.end` after; thrown: git refused it. */
+/** (RC-04, ADR 0035) What the try's checks ran on, for the ledger: the merge's tree, a narrow run's base. */
+const factsOfTry = (territory: Territory, tried: GuestTrial | undefined, mode: CheckRunMode) =>
+  tried?.state === 'tried'
+    ? factsOf(territory, {
+        ...(tried.tree === undefined ? {} : { tree: tried.tree }),
+        ...(mode === 'narrow' ? { base: tried.base } : {}),
+      })
+    : {};
+
+/**
+ * The try, with its `check.start` once the merge is made and its `check.end` after; thrown: git refused it.
+ * (RC-04) The checks green on the merge's tree are carried (the ledger), and `check.end` names that tree.
+ */
 async function tryIt(turn: Turn, pull: Pick<PullStatus, 'branch' | 'head'>): Promise<GuestTrial> {
   const { ctx, guest, territory, signal } = turn;
   const plots = ctx.deps.plots;
@@ -100,11 +117,17 @@ async function tryIt(turn: Turn, pull: Pick<PullStatus, 'branch' | 'head'>): Pro
   };
   let tried: GuestTrial | undefined;
   try {
-    tried = await plots.guest(territory, { ...pull, started }, signal);
+    const carry: GuestCarry = (point) => carriedFor(ctx, territory, point);
+    tried = await plots.guest(territory, { ...pull, started, carry }, signal);
     return tried;
   } finally {
     const trial = tried?.state === 'tried' ? tried.run.trial : undefined;
-    if (mode !== undefined) await note(turn, 'check.end', { ...mark(mode), ...endOf(trial, signal) });
+    if (mode !== undefined)
+      await note(turn, 'check.end', {
+        ...mark(mode),
+        ...endOf(trial, signal),
+        ...factsOfTry(territory, tried, mode),
+      });
   }
 }
 
@@ -147,6 +170,8 @@ async function endingOf(turn: Turn): Promise<Ending | undefined> {
   const { state, branch, head } = status.value;
   const pull = { branch, head };
   if (state === 'merged' || state === 'closed') return refused({ reason: 'not_open', ...pull });
+  // (RC-04, R-D) The forge already knows it cannot merge (GitHub's `mergeable` false): no try, no check.
+  if (state === 'conflict') return refused({ reason: 'conflict', ...pull });
   let tried: GuestTrial;
   try {
     tried = await tryIt(turn, pull);

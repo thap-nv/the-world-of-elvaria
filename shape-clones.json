@@ -366,12 +366,6 @@
       "status": "unreviewed"
     },
     {
-      "a": "packages/steward/src/forge/update.ts",
-      "b": "packages/steward/src/review/start-checks.ts",
-      "tokens": 89,
-      "status": "unreviewed"
-    },
-    {
       "a": "apps/cli/src/memo/show.ts",
       "b": "apps/cli/src/quest/escaped.ts",
       "tokens": 88,
@@ -406,20 +400,6 @@
       "b": "apps/cli/src/quest/show.ts",
       "tokens": 87,
       "status": "unreviewed"
-    },
-    {
-      "a": "packages/steward/src/forge/guest.ts",
-      "b": "packages/steward/src/forge/update.ts",
-      "tokens": 86,
-      "status": "kept",
-      "reason": "CM-07: the check.end of a guest reads a territory trial (commands.setup, a plot that could not be made, the checks), the queue update's a list of check runs; one line shape, two sources the Steward gets from different ports (Plots.guest, Plots.check)."
-    },
-    {
-      "a": "packages/steward/src/forge/guest.ts",
-      "b": "packages/steward/src/review/start-checks.ts",
-      "tokens": 86,
-      "status": "kept",
-      "reason": "CM-07: the check.end of a guest reads a territory trial, a run's checks a list of check runs from Plots.check; one line shape over two ports."
     },
     {
       "a": "apps/cli/src/memo/show.ts",
@@ -828,6 +808,13 @@
       "tokens": 255,
       "status": "kept",
       "reason": "HL-05: the healer's opening walks the verifier's (parts, secrets, spawn, the quest's move, keep), each step already a helper of sessions/open.ts (partsOf, secretsLacking, spawnFor, keep); what stays alike is the move and the Running kept, whose event, edits, before and checks differ per opening. sessions/open.ts is at its 300 lines and sessions/ at its 30 files, so one opener gathers the assignee's, the verifier's and the healer's at once (AH-14), not one pair apart."
+    },
+    {
+      "a": "packages/runner-core/src/plot/territory-trial.ts",
+      "b": "packages/steward/src/delegation/suspend.ts",
+      "tokens": 60,
+      "status": "kept",
+      "reason": "RC-04: two object literals that end in optional fields spread when set (a trial step with its environment and carried_from, a ring with its check and note); nothing shared but the language's way to leave out an absent field, in two packages with no common home."
     }
   ]
 }
