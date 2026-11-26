@@ -25,6 +25,7 @@ In stage 1 the owner merged by hand after the royal seal. In practice the owner 
 - (Amended 2026-11-23, CM-05, [ADR 0033](0033-late-machine-verdict.md)) A quest returned by a red check leaves `done` by a late machine verdict: `verdicts/<quest>-<n>-late.json` and the Steward's `done` + `verdict_fail` rows (to `returned`, to `open` for the machine's merge, to the infirmary once out of attempts), not two `return` rows; the seal and the delivery stamp go with it, so the rework is sealed again when the quest needs it and delivered again.
 
 - (Amended 2026-11-25, RC-02: a push names the commit the Steward's checks passed on in `ELVARIA_CHECKED_HEAD`, when that run had a check and set none aside; the hooks still run.)
+- (Amended 2026-11-26, RC-05, [ADR 0035](0035-checks-once-per-tree.md): where the queue would merge the base branch, it is merged before the checks after a session and kept only when they are green; the queue's update then merges only what moved since.)
 
 ## Alternatives
 

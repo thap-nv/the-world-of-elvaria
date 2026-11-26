@@ -46,10 +46,17 @@ export interface Ran {
  * environment failed when the run is set aside for it (PS-01b, (b) of P1-54): the bell alone told it before, to the
  * terminal of `elvaria run`, and nothing was left of it once the Steward restarted.
  */
-function endOf(ran: Result<RunChecks, string>, signal: AbortSignal): EventData<'check.end'> {
+function endOf(
+  ran: Result<RunChecks, string>,
+  signal: AbortSignal,
+  carried: readonly CarriedCheck[],
+): EventData<'check.end'> {
   if (signal.aborted) return { outcome: 'stopped', checks: [] };
   if (!ran.ok) return { outcome: 'error', checks: [] };
-  return ranEndOf(ran.value.checks, ran.value.environment);
+  // A check the ledger carried names the line of its real run (RC-03), which the judge's checks do not hold.
+  const from = new Map<string, CarriedCheck['from']>(carried.map(({ id, from: line }) => [id, line]));
+  const checks = ran.value.checks.map((check) => ({ ...check, carried_from: from.get(check.id) }));
+  return ranEndOf(checks, ran.value.environment);
 }
 
 /** A `check.*` line; one that cannot be written costs the owner a line, never the checks. */
@@ -90,7 +97,7 @@ export async function runOnce(ctx: Context, given: RunGiven, how: RunHow = {}): 
   const added = (await how.ended?.(checks)) ?? {};
   const facts = checks.ok ? factsOf(territory, point) : {};
   await noteChecks(ctx, quest, 'check.end', {
-    ...endOf(checks, signal),
+    ...endOf(checks, signal, carried),
     ...modeMarkOf(mode),
     ...facts,
     ...added,

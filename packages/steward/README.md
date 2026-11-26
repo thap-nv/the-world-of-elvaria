@@ -607,6 +607,15 @@
   names no tree. The queue's red checks, not set aside, run once more on the same tree in the same run, before the
   base branch or the quest's own head is asked: green then, `check.attributed` from the queue, cause `flaky`
   (`queueFlakyOf`), and the delivery goes on.
+- Merges the base branch before the checks after a session (RC-05, ADR 0035, `src/review/early-merge.ts`) where the
+  queue would update the branch (a territory in `pr` or `pr_merge` and green, git, not a party's part or contract,
+  its judge not in a scratch plot): the queue's own update with the run's number (`Plots.update`), setup, then
+  `Plots.generate`. Green on it: settled, `plot.merged`, the judge reads that run and the queue finds main held. Red,
+  not for its environment: `Plots.takeBack`, `check.end` says `taken_back`, and the red checks run again on the head
+  as submitted (`src/review/check-run.ts`, the territory with only them): red there is the quest's fail; green, the
+  rest runs with them carried by the ledger, and the quest goes on. A conflict, a refused merge, a failed generator
+  (taken back) or a run of the session taken back once already: no early merge. A run stopped, unable to run or set
+  aside leaves the merge pending for the next run of the same session.
 - Adds the machine check `screens` after the territory's for a quest whose ritual asks for eyes (`judgedByEye`, PS-11b, `src/review/screens.ts`): it fails when the checks captured no screen or one breaks the image contract, its log says why; that quest's judge gets exactly the valid screens of the run, by policy (`ToolPolicy.images`) and in its prompt (`src/sessions/request.ts`).
 - Runs a healer's session (HL-05, ADR 0034, `src/heal/`): for `plan.heals` it keeps the doer's staged tree in
   `.runs/<quest>-<n>/heal/staged-tree` and opens the healer in the quest's plot (`open.ts`, the move `heal`, role
@@ -760,5 +769,9 @@ while a pre-push hook runs and finds the hook's grandchild killed and nothing re
 they ran and carried (`src/__fixtures__/ledger.ts`, `gitPlots(…, { ledger: true })`): a run in full then a merge,
 a Steward started anew between, and the patrol after the merge makes no plot; the owner's patrol runs every check;
 a narrow run before leaves the checks with a narrow command to the patrol; a red check in the queue green the second
-time is `flaky` and the delivery goes on. `forge-merge.spec.ts` asks a merge again after a 5xx, then fails it once
+time is `flaky` and the delivery goes on. `flows/early-merge.spec.ts` (RC-05) moves main during the session: green
+on the merge keeps it (`plot.merged` before the judge, nothing for the queue), a conflict merges nothing early, a
+generator that fails after the merge takes it back, red by the quest takes it back and returns the quest, red by the
+merge runs the rest on the head as submitted with the red check carried, and a Steward stopped on the merge leaves
+one merge commit. `forge-merge.spec.ts` asks a merge again after a 5xx, then fails it once
 `FORGE_MERGE_RETRIES` are spent; `forge-guest.spec.ts` refuses a guest the forge says conflicts, before any try.
