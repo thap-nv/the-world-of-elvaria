@@ -531,6 +531,13 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   after it, one at a time, none on a red branch; `TickPlan.guest_runs`, a slot each (`BackgroundWork.guests`).
 - The digest names the quests the owner holds ((D) of fix/quest-hold): `heldQuestsOf` (`src/quest/hold.ts`), passed
   as `StewardNotices.held`, one `quest_held` item each, in the can-wait group.
+- The check ledger (RC-03, ADR 0035; `src/check-ledger/`): `check.end` and `patrol.ran` carry the `tree` checked,
+  the `config` (fingerprint of the check commands) and, on a narrow `check.end`, its `base`; a check carried names
+  the line of its real run (`carried_from`: passed, 0 ms, and a patrol's has no `log_path`;
+  `src/schema/event/check-tree.ts`). `checkLedgerOf` / `ledgerRowsOf` keep each green check that ran on a named
+  tree (no red, set-aside, carried or older line); `carryOf` says which checks of a run are carried and from which
+  line: the same command (`checkCommandOf`) on the same tree, under the same config, from the same narrow base, at
+  most `CARRY_MAX_AGE_HOURS` old. A carried patrol check is green for `baseHealthOf`. Not wired yet (RC-04).
 
 ## Does not
 

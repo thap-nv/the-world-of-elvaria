@@ -53,6 +53,23 @@ describe('baseHealthOf', () => {
     expect(baseHealthOf([...events, ran(DAY4, [green])])[0]?.red).toEqual([]);
   });
 
+  it('(RC-03) a carried check, with no log of its own, is green: it turns a red check back and is its last green', () => {
+    const carried = {
+      id: 'unit',
+      pass: true,
+      duration_ms: 0,
+      timed_out: false,
+      environment: false,
+      carried_from: '01JC0000000000000000000001',
+    };
+    const events = [ran(DAY1, [red]), ran(DAY2, [], { checks: [carried] })];
+    expect(baseHealthOf(events)[0]?.red).toEqual([]);
+    const [health] = baseHealthOf([...events, ran(DAY3, [red])]);
+    expect(health?.red.map(({ check, green_at: at }) => ({ check, at }))).toEqual([
+      { check: 'unit', at: DAY2 },
+    ]);
+  });
+
   it('names the quests merged between the last green patrol and the red one, sealed or not', () => {
     const events = [
       merged(DAY1, Q2),
