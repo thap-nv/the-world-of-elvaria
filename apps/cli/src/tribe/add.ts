@@ -14,13 +14,13 @@ import type { Tribe, TribeId } from '@elvaria/domain';
 import type { Translate } from '@elvaria/i18n';
 
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { BUILT_IN_ADAPTERS } from '../run/crew.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { adapterFilePath, isAdapterFile } from './adapter-file.ts';
 import { kingdomPool, lookCellOf, lookViewOf } from './look-view.ts';
 import { refuse, saveTribes } from './save.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 const DEFAULT_MAX_CONCURRENT = 1;

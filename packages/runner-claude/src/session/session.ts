@@ -29,15 +29,15 @@ import type {
 } from '@elvaria/runner-core';
 
 import { parseJsonLine } from '@elvaria/runner-core';
-import { accountEnv } from './account.ts';
-import { sessionArgv } from './argv.ts';
+import { accountEnv } from '../account/account.ts';
+import { sessionArgv } from '../launch/argv.ts';
 import { outcomeOf, permissionDenialsOf, structuredOf, turnsOf } from './outcome.ts';
-import { writeRunFiles } from './run-files.ts';
+import { writeRunFiles } from '../run-files/run-files.ts';
 import { createStreamReader } from './stream.ts';
 import { subagentEndLines } from './subagent.ts';
-import type { ApprenticeConfig } from './agents.ts';
-import type { Launch } from './launch.ts';
-import type { HookCommand } from './settings.ts';
+import type { ApprenticeConfig } from '../run-files/agents.ts';
+import type { Launch } from '../launch/launch.ts';
+import type { HookCommand } from '../run-files/settings.ts';
 import type { Observation, StreamReader } from './stream.ts';
 import type { ChildProcessByStdio } from 'node:child_process';
 import type { Readable, Writable } from 'node:stream';

@@ -9,10 +9,10 @@ import type { EventLogIssue } from '@elvaria/eventlog';
 import { pathExists } from '@elvaria/store';
 
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { kingdomDir, openKingdomContext } from '../kingdom-context.ts';
 import { timeline } from './timeline.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { TimelineContext } from './timeline.ts';
 
 const DEFAULT_SPEED = 20;

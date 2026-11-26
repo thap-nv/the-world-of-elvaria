@@ -3,12 +3,12 @@
 import type { Memo } from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
 
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { NONE } from '../listing.ts';
-import { renderTable } from '../table.ts';
+import { renderTable } from '../listing/table.ts';
 import { MEMO_DECISION_LABEL, MEMO_STATE_LABEL, memoFromOf, memoKindName, readMemo } from './memo.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 type Field = [MessageKey, string];

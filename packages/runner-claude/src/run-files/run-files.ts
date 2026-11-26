@@ -10,7 +10,7 @@ import type { RunContext, SpawnRequest } from '@elvaria/runner-core';
 import { agentsOf, apprenticeModelsOf } from './agents.ts';
 import { CLAUDE_PROTECTED_PATHS, settingsOf, settingsProblems } from './settings.ts';
 import type { ApprenticeConfig } from './agents.ts';
-import type { RunFiles } from './argv.ts';
+import type { RunFiles } from '../launch/argv.ts';
 import type { HookCommand } from './settings.ts';
 
 export const SETTINGS_FILE = 'settings.json';

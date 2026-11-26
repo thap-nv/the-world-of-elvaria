@@ -3,10 +3,10 @@
 import type { MessageKey } from '@elvaria/i18n';
 import type { StoreIssue } from '@elvaria/store';
 
-import { EXIT } from './command.ts';
+import { EXIT } from './command-table/command.ts';
 import { storeIssueLines } from './issues.ts';
-import { renderTable } from './table.ts';
-import type { CliContext, ExitCode } from './command.ts';
+import { renderTable } from './listing/table.ts';
+import type { CliContext, ExitCode } from './command-table/command.ts';
 
 /** Shown in a cell that has no value. */
 export const NONE = '—';

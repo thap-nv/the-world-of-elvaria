@@ -2,12 +2,12 @@
 // aura, so the owner changes its parts on the root (`tribe look <root>`) and only names the sibling here: `--name`
 // writes kingdom.tribes[].sibling_name, `--reset` drops it and the sibling takes the root's name with its Roman
 // ordinal again. A part option is refused (exit 1); a `look` written on a sibling by hand is ignored (doctor warns).
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { showLook } from './look-view.ts';
 import { updateTribe } from './save.ts';
 import type { Tribe, TribeLookPool } from '@elvaria/domain';
 
-import type { ExitCode } from '../command.ts';
+import type { ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** What the command line asks of a sibling: the part options it names, a name, or --reset. */

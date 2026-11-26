@@ -1,10 +1,10 @@
 // `elvaria tribe disable <id>` (implementation-plan §3.14 step 7): the tribe takes no new work. Its running quests
 // finish, and its quests paused for mana wait as when the mana runs out (the owner may reassign them); its
 // characters keep their tribe for life. `elvaria tribe check` enables it again.
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { namedTribe, setEnabled } from './save.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
 async function runDisable(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);

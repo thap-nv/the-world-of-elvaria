@@ -3,13 +3,13 @@
 // their latest readings and resets (P1-32), so the owner sees why it takes nothing.
 import type { Character, Registry } from '@elvaria/domain';
 
-import { EXIT } from '../command.ts';
-import { asleepLine, blockingGauge, gaugeName, readGauges, readingLines } from '../gauges.ts';
+import { EXIT } from '../command-table/command.ts';
+import { asleepLine, blockingGauge, gaugeName, readGauges, readingLines } from '../mana/gauges.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { CHARACTER_STATUS_LABEL, nameIn } from '../labels.ts';
 import { printListing } from '../listing.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
-import type { GaugeView } from '../gauges.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
+import type { GaugeView } from '../mana/gauges.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** The status; asleep for mana, marked with the sleeping gauge the character waits for. */

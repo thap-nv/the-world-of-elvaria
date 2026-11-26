@@ -6,11 +6,11 @@ import { acquireLock, inKingdom, kingdomLayout } from '@elvaria/store';
 import { sessionsLeftBehind } from '@elvaria/steward';
 import type { HeldLock } from '@elvaria/store';
 
-import { EXIT } from '../command.ts';
-import { recordUpgrade } from '../events.ts';
+import { EXIT } from '../command-table/command.ts';
+import { recordUpgrade } from '../event/events.ts';
 import { restoreDefaults } from './restore-defaults.ts';
 import { BUILD_FILE, buildDirOf, hasCli, readPointer, shortSha, writePointer } from './pointer.ts';
-import type { ExitCode } from '../command.ts';
+import type { ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** What proper-lockfile locks for `.state/steward.lock` (steward.ts): the Steward's own lock, taken the same way. */

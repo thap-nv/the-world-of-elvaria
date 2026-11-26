@@ -4,10 +4,10 @@
 // runs whatever that switch says. The Steward writes the `graph.*` lines of its own builds; this command writes none:
 // what it built is on disk, and the Steward finds it there.
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { graphsOf } from '../run/graphs.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { Territory, TerritoryId } from '@elvaria/domain';
 import type { CodeGraphs, GraphBuild } from '@elvaria/runner-core';

@@ -2,10 +2,11 @@
   "version": 1,
   "pairs": [
     {
-      "a": "packages/runner-claude/src/locate.ts",
+      "a": "packages/runner-claude/src/launch/locate.ts",
       "b": "packages/runner-codex/src/locate.ts",
       "tokens": 83,
-      "status": "unreviewed"
+      "status": "kept",
+      "reason": "AH-12: unchanged CLI lookup shape relocated from runner-claude/src/locate.ts; retain the existing pair during this moves-only refactor. AH-14 can gather adapter lookup together."
     },
     {
       "a": "packages/hooks/src/glob.ts",
@@ -288,10 +289,11 @@
       "status": "unreviewed"
     },
     {
-      "a": "packages/runner-claude/src/model.ts",
+      "a": "packages/runner-claude/src/model/effort.ts",
       "b": "packages/runner-codex/src/launch.ts",
       "tokens": 106,
-      "status": "unreviewed"
+      "status": "kept",
+      "reason": "AH-12: unchanged effort-suffix parser relocated from runner-claude/src/model.ts; retain the existing pair during this moves-only refactor. Sharing effort parsing belongs to AH-14."
     },
     {
       "a": "packages/chancellor/src/amendment.ts",
@@ -634,9 +636,10 @@
     },
     {
       "a": "packages/runner-antigravity/src/usage.ts",
-      "b": "packages/runner-claude/src/probe.ts",
+      "b": "packages/runner-claude/src/account/probe.ts",
       "tokens": 64,
-      "status": "unreviewed"
+      "status": "kept",
+      "reason": "AH-12: unchanged usage-probe shape relocated from runner-claude/src/probe.ts; retain the existing pair during this moves-only refactor. Sharing adapter probe handling belongs to AH-14."
     },
     {
       "a": "packages/runner-core/src/plot/merge.ts",
@@ -711,10 +714,11 @@
       "status": "unreviewed"
     },
     {
-      "a": "packages/runner-claude/src/stream.ts",
+      "a": "packages/runner-claude/src/session/stream.ts",
       "b": "packages/runner-core/src/runner/types.ts",
       "tokens": 61,
-      "status": "unreviewed"
+      "status": "kept",
+      "reason": "AH-12: unchanged stream observation shape relocated from runner-claude/src/stream.ts; retain the existing pair during this moves-only refactor. Reviewing shared observation types belongs to AH-14."
     },
     {
       "a": "packages/domain/src/character/transition.ts",

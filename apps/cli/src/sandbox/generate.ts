@@ -7,10 +7,10 @@ import { DAYS, isDayId, simulateDay, writeDay } from '@elvaria/sandbox';
 import type { DayProblem, DayRequest, RegistryWhat } from '@elvaria/sandbox';
 
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { registryIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** A seed is a 32-bit state (mulberry32 in @elvaria/sandbox). */

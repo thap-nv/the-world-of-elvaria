@@ -16,9 +16,9 @@ import {
 import type { Event, SessionShare, WindowKey } from '@elvaria/domain';
 import { levelsFromLog } from '@elvaria/steward';
 
-import { asleepLine, gaugeName, gaugesOf, readLog, readingLines } from '../gauges.ts';
+import { asleepLine, gaugeName, gaugesOf, readLog, readingLines } from '../mana/gauges.ts';
 import { finding } from './finding.ts';
-import type { GaugeReading, GaugeView } from '../gauges.ts';
+import type { GaugeReading, GaugeView } from '../mana/gauges.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { Finding } from './finding.ts';
 

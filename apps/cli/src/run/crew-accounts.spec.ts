@@ -9,7 +9,7 @@ import type { AgentRunner } from '@elvaria/runner-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { baseEnv, tempDir, testIo } from '../__fixtures__/cli.ts';
-import { newKingdom } from '../init.ts';
+import { newKingdom } from '../init/init.ts';
 import { SELF_ROOT } from '../upgrade/self.ts';
 import { crewOf } from './crew.ts';
 import type { TempDir } from '../__fixtures__/cli.ts';

@@ -16,12 +16,12 @@ import {
 import type { LookPart, Tribe, TribeLook, TribeLookChoice, TribeLookPool } from '@elvaria/domain';
 
 import { flagOption, textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { siblingLook } from './look-sibling.ts';
 import { idsOf, kingdomPool, showLook } from './look-view.ts';
 import { namedTribe, updateTribe } from './save.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 interface LookRequest {

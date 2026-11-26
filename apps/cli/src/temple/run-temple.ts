@@ -25,7 +25,7 @@ import type {
 import { openEventLog } from '@elvaria/eventlog';
 import { readClassPrompt, readDecree } from '@elvaria/store';
 
-import { recordTempleRan } from '../events.ts';
+import { recordTempleRan } from '../event/events.ts';
 import { registryIssueLines, storeIssueLines } from '../issues.ts';
 import { commandHeader } from '../quest/send-command.ts';
 import { sessionOf } from '../say/hearing.ts';

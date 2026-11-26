@@ -4,8 +4,8 @@ import type { Event, Quest } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { lessonsIn } from '@elvaria/steward';
 
-import { EXIT } from '../command.ts';
-import type { ExitCode } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
+import type { ExitCode } from '../command-table/command.ts';
 import { registryIssueLines, storeIssueLines } from '../issues.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import { NONE } from '../listing.ts';

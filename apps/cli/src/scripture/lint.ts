@@ -3,12 +3,12 @@
 // would load more than 40 lessons. One line per issue with its file and line; exit 1 when there is an error. (PS-12g)
 // Then each line the owner deleted that the ledger still keeps, which is no error. It reads the kingdom only: nothing
 // is written and no model is called.
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { registryIssueLines, storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { readKingdomScriptures } from './read.ts';
 import { issueLine, scriptureReportOf } from './report.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
 async function runScriptureLint(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);

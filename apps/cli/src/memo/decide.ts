@@ -7,12 +7,12 @@ import { MEMO_DECISIONS, MEMO_ID_PATTERN } from '@elvaria/domain';
 import type { Memo } from '@elvaria/domain';
 
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { readQuest } from '../quest/references.ts';
 import { commandHeader, sendCommand } from '../quest/send-command.ts';
 import { MEMO_DECISION_LABEL, excerpt, memoFromOf, memoKindName, readMemo } from './memo.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** The owner's decisions; `sustained` and `overruled` are a second judge's (PS-22). */

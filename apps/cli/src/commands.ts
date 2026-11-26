@@ -6,12 +6,12 @@ import { CHARACTER_MODEL } from './character/model.ts';
 import { CHARACTER_RELEASE, CHARACTER_SUSPEND } from './character/suspend.ts';
 import { DIGEST } from './digest/digest.ts';
 import { DOCTOR } from './doctor/doctor.ts';
-import { INIT } from './init.ts';
+import { INIT } from './init/init.ts';
 import { MEMO_DECIDE } from './memo/decide.ts';
 import { MEMO_LIST } from './memo/list.ts';
 import { MEMO_SHOW } from './memo/show.ts';
 import { METRICS } from './metrics/metrics.ts';
-import { MIGRATE } from './migrate.ts';
+import { MIGRATE } from './migrate/migrate.ts';
 import { QUEST_ADD } from './quest/add.ts';
 import { ANSWER } from './quest/answer.ts';
 import { QUEST_EDIT } from './quest/edit.ts';
@@ -47,9 +47,9 @@ import { TRIBE_DISABLE } from './tribe/disable.ts';
 import { TRIBE_LIST } from './tribe/list.ts';
 import { TRIBE_LOOK } from './tribe/look.ts';
 import { UPGRADE } from './upgrade/upgrade.ts';
-import { WAKE } from './wake.ts';
+import { WAKE } from './tribe/wake.ts';
 import { WATCH } from './watch/watch.ts';
-import type { CommandSpec } from './command.ts';
+import type { CommandSpec } from './command-table/command.ts';
 
 export const COMMANDS: readonly CommandSpec[] = [
   INIT,

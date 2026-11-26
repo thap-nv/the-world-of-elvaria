@@ -5,12 +5,12 @@
 // it: a quest not done, or one whose territory delivers by hand (`manual`) or that is no branch of its own to push.
 import { forgeDue } from '@elvaria/domain';
 
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { QUEST_STATUS_LABEL } from '../labels.ts';
 import { readQuest } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
 async function runDeliver(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);

@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { inKingdom, kingdomLayout, writeFileAtomic } from '@elvaria/store';
 
-import { backupStamp } from '../migrate.ts';
+import { backupStamp } from '../migrate/migrate.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 async function savedFiles(dir: string, prefix = ''): Promise<string[]> {

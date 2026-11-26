@@ -6,10 +6,10 @@ import type { Character, NamedAssigneeProblem, Quest, Rank } from '@elvaria/doma
 import type { MessageKey } from '@elvaria/i18n';
 
 import { readCharacter } from '../character/read.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { nameIn } from '../labels.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
-import type { ExitCode } from '../command.ts';
+import type { ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 const PROBLEM_LINE: Record<NamedAssigneeProblem, MessageKey> = {

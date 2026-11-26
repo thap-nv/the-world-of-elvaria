@@ -5,7 +5,7 @@ import { parseArgs } from 'node:util';
 import { err, ok } from '@elvaria/domain';
 import type { Result } from '@elvaria/domain';
 
-import type { CommandInput, CommandSpec, OptionSpec } from './command.ts';
+import type { CommandInput, CommandSpec, OptionSpec } from './command-table/command.ts';
 
 /** Accepted by every command. */
 export const GLOBAL_OPTIONS: Readonly<Record<string, OptionSpec>> = {

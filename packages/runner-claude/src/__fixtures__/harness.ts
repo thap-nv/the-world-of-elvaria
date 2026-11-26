@@ -13,7 +13,7 @@ import type {
 
 import { createClaudeRunner } from '../runner.ts';
 import type { ClaudeRunnerOptions } from '../runner.ts';
-import type { HookCommand } from '../settings.ts';
+import type { HookCommand } from '../run-files/settings.ts';
 
 export const FIXTURES = path.join(import.meta.dirname, '..', '..', 'fixtures');
 export const FAKE_CLAUDE = path.join(FIXTURES, 'fake-claude.mjs');

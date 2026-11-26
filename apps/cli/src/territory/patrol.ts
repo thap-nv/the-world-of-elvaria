@@ -9,11 +9,11 @@ import { TerritoryIdSchema, ok } from '@elvaria/domain';
 import type { Territory } from '@elvaria/domain';
 
 import { flagOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { commandHeader, sendCommand } from '../quest/send-command.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 function printPatrol(ctx: KingdomContext, territory: Territory): void {

@@ -1,16 +1,16 @@
 // The `claude_code` adapter: Claude Code 2.1.318 headless behind AgentRunner (implementation-plan §3.7, §3.14;
 // ADR 0006, 0007). apps/cli builds it from `kingdom.tribes[]` and hands it what this package may not import: the
 // hook's command (`hookCommand` and `HOOK_SCRIPT` of @elvaria/hooks) and the minimal env (§3.9).
-import { doctorClaude } from './doctor.ts';
-import { locateClaude } from './locate.ts';
-import { CLAUDE_MODELS } from './models.ts';
-import { purgeWorktree } from './forget.ts';
-import { probeClaude } from './probe.ts';
-import { startSession } from './session.ts';
-import { claudeTool } from './tool.ts';
-import type { ApprenticeConfig } from './agents.ts';
-import type { HookCommand } from './settings.ts';
-import type { ClaudeToolOptions } from './tool.ts';
+import { doctorClaude } from './account/doctor.ts';
+import { locateClaude } from './launch/locate.ts';
+import { CLAUDE_MODELS } from './model/catalog.ts';
+import { purgeWorktree } from './launch/forget.ts';
+import { probeClaude } from './account/probe.ts';
+import { startSession } from './session/session.ts';
+import { claudeTool } from './launch/tool.ts';
+import type { ApprenticeConfig } from './run-files/agents.ts';
+import type { HookCommand } from './run-files/settings.ts';
+import type { ClaudeToolOptions } from './launch/tool.ts';
 import type { AdapterTool, AgentRunner, ForgetWorktree } from '@elvaria/runner-core';
 
 export const CLAUDE_CODE_ADAPTER = 'claude_code';

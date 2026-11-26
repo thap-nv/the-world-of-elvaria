@@ -167,12 +167,12 @@
       "count": 5
     }
   },
-  "packages/runner-claude/src/run-once.spec.ts": {
+  "packages/runner-claude/src/launch/run-once.spec.ts": {
     "elvaria/no-real-wait": {
       "count": 1
     }
   },
-  "packages/runner-claude/src/session.spec.ts": {
+  "packages/runner-claude/src/session/session.spec.ts": {
     "elvaria/no-real-wait": {
       "count": 2
     }

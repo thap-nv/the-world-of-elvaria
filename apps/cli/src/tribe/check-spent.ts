@@ -5,7 +5,7 @@
 import type { ConformanceReport } from '@elvaria/runner-core';
 import type { TribeId } from '@elvaria/domain';
 
-import { recordTribeChecked } from '../events.ts';
+import { recordTribeChecked } from '../event/events.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** The check's line, with the tokens its sessions reported when they reported any. */

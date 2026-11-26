@@ -20,13 +20,13 @@ import { redact } from '@elvaria/eventlog';
 import { lessonsIn } from '@elvaria/steward';
 
 import { flagOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { registryIssueLines, storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { readMetricsSource } from '../metrics/read.ts';
 import { handOf } from '../run/crew.ts';
 import { readKingdomScriptures } from '../scripture/read.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { KingdomScriptures } from '../scripture/read.ts';
 

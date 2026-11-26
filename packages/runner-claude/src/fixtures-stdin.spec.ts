@@ -10,7 +10,7 @@ import type { Workspace } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { FAKE_HOOK, FIXTURES, SPEC_REPEATS, prepare } from './__fixtures__/harness.ts';
-import { PRE_TOOL_USE_ARGS } from './settings.ts';
+import { PRE_TOOL_USE_ARGS } from './run-files/settings.ts';
 
 /**
  * A preload that opens fd 0 as a libuv pipe, non-blocking on POSIX: what the runner's spawn left on macOS, where a

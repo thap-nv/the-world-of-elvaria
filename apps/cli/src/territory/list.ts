@@ -1,8 +1,8 @@
 // `elvaria territory list`: the territories attached to the kingdom.
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { NONE, printListing } from '../listing.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
 async function runTerritoryList(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);

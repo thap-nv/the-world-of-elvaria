@@ -3,11 +3,11 @@
 // applies (ADR 0005): the same attempt goes on, in the asking session when the answer comes within
 // dispatch.resume_after_answer_minutes and the adapter can resume, else in a fresh one from the letter (ADR 0017).
 // The answer waits in the inbox while the asker is busy or its pool is asleep, so sending it never fails for that.
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { questFor } from './lifecycle.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
 async function runAnswer(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   // An empty answer is a command line to fix, not a quest to refuse: checked before the kingdom is opened.

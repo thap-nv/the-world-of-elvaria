@@ -7,11 +7,11 @@ import { REGISTRY_ROOT, registryFiles } from '@elvaria/registry-default';
 import { addMissingRegistryEntries, addMissingRegistryFiles, migrateKingdom } from '@elvaria/store';
 import type { RegistryEntriesReport } from '@elvaria/store';
 
-import { EXIT } from './command.ts';
-import { registryGapLine, registryIssueLines, storeIssueLines } from './issues.ts';
-import { openKingdomContext } from './kingdom-context.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from './command.ts';
-import type { CliIo } from './io.ts';
+import { EXIT } from '../command-table/command.ts';
+import { registryGapLine, registryIssueLines, storeIssueLines } from '../issues.ts';
+import { openKingdomContext } from '../kingdom-context.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
+import type { CliIo } from '../io.ts';
 import type { Translate } from '@elvaria/i18n';
 
 /** `2026-11-06T09:12:03`: an ISO time up to the second, without its offset. */

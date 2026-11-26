@@ -10,15 +10,15 @@ import type { Territory } from '@elvaria/domain';
 import { comparePath, toPortable } from '@elvaria/store';
 
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
-import { recordTerritoryAttached } from '../events.ts';
+import { EXIT } from '../command-table/command.ts';
+import { recordTerritoryAttached } from '../event/events.ts';
 import { storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { gitIn } from '../process/git.ts';
 import { claudeLocalReach } from './claude-local.ts';
 import { RULES_GLOB, ruleFilesOf } from './claude-rules.ts';
 import { readGitInfo } from './git-info.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 const TERRITORY_KINDS = ['code', 'docs', 'content', 'data', 'mixed'] as const;

@@ -7,7 +7,7 @@ import { digestStateOf } from '@elvaria/steward';
 import { digestMarkdown } from '../digest/markdown.ts';
 import { QUEST_STATUS_LABEL } from '../labels.ts';
 import { NONE } from '../listing.ts';
-import { renderTable } from '../table.ts';
+import { renderTable } from '../listing/table.ts';
 
 export type WatchSource = Omit<WorldSource, 'campaigns'>;
 

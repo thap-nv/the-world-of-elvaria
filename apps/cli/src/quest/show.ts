@@ -10,11 +10,11 @@ import type { Event, Quest, Registry, ScopeWait } from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
 import { inKingdom } from '@elvaria/store';
 
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { QUEST_STATUS_LABEL } from '../labels.ts';
 import { NONE } from '../listing.ts';
-import { renderTable } from '../table.ts';
+import { renderTable } from '../listing/table.ts';
 import { ceilingLines, ceilingRulesOf } from './ceiling.ts';
 import { deliveryLines } from './delivery-view.ts';
 import { infirmaryLines, journalOf, lastInfirmaryOf } from './infirmary.ts';
@@ -29,7 +29,7 @@ import { scopeWaitText, scopeWaitsOf } from './scope.ts';
 import { sealText } from './seal-view.ts';
 import { staminaLines } from './stamina-view.ts';
 import { unclaimableLines, unclaimableOf } from './unclaimable.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 const listed = (values: readonly string[]): string => (values.length === 0 ? NONE : values.join(', '));
