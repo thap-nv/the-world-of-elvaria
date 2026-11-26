@@ -10,9 +10,9 @@ import type { EventCursor } from '@elvaria/eventlog';
 import type { MessageKey, Params } from '@elvaria/i18n';
 import { stewardRuns } from '@elvaria/steward';
 
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { storeIssueLines } from '../issues.ts';
-import type { ExitCode } from '../command.ts';
+import type { ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** The fields every command from the CLI starts with. */

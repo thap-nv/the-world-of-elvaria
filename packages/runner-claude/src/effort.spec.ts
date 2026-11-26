@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { Workspace } from '@elvaria/runner-core';
 
 import { prepare } from './__fixtures__/harness.ts';
-import { pingArgv, sessionArgv } from './argv.ts';
+import { pingArgv, sessionArgv } from './launch/argv.ts';
 
 const opened: Workspace[] = [];
 afterEach(async () => {

@@ -4,12 +4,12 @@
 // the free characters of the class, other than the one holding it. An inbox command like the rest (ADR 0005); the
 // CLI checks the character first (assignee.ts), so a wrong name is refused at the terminal and not one tick later.
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { giveQuestTo } from './assignee.ts';
 import { questFor } from './lifecycle.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
 async function runReassign(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);

@@ -5,13 +5,13 @@
 import type { TriageOutcome } from '@elvaria/chancellor';
 import type { DelegationHold, TribeHold } from '@elvaria/domain';
 
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { crewOf } from '../run/crew.ts';
 import { tribeHoldsOf } from '../run/tool-found.ts';
 import { reportDropped, reportFailure } from '../say/report.ts';
 import { runTriage } from './run-triage.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { CliIo } from '../io.ts';
 import type { KingdomPlace } from '../run/crew.ts';

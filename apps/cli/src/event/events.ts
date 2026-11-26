@@ -6,7 +6,7 @@ import { EVENT_VERSION, EventSchema, characterViewOf, territoryViewOf } from '@e
 import type { Character, Event, EventData, Territory } from '@elvaria/domain';
 import { createRedactor, openEventLog, redactDeep } from '@elvaria/eventlog';
 
-import type { KingdomContext } from './kingdom-context.ts';
+import type { KingdomContext } from '../kingdom-context.ts';
 
 /** The owner, through the CLI: the actor of every event the CLI writes. */
 const OWNER = { kind: 'user' } as const;

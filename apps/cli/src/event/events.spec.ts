@@ -6,8 +6,8 @@ import { openEventLog } from '@elvaria/eventlog';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, run, tempDir, testIo } from './__fixtures__/cli.ts';
-import type { TempDir } from './__fixtures__/cli.ts';
+import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 describe('events the CLI writes', () => {
   let dir: TempDir;

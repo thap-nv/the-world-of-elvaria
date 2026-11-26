@@ -7,11 +7,11 @@ import { DELIVERY_MODES, MERGE_METHODS, TerritoryIdSchema, deliveryOf, ok } from
 import type { Territory, TerritoryDelivery } from '@elvaria/domain';
 
 import { textOption, textOptions } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { forgeRepoOf } from '../forge/remote.ts';
 import { storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 type Change = Partial<TerritoryDelivery>;

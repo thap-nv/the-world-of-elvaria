@@ -17,7 +17,7 @@ import type { Tribe } from '@elvaria/domain';
 import type { Translate } from '@elvaria/i18n';
 
 import { textOptions, flagOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { isAdapterFile } from '../tribe/adapter-file.ts';
@@ -40,7 +40,7 @@ import { checkTribe, settleEnabling, skipsTribe } from './check-tribe.ts';
 import { configDirsOf } from './config-dir.ts';
 import { finding, findingLines } from './finding.ts';
 import { tribeFindings } from './held-in-trial.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { DoctorOptions, TribeCheck } from './check-tribe.ts';
 import type { Finding } from './finding.ts';

@@ -5,15 +5,15 @@ import { calibrationOf, metricsOf, planAccuracyOf } from '@elvaria/domain';
 import type { MetricsWindow } from '@elvaria/domain';
 
 import { flagOption, textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
-import { renderTable } from '../table.ts';
+import { renderTable } from '../listing/table.ts';
 import { readMetricsSource } from './read.ts';
 import { readDisruptions } from './read-disruptions.ts';
 import { disruptionsSection } from './view-disruptions.ts';
 import { planSections } from './view-plan.ts';
 import { metricsSections } from './view.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { MetricsSource } from './read.ts';
 import type { MetricsSection } from './view.ts';
 import type { KingdomContext } from '../kingdom-context.ts';

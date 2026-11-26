@@ -10,7 +10,7 @@ import type { KingdomStore } from '@elvaria/store';
 
 import { textOption } from './args.ts';
 import { storeIssueLines } from './issues.ts';
-import type { CliContext, CommandInput } from './command.ts';
+import type { CliContext, CommandInput } from './command-table/command.ts';
 import type { CliIo } from './io.ts';
 
 export interface KingdomContext extends CliContext {

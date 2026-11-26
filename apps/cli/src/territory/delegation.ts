@@ -8,11 +8,11 @@ import type { SealSuspension, Territory } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 
 import { flagOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { commandHeader, sendCommand } from '../quest/send-command.ts';
 import { suspensionCause } from './delegation-view.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** The territory's suspension as the log tells it; undefined while its delegation works. */

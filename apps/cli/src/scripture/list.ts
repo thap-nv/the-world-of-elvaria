@@ -16,12 +16,12 @@ import type { ScriptureLesson } from '@elvaria/steward';
 import type { MessageKey } from '@elvaria/i18n';
 
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { registryIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { NONE, printListing } from '../listing.ts';
 import { heaviestLoadOf, lessonsOfCharacter, readKingdomScriptures } from './read.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { KingdomScriptures } from './read.ts';
 import { listQuestScripture } from './quest.ts';

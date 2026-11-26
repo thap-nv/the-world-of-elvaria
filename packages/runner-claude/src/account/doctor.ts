@@ -8,9 +8,9 @@ import { callNote, doctorNoteOf, hookNote } from '@elvaria/runner-core';
 
 import { parseJsonLine } from '@elvaria/runner-core';
 import { accountOf } from './account.ts';
-import { launchOf } from './launch.ts';
-import { runOnce } from './run-once.ts';
-import type { Ran, RunOnceOptions } from './run-once.ts';
+import { launchOf } from '../launch/launch.ts';
+import { runOnce } from '../launch/run-once.ts';
+import type { Ran, RunOnceOptions } from '../launch/run-once.ts';
 import type { DoctorNote, ToolInfo } from '@elvaria/runner-core';
 
 export interface DoctorDeps extends RunOnceOptions {

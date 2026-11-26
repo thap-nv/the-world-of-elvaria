@@ -7,8 +7,8 @@ import type { SessionTokens } from '@elvaria/runner-core';
 import { isJsonObject, numberOf, objectOf, objectsOf, textOf } from '@elvaria/runner-core';
 import type { JsonObject } from '@elvaria/runner-core';
 import { addTokens, modelUsageTokens, usageTokens } from './json.ts';
-import { rateLimitWindowsOf, rejectionOf, spentWindowOf } from './usage.ts';
-import type { UsageWindow } from './usage.ts';
+import { rateLimitWindowsOf, rejectionOf, spentWindowOf } from '../account/usage.ts';
+import type { UsageWindow } from '../account/usage.ts';
 
 export type Observation =
   | { readonly kind: 'init'; readonly session: string }

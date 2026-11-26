@@ -1,8 +1,8 @@
 // Help is rendered from the command table, in the owner's language, so it cannot drift from what parses.
 import type { Translate } from '@elvaria/i18n';
 
-import { GLOBAL_OPTIONS } from './args.ts';
-import { renderTable } from './table.ts';
+import { GLOBAL_OPTIONS } from '../args.ts';
+import { renderTable } from '../listing/table.ts';
 import type { CommandSpec, OptionSpec } from './command.ts';
 
 const INDENT = '  ';

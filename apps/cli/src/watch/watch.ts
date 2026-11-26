@@ -3,12 +3,12 @@ import process from 'node:process';
 import { openEventLog } from '@elvaria/eventlog';
 
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { watchLoop } from './loop.ts';
 import { watchTable } from './table.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { WatchRuntime } from './loop.ts';
 
 const DEFAULT_INTERVAL = 5;

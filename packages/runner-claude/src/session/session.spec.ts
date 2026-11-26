@@ -5,11 +5,11 @@ import { CONFORMANCE_QUEST, POLICY_FILE, STDERR_FILE, STDOUT_FILE } from '@elvar
 import type { RunnerSignal, RunningSession, Workspace } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { FAKE_HOOK, SPEC_REPEATS, prepare, silentHookCommand } from './__fixtures__/harness.ts';
-import { AGENTS_FILE, PROMPT_FILE, SETTINGS_FILE, SYSTEM_FILE } from './run-files.ts';
-import type { Prepared } from './__fixtures__/harness.ts';
-import { letterRules } from './settings.ts';
-import type { ClaudeSettings } from './settings.ts';
+import { FAKE_HOOK, SPEC_REPEATS, prepare, silentHookCommand } from '../__fixtures__/harness.ts';
+import { AGENTS_FILE, PROMPT_FILE, SETTINGS_FILE, SYSTEM_FILE } from '../run-files/run-files.ts';
+import type { Prepared } from '../__fixtures__/harness.ts';
+import { letterRules } from '../run-files/settings.ts';
+import type { ClaudeSettings } from '../run-files/settings.ts';
 
 const opened: Workspace[] = [];
 afterEach(async () => {

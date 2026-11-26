@@ -9,13 +9,13 @@ import { gazetteerStampOf, tryTerritory } from '@elvaria/runner-core';
 import type { TerritoryTrialRun } from '@elvaria/runner-core';
 import { inKingdom, kingdomLayout, readTextFile } from '@elvaria/store';
 
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { readMetricsSource } from '../metrics/read.ts';
 import { processHostOf } from '../run/plots.ts';
 import { scorecardLines } from './check-view.ts';
 import { recordOf, writeTrialRecord } from './trial-record.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** The trial, stopped by Ctrl+C: the running command is killed and the plot still removed. */

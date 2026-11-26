@@ -9,11 +9,11 @@ import type { MessageKey } from '@elvaria/i18n';
 import { openEventLog } from '@elvaria/eventlog';
 
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { readQuest } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
 const REFUSAL: Readonly<Record<EscapeError['code'], MessageKey>> = {
   not_merged: 'cli.quest.escaped.not_merged',

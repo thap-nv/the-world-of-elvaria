@@ -6,10 +6,10 @@ import { openEventLog } from '@elvaria/eventlog';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { NOW, foundKingdom, printed, run, tempDir, testIo } from './__fixtures__/cli.ts';
-import { QUEST_ID, plantQuests, questFixture } from './__fixtures__/quest.ts';
+import { NOW, foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
+import { QUEST_ID, plantQuests, questFixture } from '../__fixtures__/quest.ts';
 import { gaugesOf } from './gauges.ts';
-import type { TempDir } from './__fixtures__/cli.ts';
+import type { TempDir } from '../__fixtures__/cli.ts';
 
 const READ_AT = '2026-11-06T08:30:00+07:00';
 const RESETS = '2026-11-06T13:01:26+07:00';

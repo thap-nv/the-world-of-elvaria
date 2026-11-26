@@ -5,7 +5,7 @@ import { POLICY_FILE, runContextOf } from '@elvaria/runner-core';
 import type { Workspace } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { fakeHookCommand, prepare } from './__fixtures__/harness.ts';
+import { fakeHookCommand, prepare } from '../__fixtures__/harness.ts';
 import { AGENTS_FILE, SETTINGS_FILE, bashTimeoutEnv, writeRunFiles } from './run-files.ts';
 import { CLAUDE_PROTECTED_PATHS } from './settings.ts';
 

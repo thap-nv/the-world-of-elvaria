@@ -8,7 +8,7 @@ import { poolKeyOf } from '@elvaria/domain';
 import type { Character, CharacterClass, Tribe } from '@elvaria/domain';
 
 import { finding } from './finding.ts';
-import type { KingdomContext } from './../kingdom-context.ts';
+import type { KingdomContext } from '../kingdom-context.ts';
 import type { Finding } from './finding.ts';
 
 /** A model of doers whose judges of another model all draw on one mana pool. */

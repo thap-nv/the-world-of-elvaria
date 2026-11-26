@@ -15,7 +15,7 @@ import type { CodeGraphs } from '@elvaria/runner-core';
 import { questIdOfCommand } from '@elvaria/steward';
 
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { storeIssueLines } from '../issues.ts';
 import { NONE } from '../listing.ts';
 import { memoFromOf, readMemo } from '../memo/memo.ts';
@@ -36,7 +36,7 @@ import type {
   CommandSpec,
   ExitCode,
   OptionSpec,
-} from '../command.ts';
+} from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { KingdomPlace } from '../run/crew.ts';
 import type { CliIo } from '../io.ts';

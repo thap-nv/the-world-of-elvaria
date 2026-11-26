@@ -5,12 +5,12 @@
 import type { Character } from '@elvaria/domain';
 
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { CHARACTER_STATUS_LABEL } from '../labels.ts';
 import { commandHeader, sendCommand } from '../quest/send-command.ts';
 import { namedCharacter } from './read.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 /** What happens to the quest the character holds: the next judge takes a review, a quest goes on without it. */

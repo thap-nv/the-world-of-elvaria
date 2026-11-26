@@ -11,8 +11,8 @@ import { tempDir } from '@elvaria/testkit';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { prepare } from './__fixtures__/harness.ts';
-import { PROMPT_FILE } from './run-files.ts';
-import type { HookCommand } from './settings.ts';
+import { PROMPT_FILE } from './run-files/run-files.ts';
+import type { HookCommand } from './run-files/settings.ts';
 
 /** Elvaria's hook itself, not the stand-in of the other specs: it is the hook that must mask. */
 const HOOK_SOURCE = path.resolve(import.meta.dirname, '..', '..', 'hooks', 'src', 'elvaria-hook.ts');

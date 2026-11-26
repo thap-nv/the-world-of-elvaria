@@ -1,19 +1,14 @@
 {
   "version": 1,
-  "root_size": {
-    "apps/cli/src": 18,
-    "packages/runner-claude/src": 23
-  },
+  "root_size": {},
   "dir_size": {
     "packages/runner-core/src/plot": 31
   },
   "root_spec": {},
   "test_dir": {},
   "name_pair": {
-    "apps/cli/src/command + commands": 1,
     "packages/domain/src/character/transition + transitions": 1,
     "packages/domain/src/quest/transition + transitions": 1,
-    "packages/runner-claude/src/model + models": 1,
     "packages/sandbox/src/scenario + scenarios": 1,
     "packages/steward/src/forge/look + looks": 1
   }

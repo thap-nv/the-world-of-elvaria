@@ -8,11 +8,11 @@ import { FAIL_KINDS, FAIL_NOTES_MIN_LENGTH } from '@elvaria/domain';
 import type { FailKind } from '@elvaria/domain';
 
 import { flagOption, textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { questFor } from './lifecycle.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
 const isFailKind = (value: string): value is FailKind => (FAIL_KINDS as readonly string[]).includes(value);
 

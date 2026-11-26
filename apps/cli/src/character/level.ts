@@ -4,11 +4,11 @@
 // first, so a command the Steward would refuse is refused at the terminal.
 import { CHARACTER_LEVEL_MAX, rankCeilingOf } from '@elvaria/domain';
 
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { commandHeader, sendCommand } from '../quest/send-command.ts';
 import { namedCharacter } from './read.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
 /** A level of the table (1–10) written as a whole number, or undefined. */
 export function levelOfText(text: string): number | undefined {

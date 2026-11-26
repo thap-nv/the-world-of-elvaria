@@ -11,7 +11,7 @@ import { fromPortable } from '@elvaria/store';
 import type { CodeGraphs } from '@elvaria/runner-core';
 import type { Forges, Steward } from '@elvaria/steward';
 
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { upgradeOffer } from '../upgrade/offer.ts';
 import { runningLine } from '../upgrade/running.ts';
@@ -25,7 +25,7 @@ import { toolFoundOf } from './tool-found.ts';
 import { triageJob } from '../triage/job.ts';
 import { amendmentJob } from '../amend/job.ts';
 import { templeJob } from '../temple/job.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { Crew } from './crew.ts';
 

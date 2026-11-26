@@ -8,12 +8,12 @@ import type { HoldError, Quest } from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
 
 import { textOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { QUEST_STATUS_LABEL } from '../labels.ts';
 import { readQuest } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 const REFUSAL: Readonly<Record<HoldError['code'], MessageKey>> = {

@@ -3,7 +3,7 @@
 // line says how to leave it (`elvaria upgrade --rollback`, `--here`).
 import { DEFAULT_LOCALE, isLocale, translator } from '@elvaria/i18n';
 
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { localeFlag, runCli } from '../run-cli.ts';
 import { pinOf } from './pin.ts';
 import { relaunch } from './relaunch.ts';

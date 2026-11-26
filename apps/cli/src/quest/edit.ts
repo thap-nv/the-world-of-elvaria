@@ -8,14 +8,14 @@ import { MS_PER_MINUTE, QUEST_TITLE_MAX_LENGTH, RANKS, parseInstant } from '@elv
 import type { Quest, Rank } from '@elvaria/domain';
 
 import { flagOption, textOption, textOptions } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { atPct, figureOf } from './ceiling.ts';
 import { SESSION_ROLE, tokenLines } from './edit-tokens.ts';
 import { questsMissing, readQuest } from './references.ts';
 import { readScope } from './scope.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
 const isRank = (value: string): value is Rank => (RANKS as readonly string[]).includes(value);

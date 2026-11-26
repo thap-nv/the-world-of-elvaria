@@ -9,7 +9,7 @@ import type { PlotManager } from '@elvaria/runner-core';
 import { describe, expect, it } from 'vitest';
 
 import { questFixture } from '../__fixtures__/quest.ts';
-import { newKingdom } from '../init.ts';
+import { newKingdom } from '../init/init.ts';
 import { tempDir, testIo } from '../__fixtures__/cli.ts';
 import { consoleBell, lineOf } from './bell.ts';
 import { crewOf, toolOptionsOf } from './crew.ts';

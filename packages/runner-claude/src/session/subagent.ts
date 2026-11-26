@@ -4,7 +4,7 @@
 // where a revival reads them and the tier report counts them.
 import type { RunEventDraft } from '@elvaria/runner-core';
 
-import type { ApprenticeConfig } from './agents.ts';
+import type { ApprenticeConfig } from '../run-files/agents.ts';
 import type { Observation } from './stream.ts';
 
 const MS_PER_MINUTE = 60_000;

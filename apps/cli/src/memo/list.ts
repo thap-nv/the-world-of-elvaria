@@ -2,11 +2,11 @@
 // ones only, unless `--all`. Reads memos/, writes nothing. (PS-09c) Each says where it went, `quests` for the
 // Steward's advisory, whose writer is the Steward.
 import { flagOption } from '../args.ts';
-import { EXIT } from '../command.ts';
+import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { printListing } from '../listing.ts';
 import { MEMO_STATE_LABEL, excerpt, memoFromOf } from './memo.ts';
-import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
 async function runMemoList(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);

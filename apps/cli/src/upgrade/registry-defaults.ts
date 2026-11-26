@@ -11,7 +11,7 @@ import { kingdomLayout, inKingdom, refreshRegistryDefaults } from '@elvaria/stor
 import type { RegistryDefault, RegistryRefreshReport } from '@elvaria/store';
 
 import { registryIssueLines, storeIssueLines } from '../issues.ts';
-import { backupStamp } from '../migrate.ts';
+import { backupStamp } from '../migrate/migrate.ts';
 import { buildDirOf, shortSha } from './pointer.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
