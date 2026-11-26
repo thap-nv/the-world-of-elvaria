@@ -3,14 +3,15 @@
 // the healer, whose session opens in the quest's plot on the doer's staged tree with heal.md, in the run's `heal/`
 // folder. The Steward measures what the healer changed: a small mend within the work is kept as heal.patch, committed
 // through the hooks and shown to the judge; a file outside the work puts the plot back on the doer's tree and sends
-// the quest to the infirmary; a healer whose mana runs out leaves the plot as the doer left it.
-import { readFile } from 'node:fs/promises';
+// the quest to the infirmary; a healer whose mana runs out leaves the plot as the doer left it, as does one the owner
+// suspends, one past kingdom.heal's hard ceiling (to the infirmary, `heal:cut`) and one lost with its Steward.
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { tempDir } from '@elvaria/testkit';
 import { isEventOf } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
-import { fromPortable } from '@elvaria/store';
+import { fromPortable, pathExists } from '@elvaria/store';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { leavingRunners } from '../__fixtures__/deliver.ts';
@@ -19,6 +20,7 @@ import { CAST, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts
 import { statusIs } from '../__fixtures__/review.ts';
 import type { Leaves } from '../__fixtures__/deliver.ts';
 import type { Bench, Plays } from '../__fixtures__/kingdom.ts';
+import { SESSIONS_FILE } from '../sessions/pids.ts';
 import type { Plots, Steward } from '../types.ts';
 import type { TempDir } from '@elvaria/testkit';
 import type { Quest } from '@elvaria/domain';
@@ -36,6 +38,8 @@ afterEach(async () => {
 });
 
 const TITLE = 'Linted';
+/** No process ever has this pid (tick/restart.spec.ts): the session's process died with its Steward. */
+const NO_SUCH_PID = 2_147_483_647;
 const BEFORE = 'export const a = 1;\n';
 const DOER = 'export const a = 1;\nexport const b = 2;\nlet unused;\n';
 const MENDED = 'export const a = 1;\nexport const b = 2;\n';
@@ -168,5 +172,83 @@ describe("a healer's session on the doer's refused work", () => {
     expect(await readFile(path.join(worktreeOf(quest), 'src', 'app.ts'), 'utf8')).toBe(DOER);
     expect(await kingdom.character('mira')).toMatchObject({ status: 'sleeping_mana', current: null });
     expect(kingdom.notices.filter(({ kind }) => kind === 'infirmary')).toEqual([]);
+  });
+});
+
+/** A heal half done, a new file among it: only putting the plot back removes that file, the doer never writes it. */
+const HALF = { 'src/app.ts': 'half-mended\n', 'src/extra.ts': 'export const e = 5;\n' };
+
+/** The doer submits; the healer's session hangs until the Steward stops it. */
+const HANGS = { work: { [TITLE]: ['submit', 'hang'] } } as const;
+
+async function healing(kingdom: Bench, steward: Steward): Promise<Quest> {
+  await tickUntil(steward, kingdom.clock, statusIs(kingdom, TITLE, 'healing'));
+  return kingdom.quest(TITLE);
+}
+
+const doerLeft = async (quest: Quest) => readFile(path.join(worktreeOf(quest), 'src', 'app.ts'), 'utf8');
+const healerLeft = (quest: Quest) => pathExists(path.join(worktreeOf(quest), 'src', 'extra.ts'));
+
+describe("a healer's session the Steward stops", () => {
+  it('ends with the owner’s suspend: the plot back on the doer’s work, no infirmary, the heal not counted', async () => {
+    const { kingdom, steward } = await open(HALF, HANGS);
+    await healing(kingdom, steward);
+    await kingdom.command('suspend', { character: 'mira' });
+    await steward.tick();
+    // Back from the heal, the quest goes on with its doer in the same tick, as after a healer's mana runs out.
+    const quest = await kingdom.quest(TITLE);
+    expect(quest).toMatchObject({ status: 'working', attempts: 1 });
+    expect(quest.attempt_log.slice(-2)).toMatchObject([
+      { character: 'mira', heal: 'session', outcome: 'cancelled' },
+      { character: quest.assignee, role: 'assignee' },
+    ]);
+    expect(await healerLeft(quest)).toBe(false);
+    expect(await kingdom.character('mira')).toMatchObject({ status: 'suspended', current: null });
+    expect(kingdom.notices.filter(({ kind }) => kind === 'infirmary')).toEqual([]);
+  });
+
+  it('cuts it past kingdom.heal’s hard ceiling: the plot back on the doer’s work, the quest to the infirmary', async () => {
+    const { kingdom, steward } = await open(HALF, HANGS);
+    await healing(kingdom, steward);
+    kingdom.clock.advance(30); // kingdom.heal.minutes 15 at hard_pct 150 is 22.5 minutes
+    await steward.tick();
+    const quest = await kingdom.quest(TITLE);
+    expect(quest.status).toBe('infirmary');
+    expect(await doerLeft(quest)).toBe(DOER);
+    expect(await healerLeft(quest)).toBe(false);
+    expect(steward.running()).toBe(0);
+    expect(kingdom.notices).toMatchObject([{ kind: 'infirmary', reason: { code: 'heal:cut' } }]);
+    expect(await kingdom.character('mira')).toMatchObject({ current: null });
+  });
+
+  it('is lost with the last Steward: the next one puts the plot back on the doer’s work', async () => {
+    const { kingdom, steward } = await open(HALF, HANGS);
+    const before = await healing(kingdom, steward);
+    await steward.stop();
+    // A killed Steward leaves its record behind, naming a process that is gone by now (tick/restart.spec.ts).
+    const spawnedAt = before.attempt_log.at(-1)?.started_at;
+    const sessions = [
+      { quest: before.id, role: 'assignee', character: 'mira', pid: NO_SUCH_PID, spawned_at: spawnedAt },
+    ];
+    await writeFile(path.join(kingdom.root, SESSIONS_FILE), JSON.stringify({ version: 1, sessions }));
+    running = kingdom.steward({
+      plots: gitPlots(kingdom.root),
+      runners: leavingRunners(kingdom, leaving({})),
+    });
+    expect(await running.start({ loop: false })).toEqual({ ok: true });
+    await running.tick();
+    // The lost heal does not count; planTick finds the quest's heal due again and opens a healer on the doer's tree,
+    // whose session writes nothing this time: the plot holds exactly what the doer left.
+    const quest = await kingdom.quest(TITLE);
+    expect(quest).toMatchObject({ status: 'healing', attempts: 1 });
+    expect(quest.attempt_log.slice(-2)).toMatchObject([
+      { character: 'mira', heal: 'session', outcome: 'cancelled', session_id: 'fake-claude-2' },
+      { character: 'mira', heal: 'session', session_id: 'fake-claude-3' },
+    ]);
+    expect(kingdom.warnings).toEqual([
+      `steward: ${quest.id}: mira's session was lost with the last Steward; the run does not count`,
+    ]);
+    expect(await doerLeft(quest)).toBe(DOER);
+    expect(await healerLeft(quest)).toBe(false);
   });
 });
