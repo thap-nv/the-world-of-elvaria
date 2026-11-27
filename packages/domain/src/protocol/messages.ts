@@ -68,11 +68,7 @@ export const ServerMessageSchema = z.discriminatedUnion('type', [
 /** World and lite → herald. */
 export const ClientMessageSchema = z.discriminatedUnion('type', [CommandMessageSchema]);
 export const ProtocolMessageSchema = z.discriminatedUnion('type', [
-  SnapshotMessageSchema,
-  EventsMessageSchema,
-  AcceptedMessageSchema,
-  RefusedMessageSchema,
-  AttentionMessageSchema,
+  ...ServerMessageSchema.options,
   CommandMessageSchema,
 ]);
 
@@ -80,4 +76,3 @@ export type ServerMessage = z.infer<typeof ServerMessageSchema>;
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
 export type ProtocolMessage = z.infer<typeof ProtocolMessageSchema>;
 export type CommandMessage = z.infer<typeof CommandMessageSchema>;
-export type AttentionMessage = z.infer<typeof AttentionMessageSchema>;
