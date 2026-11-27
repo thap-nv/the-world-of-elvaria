@@ -20,5 +20,6 @@ export {
   FORGE_POLL_SECONDS,
   MINUTES_PER_HOUR,
   MS_PER_SECOND,
+  TRAIN_RIDES_MAX,
   UPDATE_ROUNDS_MAX,
 } from './constants.ts';

@@ -3,11 +3,13 @@
 // `delivery.failed` of a quest is its outcome; the owner's `deliver` command (its `command.applied` line names the
 // quest) forgets it, so the Steward delivers the quest again. The Steward rebuilds it at start (recover), the digest
 // and `quest show` read it from the log as it stands. (CM-08) A `deliver` naming a territory instead sends its
-// delivery train off: the order holds until the territory's next `train.ran`, which every train that left writes.
+// delivery train off: the order holds until the territory's next `train.ran`, which every train that left writes, and
+// (623) forgets the failures on its trains, so their quests board the next one.
 import { isEventOf } from '../schema/event/event.ts';
 import type { QuestId, TerritoryId } from '../core/ids.ts';
 import type { EventData } from '../schema/event/event-data.ts';
 import type { Event } from '../schema/event/event.ts';
+import type { Quest } from '../schema/quest/quest.ts';
 
 export type ForgeOutcome =
   | { readonly type: 'delivery.pushed'; readonly data: EventData<'delivery.pushed'> }
@@ -43,6 +45,23 @@ export function forgeRoundsOf(events: readonly Event[]): Map<QuestId, number> {
   return new Map([...pushes].map(([quest, count]) => [quest, count - 1]));
 }
 
+/** (CM-08) The territory whose train an applied `deliver` sends off: its line names the territory, no quest. */
+const trainOrderOf = (event: Event): TerritoryId | undefined =>
+  isEventOf(event, 'command.applied') && event.data.kind === DELIVER_COMMAND && event.quest === undefined
+    ? event.territory
+    : undefined;
+
+/**
+ * (623) A failure on `territory`'s train the owner's order forgets, so the quest boards the next train: every failure
+ * at stage `train` but one a merge quest resolves (PS-09b: a `conflict`, or one naming its `merge_quest`).
+ */
+export const forgottenByOrder = (outcome: ForgeOutcome, territory: TerritoryId): boolean =>
+  outcome.type === 'delivery.failed' &&
+  outcome.data.stage === 'train' &&
+  outcome.data.territory === territory &&
+  outcome.data.reason !== 'conflict' &&
+  outcome.data.merge_quest === undefined;
+
 /** Each quest's latest outcome, in the order of `events` (the log's). */
 export function forgeOutcomesOf(events: readonly Event[]): Map<QuestId, ForgeOutcome> {
   const outcomes = new Map<QuestId, ForgeOutcome>();
@@ -51,6 +70,9 @@ export function forgeOutcomesOf(events: readonly Event[]): Map<QuestId, ForgeOut
     if (outcome !== undefined) outcomes.set(outcome.data.quest, outcome);
     const again = askedAgain(event);
     if (again !== undefined) outcomes.delete(again);
+    const order = trainOrderOf(event);
+    if (order === undefined) continue;
+    for (const [quest, held] of outcomes) if (forgottenByOrder(held, order)) outcomes.delete(quest);
   }
   return outcomes;
 }
@@ -60,13 +82,46 @@ export function trainOrdersOf(events: readonly Event[]): TerritoryId[] {
   const orders = new Set<TerritoryId>();
   for (const event of events) {
     if (isEventOf(event, 'train.ran')) orders.delete(event.data.territory);
-    else if (
-      isEventOf(event, 'command.applied') &&
-      event.data.kind === DELIVER_COMMAND &&
-      event.quest === undefined &&
-      event.territory !== undefined
-    )
-      orders.add(event.territory);
+    const order = trainOrderOf(event);
+    if (order !== undefined) orders.add(order);
   }
   return [...orders].toSorted();
+}
+
+type Delivered = Pick<Quest, 'id' | 'territory' | 'deliverable'>;
+
+/**
+ * The quests of a red `train.ran` that rode it as delivered (`delivered_at` not after the line); none when the base
+ * branch was red on its own (`base_red`): a red base branch costs no quest a ride ((624)(k) of implementation-plan §11).
+ */
+function ridersOf(event: Event, delivered: ReadonlyMap<QuestId, string>): QuestId[] {
+  if (!isEventOf(event, 'train.ran') || event.data.outcome !== 'red' || event.data.base_red === true)
+    return [];
+  return event.data.steps
+    .map(({ quest }) => quest)
+    .filter((quest) => {
+      const at = delivered.get(quest);
+      return at !== undefined && Date.parse(at) <= Date.parse(event.ts);
+    });
+}
+
+/**
+ * (CM-08b) The red trains each of `quests` rode since its last delivery (`deliverable.delivered_at`: a late fail drops
+ * it, the next pass stamps it anew) and since the owner's last `deliver` naming it or its territory (623).
+ * TRAIN_RIDES_MAX of them fail it to the owner (outOfRidesOf).
+ */
+export function trainRidesOf(events: readonly Event[], quests: readonly Delivered[]): Map<QuestId, number> {
+  const delivered = new Map<QuestId, string>();
+  for (const { id, deliverable } of quests)
+    if (deliverable.delivered_at !== undefined) delivered.set(id, deliverable.delivered_at);
+  const territories = new Map(quests.map(({ id, territory }) => [id, territory]));
+  const rides = new Map<QuestId, number>();
+  for (const event of events) {
+    const again = askedAgain(event);
+    if (again !== undefined) rides.delete(again);
+    const order = trainOrderOf(event);
+    for (const quest of rides.keys()) if (territories.get(quest) === order) rides.delete(quest);
+    for (const quest of ridersOf(event, delivered)) rides.set(quest, (rides.get(quest) ?? 0) + 1);
+  }
+  return rides;
 }

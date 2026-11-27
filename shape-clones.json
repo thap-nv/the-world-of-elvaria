@@ -117,7 +117,7 @@
     {
       "a": "packages/steward/src/forge/guest.ts",
       "b": "packages/steward/src/forge/train.ts",
-      "tokens": 65,
+      "tokens": 63,
       "status": "kept",
       "reason": "CM-08: the frame of a trial of the merge queue, a `check.start` once built and a `check.end` after, around Plots.guest and Plots.train, whose requests and marks differ (the guest carries the checks the ledger holds and names its mode, the train runs every check and names its tree); the shared parts (the line, the end, the red checks) are in trial-red.ts already."
     },

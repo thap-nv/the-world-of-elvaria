@@ -48,3 +48,11 @@ export const BASE_LOOK_MINUTES = 10;
  */
 export const UPDATE_ROUNDS_MAX = 3;
 export const MS_PER_SECOND = 1000;
+
+/**
+ * (CM-08b, plans/check-modes.md "Tàu giao hàng") A quest that rode this many red delivery trains without getting into
+ * the base branch, the probe never blaming it, fails to the owner (`delivery.failed`), as a queue that needs a person:
+ * each red train finds at most one red quest, so three are a train that keeps meeting other quests' faults or an
+ * unclear probe. Not measured.
+ */
+export const TRAIN_RIDES_MAX = 3;

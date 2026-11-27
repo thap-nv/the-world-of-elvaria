@@ -278,3 +278,23 @@ describe('carried checks in the check modes ledger (RC-04)', () => {
     expect(metrics.full_by_day).toEqual([{ day: '2026-11-08', count: 1 }]);
   });
 });
+
+describe('full runs of a delivery train (CM-08b, (474))', () => {
+  it('counts each train built and tried once, by its train.ran: not its check.end, nor a split train', () => {
+    const id = '01KAZ5Q3J8M6R2T4V6X8Z0B2D4';
+    const train = (minute: number, data: Record<string, unknown>) =>
+      lineOf(
+        'train.ran',
+        { territory: 'elvaria', train: id, departure: 'idle', steps: [], ...data },
+        at(minute),
+      );
+    const log = [
+      lineOf('check.end', { outcome: 'fail', checks: [], delivery: true, train: id }, at(1)),
+      train(2, { outcome: 'red', head: 'a'.repeat(40) }),
+      train(3, { outcome: 'green', head: 'b'.repeat(40), departure: 'split' }),
+      train(4, { outcome: 'stopped' }),
+      train(5, { outcome: 'green', head: 'c'.repeat(40) }),
+    ];
+    expect(checkModesOf(log, {}).full_by_day).toEqual([{ day: '2026-11-08', count: 2 }]);
+  });
+});

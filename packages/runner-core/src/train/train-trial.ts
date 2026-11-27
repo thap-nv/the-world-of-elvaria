@@ -38,8 +38,13 @@ export interface TrainHead {
 
 export interface TrainTrialRequest extends Omit<
   TerritoryTrialRequest,
-  'name' | 'commit' | 'checks' | 'narrow' | 'inPlot' | 'stamp' | 'carried' | 'steps'
+  'name' | 'commit' | 'narrow' | 'inPlot' | 'stamp' | 'carried' | 'steps'
 > {
+  /**
+   * (CM-08b) Only these checks, by id: a `split` train, the quests before the culprit of a red one, runs again only
+   * the checks that went red (ADR 0032). Every check when absent.
+   */
+  readonly checks?: readonly string[];
   /** The quests in the order they board. */
   readonly quests: readonly TrainBoarding[];
   /** Told once the train is built, right before its checks run: the Steward's `check.start`. */

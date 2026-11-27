@@ -4,37 +4,24 @@
 // merge named by its quest from the log, then the runs the domain's plan asks for (probeNextOf) in a plot `probe-<id>`
 // (Plots.probe), and one `check.attributed`, which the book's health and the digest's `base_red` item carry. (CM-06)
 // Before that line, a conclusion that blames a merged quest writes its late verdict and opens its fix quest
-// (late-fix.ts). The Steward's stop kills the run and its plot goes, nothing is recorded: the red checks stay
-// unattributed and the territory's next patrol probes them again.
+// (late-fix.ts). The runs are probe-run.ts's. The Steward's stop kills the run and its plot goes, nothing is
+// recorded: the red checks stay unattributed and the territory's next patrol probes them again.
 import {
   attributedHealth,
   attributionOf,
   greenHeadOf,
-  probeChecksOf,
-  probeNextOf,
-  probeRunOf,
   probeStepsOf,
-  questHeadOf,
   questTipsOf,
   unattributedOf,
 } from '@elvaria/domain';
-import type { ProbeDone, ProbeMove, ProbePlan, ProbeRun, QuestStep, Territory } from '@elvaria/domain';
+import type { ProbeDone, ProbePlan, Territory } from '@elvaria/domain';
 
 import { STEWARD } from '../quest/record.ts';
 import { setHealth } from './book.ts';
 import { lateFixAfter } from './late-fix.ts';
+import { probeFrom, probePlotsOf } from './probe-run.ts';
 import type { Context } from '../context.ts';
-import type { Plots } from '../types.ts';
-
-type ProbePlots = Required<Pick<Plots, 'probe' | 'commitLinks'>>;
-
-interface Probe {
-  readonly plots: ProbePlots;
-  readonly territory: Territory;
-  /** The red checks; those the plot runs leave commands.setup out, which always runs. */
-  readonly checks: readonly string[];
-  readonly signal: AbortSignal;
-}
+import type { Probe } from './probe-run.ts';
 
 /** Read each time: the Steward may stop during any await. */
 const stopped = ({ signal }: Probe): boolean => signal.aborted;
@@ -58,34 +45,6 @@ async function planOf(ctx: Context, probe: Probe): Promise<ProbePlan | undefined
   return steps === undefined ? undefined : { red, steps };
 }
 
-async function runAt(probe: Probe, commit: string, step?: QuestStep): Promise<ProbeRun> {
-  const { plots, territory, checks, signal } = probe;
-  const trial = await plots.probe(territory, commit, probeChecksOf(checks), signal);
-  return probeRunOf(trial, commit, step?.quest);
-}
-
-/** Step 4: the quest's own head before its newest merge of the base branch; a run that cannot say when git cannot. */
-async function ownRun(probe: Probe, step: QuestStep): Promise<ProbeRun> {
-  const links =
-    step.parent === undefined
-      ? undefined
-      : await probe.plots.commitLinks(probe.territory, step.head, step.parent);
-  if (links === undefined) return { commit: step.head, quest: step.quest, red: undefined, duration_ms: 0 };
-  return runAt(probe, questHeadOf(links, step.head), step);
-}
-
-const runOf = (probe: Probe, move: Exclude<ProbeMove, ProbeDone>): Promise<ProbeRun> =>
-  move.kind === 'own' ? ownRun(probe, move.step) : runAt(probe, move.commit);
-
-/** The plan's moves, one run at a time; undefined once the Steward stopped. */
-async function probeFrom(probe: Probe, plan: ProbePlan, runs: readonly ProbeRun[]) {
-  const move = probeNextOf(plan, runs);
-  if (move.kind === 'done') return { runs, done: move };
-  const run = await runOf(probe, move);
-  if (stopped(probe)) return undefined;
-  return probeFrom(probe, plan, [...runs, run]);
-}
-
 async function attribute(ctx: Context, probe: Probe): Promise<void> {
   if (stopped(probe)) return;
   const plan = await planOf(ctx, probe);
@@ -107,15 +66,13 @@ export const probeDue = (ctx: Context, territory: Territory): boolean =>
 
 /** The probe of `territory`'s unattributed red checks in its lane; nothing when there are none, or once stopped. */
 export function probeTerritory(ctx: Context, territory: Territory, signal: AbortSignal): Promise<void> {
-  const { plots } = ctx.deps;
-  const probe = plots.probe?.bind(plots);
-  const commitLinks = plots.commitLinks?.bind(plots);
-  if (probe === undefined || commitLinks === undefined) return Promise.resolve();
+  const plots = probePlotsOf(ctx.deps.plots);
+  if (plots === undefined) return Promise.resolve();
   return ctx.patrol.runs.exclusive(territory.id, async () => {
     const checks = unattributedOf(healthOf(ctx, territory));
     if (checks.length === 0) return;
     try {
-      await attribute(ctx, { plots: { probe, commitLinks }, territory, checks, signal });
+      await attribute(ctx, { plots, territory, checks, signal });
     } catch (error) {
       if (!signal.aborted) ctx.deps.log.warn(`steward: probe of ${territory.id} failed: ${messageOf(error)}`);
     }

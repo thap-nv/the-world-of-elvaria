@@ -11,7 +11,6 @@ import { isQueueMerge, queueMergeQuestOf, questFromCommand } from '@elvaria/doma
 import { createRedactor } from '@elvaria/eventlog';
 import { inKingdom } from '@elvaria/store';
 import type { QueueRedCheck, QueueStop, QuestId } from '@elvaria/domain';
-import type { CheckRun } from '@elvaria/runner-core';
 
 import { childIdOf } from '../deliver/subquests.ts';
 import { STEWARD } from '../quest/record.ts';
@@ -35,7 +34,7 @@ export interface Resolvable {
 /** Each red check with the end of its log, masked; a log that cannot be read leaves the name alone. */
 export async function redChecksOf(
   ctx: Context,
-  red: readonly Pick<CheckRun, 'id' | 'log_path'>[],
+  red: readonly { readonly id: string; readonly log_path: string }[],
 ): Promise<QueueRedCheck[]> {
   const known = Object.values(await ctx.deps.treasury.resolve(await ctx.deps.treasury.names()));
   const mask = createRedactor(known);

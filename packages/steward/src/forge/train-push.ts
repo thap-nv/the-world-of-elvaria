@@ -33,6 +33,8 @@ export interface Train {
   readonly run: TrainRun;
   /** The quests aboard, in the order they board. */
   readonly quests: readonly Quest[];
+  /** (CM-08b) A `split` train's: only these checks run, those that went red. Absent: every check. */
+  readonly checks?: readonly string[];
   readonly territory: Territory;
   readonly forge: Forge;
   readonly repo: ForgeRepo;

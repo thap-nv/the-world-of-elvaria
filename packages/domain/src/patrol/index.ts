@@ -9,3 +9,4 @@ export * from './probe.ts';
 export * from './attribution.ts';
 export * from './late-fix.ts';
 export * from './queue-probe.ts';
+export * from './train-probe.ts';

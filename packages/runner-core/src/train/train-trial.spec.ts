@@ -139,6 +139,21 @@ describe('tryTrain', () => {
     expect(started.splice(0)).toHaveLength(1);
   });
 
+  it("runs only the checks given, a split train's (CM-08b)", async () => {
+    const both = territoryAt(repo, {
+      commands: { setup: 'node setup.mjs' },
+      checks: [
+        { id: 'state', run: 'node check.mjs', when: ['**'], timeout_minutes: 1 },
+        { id: 'never', run: 'node missing.mjs', when: ['**'], timeout_minutes: 1 },
+      ],
+    });
+    const quests = [{ quest: id.red, branch: 'quest/red' }];
+    const trial = tried(
+      await tryTrain({ kingdom, territory: both, host: TEST_HOST, quests, checks: ['state'] }),
+    );
+    expect(trial.run.trial.checks.map(({ id: check, pass }) => [check, pass])).toEqual([['state', false]]);
+  });
+
   it('stops on a generator that fails, and on a branch the repo does not have, its merges told', async () => {
     const generated = await train(['a'], 'node missing.mjs');
     expect(generated).toMatchObject({

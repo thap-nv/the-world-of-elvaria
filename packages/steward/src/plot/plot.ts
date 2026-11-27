@@ -232,11 +232,12 @@ export interface Plots extends PlotQueue, HealMethods {
   /**
    * (CM-08) The delivery train of a `deferred` territory: runner-core's tryTrain, each quest's branch of `board.quests`
    * merged in order into origin's default branch under `train-<id>`, then commands.setup, commands.generate and every
-   * check, `board.started` told before the checks run. Absent: no train runs.
+   * check (only `board.checks` when given: a `split` train), `board.started` told before the checks run. Absent: no
+   * train runs.
    */
   train?(
     territory: Territory,
-    board: Pick<TrainTrialRequest, 'quests' | 'started'>,
+    board: Pick<TrainTrialRequest, 'quests' | 'started' | 'checks'>,
     signal: AbortSignal,
   ): Promise<TrainTrial>;
   /** At archive only: removes a worktree (its branch stays) and what the tribes' CLIs kept about it. */

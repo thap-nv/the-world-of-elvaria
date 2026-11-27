@@ -7,6 +7,7 @@
 // slot of dispatch.max_background and the kingdom's heavy work (HEAVY_WORK_MAX, with the patrols). A guest entry keeps
 // its place: the quests delivered after it came wait for it. The platform is drawn from the snapshot, no file of its own.
 import { MS_PER_MINUTE } from '../constants.ts';
+import { TRAIN_RIDES_MAX } from './constants.ts';
 import { HEAVY_WORK_MAX } from '../patrol/constants.ts';
 import { questFinished } from '../quest/finished.ts';
 import { checkPolicyOf } from '../schema/territory-check-policy.ts';
@@ -113,3 +114,10 @@ export function trainRunsOf(source: TrainSource, done: readonly Quest[], now: In
 /** The merge queue's deliveries due, its guests that may start and (CM-08) its trains that leave: the room decides. */
 export const forgeQueueOf = (source: TrainSource, done: readonly Quest[], now: Instant) =>
   [forgeDeliveries(source, done), guestRunsOf(source, done), trainRunsOf(source, done, now)] as const;
+
+/**
+ * (CM-08b) Of the quests a red train sends back to its platform, those for which it was the TRAIN_RIDES_MAX-th red ride
+ * (`rides`: trainRidesOf before its `train.ran`): they fail to the owner instead.
+ */
+export const outOfRidesOf = (rides: ReadonlyMap<QuestId, number>, back: readonly QuestId[]): QuestId[] =>
+  back.filter((quest) => (rides.get(quest) ?? 0) + 1 >= TRAIN_RIDES_MAX);
