@@ -110,6 +110,10 @@ async function record(ctx: Context, ledger: PatrolLedger, territory: Territory, 
   const suspension = baseRedSuspension(territory.id, turned, ctx.delegation.suspensions);
   if (suspension !== undefined) await suspendDelegation(ctx, suspension);
   await ctx.record.note({ type: 'patrol.ran', actor: STEWARD, territory: territory.id, data });
+  if (data.head !== null) {
+    ctx.patrol.heads.delete(territory.id);
+    ctx.patrol.merges.delete(territory.id);
+  }
   const view = healthLine(territory, data, red, ts);
   await ctx.record.note({ type: 'territory.health', actor: STEWARD, territory: territory.id, data: view });
   if (turned.length > 0) {

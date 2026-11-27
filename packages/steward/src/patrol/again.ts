@@ -6,7 +6,8 @@
 // around) A green `narrow` or `deferred` territory whose default branch moved since its latest patrol, by a merge of the
 // Steward's or one a look found, is patrolled (`merged`) once its merge queue is quiet, for the newest head: one patrol
 // at a time in the kingdom, in a slot of dispatch.max_background the tick's work left free (mergedPatrolOf).
-import { mergedPatrolOf, patrolsDue, queueAtWorkOf } from '@elvaria/domain';
+import { afterMergeOf, mergedPatrolOf, patrolsDue, queueAtWorkOf } from '@elvaria/domain';
+import { globToRegExp } from '@elvaria/runner-core';
 import type { BaseRed, BaseTip, KingdomSnapshot, PatrolTrigger, TerritoryId } from '@elvaria/domain';
 
 import { APPLIED, rejected } from '../inbox/quest-commands.ts';
@@ -14,6 +15,9 @@ import { patrolled, patrolTerritory } from './patrol.ts';
 import type { Context } from '../context.ts';
 import type { BaseLooks } from '../forge/looks.ts';
 import type { Outcome } from '../inbox/quest-commands.ts';
+
+/** Re-read after awaits: the stop signal can change while git reads the range. */
+const stopped = (signal: AbortSignal): boolean => signal.aborted;
 
 /** Starts the patrol of `id` outside the tick; why not, when it cannot be patrolled here. */
 function startPatrol(ctx: Context, id: TerritoryId, trigger: PatrolTrigger): string | undefined {
@@ -58,14 +62,18 @@ export function patrolMoved(ctx: Context, base: readonly BaseRed[]): void {
  * (CM-03) The patrol after a merge, after the tick's work started: the queues at work are those of `snapshot`, the
  * plan's own deliveries among them, and the slots free are those the background and the patrols leave.
  */
-export function patrolMerged(ctx: Context, snapshot: KingdomSnapshot): void {
-  if (ctx.stopping.aborted) return;
+export async function patrolMerged(ctx: Context, snapshot: KingdomSnapshot): Promise<void> {
+  if (stopped(ctx.stopping)) return;
   const { patrol } = ctx;
   const done = snapshot.quests.filter(({ status }) => status === 'done');
   const due = mergedPatrolOf({
     territories: [...ctx.world.territories.values()],
     health: patrol.health,
-    tips: [...patrol.heads].map(([territory, head]) => ({ territory, head })),
+    tips: [...patrol.heads].map(([territory, head]) => ({
+      territory,
+      head,
+      merges: patrol.merges.get(territory) ?? 0,
+    })),
     tried: patrol.tried,
     base_red: snapshot.base_red ?? [],
     queued: queueAtWorkOf(snapshot, done),
@@ -76,8 +84,26 @@ export function patrolMerged(ctx: Context, snapshot: KingdomSnapshot): void {
       patrol.runs.outside(),
   });
   if (due === undefined) return;
+  const quiet = await onlyQuietPaths(ctx, due);
+  if (stopped(ctx.stopping)) return;
   patrol.tried.set(due.territory, due.head);
+  if (quiet) return;
   const refused = startPatrol(ctx, due.territory, 'merged');
   if (refused !== undefined)
     ctx.deps.log.warn(`steward: no patrol of ${due.territory} after its branch moved: ${refused}`);
+}
+
+/** Missing history or a failed diff cannot establish that a range is quiet. */
+async function onlyQuietPaths(ctx: Context, due: BaseTip): Promise<boolean> {
+  const territory = ctx.world.territories.get(due.territory);
+  if (territory === undefined) return false;
+  const globs = afterMergeOf(territory.patrol).quiet_paths;
+  const from = ctx.patrol.health.find((health) => health.territory === due.territory)?.head;
+  if (globs.length === 0 || from === undefined || from === null) return false;
+  const paths = await ctx.deps.plots.changedPaths?.(territory, from, due.head);
+  if (paths === undefined || paths.length === 0) return false;
+  const patterns = globs.map(globToRegExp);
+  if (!paths.every((path) => patterns.some((pattern) => pattern.test(path)))) return false;
+  ctx.deps.log.info?.(`steward: ${due.territory} from ${from} to ${due.head}: only quiet_paths`);
+  return true;
 }

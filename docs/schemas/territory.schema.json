@@ -552,6 +552,28 @@
               "pattern": "^[a-z][a-z0-9_]*$"
             }
           }
+        },
+        "after_merge": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "every": {
+              "description": "Merges since the latest patrol before a merged patrol runs.",
+              "type": "integer",
+              "minimum": 1,
+              "default": 3
+            },
+            "quiet_paths": {
+              "description": "Repo-root-relative globs with /: a merge range whose every changed file matches one runs no merged patrol; the schedule still patrols.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^(?!/|[A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+                "minLength": 1
+              },
+              "default": []
+            }
+          }
         }
       }
     },

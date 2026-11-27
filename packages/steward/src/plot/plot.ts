@@ -215,6 +215,8 @@ export interface Plots extends PlotQueue, HealMethods {
     head: string,
     exclude: string,
   ): Promise<readonly CommitLink[] | undefined>;
+  /** (613) Changed paths in the source repo between patrol heads; undefined when git cannot say. */
+  changedPaths?(territory: Territory, from: string, to: string): Promise<readonly string[] | undefined>;
   /**
    * (CM-07) A guest of the merge queue: runner-core's tryGuest, the pull request's head `pull.head` (on origin's
    * `pull.branch`) merged into origin's default branch and tried under `guest-<id>`, `pull.started` told before its

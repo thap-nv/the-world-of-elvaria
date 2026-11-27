@@ -9,6 +9,7 @@ import type { EventData, Quest } from '@elvaria/domain';
 
 import { noticeQuest, ring } from '../context.ts';
 import { STEWARD } from '../quest/record.ts';
+import { recordPatrolMerge } from '../patrol/book.ts';
 import type { Context } from '../context.ts';
 
 type Pushed = EventData<'delivery.pushed'>;
@@ -62,5 +63,5 @@ export async function recordMerged(ctx: Context, quest: Quest, merged: Omit<Merg
   ctx.forge.stale.delete(quest.id);
   // The merge took in the quest and, through a merge quest, its party: the next tick looks at the territory at once.
   ctx.looks.looked.delete(quest.territory);
-  ctx.patrol.heads.set(quest.territory, data.merge_sha);
+  recordPatrolMerge(ctx.patrol, quest.territory, data.merge_sha);
 }

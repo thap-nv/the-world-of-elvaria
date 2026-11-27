@@ -53,3 +53,4 @@ export type {
   TerritoryTrialRun,
 } from './territory-trial.ts';
 export type { PlotFailure, PlotFailureReason } from './worktree.ts';
+export { changedPathsOf } from './territory/changes.ts';

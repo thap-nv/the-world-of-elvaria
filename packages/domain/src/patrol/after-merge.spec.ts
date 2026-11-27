@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { SHA_A, SHA_B, TERRITORY as ELVARIA, merged, ran } from './__fixtures__/patrol-log.ts';
-import { mergedPatrolOf, mergesSincePatrolOf, patrolsAfterMerge } from './after-merge.ts';
+import { afterMergeOf, mergedPatrolOf, mergesSincePatrolOf, patrolsAfterMerge } from './after-merge.ts';
 import type { MovedSource } from './after-merge.ts';
 import type { QuestId, TerritoryId } from '../core/ids.ts';
 import type { Territory } from '../schema/territory.ts';
@@ -45,7 +45,7 @@ const health = (id: TerritoryId, head: string | null): TerritoryHealth => ({
 const source = (more: Partial<MovedSource> = {}): MovedSource => ({
   territories: [territory(A), territory(B)],
   health: [health(A, SHA_A), health(B, SHA_A)],
-  tips: [{ territory: A, head: SHA_B }],
+  tips: [{ territory: A, head: SHA_B, merges: 3 }],
   tried: new Map(),
   queued: [],
   patrolling: 0,
@@ -65,6 +65,24 @@ describe('patrolsAfterMerge', () => {
 });
 
 describe('mergedPatrolOf', () => {
+  it('waits for three merges by default, or uses the territory threshold', () => {
+    expect(afterMergeOf(undefined)).toEqual({ every: 3, quiet_paths: [] });
+    expect(afterMergeOf({ scans: [] })).toEqual({ every: 3, quiet_paths: [] });
+    const tips = [{ territory: A, head: SHA_B, merges: 2 }];
+    expect(mergedPatrolOf(source({ tips }))).toBeUndefined();
+    expect(mergedPatrolOf(source({ tips: [{ territory: A, head: SHA_B, merges: 3 }] }))).toEqual({
+      territory: A,
+      head: SHA_B,
+    });
+    const patrol = { scans: [], after_merge: { every: 1, quiet_paths: ['docs/**'] } };
+    expect(afterMergeOf(patrol)).toEqual({ every: 1, quiet_paths: ['docs/**'] });
+    expect(
+      mergedPatrolOf(
+        source({ territories: [territory(A, { patrol })], tips: [{ territory: A, head: SHA_B, merges: 1 }] }),
+      ),
+    ).toEqual({ territory: A, head: SHA_B });
+  });
+
   it('patrols a narrow territory whose branch moved since its latest patrol, for the newest tip', () => {
     expect(mergedPatrolOf(source())).toEqual({ territory: A, head: SHA_B });
     // No patrol has run there yet: any tip is new.
@@ -94,8 +112,8 @@ describe('mergedPatrolOf', () => {
 
   it('takes the first territory by id when two moved, the next one at a later tick', () => {
     const tips = [
-      { territory: B, head: SHA_C },
-      { territory: A, head: SHA_B },
+      { territory: B, head: SHA_C, merges: 3 },
+      { territory: A, head: SHA_B, merges: 3 },
     ];
     expect(mergedPatrolOf(source({ tips }))).toEqual({ territory: A, head: SHA_B });
     expect(mergedPatrolOf(source({ tips, health: [health(A, SHA_B)] }))).toEqual({
@@ -117,11 +135,11 @@ describe('mergesSincePatrolOf', () => {
       merged('2026-11-23T09:06:00+07:00', Q2, true, A, SHA_A),
     ];
     expect(mergesSincePatrolOf(events)).toEqual([
-      { territory: A, head: SHA_A },
-      { territory: ELVARIA, head: SHA_C },
+      { territory: A, head: SHA_A, merges: 1 },
+      { territory: ELVARIA, head: SHA_C, merges: 2 },
     ]);
     expect(mergesSincePatrolOf([...events, ran('2026-11-23T10:00:00+07:00', [])])).toEqual([
-      { territory: A, head: SHA_A },
+      { territory: A, head: SHA_A, merges: 1 },
     ]);
   });
 });

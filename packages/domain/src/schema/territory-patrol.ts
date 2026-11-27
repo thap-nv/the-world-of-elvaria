@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { ClassIdSchema, KindIdSchema, ScriptIdSchema } from '../core/ids.ts';
 import { RankSchema } from './common.ts';
+import { AFTER_MERGE_EVERY } from '../patrol/constants.ts';
 
 const describe = (description: string) => ({ description });
 
@@ -39,6 +40,28 @@ export const TerritoryPatrolSchema = z
         ),
       ),
     follow_up: PatrolFollowUpSchema.optional(),
+    after_merge: z
+      .strictObject({
+        every: z
+          .int()
+          .min(1)
+          .default(AFTER_MERGE_EVERY)
+          .meta(describe('Merges since the latest patrol before a merged patrol runs.')),
+        quiet_paths: z
+          .array(
+            z
+              .string()
+              .min(1)
+              .regex(/^(?!\/|[A-Za-z]:)(?!.*\\)(?!.*(?:^|\/)\.\.(?:\/|$)).+$/),
+          )
+          .default(() => [])
+          .meta(
+            describe(
+              'Repo-root-relative globs with /: a merge range whose every changed file matches one runs no merged patrol; the schedule still patrols.',
+            ),
+          ),
+      })
+      .optional(),
   })
   .meta(
     describe(

@@ -51,7 +51,11 @@ async function ledgerBench(
   const leaves = Object.fromEntries(
     titles.map((title) => [title, sourceWithIndex(`${title.toLowerCase()}.ts`)]),
   );
-  const territory = { checks: CHECKS, patrol: { scans: [] }, check_policy: policy };
+  const territory = {
+    checks: CHECKS,
+    patrol: { scans: [], after_merge: { every: 1 } },
+    check_policy: policy,
+  };
   const { bench, steward: first } = await queueBench(leaves, { territory });
   current = bench;
   await first.stop();

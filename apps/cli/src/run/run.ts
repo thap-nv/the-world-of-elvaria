@@ -80,6 +80,9 @@ function stewardOf(ctx: KingdomContext, crew: Crew, { graphs, forges }: Found): 
     // Each tribe's CLI asked before the plan: one gone or changed since its last real check is held (A1b).
     toolFound: toolFoundOf(ctx.kingdom, crew.runners, io),
     log: {
+      info: (message) => {
+        io.out(message);
+      },
       warn: (message) => {
         io.err(t('cli.run.warning', { message }));
       },
