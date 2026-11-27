@@ -2,12 +2,18 @@
 // 1.5.6 with 1.5.7 under a pinned version, and the Steward went on opening its sessions; a VS Code update removes the
 // folder of a pinned CLI (Codex, 2026-11-14), and every session then fails to start. planTick holds a tribe whose CLI
 // is gone or says another version than the one its last `tribe check` with the real CLI passed on (versionHoldsOf);
-// this step asks, keeps the answers for the snapshot and the digest, and rings once per hold.
-import { versionHoldsOf } from '@elvaria/domain';
-import type { ToolFound, ToolsFound, TribeHold, TribeId } from '@elvaria/domain';
+// this step asks, keeps the answers for the snapshot, and rings once per hold. (P2-04) It writes a `tribe.held` line
+// when a hold appears or changes and `hold: null` when it ends, so the digest reads the holds from the log and a
+// restart, which rebuilds what it told from there, rings none again.
+import { tribeHoldsOf, versionHoldsOf } from '@elvaria/domain';
+import type { Event, ToolFound, ToolsFound, TribeHeldNote, TribeHold, TribeId } from '@elvaria/domain';
 
 import { ring } from '../context.ts';
+import { STEWARD } from '../quest/record.ts';
 import type { Context } from '../context.ts';
+
+/** A hold as its line says it. */
+type LoggedHold = NonNullable<TribeHeldNote['hold']>;
 
 /**
  * `<cli> --version` costs no mana but is a process: each tribe is asked at most once a minute. A CLI that updates
@@ -19,8 +25,8 @@ export const VERSION_ASK_MS = 60_000;
 export interface VersionBook {
   /** The last answer about each tribe's CLI (undefined: it did not answer), and when it came (the clock's ms). */
   readonly asked: Map<TribeId, { readonly found: ToolFound | undefined; readonly at: number }>;
-  /** The holds the bell told, by tribe, as `version` (or `gone`): told again only when that changes. */
-  readonly told: Map<TribeId, string>;
+  /** The holds the log says, by tribe: a line when one changes, the bell when its `version` (or `null`, gone) does. */
+  readonly told: Map<TribeId, LoggedHold>;
   /** The holds of the last tick, for the digest. */
   holds: readonly TribeHold[];
 }
@@ -42,15 +48,31 @@ async function ask(ctx: Context, book: VersionBook, tribe: TribeId, now: number)
   book.asked.set(tribe, { found, at: now });
 }
 
-const toldAs = (hold: TribeHold): string => hold.version ?? 'gone';
+/** The holds the last Steward told, from the log (P2-04). */
+export function recoverVersions(book: VersionBook, events: readonly Event[]): void {
+  for (const [tribe, hold] of tribeHoldsOf(events)) book.told.set(tribe, hold);
+}
 
-/** Rings for each hold the bell has not told as it stands; a tribe no longer held is forgotten. */
+const loggedOf = ({ path, version, checked }: TribeHold): LoggedHold => ({
+  path,
+  version: version ?? null,
+  checked,
+});
+
+/** Tells each hold that appeared or changed, ringing when its version did, and each tribe no longer held. */
 async function tell(ctx: Context, book: VersionBook): Promise<void> {
   const held = new Set(book.holds.map(({ tribe }) => tribe));
-  for (const tribe of [...book.told.keys()].filter((id) => !held.has(id))) book.told.delete(tribe);
-  for (const hold of book.holds.filter((entry) => book.told.get(entry.tribe) !== toldAs(entry))) {
-    book.told.set(hold.tribe, toldAs(hold));
-    await ring(ctx, { kind: 'tribe_held', ...hold });
+  for (const tribe of [...book.told.keys()].filter((id) => !held.has(id))) {
+    book.told.delete(tribe);
+    await ctx.record.note({ type: 'tribe.held', actor: STEWARD, data: { tribe, hold: null } });
+  }
+  for (const hold of book.holds) {
+    const before = book.told.get(hold.tribe);
+    const logged = loggedOf(hold);
+    if (JSON.stringify(before) === JSON.stringify(logged)) continue;
+    book.told.set(hold.tribe, logged);
+    await ctx.record.note({ type: 'tribe.held', actor: STEWARD, data: { tribe: hold.tribe, hold: logged } });
+    if (before?.version !== logged.version) await ring(ctx, { kind: 'tribe_held', ...hold });
   }
 }
 

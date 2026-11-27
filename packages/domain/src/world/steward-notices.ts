@@ -17,13 +17,12 @@ import { judgedByEye } from '../verify/ritual-of.ts';
 import { attentionQueue } from './attention.ts';
 import { scopeWaitNoticesOf } from './attention-scope-wait.ts';
 import { forgeOutcomesOf } from './forge-outcome.ts';
-import { judgeWaitsOf, tribeHoldsOf, unclaimableOf } from './logged-waits.ts';
+import { judgeWaitsOf, tribeHoldsOf, unclaimableOf, waitGaugesOf } from './logged-waits.ts';
 import { reduce } from './reduce.ts';
 import { unsealedMergesOf } from './unsealed-merges.ts';
 import { worldStateOf } from './world-state.ts';
 import type { Instant } from '../core/clock.ts';
 import type { QuestId } from '../core/ids.ts';
-import type { WaitGauge } from '../dispatch/judge-waits.ts';
 import type { Event } from '../schema/event/event.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Memo } from '../schema/memo/memo.ts';
@@ -32,7 +31,6 @@ import type { Verdict } from '../schema/quest/verdict.ts';
 import type { Registry } from '../schema/registry.ts';
 import type { TribeHold } from '../tribe/version-hold.ts';
 import type { AttentionItem } from './attention-table.ts';
-import type { JudgeWaitNote } from './logged-waits.ts';
 import type { StewardNotices, UpgradeOffer } from './attention-notices.ts';
 import type { WorldSource, WorldState } from './world-state.ts';
 
@@ -77,14 +75,6 @@ export function worldStateWithManaOf(
 export const judgingClassesOf = (classes: Registry['classes'], kind: Quest['kind']): string[] =>
   classes.filter((entry) => entry.is_verifier && entry.kinds.includes(kind)).map((entry) => entry.id);
 
-/** The pools of a `judge_mana` line, as judgeWaitOf named them. */
-const gaugesOf = ({ gauges = [] }: JudgeWaitNote): WaitGauge[] =>
-  gauges.map(({ tribe, pool, resets_at: resets }) => ({
-    tribe,
-    pool,
-    ...(resets === undefined ? {} : { resets_at: resets }),
-  }));
-
 /** The quests in review the log says wait for a judge: none in the roster, or every one out of mana. */
 function judgeNotices(source: AttentionSource): Pick<StewardNotices, 'unjudgeable' | 'judge_waits'> {
   const byId = new Map(source.quests.map((quest) => [quest.id, quest]));
@@ -94,7 +84,7 @@ function judgeNotices(source: AttentionSource): Pick<StewardNotices, 'unjudgeabl
     const quest = byId.get(id);
     if (quest?.status !== 'review') continue;
     const cls = judgingClassesOf(source.registry.classes, quest.kind)[0] ?? NO_CLASS;
-    if (note.reason === 'judge_mana') waits.push({ quest: id, class: cls, gauges: gaugesOf(note) });
+    if (note.reason === 'judge_mana') waits.push({ quest: id, class: cls, gauges: waitGaugesOf(note) });
     else unjudgeable.push({ quest: id, class: cls, vision: judgedByEye(quest, source.registry) });
   }
   return { unjudgeable, judge_waits: waits };

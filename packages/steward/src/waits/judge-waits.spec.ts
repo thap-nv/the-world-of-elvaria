@@ -1,6 +1,8 @@
 // A submitted quest whose judges are all held by their mana (PS-03, (d) of the P1-50 report): thorn (Claude, Sonnet)
 // hands it in, orin (Gemini, Argon) is the only judge, and the Gemini account is spent. The bell rings once; once the
-// gauge reopens, the judge's session opens as before (ADR 0008 unchanged).
+// gauge reopens, the judge's session opens as before (ADR 0008 unchanged). (P2-04) The wait is a `quest.judge_wait`
+// line with its gauges: a Steward started again reads it from the log and rings no bell again.
+import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
@@ -21,8 +23,14 @@ afterEach(async () => {
 
 const RESETS = '2026-11-07T14:00:00+07:00';
 
+/** What the `quest.judge_wait` lines of the log say, in order. */
+const waitLines = async (kingdom: Bench) =>
+  (await openEventLog(kingdom.root).read()).events
+    .filter(({ type }) => type === 'quest.judge_wait')
+    .map(({ data }) => data);
+
 describe('a quest whose judges are all held by their mana', () => {
-  it('rings once and is in the digest, then is judged once the gauge reopens', async () => {
+  it('rings once, also across a restart, and is in the digest, then is judged once the gauge reopens', async () => {
     const gemini = { spent: true };
     const probe = (): ProbeResult =>
       gemini.spent
@@ -61,6 +69,15 @@ describe('a quest whose judges are all held by their mana', () => {
         gauges: [{ tribe: 'gemini', pool: 'gemini', resets_at: RESETS }],
       },
     ]);
+    const waiting = {
+      reason: 'judge_mana',
+      gauges: [{ tribe: 'gemini', pool: 'gemini', resets_at: RESETS }],
+    };
+    expect(await waitLines(kingdom)).toEqual([waiting]);
+    // A new Steward reads the wait from the log: no bell, no line, and its digest still lists it.
+    await running.stop();
+    running = kingdom.steward({ digest });
+    expect(await running.start({ loop: false })).toEqual({ ok: true });
     await tickUntil(running, kingdom.clock, () => Promise.resolve(asked.length === 1));
     expect(asked[0]?.items).toEqual([
       expect.objectContaining({ group: 'must', kind: 'judge_mana', quest: quest.id, class: 'judge' }),
@@ -72,5 +89,8 @@ describe('a quest whose judges are all held by their mana', () => {
     await tickUntil(running, kingdom.clock, statusIs(kingdom, 'Judged later', 'done'));
     expect(rung()).toHaveLength(1);
     expect((await kingdom.quest('Judged later')).attempt_log.at(-1)).toMatchObject({ character: 'orin' });
+    // The new Steward ran the quest's checks again, a pause of the wait that rang nothing; then the gauge reopened.
+    const paused = { reason: null };
+    expect(await waitLines(kingdom)).toEqual([waiting, paused, waiting, paused]);
   });
 });

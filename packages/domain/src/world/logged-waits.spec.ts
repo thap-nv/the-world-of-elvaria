@@ -2,7 +2,13 @@
 // a quest, until a later line moves it; the owner's edit and another notice move nothing.
 import { describe, expect, it } from 'vitest';
 
-import { judgeWaitsOf, tribeHoldsOf, unclaimableOf } from './logged-waits.ts';
+import {
+  judgeWaitReasonsOf,
+  judgeWaitsOf,
+  tribeHoldsOf,
+  unclaimableOf,
+  waitGaugesOf,
+} from './logged-waits.ts';
 import { QUEST_CHANGE } from '../schema/event/__fixtures__/valid-data.ts';
 import { EventSchema } from '../schema/event/event.ts';
 import type { QuestId, TribeId } from '../core/ids.ts';
@@ -74,6 +80,31 @@ describe('judgeWaitsOf', () => {
       unclaimable(Q1, 'no_class'),
     ]);
     expect([...waits.keys()]).toEqual([Q1]);
+  });
+});
+
+describe('judgeWaitReasonsOf', () => {
+  it('keeps the last reason a quest waited for since it last moved, through a pause of the wait', () => {
+    const reasons = judgeWaitReasonsOf([
+      judgeWait(Q1, 'unjudgeable'),
+      judgeWait(Q1, 'judge_mana', [{ tribe: 'gemini', pool: 'gemini_models' }]),
+      judgeWait(Q1, null),
+      judgeWait(Q2, 'unjudgeable'),
+      moved('quest.started', Q2),
+    ]);
+    expect([...reasons]).toEqual([[Q1, 'judge_mana']]);
+  });
+});
+
+describe('waitGaugesOf', () => {
+  it('gives the pools of a judge_mana line, a reset only where a reading said one, and none for another reason', () => {
+    const gauges = [
+      { tribe: 'claude', pool: 'default', resets_at: '2026-11-27T23:00:00+07:00' },
+      { tribe: 'gemini', pool: 'gemini_models' },
+    ];
+    const [note] = judgeWaitsOf([judgeWait(Q1, 'judge_mana', gauges)]).values();
+    expect(note === undefined ? undefined : waitGaugesOf(note)).toEqual(gauges);
+    expect(waitGaugesOf({ reason: 'unjudgeable' })).toEqual([]);
   });
 });
 

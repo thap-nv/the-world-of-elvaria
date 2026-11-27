@@ -29,6 +29,7 @@ import { leftSessions, pidsWriter, reapOrphans } from './sessions/pids.ts';
 import type { LeftSession } from './sessions/pids.ts';
 import { recover, tickOf } from './tick/tick.ts';
 import { createVersionBook } from './tick/tribe-versions.ts';
+import { createJudgeWaitBook } from './waits/judge-waits.ts';
 import { limitsOf } from './tick/world.ts';
 import type { StewardJob } from './schedule/scheduler.ts';
 import type { Held, State } from './tick/steward-state.ts';
@@ -116,10 +117,9 @@ const stateOf = (deps: StewardDeps, ended: () => void): State => ({
   graphs: deps.graphs === undefined ? undefined : createGraphBuilds(deps.graphs, deps.log),
   reported: new Map(),
   stopping: new AbortController(),
-  unjudged: new Set(),
   wrapped: new Set(),
   notches: new Map(),
-  judgeWaits: new Map(),
+  judgeWaits: createJudgeWaitBook(),
   promptSizes: new Map(),
   claimPromptSizes: new Map(),
   versions: createVersionBook(),

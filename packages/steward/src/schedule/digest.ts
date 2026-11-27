@@ -1,165 +1,14 @@
 // The digest (implementation-plan §3.16.3, PS-03): the first scheduled job, in the tick and without a model. The
-// Steward decides when (dueJobs) and what (attentionQueue over the world state and its own notices); the Digest port
-// of the composition root words it in the owner's language and writes `digest/<day>.md`. Then one line and one ring.
-import {
-  baseHoldsOf,
-  baseRedOf,
-  deliveringOf,
-  heldQuestsOf,
-  healsOf,
-  carriedThenRedOf,
-  attentionQueue,
-  judgedByEye,
-  ownerDeliveries,
-  reduce,
-  scopeHoldsOf,
-  scopeWaitNoticesOf,
-  sealPolicyOf,
-  templeNoticesOf,
-  unopenedReviewsOf,
-  unsealedMergesOf,
-  narrowEscapeAlertsOf,
-  worldStateOf,
-} from '@elvaria/domain';
-import type {
-  Character,
-  Event,
-  Kingdom,
-  Memo,
-  Quest,
-  QuestId,
-  StewardNotices,
-  TempleNotices,
-  Territory,
-  Verdict,
-  WorldState,
-} from '@elvaria/domain';
+// Steward decides when (dueJobs) and what (attentionOf over the files and the log, P2-04: what `elvaria digest` lists
+// too); the Digest port of the composition root words it in the owner's language and writes `digest/<day>.md`. Then
+// one line and one ring.
+import { attentionOf, carriedThenRedOf, healsOf } from '@elvaria/domain';
 
 import { ring } from '../context.ts';
 import { STEWARD } from '../quest/record.ts';
-import { judgingClassesOf } from '../waits/unjudgeable.ts';
 import type { Context } from '../context.ts';
-import type { State } from '../tick/steward-state.ts';
-import type { World } from '../tick/world.ts';
 import type { Digest } from './ports.ts';
 import type { StewardJob } from './scheduler.ts';
-
-/** The files the digest reads, as the Steward's world or the CLI's reader holds them. */
-export interface DigestSource {
-  readonly kingdom: Kingdom;
-  readonly territories: readonly Territory[];
-  readonly characters: readonly Character[];
-  readonly quests: readonly Quest[];
-  readonly memos: readonly Memo[];
-}
-
-const MANA_LINES: ReadonlySet<string> = new Set(['mana.level', 'mana.exhausted', 'mana.restored']);
-
-/**
- * The world state of the files, with mana as the log last read it: the readings and the pools asleep live in the
- * Steward's memory and in the log, not in a file (worldStateOf alone sees every pool awake).
- */
-export function digestStateOf(source: DigestSource, events: readonly Event[]): WorldState {
-  const state = worldStateOf({ ...source, campaigns: [] });
-  return reduce(
-    state,
-    events.filter((event) => MANA_LINES.has(event.type)),
-  );
-}
-
-/** A judging class for the command that summons a judge; `<class>` when no class judges the quest's kind. */
-const classOf = (world: World, id: QuestId): string => {
-  const quest = world.quests.get(id);
-  return (quest === undefined ? undefined : judgingClassesOf(world, quest)[0]) ?? '<class>';
-};
-
-/** Whether the quest waits for a judge whose tribe reads images (PS-11), so the digest advises one. */
-const needsVision = (world: World, id: QuestId): boolean => {
-  const quest = world.quests.get(id);
-  return quest !== undefined && judgedByEye(quest, world.registry);
-};
-
-/**
- * What the Steward knows that no file holds, as this tick left it (unclaimable.ts, unjudgeable.ts, judge-waits.ts,
- * tribe-versions.ts), and what the world state cannot tell from the quest files: the done quests whose scope others
- * wait for (PS-05), the reviews whose latest judge could not open a session (fix/review-no-session); and the outcomes of
- * the deliveries to the forge (PS-08c), as the log holds them, but a pull request the Steward merges itself (PS-08d).
- */
-export function noticesOf(
-  world: World,
-  state: Pick<State, 'reported' | 'unjudged' | 'judgeWaits' | 'versions' | 'forge' | 'patrol' | 'delegation'>,
-): StewardNotices {
-  const quests = [...world.quests.values()];
-  return {
-    tribes_held: state.versions.holds,
-    unclaimable: [...state.reported.keys()],
-    unjudgeable: [...state.unjudged].map((quest) => ({
-      quest,
-      class: classOf(world, quest),
-      vision: needsVision(world, quest),
-    })),
-    judge_waits: [...state.judgeWaits.values()].map(({ quest, gauges }) => ({
-      quest,
-      class: classOf(world, quest),
-      gauges,
-    })),
-    // fix/run-221-domain: not a quest the Steward still carries to its base branch, which it archives itself.
-    scope_held: scopeHoldsOf(
-      quests,
-      [...world.territories.values()],
-      deliveringOf(state.forge.outcomes, quests, [...world.territories.values()], {
-        policy: sealPolicyOf(world.kingdom, state.delegation.suspensions),
-        nothing: state.forge.nothing,
-      }),
-    ),
-    scope_waits: scopeWaitNoticesOf(quests, [...world.territories.values()]),
-    judges_unopened: unopenedReviewsOf([...world.quests.values()]),
-    deliveries: ownerDeliveries(
-      state.forge.outcomes.values(),
-      [...world.quests.values()],
-      [...world.territories.values()],
-      // PS-08b: a pull request the Steward merges for the delegation of the seal waits for nobody either.
-      sealPolicyOf(world.kingdom, state.delegation.suspensions),
-    ),
-    // PS-26: the health of the patrolled territories' default branches.
-    patrols: state.patrol.health,
-    // PS-09d: the red territories that take no work, and the open quests that wait for them.
-    base_holds: baseHoldsOf(quests, baseRedOf(state.patrol.health, [...world.territories.values()], quests)),
-    // (D) of fix/quest-hold: the quests the owner holds, from the quest files.
-    held: heldQuestsOf([...world.quests.values()]),
-    // PS-08g: the territories whose delegation of the seal the breaker suspended.
-    delegation_suspended: state.delegation.suspensions,
-  };
-}
-
-const sourceOf = (world: World, memos: readonly Memo[]): DigestSource => ({
-  kingdom: world.kingdom,
-  territories: [...world.territories.values()],
-  characters: [...world.characters.values()],
-  quests: [...world.quests.values()],
-  memos,
-});
-
-/**
- * (PS-12g) What waits on the Temple, from the files and the log as the digest is made: the characters suspended for a
- * fail streak, and the repeated failures while the Temple is off or has no Monk. Counted here, without a model.
- */
-const templeNoticesIn = (
-  ctx: Context,
-  memos: readonly Memo[],
-  verdicts: readonly Verdict[],
-  events: readonly Event[],
-): TempleNotices =>
-  templeNoticesOf({
-    enabled: ctx.world.kingdom.schedule.temple.enabled,
-    classes: ctx.world.registry.classes,
-    characters: [...ctx.world.characters.values()],
-    quests: [...ctx.world.quests.values()],
-    streak: [...ctx.streak.suspended],
-    verdicts,
-    memos,
-    events,
-  });
 
 /** The digest as a job: the port writes the file, the Steward writes `digest.written` and rings once. */
 export const digestJob = (digest: Digest): StewardJob => ({
@@ -171,18 +20,24 @@ export const digestJob = (digest: Digest): StewardJob => ({
       ctx.deps.events.read(),
       ctx.deps.store.verdicts.list(),
     ]);
-    const state = digestStateOf(sourceOf(ctx.world, memos.items), log.events);
     // A newer build is read now (PS-08d): the composition root asks the pinned build's repo, which no tick knows.
     const upgrade = await ctx.deps.upgradeOffer?.();
-    // PS-08b: the merges without the seal since the last digest, each once, from the log.
-    const unsealed = {
-      ...run.notices,
-      merged_unsealed: unsealedMergesOf(log.events),
-      narrow_escapes: narrowEscapeAlertsOf(log.events, [...ctx.world.territories.values()]),
-      ...templeNoticesIn(ctx, memos.items, verdicts.items, log.events),
+    // P2-04: the queue `elvaria digest` and the herald build from the same files and log; only the branches this
+    // Steward found with nothing to push are its own to add.
+    const source = {
+      kingdom: ctx.world.kingdom,
+      territories: [...ctx.world.territories.values()],
+      characters: [...ctx.world.characters.values()],
+      quests: [...ctx.world.quests.values()],
+      memos: memos.items,
+      verdicts: verdicts.items,
+      registry: ctx.world.registry,
+      events: log.events,
     };
-    const notices = upgrade === undefined ? unsealed : { ...unsealed, upgrade };
-    const items = attentionQueue(state, ctx.deps.clock.now(), notices);
+    const items = attentionOf(source, ctx.deps.clock.now(), {
+      nothing: ctx.forge.nothing,
+      ...(upgrade === undefined ? {} : { upgrade }),
+    });
     const heals = healsOf(
       {
         quests: [...ctx.world.quests.values()],

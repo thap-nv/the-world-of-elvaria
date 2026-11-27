@@ -18,10 +18,11 @@ import {
   sealSuspendedOf,
   templeNoticesOf,
   unopenedReviewsOf,
+  worldStateWithManaOf,
 } from '@elvaria/domain';
 import type { Event, TempleNotices } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
-import { digestStateOf, readUnclaimable } from '@elvaria/steward';
+import { readUnclaimable } from '@elvaria/steward';
 
 import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
@@ -85,7 +86,7 @@ async function runDigest(input: CommandInput, cli: CliContext): Promise<ExitCode
   // fix/run-221-followups: the delegation of the seal as the Steward reads it (kingdom.json, the breaker's lines), so a
   // pull request the Steward merges itself is neither waiting for the owner nor holding a scope here either.
   const policy = sealPolicyOf(ctx.kingdom, suspended);
-  const items = attentionQueue(digestStateOf(source, log.events), now, {
+  const items = attentionQueue(worldStateWithManaOf(source, log.events), now, {
     unclaimable: [...unclaimable.keys()],
     // fix/run-221-domain: not a quest the Steward still carries to its base branch. Only the Steward knows a branch
     // with nothing to push: here such a quest counts as carried.

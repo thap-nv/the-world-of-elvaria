@@ -57,20 +57,8 @@ describe('a scheduled job outside the tick', () => {
     await steward.tick();
     await steward.tick();
     expect(chronicle.runs.map(({ day }) => day)).toEqual(['2026-11-07']);
-    expect(chronicle.runs[0]?.notices).toEqual({
-      patrols: [],
-      unclaimable: [],
-      unjudgeable: [],
-      judge_waits: [],
-      scope_held: [],
-      scope_waits: [],
-      judges_unopened: [],
-      tribes_held: [],
-      deliveries: [],
-      base_holds: [],
-      held: [],
-      delegation_suspended: [],
-    });
+    // P2-04: a job is given the tribes held now; the digest reads every other notice from the files and the log.
+    expect(chronicle.runs[0]?.notices).toEqual({ tribes_held: [] });
     expect(digest.runs).toEqual([]);
     chronicle.finish();
     await tickAfterFinish(steward);

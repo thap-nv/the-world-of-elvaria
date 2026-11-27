@@ -3,6 +3,7 @@
 // The two cases of 2026-11-14: agy updated itself in place (1.5.7 → 1.5.8), Codex's pinned file went with an update.
 import { ok } from '@elvaria/domain';
 import type { ToolFound, TribeId } from '@elvaria/domain';
+import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload } from '../__fixtures__/kingdom.ts';
@@ -55,6 +56,12 @@ async function open(says: Record<string, ToolFound | undefined>, digest?: Digest
   return { kingdom: current, steward: running, cli };
 }
 
+/** The `tribe.held` lines of the log, in order. */
+const heldLines = async (kingdom: Bench) =>
+  (await openEventLog(kingdom.root).read()).events
+    .filter(({ type }) => type === 'tribe.held')
+    .map(({ data }) => data);
+
 const assignees = async (kingdom: Bench) => (await kingdom.quests()).map(({ assignee }) => assignee);
 
 describe('a tribe held by its CLI', () => {
@@ -90,6 +97,32 @@ describe('a tribe held by its CLI', () => {
     );
     await steward.tick();
     expect(await assignees(kingdom)).toEqual(['ember']);
+  });
+
+  // P2-04: the digest reads the holds from the log, and a Steward started again does not ring for them once more.
+  it('says each hold in the log, so a Steward started again rings no more, and says when it ends', async () => {
+    const says: Record<string, ToolFound | undefined> = {
+      gemini: { path: AGY, version: '1.5.8' },
+      claude: { path: CLAUDE, version: undefined },
+    };
+    const { kingdom, steward, cli } = await open(says);
+    await steward.tick();
+    const held = [
+      { tribe: 'claude', hold: { path: CLAUDE, version: null, checked: '2.1.322' } },
+      { tribe: 'gemini', hold: { path: AGY, version: '1.5.8', checked: '1.5.6' } },
+    ];
+    expect(await heldLines(kingdom)).toEqual(held);
+    await steward.stop();
+    running = kingdom.steward({ toolFound: cli.toolFound });
+    expect(await running.start({ loop: false })).toEqual({ ok: true });
+    await running.tick();
+    expect(kingdom.notices.filter(({ kind }) => kind === 'tribe_held')).toHaveLength(2);
+    expect(await heldLines(kingdom)).toEqual(held);
+    // Claude Code is back on the version it is checked on: the hold ends, and the log says so.
+    says.claude = { path: CLAUDE, version: '2.1.322' };
+    kingdom.clock.advance(VERSION_ASK_MS / 60_000);
+    await running.tick();
+    expect(await heldLines(kingdom)).toEqual([...held, { tribe: 'claude', hold: null }]);
   });
 
   it('holds a tribe whose CLI is gone, and asks again after a minute', async () => {

@@ -16,8 +16,6 @@ export { pushLogOf } from './forge/push.ts';
 export { questIdOfCommand } from './inbox/quest-commands.ts';
 export { levelsFromLog } from './mana/book.ts';
 export { folderPlots } from './plot/folder-plots.ts';
-export { digestStateOf } from './schedule/digest.ts';
-export type { DigestSource } from './schedule/digest.ts';
 export { nodeScriptRunner } from './script/run-script.ts';
 export type { ScriptRequest, ScriptRunResult, ScriptRunner } from './script/run-script.ts';
 export { SCRIPT_LOG, SCRIPT_RUN } from './script/script-quest.ts';
@@ -51,4 +49,3 @@ export type {
   TickReport,
 } from './types.ts';
 export { UNCLAIMABLE_FILE, readUnclaimable } from './waits/unclaimable.ts';
-export type { Reported, UnclaimableNote } from './waits/unclaimable.ts';

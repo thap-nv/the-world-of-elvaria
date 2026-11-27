@@ -5,10 +5,7 @@ import type { Quest, QuestId, TerritoryId } from '@elvaria/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench } from '../__fixtures__/kingdom.ts';
-import { createDelegationBook } from '../delegation/book.ts';
-import { createForgeBook } from '../forge/book.ts';
-import { createPatrolBook } from '../patrol/book.ts';
-import { noticesOf } from './digest.ts';
+import { noticesOfWorld } from '../__fixtures__/notices.ts';
 import { loadWorld } from '../tick/world.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 
@@ -69,18 +66,7 @@ async function scopeWaitsOf(quests: readonly Quest[]) {
   current = await bench();
   const world = await loadWorld(current.store, { warn: () => undefined });
   if (world === undefined) throw new Error('fixture: world');
-  return noticesOf(
-    { ...world, quests: new Map(quests.map((quest) => [quest.id, quest])) },
-    {
-      reported: new Map(),
-      unjudged: new Set(),
-      judgeWaits: new Map(),
-      versions: { asked: new Map(), told: new Map(), holds: [] },
-      forge: createForgeBook(),
-      patrol: createPatrolBook(),
-      delegation: createDelegationBook(),
-    },
-  ).scope_waits;
+  return noticesOfWorld({ ...world, quests: new Map(quests.map((quest) => [quest.id, quest])) }).scope_waits;
 }
 
 describe('the Steward digest and an open quest that waits for another by scope', () => {
