@@ -18,6 +18,7 @@ import type { TrainHead, TrainLeaving, TrainStep, TrainTrial } from '@elvaria/ru
 
 import { factsOf } from '../check-ledger/carry.ts';
 import { STEWARD } from '../quest/record.ts';
+import { rememberPatrolHead } from '../patrol/book.ts';
 import { detailOf, foundOf, messageOf } from './delivery.ts';
 import { recordFailed, recordMerged } from './outcome.ts';
 import { openQueueMerge } from './queue-merge.ts';
@@ -31,7 +32,6 @@ import type { Failure } from './outcome.ts';
 import type { TrainProbed } from './train-probe.ts';
 import type { Train, TrainStop } from './train-push.ts';
 import type { CheckLine } from './trial-red.ts';
-
 type Ran = EventData<'train.ran'>;
 type Tried = Extract<TrainTrial, { state: 'tried' }>;
 /** What `train.ran` says beyond the train, its departure, its steps, the quests that left and its outcome. */
@@ -224,6 +224,7 @@ async function recordMergedSteps(aboard: Aboard, end: TrainEnd): Promise<void> {
   // (613)(4) A merge on the very tree the train checked is as patrolled: no patrol after a merge follows it.
   const { patrol } = aboard.ctx;
   if (end.ran.patrolled !== true || patrol.heads.get(aboard.run.territory) !== merge_sha) return;
+  rememberPatrolHead(patrol, aboard.run.territory, merge_sha);
   patrol.heads.delete(aboard.run.territory);
   patrol.merges.delete(aboard.run.territory);
 }

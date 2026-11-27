@@ -24,7 +24,7 @@ import { factsOf, patrolCarryFor } from '../check-ledger/carry.ts';
 import { ring } from '../context.ts';
 import { suspendDelegation } from '../delegation/suspend.ts';
 import { STEWARD } from '../quest/record.ts';
-import { setHealth } from './book.ts';
+import { rememberPatrolHead, setHealth } from './book.ts';
 import { openPatrolDraft } from './draft.ts';
 import { probeDue, probeTerritory } from './probe.ts';
 import { scansIn } from './scans.ts';
@@ -111,6 +111,7 @@ async function record(ctx: Context, ledger: PatrolLedger, territory: Territory, 
   if (suspension !== undefined) await suspendDelegation(ctx, suspension);
   await ctx.record.note({ type: 'patrol.ran', actor: STEWARD, territory: territory.id, data });
   // A merge can arrive while this patrol checks an older head; leave that newer batch pending.
+  if (data.head !== null) rememberPatrolHead(ctx.patrol, territory.id, data.head);
   if (data.head !== null && ctx.patrol.heads.get(territory.id) === data.head) {
     ctx.patrol.heads.delete(territory.id);
     ctx.patrol.merges.delete(territory.id);

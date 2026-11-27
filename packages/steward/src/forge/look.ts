@@ -2,11 +2,12 @@
 // fetched once (Plots.baseTips), then each done quest's plot asked (Plots.inBase); what it finds waits in the table of
 // looks (looks.ts) for the next tick, which archives it (forge_archives). Apart from looks.ts, which the tick's Context
 // holds and so may not know it. (PS-09) A pushed quest not in base is asked whether its branch still merges cleanly
-// into those tips: one that does not goes back into the merge queue (stale.ts). (CM-03) The tip it fetched is the newest
-// head of the branch the Steward knows, for the patrol after a merge (a merge by hand moved it), origin's first.
+// into those tips: one that does not goes back into the merge queue (stale.ts). (625) An unseen fetched tip counts one
+// live merge after the first look seeds the base; remembered tips never count twice or move the patrol head back.
 import type { BaseLook } from '@elvaria/domain';
 
 import { lookForStale } from './stale.ts';
+import { recordLookedHead } from '../patrol/book.ts';
 import type { Context } from '../context.ts';
 
 /** The Steward stopped: asked anew after each await, which TypeScript's narrowing cannot see. */
@@ -20,7 +21,7 @@ async function lookAt(ctx: Context, look: BaseLook, signal: AbortSignal): Promis
   if (tips === undefined || stopped(signal)) return;
   ctx.looks.tips.set(territory.id, tips);
   const head = tips.remote ?? tips.local;
-  if (head !== null) ctx.patrol.heads.set(territory.id, head);
+  if (head !== null) recordLookedHead(ctx.patrol, territory.id, head);
   for (const id of look.quests) {
     const quest = ctx.world.quests.get(id);
     if (quest !== undefined && (await plots.inBase(quest.plot, tips))) ctx.looks.found.add(id);
