@@ -221,7 +221,15 @@ describe('submit from the infirmary', () => {
       ok({ ...territory, laws: { ...territory.laws, patch_paths: ['.claude/**'] } }),
     );
     const sick = await cutTwice(kingdom, steward);
-    steer.patch = () => Promise.resolve({ status: 'refused', detail: 'touches src/app.ts' });
+    steer.patch = () =>
+      Promise.resolve({
+        status: 'refused',
+        reason: {
+          code: 'breaker:patch_outside_laws',
+          params: { file: 'elvaria.patch', path: 'src/app.ts', globs: '.claude/**' },
+        },
+        detail: 'touches src/app.ts',
+      });
     const before = commits.length;
     await kingdom.command('submit', { quest: sick.id });
     await steward.tick();

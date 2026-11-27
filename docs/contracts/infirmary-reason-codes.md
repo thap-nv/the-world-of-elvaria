@@ -48,6 +48,8 @@ export const infirmaryReasonOf = (code: InfirmaryReasonCode, params?: InfirmaryP
 
 ### 1.4 `detail`
 
+LL-07: lời git khi từ chối bản vá nằm ở `detail.message` (bỏ khoảng trắng hai đầu và cắt như trước); `detail.patch` giữ câu tiếng Anh cho prompt và thư. `script:broken` và `script:usage` chỉ ghi khi stderr có chữ; stderr, hoặc stdout khi stderr rỗng, nằm nguyên văn ở `detail.message`. Thêm mã vẫn đọc được dòng cũ, nên không tăng `v` hay thêm migration (ADR 0003).
+
 Các khóa của `InfirmaryDetailSchema` giữ nguyên tên và kiểu. Từ `v` 2, `detail.message` **chỉ** mang chữ bên ngoài nguyên văn (lời một script, lời hook khi không có mã `breaker:commit*`), không bao giờ là câu Elvaria tự viết; câu Elvaria tự viết nằm trong `reason`. `paths`, `wip`, `patch`, `apprentice_left`, `script`, `follow_up`, `verifiers_stopped`, `partial_verdicts` vẫn được ghi như trước (metrics, `continuationOf` và `refusedPatchOf` đọc chúng). CLI không in một điều hai lần: điều mà câu của `reason` đã nói thì dòng `detail` tương ứng không in lại.
 
 ## 2. Danh sách mã lý do trạm quân y
@@ -62,7 +64,15 @@ Khóa i18n của mã `<nhóm>:<tên>` là `cli.quest.infirmary.reason.<nhóm>.<t
 | `breaker:commit` | cầu dao, hook từ chối commit | `lines`, `total_lines`, `log` | hook từ chối; vài dòng đầu `lines`, output có `total_lines` dòng, đủ ở `log` |
 | `breaker:commit_errors` | như trên | `lines`, `errors`, `total_lines`, `log` | như trên, thêm `errors` dòng chứa `error` (≥ 1) |
 | `breaker:setup` | cầu dao, `commands.setup` chạy lại trước commit của Nhiếp chính hỏng (fix/plot-setup-on-lockfile) | `detail`, `log` | phần việc đổi một file của `commands.setup_when`, setup chạy lại và hỏng: `detail` là lệnh và cách nó kết thúc, `log` là `.runs/<quest>-setup.log`; không gì được commit |
-| `breaker:patch` | cầu dao, Nhiếp chính không áp bản vá | `file`, `why` | `elvaria.patch` không được áp; `why` nguyên văn |
+| `breaker:patch` | chỉ đọc dòng cũ | `file`, `why` | `elvaria.patch` không được áp; `why` nguyên văn |
+| `breaker:patch_unreadable` | cầu dao, Nhiếp chính không áp bản vá | `file` | git không đọc được bản vá |
+| `breaker:patch_absolute` | cầu dao, Nhiếp chính không áp bản vá | `file`, `path` | chạm đường dẫn tuyệt đối |
+| `breaker:patch_outside_plot` | cầu dao, Nhiếp chính không áp bản vá | `file`, `path` | chạm đường dẫn ngoài đất riêng |
+| `breaker:patch_git_folder` | cầu dao, Nhiếp chính không áp bản vá | `file`, `path` | chạm thư mục riêng của git |
+| `breaker:patch_outside_laws` | cầu dao, Nhiếp chính không áp bản vá | `file`, `path`, `globs` | chạm đường dẫn ngoài laws.patch_paths |
+| `breaker:patch_conflict` | cầu dao, Nhiếp chính không áp bản vá | `file` | git kiểm tra bản vá không áp được |
+| `breaker:patch_apply_failed` | cầu dao, Nhiếp chính không áp bản vá | `file` | git apply thất bại |
+| `breaker:patch_error` | cầu dao, Nhiếp chính không áp bản vá | `file` | lỗi bên ngoài khi áp bản vá |
 | `breaker:forbidden_paths` | cầu dao | `count` | `count` đường dẫn cấm bị đổi (danh sách ở `detail.paths`) |
 | `breaker:secrets_refused` | cầu dao secret | `territory`, `names` | lãnh thổ không cho các secret `names` |
 | `breaker:secrets_missing` | cầu dao secret | `names` | kho bảo vật thiếu `names` |
@@ -90,6 +100,12 @@ Khóa i18n của mã `<nhóm>:<tên>` là `cli.quest.infirmary.reason.<nhóm>.<t
 | `restart:partial_verdicts` | lần khởi động lại | `count` | … `count` phán quyết dở |
 | `script:broken` | bậc script | `script` | script hỏng (lời script ở `detail.message`) |
 | `script:usage` | bậc script | `script` | script không dùng được tham số |
+| `script:broken_exit` | bậc script | `script`, `exit` | thoát mã khác 0, không có stderr |
+| `script:broken_killed` | bậc script | `script` | bị dừng (mã thoát null), không có stderr |
+| `script:usage_silent` | bậc script | `script` | thoát mã 2, không có stderr |
+| `script:broken_lines` | bậc script | `script`, `lines` | stdout có số dòng khác 1 |
+| `script:broken_not_json` | bậc script | `script` | stdout không phải JSON |
+| `script:broken_shape` | bậc script | `script`, `produces` | JSON không đúng dạng produces |
 | `script:fail` | bậc script | `script` | script chạy xong mà không đạt |
 | `script:fail_follow_up` | bậc script | `script`, `follow_up` | như trên, đã mở quest tiếp nối `follow_up` |
 | `quest:max_attempts` | máy trạng thái | (không) | hết số lần thử |

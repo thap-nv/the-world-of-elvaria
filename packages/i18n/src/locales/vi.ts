@@ -22,6 +22,7 @@ import cliMetrics from './vi/cli-metrics.json' with { type: 'json' };
 import cliMigrate from './vi/cli-migrate.json' with { type: 'json' };
 import cliOption from './vi/cli-option.json' with { type: 'json' };
 import cliQuest from './vi/cli-quest.json' with { type: 'json' };
+import cliQuestInfirmaryReason from './vi/cli-quest-infirmary-reason.json' with { type: 'json' };
 import cliRegistry from './vi/cli-registry.json' with { type: 'json' };
 import cliReturn from './vi/cli-return.json' with { type: 'json' };
 import cliRun from './vi/cli-run.json' with { type: 'json' };
@@ -68,6 +69,7 @@ export const VI = {
   'cli.migrate': cliMigrate,
   'cli.option': cliOption,
   'cli.quest': cliQuest,
+  'cli.quest.infirmary.reason': cliQuestInfirmaryReason,
   'cli.registry': cliRegistry,
   'cli.return': cliReturn,
   'cli.run': cliRun,

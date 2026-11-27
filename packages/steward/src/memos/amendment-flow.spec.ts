@@ -147,7 +147,12 @@ describe('a submit the Steward could not commit, its letter holding an amendment
     const { kingdom, steward, calls } = await open({
       letters: (title, nth) => letter(title === 'Patched' && nth === 1 ? AMENDMENT : '-'),
       plots: () => ({
-        applyPatch: () => Promise.resolve({ status: 'refused', detail: 'it does not apply' }),
+        applyPatch: () =>
+          Promise.resolve({
+            status: 'refused',
+            detail: 'it does not apply',
+            reason: { code: 'breaker:patch_conflict', params: { file: 'elvaria.patch' } },
+          }),
       }),
       patchPaths: ['.husky/**'],
     });

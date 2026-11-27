@@ -142,7 +142,7 @@ function fall(
     return moveAndRing(ctx, { quest: quest.id, event, actor: 'steward', infirmary });
   }
   const infirmary = {
-    reason: infirmaryReasonOf(`script:${outcome.kind}`, { script: script.id }),
+    reason: infirmaryReasonOf(outcome.code, { script: script.id, ...outcome.params }),
     trip: SCRIPT_TRIPS[outcome.kind],
     detail: { message: run.stderr === '' ? run.stdout : run.stderr, script: script.id },
   };

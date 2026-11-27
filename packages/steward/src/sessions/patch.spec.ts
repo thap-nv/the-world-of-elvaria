@@ -93,39 +93,56 @@ describe('a patch for the paths the CLI guards (P1-28)', () => {
       'touches a path outside patch_paths',
       PATCH.replaceAll('.husky/pre-push', 'src/app.ts').replace(' pnpm test', ' export const app = 1;'),
       'it touches src/app.ts, outside laws.patch_paths (.husky/**)',
+      'patch_outside_laws',
+      { path: 'src/app.ts', globs: '.husky/**' },
     ],
     [
       "reaches git's own folder",
       `${PATCH}diff --git a/.git/hooks/pre-commit b/.git/hooks/pre-commit\nnew file mode 100755\n--- /dev/null\n+++ b/.git/hooks/pre-commit\n@@ -0,0 +1 @@\n+echo owned\n`,
       "it touches .git/hooks/pre-commit, git's own folder",
+      'patch_git_folder',
+      { path: '.git/hooks/pre-commit' },
     ],
-    ['does not apply', PATCH.replace(' pnpm test', ' pnpm build'), 'it does not apply: error: patch failed'],
-  ])('that %s is not applied, and the quest goes to the infirmary with why', async (_, patch, why) => {
-    const { kingdom, steward } = await open(patch);
-    await kingdom.command('create_quest', questPayload('Lint before push'));
-    await tickUntil(steward, kingdom.clock, moved(kingdom, 'Lint before push'));
-    const quest = await kingdom.quest('Lint before push');
-    expect(quest.status).toBe('infirmary');
-    expect(quest.attempt_log.at(-1)).toMatchObject({ outcome: 'breaker' });
-    const [notice, ...others] = kingdom.notices;
-    expect(others).toEqual([]);
-    expect(notice?.kind === 'infirmary' ? notice.reason : notice).toMatchObject({
-      code: 'breaker:patch',
-      params: { file: PATCH_FILE, why: expect.stringContaining(why) as unknown },
-    });
-    // The line says it in parts (P1-32): the trip, and why the patch was refused, apart from the hook's words.
-    const [line] = await linesOf(kingdom, 'quest.infirmary');
-    const refused = expect.stringContaining(why) as unknown;
-    expect(line?.data).toMatchObject({ trip: 'commit', detail: { patch: refused } });
-    expect(Object.keys(line?.data.detail ?? {})).toEqual(['patch']);
-    const worktree = worktreeOf(quest);
-    // Nothing committed, nothing applied: the patch waits in the plot for the owner.
-    expect(git(worktree, 'log', '--format=%s')).toBe('first');
-    expect(await readFile(path.join(worktree, '.husky', 'pre-push'), 'utf8')).toBe(HOOK);
-    expect(await pathExists(path.join(worktree, PATCH_FILE))).toBe(true);
-    expect(await linesOf(kingdom, 'plot.patched')).toEqual([]);
-    expect((await kingdom.character('kael')).status).toBe('idle');
-  });
+    [
+      'does not apply',
+      PATCH.replace(' pnpm test', ' pnpm build'),
+      'it does not apply: error: patch failed',
+      'patch_conflict',
+      {},
+    ],
+  ])(
+    'that %s is not applied, and the quest goes to the infirmary with why',
+    async (_, patch, why, code, params) => {
+      const { kingdom, steward } = await open(patch);
+      await kingdom.command('create_quest', questPayload('Lint before push'));
+      await tickUntil(steward, kingdom.clock, moved(kingdom, 'Lint before push'));
+      const quest = await kingdom.quest('Lint before push');
+      expect(quest.status).toBe('infirmary');
+      expect(quest.attempt_log.at(-1)).toMatchObject({ outcome: 'breaker' });
+      const [notice, ...others] = kingdom.notices;
+      expect(others).toEqual([]);
+      expect(notice?.kind === 'infirmary' ? notice.reason : notice).toMatchObject({
+        code: `breaker:${code}`,
+        params: { file: PATCH_FILE, ...params },
+      });
+      // The line says it in parts (P1-32): the trip, and why the patch was refused, apart from the hook's words.
+      const [line] = await linesOf(kingdom, 'quest.infirmary');
+      const refused = expect.stringContaining(why) as unknown;
+      expect(line?.data).toMatchObject({ trip: 'commit', detail: { patch: refused } });
+      if (code === 'patch_conflict')
+        expect(line?.data.detail).toMatchObject({
+          message: expect.stringContaining('error: patch failed') as unknown,
+        });
+      else expect(line?.data.detail).not.toHaveProperty('message');
+      const worktree = worktreeOf(quest);
+      // Nothing committed, nothing applied: the patch waits in the plot for the owner.
+      expect(git(worktree, 'log', '--format=%s')).toBe('first');
+      expect(await readFile(path.join(worktree, '.husky', 'pre-push'), 'utf8')).toBe(HOOK);
+      expect(await pathExists(path.join(worktree, PATCH_FILE))).toBe(true);
+      expect(await linesOf(kingdom, 'plot.patched')).toEqual([]);
+      expect((await kingdom.character('kael')).status).toBe('idle');
+    },
+  );
 
   it('is a file like any other on a territory that lists no patch path', async () => {
     const { kingdom, steward } = await open(PATCH, []);

@@ -22,6 +22,7 @@ import cliMetrics from './en/cli-metrics.json' with { type: 'json' };
 import cliMigrate from './en/cli-migrate.json' with { type: 'json' };
 import cliOption from './en/cli-option.json' with { type: 'json' };
 import cliQuest from './en/cli-quest.json' with { type: 'json' };
+import cliQuestInfirmaryReason from './en/cli-quest-infirmary-reason.json' with { type: 'json' };
 import cliRegistry from './en/cli-registry.json' with { type: 'json' };
 import cliReturn from './en/cli-return.json' with { type: 'json' };
 import cliRun from './en/cli-run.json' with { type: 'json' };
@@ -69,6 +70,7 @@ export const EN = {
   'cli.migrate': cliMigrate,
   'cli.option': cliOption,
   'cli.quest': cliQuest,
+  'cli.quest.infirmary.reason': cliQuestInfirmaryReason,
   'cli.registry': cliRegistry,
   'cli.return': cliReturn,
   'cli.run': cliRun,

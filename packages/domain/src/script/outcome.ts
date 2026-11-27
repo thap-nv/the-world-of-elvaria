@@ -10,6 +10,7 @@ import { UnitsSchema } from '../schema/quest/quest-parts.ts';
 import { SCRIPT_DETAIL_MAX, SCRIPT_EXIT, UNITS_LISTED_MAX } from './constants.ts';
 import type { QuestUnit } from '../schema/quest/quest-parts.ts';
 import type { CatalogScript } from '../schema/registry-entries.ts';
+import type { InfirmaryParams, InfirmaryReasonCode } from '../infirmary/reasons.ts';
 
 export type Produces = CatalogScript['produces'];
 
@@ -34,8 +35,11 @@ export interface ScriptResult {
 
 export type ScriptOutcome =
   | ScriptResult
-  | { readonly kind: 'usage'; readonly detail: string }
-  | { readonly kind: 'broken'; readonly detail: string }
+  | {
+      readonly kind: 'usage' | 'broken';
+      readonly code: Extract<InfirmaryReasonCode, `script:broken${string}` | `script:usage${string}`>;
+      readonly params: InfirmaryParams;
+    }
   | { readonly kind: 'timeout' };
 
 const clip = (text: string): string =>
@@ -78,31 +82,44 @@ const READERS: Readonly<Record<Produces, (output: unknown) => ScriptResult | und
 };
 
 /** The one JSON line of stdout, or why there is not exactly one (the patrol reads a report's count from it, PS-26). */
-export function jsonLineOf(stdout: string): { readonly value: unknown } | { readonly problem: string } {
+export function jsonLineOf(
+  stdout: string,
+):
+  | { readonly value: unknown }
+  | { readonly problem: 'lines'; readonly lines: number }
+  | { readonly problem: 'not_json' } {
   const lines = stdout.split(/\r?\n/).filter((line) => line.trim() !== '');
-  if (lines.length !== 1)
-    return { problem: `stdout has ${lines.length} lines, the contract is one JSON line` };
+  if (lines.length !== 1) return { problem: 'lines', lines: lines.length };
   try {
     return { value: JSON.parse(lines.join('')) as unknown };
   } catch {
-    return { problem: 'stdout is not JSON' };
+    return { problem: 'not_json' };
   }
 }
 
-/** What stderr says last, or the exit code when it says nothing. */
-const stopDetail = (run: ScriptRun): string =>
-  clip(run.stderr.trim()) || `exit code ${run.exit_code === null ? 'none (killed)' : String(run.exit_code)}`;
+/** External text stays on the run; the outcome only describes the cause (LL-07). */
+function stoppedOutcome(run: ScriptRun): ScriptOutcome {
+  const kind = run.exit_code === SCRIPT_EXIT.usage ? 'usage' : 'broken';
+  if (run.stderr !== '') return { kind, code: `script:${kind}`, params: {} };
+  if (kind === 'usage') return { kind, code: 'script:usage_silent', params: {} };
+  return run.exit_code === null
+    ? { kind, code: 'script:broken_killed', params: {} }
+    : { kind, code: 'script:broken_exit', params: { exit: run.exit_code } };
+}
 
 export function scriptOutcomeOf(produces: Produces, run: ScriptRun): ScriptOutcome {
   if (run.timed_out) return { kind: 'timeout' };
-  if (run.exit_code === SCRIPT_EXIT.usage) return { kind: 'usage', detail: stopDetail(run) };
-  if (run.exit_code !== SCRIPT_EXIT.ok) return { kind: 'broken', detail: stopDetail(run) };
+  if (run.exit_code !== SCRIPT_EXIT.ok) return stoppedOutcome(run);
   const line = jsonLineOf(run.stdout);
-  if ('problem' in line) return { kind: 'broken', detail: line.problem };
+  if ('problem' in line)
+    return line.problem === 'lines'
+      ? { kind: 'broken', code: 'script:broken_lines', params: { lines: line.lines } }
+      : { kind: 'broken', code: 'script:broken_not_json', params: {} };
   return (
     READERS[produces](line.value) ?? {
       kind: 'broken',
-      detail: `stdout is not the output of produces = ${produces}`,
+      code: 'script:broken_shape',
+      params: { produces },
     }
   );
 }

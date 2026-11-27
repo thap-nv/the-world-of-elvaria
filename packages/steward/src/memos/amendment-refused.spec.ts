@@ -173,7 +173,11 @@ describe('a run that ended on its amendment with its patch refused', () => {
           applyPatch: (plot, paths) => {
             if (refused) return plotsWith(k.root, {}).applyPatch(plot, paths);
             refused = true;
-            return Promise.resolve({ status: 'refused', detail: 'it does not apply' });
+            return Promise.resolve({
+              status: 'refused',
+              detail: 'it does not apply',
+              reason: { code: 'breaker:patch_conflict', params: { file: 'elvaria.patch' } },
+            });
           },
         };
       },
