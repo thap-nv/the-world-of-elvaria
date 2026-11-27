@@ -253,6 +253,8 @@ async function recordEnd(aboard: Aboard, end: TrainEnd): Promise<void> {
     territory: run.territory,
     data: ranOf(aboard, end),
   });
+  // The owner's order sent this train off, or one given while it waited: either way it ran.
+  ctx.forge.orders.delete(run.territory);
   if (end.outcome !== 'green')
     ctx.deps.log.warn(`steward: the train of ${run.territory} ended ${end.outcome}`);
 }

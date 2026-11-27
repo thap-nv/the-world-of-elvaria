@@ -92,6 +92,7 @@ async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise
     forge: settledOf(state.forge),
     forge_waits: waitsOf(state.forge),
     guests: state.guests.waiting(),
+    train_orders: [...state.forge.orders],
     in_base: [...state.looks.found, ...mergedOf(state.forge)],
     base_looks: [...state.looks.looked].map(([territory, at]) => ({ territory, at })),
     forge_sizes: await forgeSizesOf(ctx, state.forge),

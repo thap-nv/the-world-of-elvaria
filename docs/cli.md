@@ -26,6 +26,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria territory delegation <id>` | Xem ủy quyền dấu trên một lãnh thổ (phạm vi ủy quyền của vương quốc, lãnh thổ có tự merge không, cầu dao có ngừng nó không, từ quest nào và vì sao), hoặc bật lại nó. 0 mana. |
 | `elvaria territory patrol <id>` | Xem tuần tra hằng ngày có canh nhánh gốc của lãnh thổ không (check của nó, 0 mana), hoặc bật, tắt nó. |
 | `elvaria territory enqueue <id>` | Xếp một pull request của phiên của bạn vào hàng đợi merge của một lãnh thổ pr_merge (mục khách): Nhiếp chính thử nó ghép vào nhánh gốc sau các quest đang tới hạn, xanh thì merge (0 mana). |
+| `elvaria territory deliver <id>` | Cho tàu giao hàng của một lãnh thổ deferred rời ga ngay, không chờ đầy tàu hay chờ hết thời gian chờ của quest đầu (lệnh deliver, 0 mana). |
 | `elvaria character add <id>` | Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu. |
 | `elvaria character list` | Liệt kê các nhân vật. |
 | `elvaria character suspend <id>` | Đình chỉ một nhân vật: nhân vật không nhận việc và buông nhiệm vụ đang giữ, nhiệm vụ đi tiếp không có nó (lệnh suspend). |
@@ -244,6 +245,14 @@ Xếp một pull request của phiên của bạn vào hàng đợi merge của 
 |---|---|
 | `<id>` | Id của lãnh thổ. |
 | `--pr <number>` | Số pull request trên forge; nhánh và đầu nhánh lấy theo forge lúc tới lượt. (bắt buộc) |
+
+## `elvaria territory deliver`
+
+Cho tàu giao hàng của một lãnh thổ deferred rời ga ngay, không chờ đầy tàu hay chờ hết thời gian chờ của quest đầu (lệnh deliver, 0 mana).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | Id của lãnh thổ. |
 
 ## `elvaria character add`
 

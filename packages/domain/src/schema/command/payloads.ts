@@ -49,6 +49,18 @@ export const ConfirmPayloadSchema = QuestPayloadSchema.extend({
 export const TerritoryPayloadSchema = z.strictObject({ territory: TerritoryIdSchema });
 
 /**
+ * `deliver` names a done quest (PS-08c), whose delivery the Steward forgets and runs again, or (CM-08) a `deferred`
+ * territory, whose delivery train the owner sends off at the Steward's next tick. One of the two, never both.
+ */
+export const DeliverPayloadSchema = z
+  .union([QuestPayloadSchema, TerritoryPayloadSchema])
+  .meta(
+    describe(
+      "A done quest (`quest`), whose delivery to the forge the Steward runs again, or (CM-08) a `deferred` territory (`territory`), whose delivery train leaves at the Steward's next tick (departure `owner`) with the quests on its platform, or, the platform empty, as soon as a quest boards it. One of the two.",
+    ),
+  );
+
+/**
  * (CM-07) A pull request the owner's own session opened on the territory's forge: `enqueue_branch` puts it in the
  * territory's merge queue as a guest entry, tried on the base branch and merged by the Steward when green.
  */

@@ -925,6 +925,69 @@
       "tokens": 60,
       "status": "kept",
       "reason": "P2-01b: the shape every CLI command shares, a CommandSpec literal (name, args, options with their help keys) and a run that opens the kingdom context and reads the entity its <id> names (command-table/command.ts). The commands write different files under different rules; folding them into one helper would change the territory, quest and list commands outside this task."
+    },
+    {
+      "a": "apps/cli/src/territory/deliver.ts",
+      "b": "apps/cli/src/territory/enqueue.ts",
+      "tokens": 187,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/territory/check-policy.ts",
+      "b": "apps/cli/src/territory/deliver.ts",
+      "tokens": 130,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/territory/deliver.ts",
+      "b": "apps/cli/src/territory/patrol.ts",
+      "tokens": 130,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/territory/deliver.ts",
+      "b": "apps/cli/src/territory/delivery.ts",
+      "tokens": 127,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/character/suspend.ts",
+      "b": "apps/cli/src/territory/deliver.ts",
+      "tokens": 104,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/quest/deliver.ts",
+      "b": "apps/cli/src/territory/deliver.ts",
+      "tokens": 101,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/quest/lifecycle.ts",
+      "b": "apps/cli/src/territory/deliver.ts",
+      "tokens": 101,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/quest/hold.ts",
+      "b": "apps/cli/src/territory/deliver.ts",
+      "tokens": 82,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/quest/reassign.ts",
+      "b": "apps/cli/src/territory/deliver.ts",
+      "tokens": 82,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
     }
   ]
 }

@@ -97,6 +97,17 @@ describe('the live merge batches (613)', () => {
     expect(bench.heads()).toMatchObject([{ head: 'c' }, { head: 'f' }]);
   });
 
+  it('(622) counts the quests of one train, merged by one merge commit, as one merge', async () => {
+    const bench = open();
+    for (const head of ['a', 'b', 'b', 'b']) bench.merge(head);
+    await bench.run();
+    expect(bench.heads()).toEqual([]);
+    expect(bench.ctx.patrol.merges.get(bench.territory.id)).toBe(2);
+    bench.merge('c');
+    await bench.run();
+    expect(bench.heads()).toMatchObject([{ trigger: 'merged', head: 'c' }]);
+  });
+
   it('patrols a merge that arrived while the preceding head was being checked', async () => {
     const bench = open(1);
     bench.merge('x');

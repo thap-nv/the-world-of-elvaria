@@ -155,8 +155,9 @@ describe('mergesSincePatrolOf', () => {
     );
   });
 
-  // (613)(4): a train merged on the very tree it checked needs no patrol; one the base branch overtook does.
-  it('counts a green train merged on the tree it checked as patrolled, and one on another tree as merges', () => {
+  // (613)(4): a train merged on the very tree it checked needs no patrol; one the base branch overtook does, (622) as
+  // one merge: its quests' lines share the merge commit of its pull request.
+  it('counts a green train merged on the tree it checked as patrolled, and one on another tree as one merge', () => {
     const train = (ts: string, patrolled: boolean, head = SHA_B) =>
       lineOf('train.ran', ts, {
         territory: ELVARIA,
@@ -176,6 +177,10 @@ describe('mergesSincePatrolOf', () => {
     ];
     expect(mergesSincePatrolOf([...events, train('2026-11-23T08:00:02+07:00', true)])).toEqual([]);
     expect(mergesSincePatrolOf([...events, train('2026-11-23T08:00:02+07:00', false)])).toEqual([
+      { territory: ELVARIA, head: SHA_B, merges: 1 },
+    ]);
+    const before = merged('2026-11-23T07:00:00+07:00', Q2, true, ELVARIA, SHA_A);
+    expect(mergesSincePatrolOf([before, ...events])).toEqual([
       { territory: ELVARIA, head: SHA_B, merges: 2 },
     ]);
     // A red train merged nothing: it has no merge commit, and the merges before it stay counted.
@@ -187,6 +192,6 @@ describe('mergesSincePatrolOf', () => {
       outcome: 'stopped',
       patrolled: true,
     });
-    expect(mergesSincePatrolOf([...events, red])).toEqual([{ territory: ELVARIA, head: SHA_B, merges: 2 }]);
+    expect(mergesSincePatrolOf([...events, red])).toEqual([{ territory: ELVARIA, head: SHA_B, merges: 1 }]);
   });
 });

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { CAMPAIGNS, CHARACTERS, KINGDOM, TERRITORIES } from './__fixtures__/examples.ts';
 import { ATTENTION_KINDS, ATTENTION_TABLE } from './attention-table.ts';
 import { attentionQueue } from './attention.ts';
-import { forgeOutcomesOf, forgeRoundsOf } from './forge-outcome.ts';
+import { forgeOutcomesOf, forgeRoundsOf, trainOrdersOf } from './forge-outcome.ts';
 import { worldStateOf } from './world-state.ts';
 import { EventSchema } from '../schema/event/event.ts';
 import { QuestSchema } from '../schema/quest/quest.ts';
@@ -64,6 +64,25 @@ describe('forgeOutcomesOf', () => {
     const outcomes = forgeOutcomesOf(events);
     expect([...outcomes.keys()]).toEqual([Q2]);
     expect(forgeOutcomesOf([...events, failed(Q1)]).get(Q1)?.type).toBe('delivery.failed');
+  });
+
+  // (CM-08) A deliver naming a territory sends its train off; the order holds until a train of that territory ran.
+  it("keeps the owner's train orders until the territory's next train.ran, and forgets no quest's outcome", () => {
+    const onTerritory = (type: string, data: Record<string, unknown>, territory: string): Event =>
+      EventSchema.parse({ ...line(type, data), territory });
+    const order = (territory: string, kind = 'deliver') =>
+      onTerritory('command.applied', { command_id: '01JC0000000000000000000098', kind }, territory);
+    const ran = (territory: string) =>
+      onTerritory(
+        'train.ran',
+        { territory, train: '01KAZ5Q3J8M6R2T4V6X8Z0B2D4', departure: 'owner', steps: [], outcome: 'stopped' },
+        territory,
+      );
+    const events = [failed(Q1), order(TERRITORY), order('away'), order('patrolled', 'patrol'), ran('away')];
+    expect(trainOrdersOf(events)).toEqual([TERRITORY]);
+    expect(forgeOutcomesOf(events).get(Q1)?.type).toBe('delivery.failed');
+    expect(trainOrdersOf([...events, ran(TERRITORY), deliverAgain(Q1)])).toEqual([]);
+    expect(trainOrdersOf([order('b-side'), order('a-side')])).toEqual(['a-side', 'b-side']);
   });
 
   it('counts the updates of each delivery: its pushes after the first, since the last deliver (PS-09)', () => {

@@ -19,7 +19,15 @@ import {
   setRank,
   zonedTime,
 } from '@elvaria/domain';
-import type { Character, InboxCommandOf, Quest, QuestEventType, QuestId, Result } from '@elvaria/domain';
+import type {
+  Character,
+  InboxCommandOf,
+  Quest,
+  QuestEventType,
+  QuestId,
+  Result,
+  TerritoryId,
+} from '@elvaria/domain';
 
 import { closeTaken } from '../memos/close.ts';
 import { moveAndRing } from '../bell/move-and-ring.ts';
@@ -31,8 +39,11 @@ import type { Context } from '../context.ts';
 import type { Edits } from '../quest/record.ts';
 
 export type Outcome =
-  /** `quest`: the quest the command.applied line names (`deliver`, PS-08c: forgeOutcomesOf reads it). */
-  | { readonly status: 'applied'; readonly quest?: Quest }
+  /**
+   * `quest`: the quest the command.applied line names (`deliver`, PS-08c: forgeOutcomesOf reads it); `territory`, the
+   * territory it names (CM-08, a `deliver` naming one: trainOrdersOf reads it).
+   */
+  | { readonly status: 'applied'; readonly quest?: Quest; readonly territory?: TerritoryId }
   | { readonly status: 'rejected'; readonly reason: string }
   /** Not now, not refused: the command stays in the inbox for a later tick. */
   | { readonly status: 'waiting' };

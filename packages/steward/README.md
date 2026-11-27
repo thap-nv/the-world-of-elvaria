@@ -613,7 +613,10 @@
   `train` for each quest. Stopped (git, a generator, the scan, the push, the forge): `delivery.failed` for each quest
   with the reason; a branch pushed is removed. One `train.ran` closes every train, after its quests' lines; a quest
   whose branch the base branch holds already is no step, and the look archives it. The Steward's stop before the merge
-  records nothing but the `check.end` of the checks it killed, and leaves no branch.
+  records nothing but the `check.end` of the checks it killed, and leaves no branch. The owner's `deliver` naming the
+  territory (`src/forge/deliver-command.ts`, `sendTrainOff`; owner only, refused while a train of it runs) sends the
+  next train off: `ForgeBook.orders`, rebuilt at start (`trainOrdersOf`), planTick's `train_orders`, until that
+  train's `train.ran`. (622) The patrol book counts the lines of one merge commit, a train's quests, as one merge.
 - The check ledger (RC-04, ADR 0035, `src/check-ledger/carry.ts`): every run of the checks names on its `check.end`
   (or `patrol.ran`) the tree it ran on, the territory's check config and a narrow run's base (`Plots.checkPoint`,
   `Plots.patrolHead`), and the merge queue (`src/forge/queue-rerun.ts`), a guest's try and the patrol read the ledger

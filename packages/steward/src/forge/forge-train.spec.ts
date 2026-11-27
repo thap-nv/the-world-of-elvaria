@@ -172,6 +172,63 @@ describe('the delivery train of a deferred territory (CM-08)', () => {
     expect(trainBranches(bench)).toBe('');
   });
 
+  // (CM-08) `deliver` naming a territory: refused where no train goes, from the Chancellor and while a train runs; the
+  // order sends the next train off as `owner` and ends with its train.ran, so the train after it leaves on its own.
+  it("sends the next train off at the owner's deliver, and the order ends with that train", async () => {
+    const bench = await trainBench();
+    const { kingdom } = bench;
+    const plots = gitPlots(kingdom.root);
+    let atChecks = false;
+    let release = (): void => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const train: Plots['train'] = (territory, board, signal) => {
+      if (plots.train === undefined) throw new Error('fixture: no train plots');
+      const started: typeof board.started = async (point) => {
+        await board.started?.(point);
+        atChecks = true;
+        await gate;
+      };
+      return plots.train(territory, { ...board, started }, signal);
+    };
+    const steward = await bench.start({ plots: { ...plots, train } });
+    const chancellor = kingdom.ids.ulid();
+    const written = await kingdom.store.inbox.write({
+      ...{ version: 1, id: chancellor, ts: '2026-11-07T09:00:00+07:00', kind: 'deliver' as const },
+      ...{ source: 'chancellor' as const, payload: { territory: 'dc1-se-team' } },
+    });
+    if (!written.ok) throw new Error(written.error.message);
+    const ids = [
+      chancellor,
+      await kingdom.command('deliver', { territory: 'nowhere' }),
+      await kingdom.command('deliver', { territory: 'handbook' }),
+      await kingdom.command('deliver', { territory: 'dc1-se-team' }),
+    ];
+    await sealedTogether(bench, steward, ['Alpha']);
+    await tickUntil(steward, kingdom.clock, () => Promise.resolve(atChecks), 200);
+    ids.push(await kingdom.command('deliver', { territory: 'dc1-se-team' }));
+    await steward.tick();
+    const answers = [...(await bench.lines('command.applied')), ...(await bench.lines('command.rejected'))];
+    const answerOf = (id: string) => answers.find(({ data }) => data.command_id === id);
+    expect(ids.map((id) => [answerOf(id)?.type, answerOf(id)?.data.reason])).toEqual([
+      ['command.rejected', 'owner_only'],
+      ['command.rejected', 'unknown_territory'],
+      ['command.rejected', 'not_deferred'],
+      ['command.applied', undefined],
+      ['command.rejected', 'train_running'],
+    ]);
+    expect(answerOf(ids[3] ?? '')?.territory).toBe('dc1-se-team');
+    release();
+    await tickUntil(steward, kingdom.clock, async () => (await ran(bench)).length === 1, 200);
+    await sealedTogether(bench, steward, ['Beta']);
+    await tickUntil(steward, kingdom.clock, async () => (await ran(bench)).length === 2, 200);
+    expect((await ran(bench)).map(({ departure, outcome }) => [departure, outcome])).toEqual([
+      ['owner', 'green'],
+      ['idle', 'green'],
+    ]);
+  });
+
   it('leaves no branch and no line when the Steward stops mid-train; the next Steward runs it anew', async () => {
     const bench = await trainBench();
     const plots = gitPlots(bench.kingdom.root);

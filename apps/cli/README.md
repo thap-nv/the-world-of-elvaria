@@ -379,7 +379,8 @@ delivery`), with no event; `deferred` is refused unless the territory delivers b
 - A guest entry of the merge queue (CM-07): `territory enqueue <id> --pr <n>` sends the inbox command
   `enqueue_branch` for a git territory delivered by `pr_merge`; `run` gives the Steward `Plots.guest` (`tryGuest`
   under `guest-<id>`), and the GitHub adapter's `status` names the pull request's branch. (CM-08) `run` also gives
-  it `Plots.train` (`tryTrain` under `train-<id>`), the delivery train of a `deferred` territory.
+  it `Plots.train` (`tryTrain` under `train-<id>`), the delivery train of a `deferred` territory, and
+  `territory deliver <id>` sends `deliver` naming the territory: its train leaves at the Steward's next tick.
 - Scripture line by line (PS-12, `src/scripture/`, 0 mana, reads only): `scripture lint` checks every line of the
   temple's scripture and each character's against the grammar and the rules of lesson-sharing T4 (`lintScripture`
   of the domain, the event log's redaction through the Steward's `lessonsIn`), prints `<file>:<line>: <level>:

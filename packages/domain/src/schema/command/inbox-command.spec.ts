@@ -120,6 +120,15 @@ describe('confirm payload', () => {
   });
 });
 
+describe('deliver payload', () => {
+  it('(CM-08) names a quest or a territory, one of the two', () => {
+    expect(InboxCommandSchema.parse(command('deliver', { territory: 'do-an' })).payload).toEqual({
+      territory: 'do-an',
+    });
+    expect(issuesOf(command('deliver', {}))).toEqual(['payload: Invalid input']);
+  });
+});
+
 describe('edit_quest payload', () => {
   const edit = (changes: object) => command('edit_quest', { quest: QUEST, expected_updated_at: TS, changes });
 

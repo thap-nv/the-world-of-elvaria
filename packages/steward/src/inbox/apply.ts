@@ -6,7 +6,7 @@ import { UlidSchema } from '@elvaria/domain';
 import type { InboxCommand, Quest } from '@elvaria/domain';
 import type { InboxItem } from '@elvaria/store';
 
-import { deliverAgain } from '../forge/deliver-command.ts';
+import { deliverAgain, sendTrainOff } from '../forge/deliver-command.ts';
 import { wake } from '../mana/step.ts';
 import { answerQuest, decideAmendment } from '../memos/amendment.ts';
 import { decideMemo } from '../memos/decide.ts';
@@ -90,8 +90,13 @@ async function onQuest(ctx: Context, command: InboxCommand, quest: Quest): Promi
   }
 }
 
-/** A command on a territory: patrol (PS-09d), resume_delegation (PS-08g), enqueue_branch (CM-07); else undefined. */
+/**
+ * A command on a territory: patrol (PS-09d), resume_delegation (PS-08g), enqueue_branch (CM-07), a deliver naming a
+ * territory (CM-08); else undefined.
+ */
 function territoryCommand(ctx: Context, command: InboxCommand): Outcome | Promise<Outcome> | undefined {
+  if (command.kind === 'deliver' && 'territory' in command.payload)
+    return sendTrainOff(ctx, command.source, command.payload.territory);
   if (command.kind === 'patrol') return patrolNow(ctx, command.payload.territory);
   if (command.kind === 'resume_delegation') return resumeDelegation(ctx, command.payload.territory);
   if (command.kind === 'enqueue_branch') return enqueueBranch(ctx, command);
@@ -126,7 +131,8 @@ export async function applyCommand(ctx: Context, command: InboxCommand): Promise
  * The command's line. `kind` (PS-01b) lets the metrics ledger count the owner's steps from the log alone, and
  * `source` (PS-03b) tells the Chancellor's triage, and (PS-12c) the temple, from them; a file no command could be read
  * from has neither. A
- * `deliver` names its quest on the line (PS-08c), so the log alone says the quest's delivery was asked again.
+ * `deliver` names its quest on the line (PS-08c), so the log alone says the quest's delivery was asked again, or
+ * (CM-08) its territory, so the log alone says the owner sent the territory's train off.
  */
 async function answered(
   ctx: Context,
@@ -144,7 +150,14 @@ async function answered(
     ...(command?.device === undefined ? {} : { device: command.device }),
   };
   const quest = outcome.status === 'applied' ? outcome.quest : undefined;
-  await ctx.record.note({ type, actor: STEWARD, data, ...(quest === undefined ? {} : { quest }) });
+  const territory = outcome.status === 'applied' ? outcome.territory : undefined;
+  await ctx.record.note({
+    type,
+    actor: STEWARD,
+    data,
+    ...(quest === undefined ? {} : { quest }),
+    ...(territory === undefined ? {} : { territory }),
+  });
   if (outcome.status === 'applied') ctx.counts.applied += 1;
   else ctx.counts.rejected += 1;
 }

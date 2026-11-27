@@ -86,6 +86,8 @@ describe('commandScopeOf', () => {
     expect(scopeOf('patrol', { territory: AWAY })).toEqual([AWAY]);
     expect(scopeOf('seal', { quest: Q_HOME.id })).toEqual([HOME]);
     expect(scopeOf('reassign', { quest: Q_AWAY.id, character: 'thorn' })).toEqual([AWAY]);
+    expect(scopeOf('deliver', { quest: Q_HOME.id })).toEqual([HOME]);
+    expect(scopeOf('deliver', { territory: AWAY })).toEqual([AWAY]);
   });
 
   it('reaches every territory of the quests and memos a payload names, each once', () => {

@@ -2,9 +2,10 @@
 // the log alone: the quest file keeps no field for it. The last `delivery.pushed`, `delivery.merged` or
 // `delivery.failed` of a quest is its outcome; the owner's `deliver` command (its `command.applied` line names the
 // quest) forgets it, so the Steward delivers the quest again. The Steward rebuilds it at start (recover), the digest
-// and `quest show` read it from the log as it stands.
+// and `quest show` read it from the log as it stands. (CM-08) A `deliver` naming a territory instead sends its
+// delivery train off: the order holds until the territory's next `train.ran`, which every train that left writes.
 import { isEventOf } from '../schema/event/event.ts';
-import type { QuestId } from '../core/ids.ts';
+import type { QuestId, TerritoryId } from '../core/ids.ts';
 import type { EventData } from '../schema/event/event-data.ts';
 import type { Event } from '../schema/event/event.ts';
 
@@ -52,4 +53,20 @@ export function forgeOutcomesOf(events: readonly Event[]): Map<QuestId, ForgeOut
     if (again !== undefined) outcomes.delete(again);
   }
   return outcomes;
+}
+
+/** (CM-08) The territories whose train the owner sent off (an applied `deliver` naming one) and that has not run since. */
+export function trainOrdersOf(events: readonly Event[]): TerritoryId[] {
+  const orders = new Set<TerritoryId>();
+  for (const event of events) {
+    if (isEventOf(event, 'train.ran')) orders.delete(event.data.territory);
+    else if (
+      isEventOf(event, 'command.applied') &&
+      event.data.kind === DELIVER_COMMAND &&
+      event.quest === undefined &&
+      event.territory !== undefined
+    )
+      orders.add(event.territory);
+  }
+  return [...orders].toSorted();
 }
