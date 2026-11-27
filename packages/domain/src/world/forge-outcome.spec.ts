@@ -145,6 +145,21 @@ describe('forgeOutcomesOf', () => {
     });
   });
 
+  it('does not count a red train whose base branch was red on its own ((624)(k))', () => {
+    const steps = [Q1, Q2].map((quest) => ({ quest, commit: HEAD }));
+    const at = (minute: number) => `2026-11-16T08:${String(minute).padStart(2, '0')}:00+07:00`;
+    const red = (minute: number, base_red?: true) =>
+      ran(TERRITORY, { steps, outcome: 'red', head: HEAD, ...(base_red ? { base_red } : {}) }, at(minute));
+    const quests = [Q1, Q2].map((id) => ({
+      id,
+      territory: TERRITORY as TerritoryId,
+      deliverable: DeliverableSchema.parse({ type: 'branch', delivered_at: at(10) }),
+    }));
+    const rides = (log: readonly Event[]) => Object.fromEntries(trainRidesOf(log, quests));
+    expect(rides([red(20, true), red(30, true), red(40, true)])).toEqual({});
+    expect(rides([red(20, true), red(30), red(40, true)])).toEqual({ [Q1]: 1, [Q2]: 1 });
+  });
+
   it('counts the updates of each delivery: its pushes after the first, since the last deliver (PS-09)', () => {
     const rounds = forgeRoundsOf([pushed(Q1), pushed(Q1), pushed(Q2), failed(Q1), pushed(Q1)]);
     expect(Object.fromEntries(rounds)).toEqual({ [Q1]: 2, [Q2]: 0 });

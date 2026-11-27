@@ -36,7 +36,7 @@ type Ran = EventData<'train.ran'>;
 type Tried = Extract<TrainTrial, { state: 'tried' }>;
 /** What `train.ran` says beyond the train, its departure, its steps, the quests that left and its outcome. */
 type RanFacts = Partial<
-  Pick<Ran, 'base' | 'head' | 'tree' | 'checks' | 'pr' | 'merge_sha' | 'patrolled' | 'detail'>
+  Pick<Ran, 'base' | 'head' | 'tree' | 'checks' | 'base_red' | 'pr' | 'merge_sha' | 'patrolled' | 'detail'>
 >;
 
 /** The train before it is found on its forge: its id, why it left, its quests. */
@@ -145,7 +145,7 @@ async function endOfTried(train: Train, tried: Tried, boarded: Boarded): Promise
     const probed = await probeTrain(train, tried, boarded.steps, red);
     if (probed === undefined) return undefined;
     const end = { ...boarded, outcome: 'red' as const, ran: { ...ran, checks: red } };
-    return probed === 'base_red' ? end : { ...end, probed };
+    return probed === 'base_red' ? { ...end, ran: { ...end.ran, base_red: true } } : { ...end, probed };
   }
   const merged = boarded.steps.flatMap((step) => train.quests.find(({ id }) => id === step.quest) ?? []);
   const delivered = await deliverTrain(train, { base, head, tree }, checked, merged);

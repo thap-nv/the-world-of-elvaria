@@ -90,9 +90,13 @@ export function trainOrdersOf(events: readonly Event[]): TerritoryId[] {
 
 type Delivered = Pick<Quest, 'id' | 'territory' | 'deliverable'>;
 
-/** The quests of a red `train.ran` that rode it as delivered (`delivered_at` not after the line). */
+/**
+ * The quests of a red `train.ran` that rode it as delivered (`delivered_at` not after the line); none when the base
+ * branch was red on its own (`base_red`): a red base branch costs no quest a ride ((624)(k) of implementation-plan §11).
+ */
 function ridersOf(event: Event, delivered: ReadonlyMap<QuestId, string>): QuestId[] {
-  if (!isEventOf(event, 'train.ran') || event.data.outcome !== 'red') return [];
+  if (!isEventOf(event, 'train.ran') || event.data.outcome !== 'red' || event.data.base_red === true)
+    return [];
   return event.data.steps
     .map(({ quest }) => quest)
     .filter((quest) => {

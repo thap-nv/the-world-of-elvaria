@@ -115,7 +115,7 @@ describe('the probe of a red delivery train (CM-08b)', () => {
       await pushToMain(bench, 'red.txt', 'red\n');
       await tickUntil(steward, kingdom.clock, async () => (await ranOf(bench)).length === 1, 300);
       const [first] = await ranOf(bench);
-      expect(first).toMatchObject({ outcome: 'red', departure: 'full' });
+      expect(first).toMatchObject({ outcome: 'red', departure: 'full', base_red: true });
       const sources = (await dataOf(bench, 'check.attributed')).map(({ source }) => source);
       expect(sources).not.toContain('train');
       expect(await failedOf(bench)).toEqual([]);

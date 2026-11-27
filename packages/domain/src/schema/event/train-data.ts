@@ -97,6 +97,14 @@ export const TrainRanDataSchema = z
       .min(1)
       .optional()
       .meta(describe('With outcome red: the red checks, or `setup`.')),
+    base_red: z
+      .literal(true)
+      .optional()
+      .meta(
+        describe(
+          "With outcome red (CM-08b): the base branch was red on its own, so nothing was probed and nobody blamed; the ride does not count against its quests' TRAIN_RIDES_MAX ((624)(k) of implementation-plan §11).",
+        ),
+      ),
     outcome: z.enum(TRAIN_OUTCOMES),
     pr: z.int().min(1).optional().meta(describe("With outcome green: the train's pull request.")),
     merge_sha: CommitShaSchema.optional().meta(
