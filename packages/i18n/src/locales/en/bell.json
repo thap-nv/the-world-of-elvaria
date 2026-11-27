@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "messages": {
+    "bell.failed": "a bell could not ring: {message}",
+    "bell.desktop.unsupported": "this machine ({platform}) shows no desktop notification; the bell rings on the terminal only.",
+    "bell.desktop.failed": "a desktop notification could not be shown: {why}",
+    "bell.toast.heading": "Elvaria · {what}",
+    "bell.toast.kind.awaiting_seal": "Waiting for your seal",
+    "bell.toast.kind.infirmary": "A quest went to the infirmary",
+    "bell.toast.kind.question": "A character asks you",
+    "bell.toast.kind.mana_asleep": "Out of mana",
+    "bell.toast.kind.base_red": "A default branch turned red",
+    "bell.toast.kind.delegation_suspended": "Seal delegation suspended",
+    "bell.toast.quest": "{quest} «{title}»",
+    "bell.toast.pool": "Pool {pool} of tribe {tribe}",
+    "bell.toast.territory": "Territory {territory}"
+  }
+}

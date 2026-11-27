@@ -1,5 +1,6 @@
 // English by namespace: typed against Vietnamese, so a namespace or key missing here fails typecheck (AH-04).
 import type { Translation } from './namespace.ts';
+import bell from './en/bell.json' with { type: 'json' };
 import character from './en/character.json' with { type: 'json' };
 import cli from './en/cli.json' with { type: 'json' };
 import cliAmend from './en/cli-amend.json' with { type: 'json' };
@@ -48,6 +49,7 @@ import tribeLook from './en/tribe-look.json' with { type: 'json' };
 import type { VI } from './vi.ts';
 
 export const EN = {
+  bell,
   character,
   cli,
   'cli.amend': cliAmend,

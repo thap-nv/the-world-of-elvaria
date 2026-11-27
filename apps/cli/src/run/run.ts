@@ -1,6 +1,6 @@
 // `elvaria run`: the Steward of one kingdom, until the owner stops it (implementation-plan §3.1; P1-09 row,
 // "(Chốt sau P1-03)"). This is where the work engine is put together: a runner per tribe from its adapter, plots
-// over PlotManager, the console bell and the digest file (PS-03), the Chancellor's triage (PS-03b), the amendments'
+// over PlotManager, the console and desktop bells and the digest file (PS-03), the Chancellor's triage (PS-03b), the amendments'
 // authors (PS-22b), the forges a done quest is delivered to (PS-08c), the newer build the digest offers (PS-08d), the
 // event log; the Steward itself sees only
 // interfaces (ADR 0006, 0021).
@@ -11,6 +11,7 @@ import { fromPortable } from '@elvaria/store';
 import type { CodeGraphs } from '@elvaria/runner-core';
 import type { Forges, Steward } from '@elvaria/steward';
 
+import { runBell } from '../bell/run-bell.ts';
 import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { upgradeOffer } from '../upgrade/offer.ts';
@@ -68,7 +69,8 @@ function stewardOf(ctx: KingdomContext, crew: Crew, { graphs, forges }: Found): 
     ids: ctx.ids,
     // Catalog scripts run on the node found for Elvaria, with the same minimal env and no secret (§3.12).
     scripts: nodeScriptRunner(io.nodePath),
-    bell: consoleBell(t, io),
+    // The console bell, and the desktop one beside it (P2-03).
+    bell: runBell(ctx, consoleBell(t, io)),
     // The digest, once a day at kingdom.schedule.digest.at, in the owner's language (PS-03).
     digest: fileDigest(t, store.root, ctx.kingdom.name),
     // A newer build than the pinned one, read as the digest is made (PS-08d).

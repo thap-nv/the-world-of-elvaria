@@ -32,6 +32,7 @@ export function nodeIo(): CliIo {
     home: os.homedir(),
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     platform: process.platform,
+    interactive: process.stdout.isTTY,
     nodePath: process.execPath,
     clock: { now: () => InstantSchema.parse(Date.now()) },
     sleep: async (ms) => {

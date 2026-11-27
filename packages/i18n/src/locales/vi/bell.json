@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "messages": {
+    "bell.failed": "một chuông không rung được: {message}",
+    "bell.desktop.unsupported": "máy này ({platform}) không hiện được thông báo hệ thống; chuông chỉ rung ở terminal.",
+    "bell.desktop.failed": "thông báo hệ thống không hiện được: {why}",
+    "bell.toast.heading": "Elvaria · {what}",
+    "bell.toast.kind.awaiting_seal": "Chờ dấu vua của bạn",
+    "bell.toast.kind.infirmary": "Một nhiệm vụ vào trạm quân y",
+    "bell.toast.kind.question": "Một nhân vật hỏi bạn",
+    "bell.toast.kind.mana_asleep": "Hết mana",
+    "bell.toast.kind.base_red": "Nhánh gốc vừa đỏ",
+    "bell.toast.kind.delegation_suspended": "Ủy quyền dấu đã ngừng",
+    "bell.toast.quest": "{quest} «{title}»",
+    "bell.toast.pool": "Pool {pool} của tộc {tribe}",
+    "bell.toast.territory": "Lãnh thổ {territory}"
+  }
+}

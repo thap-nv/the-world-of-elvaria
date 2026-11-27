@@ -1,5 +1,6 @@
 // ConsoleBell (implementation-plan §3.1, stage 1): the Steward rings with data, a Notice; this bell says it in the
-// owner's language on the terminal that runs `elvaria run`. Desktop and web push come in stage 2.
+// owner's language on the terminal that runs `elvaria run`. The desktop bell rings beside it (../bell/, P2-03); web
+// push comes with P2-08.
 import type { Translate } from '@elvaria/i18n';
 import type { Bell, ManaGaugeNotice, Notice } from '@elvaria/steward';
 

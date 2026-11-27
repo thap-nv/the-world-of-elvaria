@@ -426,6 +426,15 @@ delivery`), with no event; `deferred` is refused unless the territory delivers b
   sets `revoked_at` once. The three write the device files themselves (ADR 0005 exception, .claude/rules/cli.md).
   `doctor` adds one line for `kingdom.herald`: the port and the origins besides loopback, a warning for one that is
   plain http off this machine (`doctor/check-herald.ts`).
+- (P2-03) The bell of `run` (`src/bell/run-bell.ts`) rings the console bell and, while `kingdom.bell.desktop` is on
+  and stdout is a terminal, the desktop bell beside it, through `fanOut` (`src/bell/fan-out.ts`): a bell that throws
+  or rejects is one warning line and the others still ring. `DESKTOP_RINGS` (`src/bell/toast.ts`, one cell per kind
+  of notice, W13) picks the notices that also become a system notification: the seal, the infirmary, a question, a
+  whole pool out of mana, `base_red` and `delegation_suspended`; the toast is a heading and one line naming the
+  quest, pool or territory, masked, never the question or a path. `src/bell/desktop.ts` starts
+  `node src/bell/show-toast.(ts|js) <toast as JSON>` for each, without a shell and with the minimal env, and does not
+  wait for it; that process (`src/bell/platform.ts`) hands the toast to node-notifier's Windows toaster (SnoreToast)
+  or macOS Notification Center (terminal-notifier). Linux and the rest: one warning line, then quiet.
 
 ## Does not
 
@@ -437,7 +446,9 @@ delivery`), with no event; `deferred` is refused unless the territory delivers b
   territory's branch itself: the Steward of `run` does (PS-08c), with the git and the forge adapter given to it;
   `territory delivery` only writes settings, `doctor` only reads a credential and asks the forge one question, and
   `quest deliver` only writes a command.
-- Inherit `process.env` into child processes: they get `minimalEnv` (ADR 0013), and never a shell (ADR 0015).
+- Inherit `process.env` into child processes: they get `minimalEnv` (ADR 0013), and never a shell (ADR 0015). The
+  desktop bell's toast runs in a Node process of its own for that reason: node-notifier starts its bundled programs
+  with the env of the process it runs in (P2-03).
 
 ## Depends on
 
@@ -452,6 +463,8 @@ delivery`), with no event; `deferred` is refused unless the territory delivers b
   `claude_code` adapter), `@elvaria/runner-antigravity` (the `antigravity` adapter, P1-15), `@elvaria/runner-codex`
   (the `codex_cli` adapter), `@elvaria/hooks` (the hook's command), `@elvaria/herald` (the Herald's server, pairing
   codes and sessions, P2-01b).
+- `node-notifier` (P2-03, W9): only in the toast's own process (`src/bell/show-toast.ts`), with its bundled
+  SnoreToast (Windows) and terminal-notifier (macOS); no install script.
 - `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
 - `@elvaria/testkit` (dev only: throwaway folders and their cleanup).
 
@@ -484,6 +497,9 @@ and path and keeps every request: `src/forge/github-forge.spec.ts` takes each ca
 masked, `gitToken` on the fake helper), `src/forge/github-status.spec.ts` a pull request's state and its required
 checks. `src/quest/deliver.spec.ts` plants done quests and territories and reads the inbox; `delivery-view.spec.ts`,
 `run/bell.spec.ts` and `digest/digest.spec.ts` word a delivery's outcome; `run/forges.spec.ts` finds git or none.
+No spec shows a real toast (P2-03): `src/bell/platform.spec.ts` passes fake notifiers for Windows and macOS,
+`src/bell/desktop.spec.ts` a fake spawn (and runs `show-toast` only with an argument that is not a toast), and
+`src/bell/run-bell.spec.ts` stands Linux in for a machine with the desktop bell.
 `fixtures/lantern-adapter.mjs` is an owner adapter file that imports nothing, for `fixtures/fake-lantern.mjs`, a
 fake CLI with no tool gate: `src/tribe/tribe.spec.ts` adds, pins, checks and disables it; `src/tribe/round.spec.ts`
 runs the Steward (`elvaria run`) with it until a rank D quest is done, while a rank C quest stays open (P1-19);
