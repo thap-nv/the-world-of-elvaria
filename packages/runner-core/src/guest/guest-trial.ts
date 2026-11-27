@@ -15,7 +15,7 @@ import type { CheckPoint } from '../checks/check-config.ts';
 import type { CheckRunMode } from '../checks/check-mode.ts';
 import { plotCommitMessage } from '../plot/commit-message.ts';
 import { conflictPathsOf, saidBy } from '../plot/dry-merge.ts';
-import { fetchBase } from '../plot/fetch.ts';
+import { fetchBase, originTipOf } from '../plot/fetch.ts';
 import { gitOf, gitOut, treeOf, zList } from '../plot/git.ts';
 import type { Git } from '../plot/git.ts';
 import { tryTerritory } from '../plot/territory-trial.ts';
@@ -65,19 +65,13 @@ const failed = (detail: string): GuestTrial => ({ state: 'failed', detail });
 async function fetched(git: Git, repo: string, request: GuestTrialRequest): Promise<string | GuestTrial> {
   const main = request.territory.vcs.default_branch;
   if (main === undefined) return failed('the territory has no default_branch');
-  if (!(await fetchBase(git, repo, main))) return failed(`git could not fetch ${main} from origin`);
+  const base = await originTipOf(git, repo, main);
+  if ('detail' in base) return failed(base.detail);
   if (!(await fetchBase(git, repo, request.branch)))
     return failed(`git could not fetch ${request.branch} from origin`);
-  const base = await git(repo, [
-    'rev-parse',
-    '--verify',
-    '--end-of-options',
-    `refs/remotes/origin/${main}^{commit}`,
-  ]);
-  if (base.code !== 0) return failed(saidBy(base));
   const head = await git(repo, ['cat-file', '-e', '--end-of-options', `${request.head}^{commit}`]);
   if (head.code !== 0) return failed(`origin's ${request.branch} has no commit ${request.head}`);
-  return base.stdout.trim();
+  return base.commit;
 }
 
 /** The merge of the head into `base` as a commit no ref names, or the files that conflict. */

@@ -4,6 +4,7 @@
 // to merge. Within one Steward the fetches of a repo wait for each other; a fetch that fails still says so.
 import path from 'node:path';
 
+import { saidBy } from './dry-merge.ts';
 import type { Git } from './git.ts';
 
 const running = new Map<string, Promise<unknown>>();
@@ -20,4 +21,16 @@ export async function fetchBase(git: Git, repo: string, branch: string): Promise
   } finally {
     if (running.get(key) === ended) running.delete(key);
   }
+}
+
+/** Origin's `branch` once fetched: its commit (the base of a guest's try and of a delivery train), or why git has none. */
+export async function originTipOf(
+  git: Git,
+  repo: string,
+  branch: string,
+): Promise<{ readonly commit: string } | { readonly detail: string }> {
+  if (!(await fetchBase(git, repo, branch))) return { detail: `git could not fetch ${branch} from origin` };
+  const ref = `refs/remotes/origin/${branch}^{commit}`;
+  const tip = await git(repo, ['rev-parse', '--verify', '--end-of-options', ref]);
+  return tip.code === 0 ? { commit: tip.stdout.trim() } : { detail: saidBy(tip) };
 }

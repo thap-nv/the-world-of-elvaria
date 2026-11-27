@@ -17,4 +17,5 @@ export * from './session/index.ts';
 export * from './stream/index.ts';
 export * from './structured/index.ts';
 export * from './tool/index.ts';
+export * from './train/index.ts';
 export * from './treasury/index.ts';

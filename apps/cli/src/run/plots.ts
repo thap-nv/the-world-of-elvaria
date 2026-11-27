@@ -21,6 +21,7 @@ import {
   trialInScratch,
   tryGuest,
   tryTerritory,
+  tryTrain,
 } from '@elvaria/runner-core';
 import type { ForgetWorktree, PlotManager, ProcessHost } from '@elvaria/runner-core';
 import type { Plots } from '@elvaria/steward';
@@ -130,7 +131,7 @@ const queueOf = (
 const patrolPlots = (
   kingdom: string,
   host: ProcessHost,
-): Pick<Plots, 'patrol' | 'patrolHead' | 'probe' | 'commitLinks' | 'changedPaths' | 'guest'> => ({
+): Pick<Plots, 'patrol' | 'patrolHead' | 'probe' | 'commitLinks' | 'changedPaths' | 'guest' | 'train'> => ({
   // (RC-04) On the commit patrolHead named, the checks the ledger carries passed without running.
   patrol: async (territory, { signal, scan, commit, carried }) => {
     const name = patrolIdOf(territory.id);
@@ -151,6 +152,8 @@ const patrolPlots = (
   changedPaths: (territory, from, to) => changedPathsOf({ territory, host, from, to }),
   // (CM-07) A guest of the merge queue: its head merged into origin's default branch, tried under `guest-<id>`.
   guest: (territory, pull, signal) => tryGuest({ kingdom, territory, host, signal, ...pull }),
+  // (CM-08) The delivery train of a `deferred` territory: its quests merged into origin's default branch, tried once.
+  train: (territory, board, signal) => tryTrain({ kingdom, territory, host, signal, ...board }),
 });
 
 /**

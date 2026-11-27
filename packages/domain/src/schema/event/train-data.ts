@@ -8,13 +8,14 @@
 import { z } from 'zod';
 
 import { DELIVERY_DETAIL_MAX_LENGTH } from '../constants.ts';
-import { QuestIdSchema, REGISTRY_ID_PATTERN, TerritoryIdSchema, ULID_PATTERN } from '../../core/ids.ts';
+import { QuestIdSchema, TerritoryIdSchema, ULID_PATTERN } from '../../core/ids.ts';
 import { NonEmptyStringSchema } from '../common.ts';
 import { TreeIdSchema } from './check-tree.ts';
 import {
   DeliveryEnqueuedDataSchema,
   DeliveryGuestMergedDataSchema,
   DeliveryGuestRefusedDataSchema,
+  RedCheckSchema,
 } from './guest-data.ts';
 import { CommitShaSchema } from './upgrade-data.ts';
 
@@ -61,12 +62,6 @@ const StepSchema = z.strictObject({
 
 const LeftSchema = z.strictObject({ quest: QuestIdSchema, reason: z.enum(TRAIN_LEAVINGS) });
 
-const RedSchema = z.strictObject({
-  id: z.string().regex(REGISTRY_ID_PATTERN).meta(describe('The red check, or `setup` for commands.setup.')),
-  timed_out: z.literal(true).optional(),
-  line: NonEmptyStringSchema.optional().meta(describe('The line of its log that says why, masked.')),
-});
-
 export const TrainRanDataSchema = z
   .strictObject({
     territory: TerritoryIdSchema,
@@ -89,7 +84,7 @@ export const TrainRanDataSchema = z
       .optional()
       .meta(describe('The quests that left the train while it was built (to a merge quest, PS-09b).')),
     checks: z
-      .array(RedSchema)
+      .array(RedCheckSchema)
       .min(1)
       .optional()
       .meta(describe('With outcome red: the red checks, or `setup`.')),

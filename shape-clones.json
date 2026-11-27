@@ -835,7 +835,7 @@
       "reason": "HL-05: the healer's opening walks the verifier's (parts, secrets, spawn, the quest's move, keep), each step already a helper of sessions/open.ts (partsOf, secretsLacking, spawnFor, keep); what stays alike is the move and the Running kept, whose event, edits, before and checks differ per opening. sessions/open.ts is at its 300 lines and sessions/ at its 30 files, so one opener gathers the assignee's, the verifier's and the healer's at once (AH-14), not one pair apart."
     },
     {
-      "a": "packages/runner-core/src/plot/territory-trial.ts",
+      "a": "packages/runner-core/src/plot/territory/trial-steps.ts",
       "b": "packages/steward/src/delegation/suspend.ts",
       "tokens": 60,
       "status": "kept",
