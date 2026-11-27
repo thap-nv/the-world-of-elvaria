@@ -30,6 +30,7 @@ export * from './event/schedule-data.ts';
 export * from './event/temple-data.ts';
 export * from './event/state-data.ts';
 export * from './event/upgrade-data.ts';
+export * from './event/wait-data.ts';
 export * from './json-schema.ts';
 export * from './kingdom.ts';
 export * from './program.ts';

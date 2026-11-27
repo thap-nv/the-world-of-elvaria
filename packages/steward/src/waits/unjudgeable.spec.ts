@@ -1,16 +1,16 @@
 // A submitted quest whose judge the roster does not have (P1-15): dispatch.verifier_same_family = different_model
 // (the default) and the only judge works on the assignee's own model. (PS-11) A quest tagged visual, whose ritual asks
-// for eyes, while no judge is of a tribe whose CLI reads images.
+// for eyes, while no judge is of a tribe whose CLI reads images. (P2-04) The wait is a `quest.judge_wait` line: a new
+// Steward reads it from the log and rings no bell again, and the digest lists it from there.
 import { TribeIdSchema } from '@elvaria/domain';
+import type { QuestId } from '@elvaria/domain';
+import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, characterOf, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import { statusIs } from '../__fixtures__/review.ts';
 import { capturingPlots } from '../__fixtures__/screens.ts';
-import { createForgeBook } from '../forge/book.ts';
-import { createPatrolBook } from '../patrol/book.ts';
-import { createDelegationBook } from '../delegation/book.ts';
-import { noticesOf } from '../schedule/digest.ts';
+import { noticesOfWorld } from '../__fixtures__/notices.ts';
 import { loadWorld } from '../tick/world.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Steward } from '../types.ts';
@@ -40,12 +40,18 @@ async function open() {
 
 const rung = (kingdom: Bench) => kingdom.notices.filter(({ kind }) => kind === 'unjudgeable');
 
+/** What the `quest.judge_wait` lines of the log say about `quest`, in order. */
+const waitLines = async (kingdom: Bench, quest: QuestId) =>
+  (await openEventLog(kingdom.root).read()).events
+    .filter((event) => event.type === 'quest.judge_wait' && event.quest === quest)
+    .map(({ data }) => data);
+
 describe('a submitted quest no judge of the roster may take', () => {
-  it('rings once while it waits, then goes on with the judge the owner summons', async () => {
-    const { kingdom, steward } = await open();
+  it('rings once while it waits, also across a restart, then goes on with the judge the owner summons', async () => {
+    const { kingdom, steward: first } = await open();
     await kingdom.command('create_quest', questPayload('Nobody judges'));
-    await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Nobody judges', 'review'));
-    for (let tick = 0; tick < 3; tick += 1) await steward.tick();
+    await tickUntil(first, kingdom.clock, statusIs(kingdom, 'Nobody judges', 'review'));
+    for (let tick = 0; tick < 3; tick += 1) await first.tick();
     const quest = await kingdom.quest('Nobody judges');
     expect(quest).toMatchObject({ status: 'review', verifier: null });
     expect(rung(kingdom)).toEqual([
@@ -56,12 +62,23 @@ describe('a submitted quest no judge of the roster may take', () => {
         model: 'claude-sonnet-5-5',
       },
     ]);
+    expect(await waitLines(kingdom, quest.id)).toEqual([{ reason: 'unjudgeable' }]);
+    // A new Steward reads the wait from the log: no bell, no line.
+    await first.stop();
+    const steward = kingdom.steward();
+    running = steward;
+    expect(await steward.start({ loop: false })).toEqual({ ok: true });
+    for (let tick = 0; tick < 3; tick += 1) await steward.tick();
+    expect(rung(kingdom)).toHaveLength(1);
+    expect(await waitLines(kingdom, quest.id)).toEqual([{ reason: 'unjudgeable' }]);
     // The owner summons a judge on another model: the review goes on, and the bell has nothing more to say.
     await kingdom.store.characters.write(
       characterOf({ id: 'sable', cls: 'judge', model: 'claude-opus-5-5' }),
     );
     await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Nobody judges', 'done'));
     expect(rung(kingdom)).toHaveLength(1);
+    // The wait ended while the quest was still in review, before its judge's session: a line says so.
+    expect(await waitLines(kingdom, quest.id)).toEqual([{ reason: 'unjudgeable' }, { reason: null }]);
   });
 });
 
@@ -100,18 +117,10 @@ describe('a submitted quest that needs a judge who reads images (PS-11)', () => 
     ]);
     const world = await loadWorld(kingdom.store, { warn: () => undefined });
     if (world === undefined) throw new Error('fixture: world');
-    const versions = { asked: new Map(), told: new Map(), holds: [] };
-    const forge = createForgeBook();
-    const state = {
-      reported: new Map(),
-      unjudged: new Set([quest.id]),
-      judgeWaits: new Map(),
-      versions,
-      forge,
-      patrol: createPatrolBook(),
-      delegation: createDelegationBook(),
-    };
-    expect(noticesOf(world, state).unjudgeable).toEqual([{ quest: quest.id, class: 'judge', vision: true }]);
+    const { events } = await openEventLog(kingdom.root).read();
+    expect(noticesOfWorld(world, events).unjudgeable).toEqual([
+      { quest: quest.id, class: 'judge', vision: true },
+    ]);
     // The owner summons a judge of the tribe that reads images: the review goes on with it.
     await kingdom.store.characters.write(
       characterOf({ id: 'orin', cls: 'judge', tribe: 'gemini', model: 'gemini-4-argon-medium' }),

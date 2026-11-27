@@ -22,7 +22,10 @@ export type JobMode = 'in_tick' | 'off_tick';
 export interface JobView {
   /** The kingdom's local day it runs for, `yyyy-mm-dd`. */
   readonly day: string;
-  /** What the Steward knows that no file holds, as the tick that started the job left it. */
+  /**
+   * The tribes held by their CLI as the tick that started the job left them (`tribes_held`), which a job that opens a
+   * session waits on. (P2-04) The digest builds every notice from the files and the log instead (stewardNoticesOf).
+   */
   readonly notices: StewardNotices;
   /**
    * The tribes a session of this Steward runs on now (PS-03b): a job whose session lies outside the tribes' slots, as

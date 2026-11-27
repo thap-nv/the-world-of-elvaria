@@ -4,8 +4,7 @@
 // of the class, give it to a character its party bars (P1-37 (ii): the owner's reassign is not barred), or cancel it.
 import { CHARACTER_LEVEL_MAX, RANKS, canTake, rankCeilingOf } from '@elvaria/domain';
 import { readUnclaimable } from '@elvaria/steward';
-import type { Quest, QuestId, Rank, Registry } from '@elvaria/domain';
-import type { UnclaimableNote } from '@elvaria/steward';
+import type { Quest, QuestId, Rank, Registry, UnclaimableNote } from '@elvaria/domain';
 
 import { nameIn } from '../labels.ts';
 import type { KingdomContext } from '../kingdom-context.ts';

@@ -1,8 +1,7 @@
 // Read-only board: snapshot files remain authoritative; the log supplies the mana readings.
-import { attentionQueue } from '@elvaria/domain';
+import { attentionQueue, worldStateWithManaOf } from '@elvaria/domain';
 import type { Event, Instant, WorldSource } from '@elvaria/domain';
 import type { Translate } from '@elvaria/i18n';
-import { digestStateOf } from '@elvaria/steward';
 
 import { digestMarkdown } from '../digest/markdown.ts';
 import { QUEST_STATUS_LABEL } from '../labels.ts';
@@ -33,7 +32,7 @@ export function watchTable(
             t(QUEST_STATUS_LABEL[quest.status]),
           ]),
         ]);
-  const items = attentionQueue(digestStateOf({ ...source, memos: source.memos ?? [] }, events), now);
+  const items = attentionQueue(worldStateWithManaOf(source, events), now);
   if (items.length === 0) return board.join('\n');
   const attention = digestMarkdown(t, { day: '', name: source.kingdom.name, items });
   return [...board, '', t('cli.watch.attention'), ...attention.trimEnd().split('\n').slice(2)].join('\n');

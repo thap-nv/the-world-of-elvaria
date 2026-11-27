@@ -1,6 +1,6 @@
 // What a Steward holds while it runs and keeps between ticks (implementation-plan §3.1). Apart from steward.ts, which
 // creates it, since PS-03: the tick (tick.ts) and the loop (loop.ts) work on it too.
-import type { JudgeWait, QuestId, StaminaMark, TribeId, TribeLimits, ZonedTime } from '@elvaria/domain';
+import type { StaminaMark, TribeId, TribeLimits, ZonedTime } from '@elvaria/domain';
 import type { PromptTemplates } from '@elvaria/runner-core';
 import type { HeldLock } from '@elvaria/store';
 
@@ -20,6 +20,7 @@ import type { Restart } from './restart.ts';
 import type { Scheduler } from '../schedule/scheduler.ts';
 import type { Sessions } from '../sessions/running.ts';
 import type { VersionBook } from './tribe-versions.ts';
+import type { JudgeWaitBook } from '../waits/judge-waits.ts';
 import type { Reported } from '../waits/unclaimable.ts';
 
 export interface Held {
@@ -45,10 +46,11 @@ export interface State {
   reported: Reported;
   /** Aborted by stop(): a tick it stops in starts no other script. */
   stopping: AbortController;
-  /** Submitted quests the bell already named for having no judge in the roster (unjudgeable.ts, P1-15). */
-  readonly unjudged: Set<QuestId>;
-  /** Submitted quests the bell named for judges all held by their mana, with their gauges (judge-waits.ts, PS-03). */
-  readonly judgeWaits: Map<QuestId, JudgeWait>;
+  /**
+   * Quests in review waiting for a judge, none in the roster (P1-15) or all out of mana (PS-03), as the log says them
+   * (judge-waits.ts, P2-04), and what the bell told of them: rebuilt from it at start.
+   */
+  readonly judgeWaits: JudgeWaitBook;
   /** Sessions already given their soft-ceiling reminder (sessions/wrap-up.ts): once per session. */
   readonly wrapped: Set<string>;
   /** What the last `agent.session.usage` line of each held session said (sessions/usage.ts, PS-28). */

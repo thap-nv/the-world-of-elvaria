@@ -1,17 +1,16 @@
 // "Quest không ai nhận được" (implementation-plan §3.1): planTick names the open quests nobody can take; the
 // Steward tells each once — a `quest.unclaimable` line and the bell when the reason appears or changes, a line with
 // `reason: null` when it is gone while the quest is still open — and keeps what it told in
-// `.state/unclaimable.json` for `elvaria quest list` and `show`. The file is rebuilt from the log at every start.
-import { QuestUnclaimableDataSchema, isEventOf, questFinished } from '@elvaria/domain';
+// `.state/unclaimable.json` for `elvaria quest list` and `show`. The file is rebuilt from the log at every start, as
+// `elvaria digest` reads the notices from it (unclaimableOf, P2-04).
+import { QuestUnclaimableDataSchema, questFinished } from '@elvaria/domain';
 import { inKingdom, readTextFile, writeFileAtomic } from '@elvaria/store';
-import type { EventData, Quest, QuestId, Unclaimable } from '@elvaria/domain';
-import type { Event } from '@elvaria/domain';
+import type { Quest, QuestId, Unclaimable, UnclaimableNote } from '@elvaria/domain';
 
 import { noticeQuest, ring } from '../context.ts';
 import { STEWARD } from '../quest/record.ts';
 import type { Context } from '../context.ts';
 
-export type UnclaimableNote = EventData<'quest.unclaimable'>;
 /** The notices in force: one per open quest, never with `reason: null`. */
 export type Reported = Map<QuestId, UnclaimableNote>;
 
@@ -19,17 +18,6 @@ export type Reported = Map<QuestId, UnclaimableNote>;
 export const UNCLAIMABLE_FILE = '.state/unclaimable.json';
 const FILE_VERSION = 1;
 const JSON_INDENT = 2;
-
-/** What the log last said about each quest. */
-export function reportedFromLog(events: readonly Event[]): Reported {
-  const reported: Reported = new Map();
-  for (const event of events) {
-    if (!isEventOf(event, 'quest.unclaimable') || event.quest === undefined) continue;
-    if (event.data.reason === null) reported.delete(event.quest);
-    else reported.set(event.quest, event.data);
-  }
-  return reported;
-}
 
 /** The notices as the Steward last wrote them; empty when the file is missing or unreadable. */
 export async function readUnclaimable(root: string): Promise<Reported> {

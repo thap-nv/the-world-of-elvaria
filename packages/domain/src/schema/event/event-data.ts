@@ -25,6 +25,7 @@ import {
   DeliveryPushedDataSchema,
 } from './delivery-data.ts';
 import { MERGE_QUEUE_EVENT_DATA } from './train-data.ts';
+import { WAIT_EVENT_DATA } from './wait-data.ts';
 import {
   MemoClosedDataSchema,
   MemoDeliveredDataSchema,
@@ -201,6 +202,7 @@ export const EVENT_DATA_SCHEMAS = {
   'quest.delivered': QuestChangeDataSchema,
   'quest.edited': QuestChangeDataSchema,
   'quest.unclaimable': QuestUnclaimableDataSchema,
+  ...WAIT_EVENT_DATA,
   'agent.tool': AgentToolDataSchema,
   'agent.tool.blocked': AgentToolBlockedDataSchema,
   'agent.session.start': AgentSessionStartDataSchema,

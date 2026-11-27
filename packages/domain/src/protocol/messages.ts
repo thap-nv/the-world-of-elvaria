@@ -1,12 +1,14 @@
 // The WebSocket protocol between the herald and its clients, the 3D world and the lite phone client
-// (implementation-plan §8, stage 2): `snapshot` and `events` from the herald, `command` from a client, and the
-// herald's `accepted` or `refused` for each command. It lives in the domain because both ends import it, the browser
-// included (ADR 0002). (P2-01, ADR 0031 item 5) A client sends only what it asks for, `kind` and `payload`: the
-// herald writes the envelope (`id`, `ts`, `source`, `device`), so no client can claim another source or device.
+// (implementation-plan §8, stage 2): `snapshot` and `events` from the herald, `command` from a client, the
+// herald's `accepted` or `refused` for each command, and (P2-04) the owner's attention queue in `attention`. It
+// lives in the domain because both ends import it, the browser included (ADR 0002). (P2-01, ADR 0031 item 5) A client
+// sends only what it asks for, `kind` and `payload`: the herald writes the envelope (`id`, `ts`, `source`,
+// `device`), so no client can claim another source or device.
 import { z } from 'zod';
 
 import { REGISTRY_ID_PATTERN, UlidSchema } from '../core/ids.ts';
 import { EventSchema } from '../schema/event/event.ts';
+import { AttentionItemSchema } from '../world/attention-item.ts';
 import { WorldStateSchema } from '../world/world-state.ts';
 
 /** The whole state: the first message of a connection, and again whenever the herald rebuilt it. */
@@ -46,20 +48,27 @@ export const RefusedMessageSchema = z.strictObject({
   reason: z.string().regex(REGISTRY_ID_PATTERN),
 });
 
+/**
+ * (P2-04) What waits for the owner (attentionOf over the files and the log), whole: the herald sends it after a batch of
+ * events when it changed, a limited device only the items of its territories (scopeAttention).
+ */
+export const AttentionMessageSchema = z.strictObject({
+  type: z.literal('attention'),
+  items: z.array(AttentionItemSchema),
+});
+
 /** Herald → world and lite. */
 export const ServerMessageSchema = z.discriminatedUnion('type', [
   SnapshotMessageSchema,
   EventsMessageSchema,
   AcceptedMessageSchema,
   RefusedMessageSchema,
+  AttentionMessageSchema,
 ]);
 /** World and lite → herald. */
 export const ClientMessageSchema = z.discriminatedUnion('type', [CommandMessageSchema]);
 export const ProtocolMessageSchema = z.discriminatedUnion('type', [
-  SnapshotMessageSchema,
-  EventsMessageSchema,
-  AcceptedMessageSchema,
-  RefusedMessageSchema,
+  ...ServerMessageSchema.options,
   CommandMessageSchema,
 ]);
 

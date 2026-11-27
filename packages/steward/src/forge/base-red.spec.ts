@@ -16,10 +16,7 @@ import { forgeBench } from '../__fixtures__/forge-bench.ts';
 import { git, gitPlots } from '../__fixtures__/git-plots.ts';
 import { questPayload, settled, tickUntil } from '../__fixtures__/kingdom.ts';
 import { QUEUE_FILES, QUEUE_TERRITORY, sourceWithIndex, statusOf } from '../__fixtures__/queue.ts';
-import { createForgeBook } from './book.ts';
-import { createPatrolBook, recoverPatrol } from '../patrol/book.ts';
-import { createDelegationBook } from '../delegation/book.ts';
-import { noticesOf } from '../schedule/digest.ts';
+import { noticesOfWorld } from '../__fixtures__/notices.ts';
 import { loadWorld } from '../tick/world.ts';
 import type { Leaves } from '../__fixtures__/deliver.ts';
 import type { ForgeBench } from '../__fixtures__/forge-bench.ts';
@@ -117,17 +114,7 @@ const triggers = async (bench: ForgeBench) =>
 async function holdsOf(bench: ForgeBench) {
   const world = await loadWorld(bench.kingdom.store, { warn: () => undefined });
   if (world === undefined) throw new Error('fixture: world');
-  const patrol = createPatrolBook();
-  recoverPatrol(patrol, (await openEventLog(bench.kingdom.root).read()).events);
-  const versions = { asked: new Map(), told: new Map(), holds: [] };
-  const books = { forge: createForgeBook(), patrol, delegation: createDelegationBook() };
-  return noticesOf(world, {
-    reported: new Map(),
-    unjudged: new Set(),
-    judgeWaits: new Map(),
-    versions,
-    ...books,
-  }).base_holds;
+  return noticesOfWorld(world, (await openEventLog(bench.kingdom.root).read()).events).base_holds;
 }
 
 const draftOf = async (bench: ForgeBench): Promise<Quest | undefined> =>

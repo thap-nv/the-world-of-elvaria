@@ -48,6 +48,8 @@
   no mana; at most once a minute a tribe, `VERSION_ASK_MS`), so `planTick` holds a tribe whose CLI is gone or says
   another version than the one its last real `tribe check` passed on. The bell `tribe_held` rings once per hold and
   version, and the digest lists the hold. A CLI that does not answer holds nothing; without the port nothing is held.
+  (P2-04) Each hold is a `tribe.held` line when it appears or changes, `hold: null` when it ends; a new Steward
+  reads what it told from the log (`recoverVersions`) and rings none again.
 - Runs the machine's long work outside the tick (P1-25, `src/background/background.ts`): a submitted quest's checks and a
   script-tier run start in a tick and go on while later ticks apply the inbox, record the sessions' ends and give
   out work; `planTick` sees which quests have work running and which have checks ready (`BackgroundWork`). The
@@ -121,15 +123,19 @@
   in-tick job waits for the day's off-tick jobs of an earlier or equal hour to end, run or not yet ready (the
   domain's `awaitedJob`), and to have ended before the last tick's step, so the inbox commands they sent are applied:
   the digest carries the triage's advice however late the Steward started. The first job is the digest (`digestJob`, given
-  `StewardDeps.digest`): the domain's `attentionQueue` over the files, the open memos, mana as the log last read it
-  (`digestStateOf`) and the Steward's own notices (`noticesOf`: unclaimable, unjudgeable, judges out of mana, tribes
-  held by their CLI); the
+  `StewardDeps.digest`): the domain's `attentionOf` over the files, the open memos, the verdicts, the registry and the
+  log (P2-04: what `elvaria digest` and the herald list from them too), with the branches its forge book found with
+  nothing to push and a newer build (`deps.upgradeOffer`) as the only notices of its own; the
   `Digest` port of the composition root words it and writes `digest/<day>.md`, then one `digest.written` line and
   one bell (`digest`). No model, no mana.
-- Rings once for a submitted quest whose judges are all held by their mana (PS-03, (d) of P1-50;
-  `src/waits/judge-waits.ts`): `planTick`'s `judge_waits` name it with the pools that hold its judges and their reset when
-  a reading says; the bell `judge_mana` rings once per quest, as for a quest without a judge (`unjudgeable.ts`), and
-  the digest lists it. Who judges, and when, is unchanged: the judge opens once a gauge reopens (ADR 0008).
+- Tells a submitted quest that waits for a judge (`src/waits/judge-waits.ts`): none in the roster (`unjudgeable`,
+  P1-15: `different_model` and no judge of the kind outside its doers on another model; PS-11: `vision` when the
+  quest's ritual asks for eyes), or every judge held by its mana (`judge_mana`, PS-03, (d) of P1-50, with the pools
+  that hold them and their reset when a reading says). (P2-04) A `quest.judge_wait` line when a wait appears or
+  changes, `reason: null` when it is gone while the quest is still in review; the bell rings when the reason does,
+  or after a judge's session, not when a wait pauses and comes back as it was (its checks run again after a
+  restart). A new Steward rebuilds both from the log (`recoverJudgeWaits`). Who judges, and when, is unchanged: the
+  judge opens once a gauge reopens (ADR 0008).
 - Sets aside checks that failed because of their environment (P1-54, `src/review/environment.ts`): a failing check
   whose log shows a line of the territory's `environment_errors` (Docker not running, a container gone) gets no
   judge, so its assignee keeps its level and no flake quest opens; the bell says so once per run (`environment`
@@ -547,9 +553,7 @@
   composition root says the pinned build's repo has one; read as the digest is made.
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with
   `reason: null`, and keeps the notices in `.state/unclaimable.json` (`readUnclaimable`) for `elvaria quest list`
-  and `show`. Rings once when a submitted quest waits for a judge the roster does not have (`unjudgeable`,
-  P1-15: `different_model` and no judge of the kind outside its doers on another model; PS-11: `vision` when the
-  quest's ritual asks for eyes, and so does the digest's notice); no file, no event.
+  and `show`, rebuilt from the log at start (the domain's `unclaimableOf`).
 - Builds the territories' code graphs outside the tick (PS-21, ADR 0029, `src/background/graph-builds.ts`) through the optional
   `deps.graphs` port (runner-core's `codeGraphsOf`): for each territory with `code_graph` on, the default branch's tip
   every tick and a quest's base commit when its session opens; one build per territory, the latest commit next,
@@ -780,8 +784,10 @@ quest keeps the exclusive lock, and gets no exclusive check's command.
 `digest.spec.ts` (PS-03): the digest is written once a day at `schedule.digest.at`, rung once, and not again when
 the clock goes back and forth or a new Steward starts the same day; it lists the quests nobody can take and the open
 memos in their groups with their commands; no runner is asked; a port that throws warns once and tries again at the
-next start. `judge-waits.spec.ts` (PS-03): a quest whose only judge's account is spent rings `judge_mana` once, is
-in the digest with the pool asleep, and is judged by that judge once the window resets. `schedule.spec.ts` (PS-03):
+next start. `judge-waits.spec.ts` (PS-03): a quest whose only judge's account is spent rings `judge_mana` once, also
+across a restart (P2-04), is in the digest with the pool asleep, and is judged by that judge once the window resets;
+`unjudgeable.spec.ts` the same for a quest no judge may take. `digest-attention.spec.ts` (P2-04): the digest lists
+what the domain's `attentionOf` lists from the same files and log. `schedule.spec.ts` (PS-03):
 jobs outside the tick run one at a time without holding it, write `schedule.ran` when they end, stop unrecorded with
 the Steward and run again at the next start, and warn when they throw.
 `forge/scan.spec.ts` (PS-08c) holds the scan to redact's patterns: a treasury value or a specific shape is a secret,

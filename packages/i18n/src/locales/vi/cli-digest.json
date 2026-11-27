@@ -85,6 +85,6 @@
     "cli.digest.advice.read_letters_then_release": "Đọc thư của Thầy tu trước (elvaria memo show <thư>) và làm điều thư xin (một check, một model mạnh hơn), rồi thả nhân vật.",
     "cli.digest.advice.add_monk": "Thêm một nhân vật nghề Thầy tu; nếu Đền đang tắt thì bật thêm trong kingdom.json: \"schedule\": {\"temple\": {\"enabled\": true}}. Mỗi lần Đền chạy tốn mana.",
     "cli.digest.advice.enable_temple": "Bật trong kingdom.json: \"schedule\": {\"temple\": {\"enabled\": true}}; Nhiếp chính đọc lại ở nhịp kế. Mỗi lần Đền chạy tốn mana: nhiều nhất một phiên mỗi ngày, cộng một phiên cho mỗi lần đình chỉ.",
-    "cli.digest.live_note": "Dựng lúc này từ file và sổ sự kiện. Nhiệm vụ chờ người chấm, và tộc bị giữ vì CLI (elvaria doctor cũng nêu), chỉ có trong bản tấu Nhiếp chính viết vào digest/."
+    "cli.digest.live_note": "Dựng lúc này từ file và sổ sự kiện; bản tấu Nhiếp chính viết vào digest/ nêu cùng danh sách."
   }
 }

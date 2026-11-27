@@ -3,11 +3,12 @@ import { describe, expect, it } from 'vitest';
 import events from '../../examples/event.json' with { type: 'json' };
 import { EVENT_VERSION, EventSchema } from '../schema/event/event.ts';
 import { CAMPAIGNS, CHARACTERS, KINGDOM, QUESTS, TERRITORIES } from '../world/__fixtures__/examples.ts';
+import { itemOf } from '../world/attention-notices.ts';
 import { worldStateOf } from '../world/world-state.ts';
 import { decodeClientMessage, decodeServerMessage, encodeMessage } from './codec.ts';
 import { commandOf } from './envelope.ts';
 import { ProtocolMessageSchema } from './messages.ts';
-import type { DeviceId, Ulid } from '../core/ids.ts';
+import type { DeviceId, QuestId, Ulid } from '../core/ids.ts';
 import type { CommandMessage, ProtocolMessage } from './messages.ts';
 
 const STATE = worldStateOf({
@@ -33,6 +34,17 @@ const ACCEPTED: ProtocolMessage = {
   command_id: '01JCFB7Q2R8S4T6V9W3X5Y1Z0A' as Ulid,
 };
 const REFUSED: ProtocolMessage = { type: 'refused', ref: 'seal-1', reason: 'passkey_required' };
+// P2-04: the owner's attention queue, as the herald sends it after a batch of events.
+const ATTENTION: ProtocolMessage = {
+  type: 'attention',
+  items: [
+    itemOf('awaiting_seal', {
+      quest: 'q_20261106_7k3m2a' as QuestId,
+      title: 'Sửa trang "đăng nhập"',
+      rank: 'B',
+    }),
+  ],
+};
 
 const ENVELOPE = {
   id: '01JCFB7Q2R8S4T6V9W3X5Y1Z0A' as Ulid,
@@ -42,14 +54,14 @@ const ENVELOPE = {
 } as const;
 
 describe('the WebSocket protocol', () => {
-  it('has the messages of stage 2: snapshot, events, accepted and refused, and a command', () => {
-    for (const message of [SNAPSHOT, LINES, ACCEPTED, REFUSED, SEAL]) {
+  it('has the messages of stage 2: snapshot, events, accepted, refused, attention, and a command', () => {
+    for (const message of [SNAPSHOT, LINES, ACCEPTED, REFUSED, ATTENTION, SEAL]) {
       expect(ProtocolMessageSchema.parse(message)).toEqual(message);
     }
   });
 
   it('carries a snapshot, log lines and the answers to a command from the herald to a client unchanged', () => {
-    for (const message of [SNAPSHOT, LINES, ACCEPTED, REFUSED])
+    for (const message of [SNAPSHOT, LINES, ACCEPTED, REFUSED, ATTENTION])
       expect(decodeServerMessage(encodeMessage(message))).toEqual({ ok: true, value: message });
   });
 
@@ -63,7 +75,7 @@ describe('the WebSocket protocol', () => {
         ok: false,
         error: { code: 'invalid_message' },
       });
-    for (const message of [SNAPSHOT, ACCEPTED, REFUSED])
+    for (const message of [SNAPSHOT, ACCEPTED, REFUSED, ATTENTION])
       expect(decodeClientMessage(encodeMessage(message))).toMatchObject({
         ok: false,
         error: { code: 'invalid_message' },

@@ -318,7 +318,9 @@ count}` counted in the list's order, never stored: `siblingRootOf`, `siblingsOf`
   changes what the world shows carries the view after it (`questViewOf`, ...; `questLogTypeOf` names quest
   lines). `snapshotOf` / `readSnapshot` version the snapshot; `src/protocol/` is the herald's WebSocket protocol:
   `snapshot`, `events`, `accepted`, `refused` from the herald, `command` (`ref`, `kind`, `payload`) from a client, and
-  `commandOf`, the envelope the herald writes around it (ADR 0031 item 5, P2-01).
+  `commandOf`, the envelope the herald writes around it (ADR 0031 item 5, P2-01); (P2-04) `attention`, the owner's
+  queue as `AttentionItemSchema` (`src/world/attention-item.ts`) checks it, of which a limited device receives the
+  items of its territories (`scopeAttention`, `src/device/`).
   A `quest.infirmary` line also says why in parts (P1-32): `trip` (`INFIRMARY_TRIPS`: the breaker trips,
   `no_verdict` and `partial_verdicts` for a stalled review, `max_attempts`, `script_broken`, `script_usage`,
   `script_fail`) and `detail` (`InfirmaryDetailSchema`; `paths`
@@ -403,6 +405,14 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
 <tribe>`; A1b of the lessons of 2026-11-13). The world state holds the
   open memos since PS-03 (`memos`, `memoViewOf`; `memo.*` lines reduce into it; `WORLD_STATE_VERSION` 2). A memo the
   Chancellor's triage sent up carries its advice (`escalated`, PS-03b) and lists as `memo_escalated`.
+- Builds that queue from the files and the log alone (`src/world/steward-notices.ts`, P2-04), so the Steward's digest,
+  `elvaria digest` and the herald give the same list: `worldStateWithManaOf` (the files' state with the log's mana
+  lines), `stewardNoticesOf` (every notice, from the lines that say them; what only the caller knows, the branches the
+  Steward found with nothing to push and a newer build, comes in `NoticeExtras`) and `attentionOf`, both together. The
+  waits only the Steward's memory held before have lines (`src/schema/event/wait-data.ts`): `quest.judge_wait`
+  (`unjudgeable`, `judge_mana` with its gauges, `null` when gone) and `tribe.held` (`hold`, `null` when let go);
+  `unclaimableOf`, `judgeWaitsOf` and `tribeHoldsOf` (`src/world/logged-waits.ts`) fold them, a quest's notice also
+  ending at a later line that moves it, and the Steward rebuilds its books from them at start.
 - Decides the delegation of the royal seal (`src/delegation/seal.ts`, PS-08b, ADR 0023): `kingdom.delegation.seal`
   (`SealDelegationSchema`: `max_rank`, `kinds`, `max_diff_lines`, default 400), `sealDelegated` (a new quest whose
   command says nothing of the seal, not of a party, of a listed kind whose `seal_default` is true, within `max_rank`, on

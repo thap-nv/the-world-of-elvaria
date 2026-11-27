@@ -68,6 +68,10 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
     best_character: 'thorn',
     best_level: 5,
   },
+  'quest.judge_wait': {
+    reason: 'judge_mana',
+    gauges: [{ tribe: 'claude', pool: 'default', resets_at: '2026-11-27T22:00:00+07:00' }],
+  },
   'character.created': CHARACTER_CHANGE,
   'character.sleep': CHARACTER_CHANGE,
   'character.wake': CHARACTER_CHANGE,
@@ -241,6 +245,10 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'upgrade.switched': { from: null, to: SHA_NEW },
   'upgrade.rolled_back': { from: SHA_NEW, to: SHA_OLD },
   'upgrade.failed': { to: SHA_NEW, step: 'doctor', reason: 'exit:1' },
+  'tribe.held': {
+    tribe: 'gemini',
+    hold: { path: 'C:/Users/owner/AppData/Local/agy/agy.exe', version: '1.5.7', checked: '1.5.6' },
+  },
   'tribe.checked': {
     tribe: 'gemini',
     model: 'gemini-3.8-flash-high',

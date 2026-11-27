@@ -25,6 +25,8 @@ export const EVENT_TYPES = [
   'quest.delivered',
   'quest.edited',
   'quest.unclaimable',
+  // P2-04: a quest in review waits for a judge (none in the roster, or all out of mana), and when it no longer does.
+  'quest.judge_wait',
   'agent.session.start',
   'agent.session.end',
   'agent.session.wrap_up',
@@ -116,6 +118,8 @@ export const EVENT_TYPES = [
   'upgrade.failed',
   // Run (221) (b): `elvaria tribe check` against the real CLI says what its sessions spent, for the mana estimate.
   'tribe.checked',
+  // P2-04: the Steward holds a tribe whose CLI changed or is gone, and lets it go again.
+  'tribe.held',
   // fix/run-221-followups: a session of the Chancellor's office says what it spent, for the mana estimate.
   'chancellor.answered',
 ] as const;

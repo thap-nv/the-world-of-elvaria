@@ -112,6 +112,9 @@ describe('replaying a fake day', () => {
       'quest.healing',
       'quest.edited',
       'quest.unclaimable',
+      // P2-04: a quest waiting for a judge and a tribe held by its CLI, notices the digest reads from the log.
+      'quest.judge_wait',
+      'tribe.held',
       'mana.warning',
       'character.meditate',
       'character.suspend',

@@ -1,6 +1,6 @@
 // One tick of the Steward (implementation-plan §3.1), and what the log already knows before the first one. Apart from
 // steward.ts since PS-03, which adds the scheduled jobs to both: they run at the end of the tick (§3.16.3).
-import { baseRedOf, planTick, sealPolicyOf } from '@elvaria/domain';
+import { baseRedOf, planTick, sealPolicyOf, unclaimableOf } from '@elvaria/domain';
 import type { BackgroundWork, Instant, KingdomSnapshot, ZonedTime } from '@elvaria/domain';
 
 import { wantedIn } from '../background/background.ts';
@@ -13,12 +13,11 @@ import { recordStreak, recoverStreak } from '../temple/streak-book.ts';
 import { applyInbox } from '../inbox/apply.ts';
 import { asleepFromLog, levelsFromLog, outsideFromLog, warnedFromLog } from '../mana/book.ts';
 import { manaStep } from '../mana/step.ts';
-import { noteJudgeWaits } from '../waits/judge-waits.ts';
+import { noteJudgeWaits, recoverJudgeWaits } from '../waits/judge-waits.ts';
 import { createRecorder } from '../quest/record.ts';
 import { restartFromLog, stallLeftReviews } from './restart.ts';
 import { reviewPromptsOf } from '../review/prompt-size.ts';
 import { claimPromptsOf } from '../sessions/claim-prompt-size.ts';
-import { noticesOf } from '../schedule/digest.ts';
 import { recordEnd } from '../sessions/ended.ts';
 import { wantTipGraphs } from '../sessions/graph.ts';
 import { maskFinished } from '../sessions/secrets.ts';
@@ -26,9 +25,8 @@ import { reapLost } from '../sessions/settle.ts';
 import { heldReadingsOf, noteStamina } from '../sessions/usage.ts';
 import { noteWrapUps } from '../sessions/wrap-up.ts';
 import { carryOut } from './steps.ts';
-import { versionStep } from './tribe-versions.ts';
-import { noteUnclaimable, reportedFromLog, writeUnclaimable } from '../waits/unclaimable.ts';
-import { noteUnjudgeable } from '../waits/unjudgeable.ts';
+import { recoverVersions, versionStep } from './tribe-versions.ts';
+import { noteUnclaimable, writeUnclaimable } from '../waits/unclaimable.ts';
 import { loadWorld, modelsOf, snapshotOf } from './world.ts';
 import type { Context, Counts } from '../context.ts';
 import type { Held, State } from './steward-state.ts';
@@ -43,7 +41,7 @@ const reportOf = (counts: Counts): TickReport => ({
 /**
  * What the log already knows: the commands answered, the notices in force (§3.1), the pools asleep and what tribe
  * checks spent (§3.5, run (221) (b)), the stalled reviews the owner retried (P1-44), and (PS-08g) the territories
- * whose delegation of the seal is suspended.
+ * whose delegation of the seal is suspended; (P2-04) the quests waiting for a judge and the tribes held by their CLI.
  */
 export async function recover(deps: StewardDeps, state: State): Promise<void> {
   const log = await deps.events.read();
@@ -53,7 +51,10 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
     const id = (event.data as { command_id?: unknown }).command_id;
     if (typeof id === 'string') state.handled.add(id);
   }
-  state.reported = reportedFromLog(log.events);
+  state.reported = unclaimableOf(log.events);
+  // P2-04: the waits for a judge and the tribes held, as the log says them, so the first tick rings none of them again.
+  recoverJudgeWaits(state.judgeWaits, log.events);
+  recoverVersions(state.versions, log.events);
   await writeUnclaimable(deps.store.root, state.reported);
   state.mana.asleep = asleepFromLog(log.events);
   state.mana.warned = warnedFromLog(log.events);
@@ -133,8 +134,7 @@ async function planAndAct(
   const plan = planTick(snapshot, now);
   if (await noteUnclaimable(ctx, state.reported, plan.unclaimable))
     await writeUnclaimable(ctx.root, state.reported);
-  await noteUnjudgeable(ctx, state.unjudged, plan.unjudgeable);
-  await noteJudgeWaits(ctx, state.judgeWaits, plan.judge_waits);
+  await noteJudgeWaits(ctx, state.judgeWaits, plan);
   await carryOut(ctx, plan);
   patrolMoved(ctx, snapshot.base_red ?? []);
   await patrolMerged(ctx, snapshot);
@@ -212,7 +212,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   await planAndAct(ctx, state, await snapshotFor(ctx, state, held.zone), now);
   // The pids of the sessions opened or ended in this tick are on disk before the next one (sessions/pids.ts).
   await sessions.saved();
-  await state.scheduler.step(ctx, held.zone, noticesOf(world, state));
+  await state.scheduler.step(ctx, held.zone, { tribes_held: state.versions.holds });
   return reportOf(counts);
 }
 
