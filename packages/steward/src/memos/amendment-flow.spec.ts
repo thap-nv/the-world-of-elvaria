@@ -151,7 +151,7 @@ describe('a submit the Steward could not commit, its letter holding an amendment
           Promise.resolve({
             status: 'refused',
             detail: 'it does not apply',
-            reason: { code: 'breaker:patch_not_apply', params: { file: 'elvaria.patch' } },
+            reason: { code: 'breaker:patch_conflict', params: { file: 'elvaria.patch' } },
           }),
       }),
       patchPaths: ['.husky/**'],

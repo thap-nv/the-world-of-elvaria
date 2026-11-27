@@ -78,15 +78,15 @@ export function headerPaths(patch: string): string[] {
 const DRIVE = /^[a-z]:/i;
 
 /** Why `name` is out of the patch's reach whatever the globs say: absolute, outside the plot, git's own folder. */
-function outOfReach(name: string): 'patch_absolute' | 'patch_outside_plot' | 'patch_git' | undefined {
+function outOfReach(name: string): 'patch_absolute' | 'patch_outside_plot' | 'patch_git_folder' | undefined {
   if (name.startsWith('/') || DRIVE.test(name)) return 'patch_absolute';
   if (name.split('/').includes('..')) return 'patch_outside_plot';
-  return namesNoGitFolder(name) ? undefined : 'patch_git';
+  return namesNoGitFolder(name) ? undefined : 'patch_git_folder';
 }
 
 export type PatchProblem =
-  | { readonly code: 'patch_absolute' | 'patch_outside_plot' | 'patch_git'; readonly path: string }
-  | { readonly code: 'patch_outside_paths'; readonly path: string; readonly globs: string };
+  | { readonly code: 'patch_absolute' | 'patch_outside_plot' | 'patch_git_folder'; readonly path: string }
+  | { readonly code: 'patch_outside_laws'; readonly path: string; readonly globs: string };
 
 /**
  * Why a patch touching `paths` may not be applied, or undefined when every path is one of `globs`
@@ -99,7 +99,7 @@ export function patchProblem(paths: readonly string[], globs: readonly string[])
     const reach = outOfReach(name);
     if (reach !== undefined) return { code: reach, path: raw };
     if (!allowed.some((glob) => glob.test(name))) {
-      return { code: 'patch_outside_paths', path: raw, globs: globs.join(', ') };
+      return { code: 'patch_outside_laws', path: raw, globs: globs.join(', ') };
     }
   }
   return undefined;

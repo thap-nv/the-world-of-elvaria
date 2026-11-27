@@ -176,7 +176,7 @@ describe('a run that ended on its amendment with its patch refused', () => {
             return Promise.resolve({
               status: 'refused',
               detail: 'it does not apply',
-              reason: { code: 'breaker:patch_not_apply', params: { file: 'elvaria.patch' } },
+              reason: { code: 'breaker:patch_conflict', params: { file: 'elvaria.patch' } },
             });
           },
         };

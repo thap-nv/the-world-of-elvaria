@@ -65,7 +65,7 @@ describe('patchProblem', () => {
     expect(patchProblem(['.husky/pre-push', '.husky/_/h'], HUSKY)).toBeUndefined();
     expect(patchProblem(['./.husky/pre-push', '.HUSKY\\pre-commit'], HUSKY)).toBeUndefined();
     expect(patchProblem(['.husky/pre-push', 'src/app.ts'], HUSKY)).toEqual({
-      code: 'patch_outside_paths',
+      code: 'patch_outside_laws',
       path: 'src/app.ts',
       globs: '.husky/**',
     });
@@ -73,10 +73,13 @@ describe('patchProblem', () => {
 
   it("never reaches git's own folder, outside the plot, or an absolute path, whatever the globs allow", () => {
     expect(patchProblem(['.git/hooks/pre-commit'], ['**'])).toEqual({
-      code: 'patch_git',
+      code: 'patch_git_folder',
       path: '.git/hooks/pre-commit',
     });
-    expect(patchProblem(['sub/.GIT/config'], ['**'])).toEqual({ code: 'patch_git', path: 'sub/.GIT/config' });
+    expect(patchProblem(['sub/.GIT/config'], ['**'])).toEqual({
+      code: 'patch_git_folder',
+      path: 'sub/.GIT/config',
+    });
     expect(patchProblem(['.husky/../../x'], ['**'])).toEqual({
       code: 'patch_outside_plot',
       path: '.husky/../../x',

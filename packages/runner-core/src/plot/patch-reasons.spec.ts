@@ -20,7 +20,7 @@ async function patchAt() {
 describe('coded patch refusals (LL-07)', () => {
   it.each([
     ['--numstat', 'breaker:patch_unreadable', 'git cannot read it as a patch:'],
-    ['--check', 'breaker:patch_not_apply', 'it does not apply:'],
+    ['--check', 'breaker:patch_conflict', 'it does not apply:'],
     [PATCH_FILE, 'breaker:patch_apply_failed', 'git apply failed:'],
   ])('separates git text when %s fails', async (stage, code, sentence) => {
     const root = await patchAt();
@@ -47,8 +47,8 @@ describe('coded patch refusals (LL-07)', () => {
   it.each([
     ['/absolute', 'patch_absolute', 'an absolute path', {}],
     ['../outside', 'patch_outside_plot', 'outside the plot', {}],
-    ['.git/config', 'patch_git', "git's own folder", {}],
-    ['src/app.ts', 'patch_outside_paths', 'outside laws.patch_paths (.husky/**)', { globs: '.husky/**' }],
+    ['.git/config', 'patch_git_folder', "git's own folder", {}],
+    ['src/app.ts', 'patch_outside_laws', 'outside laws.patch_paths (.husky/**)', { globs: '.husky/**' }],
   ])('codes the scope refusal for %s with exactly its parameters', async (name, code, sentence, params) => {
     const root = await patchAt();
     const git: Git = () => Promise.resolve({ code: 0, stdout: `1\t0\t${name}\0`, stderr: '' });

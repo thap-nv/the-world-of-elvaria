@@ -53,11 +53,11 @@ function scopeRefusal(problem: PatchProblem): PatchOutcome {
   const wording = {
     patch_absolute: 'an absolute path',
     patch_outside_plot: 'outside the plot',
-    patch_git: "git's own folder",
-    patch_outside_paths: 'outside laws.patch_paths',
+    patch_git_folder: "git's own folder",
+    patch_outside_laws: 'outside laws.patch_paths',
   };
   const { code, ...params } = problem;
-  const suffix = problem.code === 'patch_outside_paths' ? ` (${problem.globs})` : '';
+  const suffix = problem.code === 'patch_outside_laws' ? ` (${problem.globs})` : '';
   return {
     status: 'refused',
     reason: infirmaryReasonOf(`breaker:${code}`, { file: PATCH_FILE, ...params }),
@@ -100,7 +100,7 @@ export async function applyPatchIn(
   if (problem !== undefined) return scopeRefusal(problem);
   const check = await git(worktree, [...APPLY, '--check', PATCH_FILE]);
   if (check.code !== 0)
-    return refused('breaker:patch_not_apply', `it does not apply: ${check.stderr.trim()}`, check.stderr);
+    return refused('breaker:patch_conflict', `it does not apply: ${check.stderr.trim()}`, check.stderr);
   const applied = await git(worktree, [...APPLY, PATCH_FILE]);
   if (applied.code !== 0)
     return refused(

@@ -93,21 +93,21 @@ describe('a patch for the paths the CLI guards (P1-28)', () => {
       'touches a path outside patch_paths',
       PATCH.replaceAll('.husky/pre-push', 'src/app.ts').replace(' pnpm test', ' export const app = 1;'),
       'it touches src/app.ts, outside laws.patch_paths (.husky/**)',
-      'patch_outside_paths',
+      'patch_outside_laws',
       { path: 'src/app.ts', globs: '.husky/**' },
     ],
     [
       "reaches git's own folder",
       `${PATCH}diff --git a/.git/hooks/pre-commit b/.git/hooks/pre-commit\nnew file mode 100755\n--- /dev/null\n+++ b/.git/hooks/pre-commit\n@@ -0,0 +1 @@\n+echo owned\n`,
       "it touches .git/hooks/pre-commit, git's own folder",
-      'patch_git',
+      'patch_git_folder',
       { path: '.git/hooks/pre-commit' },
     ],
     [
       'does not apply',
       PATCH.replace(' pnpm test', ' pnpm build'),
       'it does not apply: error: patch failed',
-      'patch_not_apply',
+      'patch_conflict',
       {},
     ],
   ])(
@@ -129,7 +129,7 @@ describe('a patch for the paths the CLI guards (P1-28)', () => {
       const [line] = await linesOf(kingdom, 'quest.infirmary');
       const refused = expect.stringContaining(why) as unknown;
       expect(line?.data).toMatchObject({ trip: 'commit', detail: { patch: refused } });
-      if (code === 'patch_not_apply')
+      if (code === 'patch_conflict')
         expect(line?.data.detail).toMatchObject({
           message: expect.stringContaining('error: patch failed') as unknown,
         });

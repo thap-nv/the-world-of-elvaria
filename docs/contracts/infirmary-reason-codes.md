@@ -68,9 +68,9 @@ Khóa i18n của mã `<nhóm>:<tên>` là `cli.quest.infirmary.reason.<nhóm>.<t
 | `breaker:patch_unreadable` | cầu dao, Nhiếp chính không áp bản vá | `file` | git không đọc được bản vá |
 | `breaker:patch_absolute` | cầu dao, Nhiếp chính không áp bản vá | `file`, `path` | chạm đường dẫn tuyệt đối |
 | `breaker:patch_outside_plot` | cầu dao, Nhiếp chính không áp bản vá | `file`, `path` | chạm đường dẫn ngoài đất riêng |
-| `breaker:patch_git` | cầu dao, Nhiếp chính không áp bản vá | `file`, `path` | chạm thư mục riêng của git |
-| `breaker:patch_outside_paths` | cầu dao, Nhiếp chính không áp bản vá | `file`, `path`, `globs` | chạm đường dẫn ngoài laws.patch_paths |
-| `breaker:patch_not_apply` | cầu dao, Nhiếp chính không áp bản vá | `file` | git kiểm tra bản vá không áp được |
+| `breaker:patch_git_folder` | cầu dao, Nhiếp chính không áp bản vá | `file`, `path` | chạm thư mục riêng của git |
+| `breaker:patch_outside_laws` | cầu dao, Nhiếp chính không áp bản vá | `file`, `path`, `globs` | chạm đường dẫn ngoài laws.patch_paths |
+| `breaker:patch_conflict` | cầu dao, Nhiếp chính không áp bản vá | `file` | git kiểm tra bản vá không áp được |
 | `breaker:patch_apply_failed` | cầu dao, Nhiếp chính không áp bản vá | `file` | git apply thất bại |
 | `breaker:patch_error` | cầu dao, Nhiếp chính không áp bản vá | `file` | lỗi bên ngoài khi áp bản vá |
 | `breaker:forbidden_paths` | cầu dao | `count` | `count` đường dẫn cấm bị đổi (danh sách ở `detail.paths`) |
