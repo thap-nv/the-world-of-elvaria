@@ -138,8 +138,20 @@ describe('mergesSincePatrolOf', () => {
       { territory: A, head: SHA_A, merges: 1 },
       { territory: ELVARIA, head: SHA_C, merges: 2 },
     ]);
-    expect(mergesSincePatrolOf([...events, ran('2026-11-23T10:00:00+07:00', [])])).toEqual([
+    expect(mergesSincePatrolOf([...events, ran('2026-11-23T10:00:00+07:00', [], { head: SHA_C })])).toEqual([
       { territory: A, head: SHA_A, merges: 1 },
     ]);
+  });
+
+  it('keeps the newest merge and its count when a patrol finishes checking an older head', () => {
+    const events = [
+      merged('2026-11-23T08:00:00+07:00', Q1, true, ELVARIA, SHA_A),
+      merged('2026-11-23T08:01:00+07:00', Q2, true, ELVARIA, SHA_B),
+      ran('2026-11-23T08:10:00+07:00', [], { head: SHA_A }),
+    ];
+    expect(mergesSincePatrolOf(events)).toEqual([{ territory: ELVARIA, head: SHA_B, merges: 2 }]);
+    expect(mergesSincePatrolOf([...events, ran('2026-11-23T08:20:00+07:00', [], { head: SHA_B })])).toEqual(
+      [],
+    );
   });
 });

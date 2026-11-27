@@ -4,7 +4,7 @@
 // a flaky check, or a branch fixed by hand). Each runs outside the tick in its territory's lane (runs.ts); a green
 // branch opens its territory at the next tick, which the run's end calls at once. (CM-03, ADR 0032; C8 turns K16
 // around) A green `narrow` or `deferred` territory whose default branch moved since its latest patrol, by a merge of the
-// Steward's or one a look found, is patrolled (`merged`) once its merge queue is quiet, for the newest head: one patrol
+// Steward's, is patrolled (`merged`) after its delivery batch fills and its merge queue is quiet, for the newest head: one patrol
 // at a time in the kingdom, in a slot of dispatch.max_background the tick's work left free (mergedPatrolOf).
 import { afterMergeOf, mergedPatrolOf, patrolsDue, queueAtWorkOf } from '@elvaria/domain';
 import { globToRegExp } from '@elvaria/runner-core';

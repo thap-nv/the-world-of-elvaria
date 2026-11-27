@@ -4,8 +4,6 @@ import { describe, expect, it } from 'vitest';
 
 import { patrolMerged } from './again.ts';
 import { createPatrolBook, recordPatrolMerge } from './book.ts';
-import { startLook } from '../forge/look.ts';
-import { createBaseLooks } from '../forge/looks.ts';
 import type { Context } from '../context.ts';
 import type { Recorder } from '../quest/record.ts';
 
@@ -18,7 +16,6 @@ function context(territory: Territory, trial: () => Promise<TerritoryTrial>) {
   };
   const ctx = {
     patrol: createPatrolBook(log),
-    looks: createBaseLooks(log),
     stopping: new AbortController().signal,
     world: {
       territories: new Map([[territory.id, territory]]),
@@ -39,8 +36,6 @@ function context(territory: Territory, trial: () => Promise<TerritoryTrial>) {
       clock: { now: () => 0 },
       events: { read: () => Promise.resolve({ events: [] }) },
       plots: {
-        baseTips: async () => ({ local: (await trial()).base, remote: null }),
-        inBase: () => Promise.resolve(false),
         patrol: trial,
       },
     },
@@ -73,9 +68,6 @@ function open(every = 3) {
     merge: (next: string) => {
       head = next;
       recordPatrolMerge(ctx.patrol, territory.id, next);
-    },
-    move: (next: string) => {
-      head = next;
     },
     during: (work?: () => Promise<void>) => {
       during = work;
@@ -114,29 +106,5 @@ describe('the live merge batches (613)', () => {
     bench.during();
     await bench.run();
     expect(bench.heads()).toMatchObject([{ head: 'x' }, { head: 'y' }]);
-  });
-
-  it('counts each new look tip once, including a manual merge after a patrol', async () => {
-    const bench = open(1);
-    const look = async () => {
-      startLook(bench.ctx, { territory: bench.territory.id, quests: [] });
-      await bench.ctx.looks.idle();
-    };
-    bench.merge('x');
-    await look();
-    expect(bench.ctx.patrol.merges.get(bench.territory.id)).toBe(1);
-    await bench.run();
-    await look();
-    expect(bench.ctx.patrol.merges.get(bench.territory.id)).toBeUndefined();
-    bench.merge('z');
-    await bench.run();
-    await look();
-    expect(bench.ctx.patrol.merges.get(bench.territory.id)).toBeUndefined();
-    bench.move('manual');
-    await look();
-    await look();
-    expect(bench.ctx.patrol.merges.get(bench.territory.id)).toBe(1);
-    await bench.run();
-    expect(bench.heads()).toMatchObject([{ head: 'x' }, { head: 'z' }, { head: 'manual' }]);
   });
 });

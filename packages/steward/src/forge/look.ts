@@ -4,28 +4,13 @@
 // holds and so may not know it. (PS-09) A pushed quest not in base is asked whether its branch still merges cleanly
 // into those tips: one that does not goes back into the merge queue (stale.ts). (CM-03) The tip it fetched is the newest
 // head of the branch the Steward knows, for the patrol after a merge (a merge by hand moved it), origin's first.
-import type { BaseLook, TerritoryId } from '@elvaria/domain';
-import type { BaseTips } from '@elvaria/runner-core';
+import type { BaseLook } from '@elvaria/domain';
 
 import { lookForStale } from './stale.ts';
-import { recordPatrolMerge } from '../patrol/book.ts';
 import type { Context } from '../context.ts';
 
 /** The Steward stopped: asked anew after each await, which TypeScript's narrowing cannot see. */
 const stopped = (signal: AbortSignal): boolean => signal.aborted;
-
-/** A look can discover a manual merge; repeated looks and our own deliveries must not count twice. */
-function rememberTip(ctx: Context, territory: TerritoryId, tips: BaseTips): void {
-  const previous = ctx.looks.tips.get(territory);
-  const known =
-    ctx.patrol.heads.get(territory) ??
-    ctx.patrol.health.find((health) => health.territory === territory)?.head ??
-    previous?.remote ??
-    previous?.local;
-  ctx.looks.tips.set(territory, tips);
-  const head = tips.remote ?? tips.local;
-  if (head !== null && head !== known) recordPatrolMerge(ctx.patrol, territory, head);
-}
 
 async function lookAt(ctx: Context, look: BaseLook, signal: AbortSignal): Promise<void> {
   const { plots } = ctx.deps;
@@ -33,7 +18,9 @@ async function lookAt(ctx: Context, look: BaseLook, signal: AbortSignal): Promis
   if (territory === undefined || plots.baseTips === undefined || plots.inBase === undefined) return;
   const tips = await plots.baseTips(territory);
   if (tips === undefined || stopped(signal)) return;
-  rememberTip(ctx, territory.id, tips);
+  ctx.looks.tips.set(territory.id, tips);
+  const head = tips.remote ?? tips.local;
+  if (head !== null) ctx.patrol.heads.set(territory.id, head);
   for (const id of look.quests) {
     const quest = ctx.world.quests.get(id);
     if (quest !== undefined && (await plots.inBase(quest.plot, tips))) ctx.looks.found.add(id);

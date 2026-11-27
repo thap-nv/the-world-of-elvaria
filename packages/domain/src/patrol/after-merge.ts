@@ -1,13 +1,15 @@
 // The patrol after the default branch moved (CM-03, ADR 0032, plans/check-modes.md; the owner's C8 turns K16 of the
 // phase-2 plan around): a territory checked narrowly (`narrow`, `deferred`) runs its full set of checks on the base
-// branch only, so its patrol follows batches of merges of that branch, by a merge of the Steward's or one a look found
-// (PS-08d), and not the schedule alone. A `full` territory's merge queue ran every check on the very tree it merged: no
+// branch only, so its patrol follows batches of the Steward's delivery merges, and not the schedule alone.
+// A `full` territory's merge queue ran every check on the very tree it merged: no
 // patrol more. The patrol waits for its territory's merge queue to be quiet and tries the head the branch has then, so
 // a burst of merges is patrolled once, at its last head; the queue never waits for it. HEAVY_WORK_MAX at a time in the
 // kingdom, and only in a slot of dispatch.max_background left free by the tick's work, which it then holds
 // (startingNow). A red territory's moves are base_moved's (patrolsDue).
 // (613) Wait for after_merge.every merges (default 3); the daily P1D schedule covers the tail. The Steward skips
 // a non-empty range matching only the territory's quiet_paths, when its latest patrol head and changed paths are known.
+// A look's head (PS-08d, a manual merge) is not counted: it waits for P1D or every delivery merges of the Steward's.
+// A merge arriving during a patrol stays counted unless that patrol tried the newest merge head.
 import { AFTER_MERGE_EVERY, HEAVY_WORK_MAX } from './constants.ts';
 import { isEventOf } from '../schema/event/event.ts';
 import { checkPolicyOf } from '../schema/territory-check-policy.ts';
@@ -89,7 +91,12 @@ export function mergesSincePatrolOf(events: readonly Event[]): MergeTip[] {
         head: event.data.merge_sha,
         merges: (heads.get(event.data.territory)?.merges ?? 0) + 1,
       });
-    else if (isEventOf(event, 'patrol.ran') && event.data.head !== null) heads.delete(event.data.territory);
+    else if (
+      isEventOf(event, 'patrol.ran') &&
+      event.data.head !== null &&
+      heads.get(event.data.territory)?.head === event.data.head
+    )
+      heads.delete(event.data.territory);
   }
   return [...heads]
     .map(([territory, tip]) => ({ territory, ...tip }))
