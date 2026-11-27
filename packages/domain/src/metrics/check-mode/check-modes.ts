@@ -38,13 +38,22 @@ export interface CheckModes {
   readonly peaks: readonly QuestPeak[];
 }
 
+/**
+ * A run of every check: a patrol, a quest's run in full (no `mode`), and (CM-08b, (474)) a delivery train built and
+ * tried (its `train.ran` has a `head`), counted once by that line, not by its `check.end`; a `split` train reruns
+ * only the checks that were red.
+ */
+function fullRun(event: Event): boolean {
+  if (isEventOf(event, 'train.ran')) return event.data.head !== undefined && event.data.departure !== 'split';
+  if (isEventOf(event, 'patrol.ran')) return !everyCarried(event.data.checks);
+  if (!isEventOf(event, 'check.end') || event.data.train !== undefined) return false;
+  return event.data.mode === undefined && !everyCarried(event.data.checks);
+}
+
 function fullByDay(events: readonly Event[], window: MetricsWindow): CheckModes['full_by_day'] {
   const days = new Map<string, number>();
   for (const event of events) {
-    if (!inWindow(window, event.ts)) continue;
-    if (!isEventOf(event, 'patrol.ran') && !(isEventOf(event, 'check.end') && event.data.mode === undefined))
-      continue;
-    if (everyCarried(event.data.checks)) continue;
+    if (!inWindow(window, event.ts) || !fullRun(event)) continue;
     const day = dayOf(event.ts);
     days.set(day, (days.get(day) ?? 0) + 1);
   }

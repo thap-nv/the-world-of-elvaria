@@ -38,7 +38,8 @@ export const TrainMarkSchema = TrainIdSchema.optional().meta(
 
 /**
  * How a train's run ended: `green`, merged into the base branch; `red`, a check or commands.setup red, nothing merged
- * and no branch left (CM-08b attributes it); `stopped`, it could not run its course (the repo's config, git,
+ * and no branch left: (CM-08b) the Steward probed its merge commits (`check.attributed`, `source: train`) and the
+ * quest found fails late or goes to a merge quest, or the base branch was red on its own; `stopped`, it could not run its course (the repo's config, git,
  * commands.generate, the secret scan, the push, the forge), nothing merged, each quest aboard with its
  * `delivery.failed` ((621)(l) of implementation-plan §11), or nobody was left aboard (no `head`: each quest left it,
  * or its branch was in the base branch already).
@@ -49,9 +50,11 @@ export type TrainOutcome = (typeof TRAIN_OUTCOMES)[number];
 /**
  * Why the train left the platform (dispatch/train.ts): the owner sent it off (`deliver` with a territory), it holds
  * train.max_quests, its first quest waited train.max_wait_minutes, a quest ready to start waits for the scope of one
- * on it, or nothing works nor is judged on the territory any more.
+ * on it, or nothing works nor is judged on the territory any more; (CM-08b) `split`: the quests before the first red
+ * step of a red train, at once, running only the checks that were red. Values added to a payload enum: older lines
+ * still read (ADR 0003).
  */
-export const TRAIN_DEPARTURES = ['owner', 'full', 'waited', 'scope', 'idle'] as const;
+export const TRAIN_DEPARTURES = ['owner', 'full', 'waited', 'scope', 'idle', 'split'] as const;
 export type TrainDeparture = (typeof TRAIN_DEPARTURES)[number];
 
 /** Why a quest left the train while it was built: its branch conflicts outside every rule of shared_paths. */

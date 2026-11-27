@@ -4979,7 +4979,8 @@
                   "full",
                   "waited",
                   "scope",
-                  "idle"
+                  "idle",
+                  "split"
                 ]
               },
               "base": {

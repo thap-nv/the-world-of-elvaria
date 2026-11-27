@@ -2624,7 +2624,7 @@
             {
               "group": "Phép dò",
               "types": ["check.attributed"],
-              "meaning": "Nhiếp chính dò nhánh gốc đỏ sau một lần tuần tra (CM-04, ADR 0032), 0 mana: chỉ chạy các check đỏ, tìm nhị phân trên các commit theo cha thứ nhất từ đầu xanh gần nhất tới đầu đỏ (tối đa `PROBE_RUNS_MAX` lần chạy), rồi ghi `cause` (`own_change`, `combination`, `outside`, `flaky`, `unknown`), bước đỏ đầu (`commit`), quest gây ra (`culprit`) và từng lần chạy (`runs`); `source` là `patrol` (sau này cả `queue`, `train`). Mục bản tấu `base_red` nêu kết luận"
+              "meaning": "Nhiếp chính dò nhánh gốc đỏ sau một lần tuần tra (CM-04, ADR 0032), 0 mana: chỉ chạy các check đỏ, tìm nhị phân trên các commit theo cha thứ nhất từ đầu xanh gần nhất tới đầu đỏ (tối đa `PROBE_RUNS_MAX` lần chạy), rồi ghi `cause` (`own_change`, `combination`, `outside`, `flaky`, `unknown`), bước đỏ đầu (`commit`), quest gây ra (`culprit`) và từng lần chạy (`runs`); `source` là `patrol`, `queue` (bước 4 ở hàng đợi, CM-06) hay `train` (tàu đỏ, CM-08b: các bước là merge commit của tàu, mang `culprit`). Mục bản tấu `base_red` nêu kết luận"
             },
             {
               "group": "Ủy quyền dấu",
@@ -2644,7 +2644,7 @@
             {
               "group": "Tàu giao hàng",
               "types": ["train.ran"],
-              "meaning": "Tàu giao hàng của lãnh thổ `deferred` chạy xong (CM-08, ADR 0032): `train`, `departure` (`owner`, `full`, `waited`, `scope`, `idle`), `base` tàu tách ra, `head` và `tree` đã kiểm, `steps` (quest, merge commit), `left` (quest rời tàu vì `conflict`), `outcome` (`green`: một PR `pr` đã merge, `merge_sha`, `patrolled` khi cây của merge commit bằng cây tàu đã kiểm nên không tuần tra `merged`; `red` kèm `checks`; `stopped` kèm `detail`). Nhiếp chính dừng giữa tàu thì không ghi gì"
+              "meaning": "Tàu giao hàng của lãnh thổ `deferred` chạy xong (CM-08, ADR 0032): `train`, `departure` (`owner`, `full`, `waited`, `scope`, `idle`, `split`: các quest trước bước đỏ đầu của một tàu đỏ, đi ngay, chỉ chạy lại check từng đỏ), `base` tàu tách ra, `head` và `tree` đã kiểm, `steps` (quest, merge commit), `left` (quest rời tàu vì `conflict`), `outcome` (`green`: một PR `pr` đã merge, `merge_sha`, `patrolled` khi cây của merge commit bằng cây tàu đã kiểm nên không tuần tra `merged`; `red` kèm `checks`, sau dòng `check.attributed` `source: train` của phép dò; `stopped` kèm `detail`). Nhiếp chính dừng giữa tàu hay giữa lúc dò thì không ghi gì"
             },
             {
               "group": "Khác",

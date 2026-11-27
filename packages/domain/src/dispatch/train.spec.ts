@@ -7,7 +7,8 @@ import { describe, expect, it } from 'vitest';
 import { DOCS, NOW, Q1, Q2, Q3, TERRITORY, at, quest, snapshot, territory } from './__fixtures__/snapshot.ts';
 import { boardsTrain, forgeDeliveries, queueAtWorkOf } from './forge-due.ts';
 import { planTick } from './plan-tick.ts';
-import { trainRunsOf } from './train.ts';
+import { TRAIN_RIDES_MAX } from './constants.ts';
+import { outOfRidesOf, trainRunsOf } from './train.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { TerritoryCheckPolicy } from '../schema/territory-check-policy.ts';
@@ -150,5 +151,16 @@ describe('planTick and the room', () => {
     const full = sourceOf(quests, { background: { running: ['q_20261106_run100' as QuestId], checked: [] } });
     const kingdom = { ...full.kingdom, dispatch: { ...full.kingdom.dispatch, max_background: 1 } };
     expect(planTick({ ...full, kingdom }, NOW).train_runs).toEqual([]);
+  });
+});
+
+describe('outOfRidesOf (CM-08b)', () => {
+  it('fails the quests sent back for whom this red train was the last ride', () => {
+    const rides = new Map([
+      [Q1, TRAIN_RIDES_MAX - 1],
+      [Q2, TRAIN_RIDES_MAX - 2],
+    ]);
+    expect(outOfRidesOf(rides, [Q1, Q2, Q3])).toEqual([Q1]);
+    expect(outOfRidesOf(new Map(), [Q3])).toEqual([]);
   });
 });
