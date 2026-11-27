@@ -61,11 +61,12 @@ const liveFor = (ctx: Context, origin: QuestId): QuestId | undefined =>
 /**
  * The merge quest for the delivery's stop: one on its way found, else the one of this commit (opened now, or found
  * archived: a merge quest the owner dropped is not opened again for the same commit). Undefined when the kingdom
- * refuses it or it cannot be written, which the log says: the stop is then the owner's, as before PS-09b.
+ * refuses it or it cannot be written, which the log says: the stop is then the owner's, as before PS-09b. (CM-08) A
+ * quest that left a delivery train on a conflict gets one too.
  */
 export async function openQueueMerge(
   ctx: Context,
-  d: Delivery,
+  d: Pick<Delivery, 'quest' | 'base'>,
   resolvable: Resolvable,
 ): Promise<QuestId | undefined> {
   const live = liveFor(ctx, d.quest.id);

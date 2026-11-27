@@ -25,6 +25,9 @@ export interface Delivery {
   readonly signal: AbortSignal;
 }
 
+/** Where git runs for a piece of a delivery: the plot, or (CM-08) the territory's repo for a delivery train. */
+export type GitPlace = Pick<Delivery, 'git' | 'worktree' | 'signal'>;
+
 export const forgeError = (branch: string, detail: string): Failure => ({
   stage: 'push',
   reason: 'forge_error',

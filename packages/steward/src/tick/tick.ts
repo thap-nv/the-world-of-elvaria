@@ -104,13 +104,18 @@ async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise
 
 /**
  * The background planTick sees: (CM-03) the patrols started outside the tick hold a slot each; (CM-07) so does each
- * guest being tried, which holds its territory's lane too.
+ * guest being tried, which holds its territory's lane too, and (CM-08) each delivery train, heavy work besides.
  */
 function backgroundOf(state: State): BackgroundWork {
   const patrols = state.patrol.runs.outside();
   const guests = state.guests.running();
-  const view = state.background.view();
-  return { ...view, ...(patrols === 0 ? {} : { patrols }), ...(guests.length === 0 ? {} : { guests }) };
+  const trains = state.trains.running();
+  return {
+    ...state.background.view(),
+    ...(patrols === 0 ? {} : { patrols }),
+    ...(guests.length === 0 ? {} : { guests }),
+    ...(trains.length === 0 ? {} : { trains }),
+  };
 }
 
 /**
@@ -155,14 +160,13 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   if (world === undefined) return reportOf(counts);
   const { sessions, handled, limits, mana, background, judgeLocks, graphs, forge, looks } = state;
   const record = recorderFor(deps, state, held, world);
-  const { templates } = held;
   const ctx: Context = {
     deps,
     root: deps.store.root,
     world,
     record,
     sessions,
-    templates,
+    templates: held.templates,
     limits,
     mana,
     counts,
@@ -172,6 +176,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
     graphs,
     forge,
     guests: state.guests,
+    trains: state.trains,
     looks,
     patrol: state.patrol,
     delegation: state.delegation,

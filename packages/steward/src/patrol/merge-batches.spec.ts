@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { patrolMerged } from './again.ts';
 import { createPatrolBook, recordPatrolMerge } from './book.ts';
+import { createLaneRuns } from '../forge/lane-runs.ts';
 import type { Context } from '../context.ts';
 import type { Recorder } from '../quest/record.ts';
 
@@ -16,6 +17,7 @@ function context(territory: Territory, trial: () => Promise<TerritoryTrial>) {
   };
   const ctx = {
     patrol: createPatrolBook(log),
+    trains: createLaneRuns(log),
     stopping: new AbortController().signal,
     world: {
       territories: new Map([[territory.id, territory]]),
@@ -106,5 +108,21 @@ describe('the live merge batches (613)', () => {
     bench.during();
     await bench.run();
     expect(bench.heads()).toMatchObject([{ head: 'x' }, { head: 'y' }]);
+  });
+
+  it('(CM-08) waits while a delivery train runs, heavy work as a patrol is, and patrols once it ended', async () => {
+    const bench = open(1);
+    bench.merge('x');
+    let leave = (): void => undefined;
+    const train = new Promise<void>((resolve) => {
+      leave = resolve;
+    });
+    bench.ctx.trains.start(bench.territory.id, 'the train of code', () => train);
+    await bench.run();
+    expect(bench.heads()).toEqual([]);
+    leave();
+    await bench.ctx.trains.idle();
+    await bench.run();
+    expect(bench.heads()).toMatchObject([{ trigger: 'merged', head: 'x' }]);
   });
 });

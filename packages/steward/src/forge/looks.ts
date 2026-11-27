@@ -9,6 +9,7 @@
 import type { Instant, QuestId, TerritoryId } from '@elvaria/domain';
 import type { BaseTips } from '@elvaria/runner-core';
 
+import { createLaneRuns } from './lane-runs.ts';
 import type { Logger } from '../types.ts';
 
 export interface BaseLooks {
@@ -26,39 +27,21 @@ export interface BaseLooks {
   stop(): Promise<void>;
 }
 
-const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
-
 /** `ended` is told when a look ends on its own: the Steward ticks then, to archive what it found (P1-10b). */
 export function createBaseLooks(log: Logger, ended: () => void = () => undefined): BaseLooks {
-  const running = new Map<TerritoryId, AbortController>();
-  const live = new Set<Promise<void>>();
+  // One look per territory at a time, as the merge queue's guests and trains run (lane-runs.ts).
+  const runs = createLaneRuns(log, ended);
   const looks: BaseLooks = {
     found: new Set(),
     looked: new Map(),
     tips: new Map(),
     start: (territory, at, work) => {
-      if (running.has(territory)) return;
+      if (runs.running().includes(territory)) return;
       looks.looked.set(territory, at);
-      const control = new AbortController();
-      running.set(territory, control);
-      const done = work(control.signal)
-        .catch((error: unknown) => {
-          log.warn(`steward: the look at the base branch of ${territory} stopped: ${messageOf(error)}`);
-        })
-        .then(() => {
-          running.delete(territory);
-          if (!control.signal.aborted) ended();
-        });
-      live.add(done);
-      void done.finally(() => live.delete(done));
+      runs.start(territory, `the look at the base branch of ${territory}`, work);
     },
-    idle: async () => {
-      await Promise.all(live);
-    },
-    stop: async () => {
-      for (const control of running.values()) control.abort();
-      await Promise.all(live);
-    },
+    idle: () => runs.idle(),
+    stop: () => runs.stop(),
   };
   return looks;
 }

@@ -4956,7 +4956,6 @@
               "territory",
               "train",
               "departure",
-              "base",
               "outcome"
             ],
             "properties": {
@@ -4984,7 +4983,7 @@
                 ]
               },
               "base": {
-                "description": "The base branch's head the train was cut from.",
+                "description": "The base branch's head the train was cut from. Absent (outcome stopped): the train stopped before origin's branch was read.",
                 "type": "string",
                 "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
               },

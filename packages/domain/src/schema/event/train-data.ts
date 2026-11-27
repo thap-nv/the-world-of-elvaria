@@ -2,8 +2,8 @@
 // Steward merges each sealed quest on the platform into the detached plot train-<territory>, cut from the green base
 // branch, one merge commit per quest, runs every check once on the train's head, and on green pushes
 // train/<territory>/<id>, opens one pull request and merges it; each quest then has its `delivery.merged` with `train`.
-// `train.ran` is the train's own line, written once it ran its course; a stop of the Steward writes none, so the next
-// one builds the train anew. New type and optional fields: `v` stays 2 (ADR 0003). With the lines of a guest entry
+// `train.ran` is the train's own line, one per train that left, written after its quests' lines; a stop of the
+// Steward before the merge writes none, so the next one builds the train anew. New type and optional fields: `v` stays 2 (ADR 0003). With the lines of a guest entry
 // (CM-07) they are the merge queue's own lines, grouped here so event-data.ts stays under its size limit.
 import { z } from 'zod';
 
@@ -38,8 +38,10 @@ export const TrainMarkSchema = TrainIdSchema.optional().meta(
 
 /**
  * How a train's run ended: `green`, merged into the base branch; `red`, a check or commands.setup red, nothing merged
- * and no branch left (CM-08b attributes it); `stopped`, it could not run its course (git, commands.generate, the
- * push, the forge), nothing merged, the quests left on the platform.
+ * and no branch left (CM-08b attributes it); `stopped`, it could not run its course (the repo's config, git,
+ * commands.generate, the secret scan, the push, the forge), nothing merged, each quest aboard with its
+ * `delivery.failed` ((621)(l) of implementation-plan §11), or nobody was left aboard (no `head`: each quest left it,
+ * or its branch was in the base branch already).
  */
 export const TRAIN_OUTCOMES = ['green', 'red', 'stopped'] as const;
 export type TrainOutcome = (typeof TRAIN_OUTCOMES)[number];
@@ -67,7 +69,11 @@ export const TrainRanDataSchema = z
     territory: TerritoryIdSchema,
     train: TrainIdSchema,
     departure: z.enum(TRAIN_DEPARTURES),
-    base: CommitShaSchema.meta(describe("The base branch's head the train was cut from.")),
+    base: CommitShaSchema.optional().meta(
+      describe(
+        "The base branch's head the train was cut from. Absent (outcome stopped): the train stopped before origin's branch was read.",
+      ),
+    ),
     head: CommitShaSchema.optional().meta(
       describe("The train's last commit, the one its checks ran on. Absent: no quest boarded it cleanly."),
     ),

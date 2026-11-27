@@ -11,17 +11,19 @@
 // but the `check.end` of the checks it killed: the next Steward tries the guest from the start.
 // (RC-04, ADR 0035) The checks green on the merge's tree are carried (the check ledger), so a guest queued again with
 // the same head on the same base runs only the checks that were red; `check.end` names the tree for the next one.
-import { DELIVERY_DETAIL_MAX_LENGTH, deliveryOf, environmentFailureOf } from '@elvaria/domain';
+import { DELIVERY_DETAIL_MAX_LENGTH, deliveryOf } from '@elvaria/domain';
 import { recordPatrolMerge } from '../patrol/book.ts';
 import { fromPortable } from '@elvaria/store';
 import type { CheckRunMode, GuestTrial, GuestTrialRequest } from '@elvaria/runner-core';
 import type { EventData, GuestEntry, Territory, TerritoryTrial } from '@elvaria/domain';
 
-import { carriedFor, endChecksOf, factsOf } from '../check-ledger/carry.ts';
+import { carriedFor, factsOf } from '../check-ledger/carry.ts';
 import { STEWARD } from '../quest/record.ts';
 import { detailOf, messageOf } from './delivery.ts';
+import { noteCheckLine, trialEndOf, trialRedOf } from './trial-red.ts';
 import type { Context } from '../context.ts';
 import type { Forge, ForgeRepo, PullStatus } from './forge.ts';
+import type { CheckLine } from './trial-red.ts';
 
 type Refused = EventData<'delivery.guest_refused'>;
 type GuestCarry = NonNullable<GuestTrialRequest['carry']>;
@@ -62,32 +64,9 @@ function turnOf(ctx: Context, guest: GuestEntry, signal: AbortSignal): Turn | En
   return { ctx, guest, territory, forge, repo, signal };
 }
 
-/** A `check.*` line of the guest's checks; one that cannot be written costs the owner a line, never the turn. */
-async function note(turn: Turn, type: 'check.start' | 'check.end', data: Record<string, unknown>) {
-  const { ctx, guest } = turn;
-  try {
-    await ctx.record.note({ type, actor: STEWARD, territory: guest.territory, data });
-  } catch (error) {
-    ctx.deps.log.warn(
-      `steward: guest #${guest.pr} of ${guest.territory}: no ${type} line: ${messageOf(error)}`,
-    );
-  }
-}
-
-/** What `check.end` says of the trial: what each check gave, or that they could not run or were stopped. */
-function endOf(trial: TerritoryTrial | undefined, signal: AbortSignal) {
-  if (signal.aborted) return { outcome: 'stopped', checks: [] };
-  if (trial === undefined || trial.plot_failure !== undefined) return { outcome: 'error', checks: [] };
-  const { setup, checks } = trial;
-  const environment = environmentFailureOf(checks);
-  return {
-    outcome: setup?.pass !== false && checks.every(({ pass }) => pass) ? 'pass' : 'fail',
-    checks: endChecksOf(checks),
-    ...(environment === undefined
-      ? {}
-      : { environment: { check: environment.check, line: environment.line } }),
-  };
-}
+/** A `check.*` line of the guest's checks (trial-red.ts). */
+const note = ({ ctx, guest }: Turn, type: CheckLine['type'], data: CheckLine['data']) =>
+  noteCheckLine(ctx, guest.territory, `guest #${guest.pr} of ${guest.territory}`, { type, data });
 
 /** (RC-04, ADR 0035) What the try's checks ran on, for the ledger: the merge's tree, a narrow run's base. */
 const factsOfTry = (territory: Territory, tried: GuestTrial | undefined, mode: CheckRunMode) =>
@@ -126,7 +105,7 @@ async function tryIt(turn: Turn, pull: Pick<PullStatus, 'branch' | 'head'>): Pro
     if (mode !== undefined)
       await note(turn, 'check.end', {
         ...mark(mode),
-        ...endOf(trial, signal),
+        ...trialEndOf(trial, signal),
         ...factsOfTry(territory, tried, mode),
       });
   }
@@ -134,20 +113,12 @@ async function tryIt(turn: Turn, pull: Pick<PullStatus, 'branch' | 'head'>): Pro
 
 /** Why the trial is red: commands.setup, or the red checks; undefined when green or set aside. */
 function redOf(turn: Turn, trial: TerritoryTrial): Refused['checks'] | undefined {
-  const lineOf = ({ timed_out, error_line }: { timed_out: boolean; error_line?: string | undefined }) => ({
-    ...(timed_out ? { timed_out: true as const } : {}),
-    ...(error_line === undefined || error_line === '' ? {} : { line: error_line }),
-  });
-  if (trial.setup !== null && !trial.setup.pass) return [{ id: 'setup', ...lineOf(trial.setup) }];
-  const red = trial.checks.filter(({ pass }) => !pass);
-  if (red.length === 0) return undefined;
-  const environment = environmentFailureOf(trial.checks);
-  if (environment === undefined) return red.map((check) => ({ id: check.id, ...lineOf(check) }));
   const { guest, ctx } = turn;
-  ctx.deps.log.warn(
-    `steward: guest #${guest.pr} of ${guest.territory}: its checks set aside (${environment.check}: ${environment.line})`,
-  );
-  return undefined;
+  return trialRedOf(trial, (environment) => {
+    ctx.deps.log.warn(
+      `steward: guest #${guest.pr} of ${guest.territory}: its checks set aside (${environment.check}: ${environment.line})`,
+    );
+  });
 }
 
 /** The pull request merged through the forge while its head is still the one tried. */

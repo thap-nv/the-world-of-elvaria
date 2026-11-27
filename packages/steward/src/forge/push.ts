@@ -24,7 +24,7 @@ import { repoConfigFailure } from './repo-config.ts';
 import { COMMIT_FORMAT, scanDiff } from './scan.ts';
 import { updateBranch } from './update.ts';
 import type { Context } from '../context.ts';
-import type { Delivery } from './delivery.ts';
+import type { Delivery, GitPlace } from './delivery.ts';
 import type { Failure } from './outcome.ts';
 import type { ScanResult } from './scan.ts';
 
@@ -40,7 +40,7 @@ const LOCAL_GIT_TIMEOUT_MS = LOCAL_GIT_TIMEOUT_MINUTES * MS_PER_MINUTE;
 export const pushLogOf = (quest: QuestId): string => `.runs/${quest}-delivery/push.log`;
 
 /** git in the plot with a short limit; its trimmed stdout, or undefined when it failed. */
-async function localGit(d: Delivery, args: readonly string[]): Promise<string | undefined> {
+async function localGit(d: GitPlace, args: readonly string[]): Promise<string | undefined> {
   const run = await runDeliveryGit(d.git, d.worktree, args, {
     timeout_ms: LOCAL_GIT_TIMEOUT_MS,
     signal: d.signal,
@@ -55,7 +55,7 @@ async function baseOf(d: Delivery): Promise<string> {
 }
 
 /** The treasury's values: the scan looks for each, and every log and message is masked with them. */
-async function knownOf(ctx: Context): Promise<string[]> {
+export async function knownOf(ctx: Context): Promise<string[]> {
   return Object.values(await ctx.deps.treasury.resolve(await ctx.deps.treasury.names()));
 }
 
@@ -76,10 +76,11 @@ const SCAN_DIFF = [
  * What the scan reads (fix/push-scan, (212)): the branch's whole diff over the base, then each commit's own, since
  * `git push` sends every one. A merge shows what it adds beyond git's own merge of its parents (--remerge-diff, git
  * 2.36; the merge queue needs 2.38 already); an octopus merge shows nothing there, and the whole diff covers it.
+ * (CM-08) `tip`: the commit pushed, the plot's HEAD; a delivery train's head, whose plot is gone already.
  */
-async function changesOf(d: Delivery, base: string): Promise<string | undefined> {
+export async function changesOf(d: GitPlace, base: string, tip = 'HEAD'): Promise<string | undefined> {
   const quoted = ['-c', 'core.quotePath=false'];
-  const whole = await localGit(d, [...quoted, 'diff', ...SCAN_DIFF, `${base}...HEAD`]);
+  const whole = await localGit(d, [...quoted, 'diff', ...SCAN_DIFF, `${base}...${tip}`]);
   const format = `--format=${COMMIT_FORMAT}`;
   const each = await localGit(d, [
     ...quoted,
@@ -88,13 +89,17 @@ async function changesOf(d: Delivery, base: string): Promise<string | undefined>
     ...SCAN_DIFF,
     '--remerge-diff',
     format,
-    `${base}..HEAD`,
+    `${base}..${tip}`,
   ]);
   return whole === undefined || each === undefined ? undefined : `${whole}\n${each}`;
 }
 
 /** The scan's stop: the files, and in `detail` each commit that adds a secret with its files, masked like a log. */
-function secretFailure(d: Delivery, scan: ScanResult, known: readonly string[]): Failure {
+export function secretFailure(
+  d: Pick<Delivery, 'branch'>,
+  scan: ScanResult,
+  known: readonly string[],
+): Failure {
   const lines = scan.commits.map(({ sha, files }) => `commit ${sha} adds a secret to ${files.join(', ')}`);
   return {
     stage: 'scan',
@@ -105,15 +110,15 @@ function secretFailure(d: Delivery, scan: ScanResult, known: readonly string[]):
   };
 }
 
-/** `git push` of the branch alone, its output masked into push.log; the output's end when git refused. */
-async function push(
+/** `git push` of one refspec alone, its output masked into `log`; the output's end when git refused. */
+export async function pushRef(
   ctx: Context,
-  d: Delivery,
+  d: GitPlace,
+  pushing: { readonly refspec: string; readonly log: string },
   known: readonly string[],
   env: Readonly<Record<string, string>>,
 ): Promise<Result<number, string>> {
-  const refspec = `${d.branch}:refs/heads/${d.branch}`;
-  const args = ['push', 'origin', refspec];
+  const args = ['push', 'origin', pushing.refspec];
   const started = ctx.deps.clock.now();
   const run = await runDeliveryGit(d.git, d.worktree, args, {
     timeout_ms: PUSH_TIMEOUT_MS,
@@ -122,7 +127,7 @@ async function push(
   });
   const push_ms = Math.max(0, ctx.deps.clock.now() - started);
   const masked = createRedactor(known)(`$ git ${args.join(' ')}\n${run.output}\n`);
-  await writeFileAtomic(inKingdom(ctx.root, pushLogOf(d.quest.id)), masked);
+  await writeFileAtomic(inKingdom(ctx.root, pushing.log), masked);
   if (run.code === 0) return ok(push_ms);
   return err(
     run.stopped && !d.signal.aborted ? `${masked}\nstopped after ${PUSH_TIMEOUT_MINUTES} minutes` : masked,
@@ -186,7 +191,8 @@ async function deliverChecked(ctx: Context, d: Delivery): Promise<Failure | unde
     return { verdict: verdict.ok ? verdict.value : undefined, committed_at };
   });
   if (stopped(d)) return undefined;
-  const pushed = await push(ctx, d, known, env);
+  const refspec = `${d.branch}:refs/heads/${d.branch}`;
+  const pushed = await pushRef(ctx, d, { refspec, log: pushLogOf(d.quest.id) }, known, env);
   if (stopped(d)) return undefined;
   if (!pushed.ok) return { stage: 'push', reason: 'push_refused', branch: d.branch, detail: pushed.error };
   return openPullRequest(ctx, d, { head, known, warnings: scan.warnings, push_ms: pushed.value });

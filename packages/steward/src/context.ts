@@ -4,6 +4,7 @@ import type { DelegationBook } from './delegation/book.ts';
 import type { StreakBook } from './temple/streak-book.ts';
 import type { ForgeBook } from './forge/book.ts';
 import type { GuestBook } from './forge/guest-book.ts';
+import type { LaneRuns } from './forge/lane-runs.ts';
 import type { BaseLooks } from './forge/looks.ts';
 import type { PatrolBook } from './patrol/book.ts';
 import type { GraphBuilds } from './background/graph-builds.ts';
@@ -48,6 +49,8 @@ export interface Context {
   readonly forge: ForgeBook;
   /** (CM-07) The guest entries of the merge queues that wait, and their tries outside the tick, across ticks. */
   readonly guests: GuestBook;
+  /** (CM-08) The delivery trains of the `deferred` territories, running outside the tick, one per territory. */
+  readonly trains: LaneRuns;
   /** The looks at the base branches and the done quests found there (PS-08d), across ticks. */
   readonly looks: BaseLooks;
   /** The health of the patrolled territories' default branches (PS-26), across ticks. */

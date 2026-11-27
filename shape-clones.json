@@ -108,11 +108,18 @@
       "status": "unreviewed"
     },
     {
-      "a": "packages/steward/src/forge/guest-book.ts",
-      "b": "packages/steward/src/forge/looks.ts",
-      "tokens": 150,
+      "a": "packages/steward/src/forge/lane-runs.ts",
+      "b": "packages/steward/src/patrol/runs.ts",
+      "tokens": 139,
       "status": "kept",
-      "reason": "CM-07: two tables of work outside the tick, one run per territory (start, idle, stop over an AbortController each), as the patrol runs are a third; each keeps what its kind needs beside them (the looks their time and tips, the guests the entries that wait, drawn from the log). A shared runner of outside work gathers the three at once (AH-14), not one pair apart."
+      "reason": "CM-08: lane-runs.ts gathers the runs outside the tick that hold one run per territory (the looks, the guests, the trains); the patrol runs keep lanes of their own beside it (busy and outside counts, a run started per trigger), which a shared runner of outside work gathers with the rest at once (AH-14), not this pair apart."
+    },
+    {
+      "a": "packages/steward/src/forge/guest.ts",
+      "b": "packages/steward/src/forge/train.ts",
+      "tokens": 65,
+      "status": "kept",
+      "reason": "CM-08: the frame of a trial of the merge queue, a `check.start` once built and a `check.end` after, around Plots.guest and Plots.train, whose requests and marks differ (the guest carries the checks the ledger holds and names its mode, the train runs every check and names its tree); the shared parts (the line, the end, the red checks) are in trial-red.ts already."
     },
     {
       "a": "apps/cli/src/territory/check-policy.ts",
@@ -175,12 +182,6 @@
       "a": "apps/cli/src/quest/edit.ts",
       "b": "apps/cli/src/quest/escaped.ts",
       "tokens": 86,
-      "status": "unreviewed"
-    },
-    {
-      "a": "packages/steward/src/forge/looks.ts",
-      "b": "packages/steward/src/patrol/runs.ts",
-      "tokens": 139,
       "status": "unreviewed"
     },
     {
