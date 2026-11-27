@@ -209,7 +209,14 @@ export const KingdomSchema = z
     dispatch: DispatchSchema,
     delegation: DelegationSchema,
     bell: z.strictObject({
-      desktop: z.boolean().default(true),
+      desktop: z
+        .boolean()
+        .default(true)
+        .meta(
+          describe(
+            'Desktop bell (P2-03): what waits on the owner (seal, infirmary, question, a whole pool out of mana) and the alarms also show as a system notification on Windows and macOS while `elvaria run` runs on a terminal; false: the terminal only.',
+          ),
+        ),
       web_push: z.boolean().default(false),
       messaging: z
         .null()

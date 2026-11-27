@@ -7,7 +7,7 @@
       "project": ["scripts/**/*.mjs!", "scripts/**/*.ts", ".claude/hooks/**/*.mjs!", ".claude/hooks/**/*.ts"]
     },
     "apps/cli": {
-      "entry": ["src/cli.ts!", "fixtures/*.mjs"],
+      "entry": ["src/cli.ts!", "src/bell/show-toast.ts!", "fixtures/*.mjs"],
       "project": ["src/**/*.ts!", "!src/**/*.spec.ts!", "!src/**/__fixtures__/**!", "fixtures/**/*.mjs"]
     },
     "packages/config": {

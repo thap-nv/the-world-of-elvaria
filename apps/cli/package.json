@@ -26,7 +26,8 @@
     "@elvaria/runner-core": "workspace:*",
     "@elvaria/sandbox": "workspace:*",
     "@elvaria/steward": "workspace:*",
-    "@elvaria/store": "workspace:*"
+    "@elvaria/store": "workspace:*",
+    "node-notifier": "^12.1.0"
   },
   "devDependencies": {
     "@elvaria/config": "workspace:*",

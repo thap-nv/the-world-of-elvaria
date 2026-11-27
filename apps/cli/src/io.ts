@@ -19,6 +19,8 @@ export interface CliIo {
   /** IANA zone of the machine, written into a new kingdom.json. */
   readonly timeZone: string;
   readonly platform: NodeJS.Platform;
+  /** stdout is a terminal someone watches: `run` then adds the desktop bell (P2-03). Absent in tests: not one. */
+  readonly interactive?: boolean;
   /** Absolute path of the running Node, to start an npm `.cmd` shim's script without a shell (ADR 0015). */
   readonly nodePath: string;
   readonly clock: Clock;
