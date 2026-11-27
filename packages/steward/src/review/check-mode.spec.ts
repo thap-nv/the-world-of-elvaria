@@ -47,12 +47,17 @@ const green = (request: PlotCheck): Promise<readonly CheckRun[]> => {
 };
 
 /** A quest touching `touched` on dc1-se-team with `policy`, worked and judged to its end. */
-async function judged(touched: readonly string[], policy: Record<string, unknown> | null = NARROW) {
+async function judged(
+  touched: readonly string[],
+  policy: Record<string, unknown> | null = NARROW,
+  more: Record<string, unknown> = {},
+) {
   const kingdom = await bench();
   current = kingdom;
   const read = await kingdom.store.territories.read('dc1-se-team' as TerritoryId);
   if (!read.ok) throw new Error('fixture: no territory');
-  const written = { ...read.value, checks: CHECKS, ...(policy === null ? {} : { check_policy: policy }) };
+  const policed = policy === null ? {} : { check_policy: policy };
+  const written = { ...read.value, checks: CHECKS, ...policed, ...more };
   await kingdom.store.territories.write(TerritorySchema.parse(written));
   const calls: PlotCheck[] = [];
   const check = (request: PlotCheck) => {
@@ -101,5 +106,19 @@ describe('the check mode of the run after a session (CM-01)', () => {
     expect(calls[0]).not.toHaveProperty('mode');
     expect(lines[0]).toEqual({});
     expect(allow).not.toContain('Bash(pnpm test:changed:*)');
+  });
+
+  it('leaves the checks marked defer_to_merge to the train in a deferred territory (CM-08)', async () => {
+    const e2e = { id: 'e2e', run: 'pnpm e2e', when: ['src/**'], timeout_minutes: 30, defer_to_merge: true };
+    const delivery = { mode: 'pr_merge', forge: 'github', merge_method: 'merge' };
+    const vcs = { type: 'git', default_branch: 'main', remote: 'https://github.com/owner/repo.git' };
+    const { calls, lines } = await judged(
+      CODE,
+      { mode: 'deferred' },
+      { checks: [...CHECKS, e2e], delivery, vcs },
+    );
+    expect(calls.map(({ mode }) => mode)).toEqual(['narrow']);
+    expect(calls[0]?.territory.checks.map(({ id }) => id)).toEqual(['lint', 'unit', 'docs']);
+    expect(lines[0]).toEqual({ mode: 'narrow' });
   });
 });
