@@ -1,10 +1,13 @@
-import { TerritorySchema } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, TerritorySchema } from '@elvaria/domain';
 import type { KingdomSnapshot, Territory, TerritoryTrial } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import { patrolMerged } from './again.ts';
-import { createPatrolBook, recordPatrolMerge } from './book.ts';
+import { createPatrolBook, recordLookedHead, recordPatrolMerge, recoverPatrol } from './book.ts';
+import { patrolTerritory } from './patrol.ts';
 import { createLaneRuns } from '../forge/lane-runs.ts';
+import { startLook } from '../forge/look.ts';
+import { createBaseLooks } from '../forge/looks.ts';
 import type { Context } from '../context.ts';
 import type { Recorder } from '../quest/record.ts';
 
@@ -71,6 +74,10 @@ function open(every = 3) {
       head = next;
       recordPatrolMerge(ctx.patrol, territory.id, next);
     },
+    look: (next: string) => {
+      head = next;
+      recordLookedHead(ctx.patrol, territory.id, next);
+    },
     during: (work?: () => Promise<void>) => {
       during = work;
     },
@@ -83,6 +90,144 @@ function open(every = 3) {
 }
 
 describe('the live merge batches (613)', () => {
+  it('(625) records fetched remote heads through the base look, ignoring a stale fetched tip', async () => {
+    const bench = open();
+    let remote = 'initial';
+    const ctx = {
+      ...bench.ctx,
+      looks: createBaseLooks(bench.ctx.deps.log),
+      deps: {
+        ...bench.ctx.deps,
+        plots: {
+          ...bench.ctx.deps.plots,
+          baseTips: () => Promise.resolve({ local: 'local', remote }),
+          inBase: () => Promise.resolve(false),
+        },
+      },
+    };
+    for (const tip of ['initial', 'manual', 'initial']) {
+      remote = tip;
+      startLook(ctx, { territory: bench.territory.id, quests: [] });
+      await ctx.looks.idle();
+    }
+    expect(ctx.patrol.heads.get(bench.territory.id)).toBe('manual');
+    expect(ctx.patrol.merges.get(bench.territory.id)).toBe(1);
+  });
+
+  it('(625) counts manual heads mixed with delivery merges and never recounts a patrolled tip', async () => {
+    const bench = open();
+    bench.look('initial');
+    bench.look('manual-a');
+    expect(bench.ctx.patrol.merges.get(bench.territory.id)).toBe(1);
+    bench.merge('delivery');
+    await bench.run();
+    expect(bench.heads()).toEqual([]);
+    bench.look('manual-b');
+    await bench.run();
+    expect(bench.heads()).toMatchObject([{ trigger: 'merged', head: 'manual-b' }]);
+    bench.look('manual-b');
+    expect(bench.ctx.patrol.merges.has(bench.territory.id)).toBe(false);
+    expect(bench.ctx.patrol.heads.has(bench.territory.id)).toBe(false);
+  });
+
+  it('(625) counts a look and a delivery of the same commit once in either order', () => {
+    const bench = open();
+    bench.look('initial');
+    bench.look('a');
+    bench.merge('a');
+    expect(bench.ctx.patrol.merges.get(bench.territory.id)).toBe(1);
+    bench.merge('b');
+    bench.look('b');
+    bench.look('a');
+    expect(bench.ctx.patrol.merges.get(bench.territory.id)).toBe(2);
+    expect(bench.ctx.patrol.heads.get(bench.territory.id)).toBe('b');
+  });
+
+  it('(625) forgets live looks at recovery and seeds the first look without counting', () => {
+    const bench = open();
+    bench.look('initial');
+    bench.look('a');
+    recoverPatrol(bench.ctx.patrol, []);
+    expect(bench.ctx.patrol.seen.size).toBe(0);
+    bench.look('b');
+    expect(bench.ctx.patrol.heads.get(bench.territory.id)).toBe('b');
+    expect(bench.ctx.patrol.merges.size).toBe(0);
+    bench.look('c');
+    expect(bench.ctx.patrol.merges.get(bench.territory.id)).toBe(1);
+  });
+
+  it('(625) retains only the latest twenty distinct heads per territory', () => {
+    const bench = open();
+    const other = TerritorySchema.parse({ ...bench.territory, id: 'other' });
+    recordPatrolMerge(bench.ctx.patrol, other.id, 'other-head');
+    bench.look('initial');
+    for (let n = 1; n <= 21; n += 1) bench.merge(`head-${n}`);
+    bench.look('head-2');
+    expect(bench.ctx.patrol.seen.get(bench.territory.id)).toEqual([
+      'head-2',
+      'head-3',
+      'head-4',
+      'head-5',
+      'head-6',
+      'head-7',
+      'head-8',
+      'head-9',
+      'head-10',
+      'head-11',
+      'head-12',
+      'head-13',
+      'head-14',
+      'head-15',
+      'head-16',
+      'head-17',
+      'head-18',
+      'head-19',
+      'head-20',
+      'head-21',
+    ]);
+    expect(bench.ctx.patrol.merges.get(bench.territory.id)).toBe(21);
+    expect(bench.ctx.patrol.seen.get(other.id)).toEqual(['other-head']);
+  });
+
+  it('(625) seeds remembered heads from recovered delivery merges', () => {
+    const bench = open();
+    const head = 'a'.repeat(40);
+    const event = EventSchema.parse({
+      v: EVENT_VERSION,
+      id: '01JC0000000000000000000001',
+      ts: '2026-11-27T09:00:00+07:00',
+      type: 'delivery.merged',
+      actor: { kind: 'steward' },
+      data: {
+        quest: 'q_20261127_000001',
+        territory: bench.territory.id,
+        branch: 'quest/q_20261127_000001',
+        head,
+        pr: { number: 7, url: 'https://github.com/o/r/pull/7' },
+        merge_sha: head,
+        method: 'merge',
+        sealed: true,
+        branch_deleted: true,
+      },
+    });
+    recoverPatrol(bench.ctx.patrol, [event]);
+    bench.look(head);
+    bench.merge(head);
+    expect(bench.ctx.patrol.seen.get(bench.territory.id)).toEqual([head]);
+    expect(bench.ctx.patrol.merges.get(bench.territory.id)).toBe(1);
+    bench.look('manual');
+    expect(bench.ctx.patrol.merges.get(bench.territory.id)).toBe(2);
+  });
+
+  it('(625) remembers a scheduled patrol head even before any look or delivery', async () => {
+    const bench = open();
+    await patrolTerritory(bench.ctx, bench.territory, 'schedule', bench.ctx.stopping);
+    bench.look('initial');
+    expect(bench.ctx.patrol.heads.size).toBe(0);
+    expect(bench.ctx.patrol.merges.size).toBe(0);
+    expect(bench.ctx.patrol.seen.get(bench.territory.id)).toEqual(['initial']);
+  });
+
   it('starts a fresh batch after the previous patrol: two merges wait, the third runs', async () => {
     const bench = open();
     for (const head of ['a', 'b', 'c']) bench.merge(head);

@@ -8,7 +8,7 @@
 // (startingNow). A red territory's moves are base_moved's (patrolsDue).
 // (613) Wait for after_merge.every merges (default 3); the daily P1D schedule covers the tail. The Steward skips
 // a non-empty range matching only the territory's quiet_paths, when its latest patrol head and changed paths are known.
-// A look's head (PS-08d, a manual merge) is not counted: it waits for P1D or every delivery merges of the Steward's.
+// (625) A look's manual head counts live in the Steward; restart forgets looked moves, covered by the daily P1D patrol.
 // A merge arriving during a patrol stays counted unless that patrol tried the newest merge head. (613)(4) In `deferred`
 // a train's merge whose tree is the tree the train checked (`train.ran` `patrolled`) is as patrolled, as in `full`;
 // one whose tree differs (the base branch moved while the train ran) counts as any merge. (622) One merge commit is
