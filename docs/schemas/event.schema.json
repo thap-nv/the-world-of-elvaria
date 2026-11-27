@@ -2996,6 +2996,126 @@
       "if": {
         "properties": {
           "type": {
+            "const": "quest.judge_wait"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The quest does not move. Its wait also ends with the next line that moves it (a judge opens its session, the owner cancels it).",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "reason"
+            ],
+            "properties": {
+              "reason": {
+                "description": "unjudgeable: no judge of the roster may take the quest (different model, not one of its doers, eyes when its ritual asks for them); judge_mana: it has judges, and the mana of every one is closed; null: the wait is gone while the quest is still in review (a judge whose mana opened is busy).",
+                "enum": [
+                  "unjudgeable",
+                  "judge_mana"
+                ]
+              },
+              "gauges": {
+                "description": "judge_mana: one per pool of the judges it waits for, in the order of the judges.",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "tribe",
+                    "pool"
+                  ],
+                  "properties": {
+                    "tribe": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "pool": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "resets_at": {
+                      "description": "When the last window that closes it resets, if a reading says.",
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "tribe.held"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "Written when the hold appears or changes, and when it ends. A hold whose `checked` is no longer the tribe's checked version (a `tribe check` passed since) is over too.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tribe",
+              "hold"
+            ],
+            "properties": {
+              "tribe": {
+                "description": "TribeId from kingdom.tribes[].",
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "hold": {
+                "description": "Why the Steward opens no new session on the tribe; null: the hold is gone.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": false,
+                "required": [
+                  "path",
+                  "version",
+                  "checked"
+                ],
+                "properties": {
+                  "path": {
+                    "description": "The CLI its runner starts, as a portable path.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "version": {
+                    "description": "What the CLI says with `--version`; null: the file is gone.",
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1
+                  },
+                  "checked": {
+                    "description": "The version its last passing `tribe check` ran on, else the pinned one (checkedVersionOf).",
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "const": "agent.tool"
           }
         }
@@ -6560,6 +6680,7 @@
         "quest.delivered",
         "quest.edited",
         "quest.unclaimable",
+        "quest.judge_wait",
         "agent.session.start",
         "agent.session.end",
         "agent.session.wrap_up",
@@ -6636,6 +6757,7 @@
         "upgrade.rolled_back",
         "upgrade.failed",
         "tribe.checked",
+        "tribe.held",
         "chancellor.answered"
       ]
     }

@@ -2526,9 +2526,10 @@
                 "quest.healing",
                 "quest.delivered",
                 "quest.edited",
-                "quest.unclaimable"
+                "quest.unclaimable",
+                "quest.judge_wait"
               ],
-              "meaning": "mỗi chuyển trạng thái của quest (§2.5 của implementation-plan); `quest.edited`: người dùng sửa trường của quest (`edit_quest`, `set_rank`); `quest.unclaimable`: Nhiếp chính báo quest `open` không ai nhận được (§3.1); `quest.heal_due`: hook từ chối commit nộp lần đầu trong lượt, quest về `returned` chờ phiên chữa, không chuông (ADR 0034); `quest.healing`: phiên của Y sư mở trên quest (`returned` → `healing`, ADR 0034)"
+              "meaning": "mỗi chuyển trạng thái của quest (§2.5 của implementation-plan); `quest.edited`: người dùng sửa trường của quest (`edit_quest`, `set_rank`); `quest.unclaimable`: Nhiếp chính báo quest `open` không ai nhận được (§3.1); `quest.judge_wait`: Nhiếp chính báo quest `review` chờ người chấm (`reason` `unjudgeable`: đội hình không có người chấm; `judge_mana`: mana của mọi người chấm đều đóng, kèm `gauges`), và `reason: null` khi hết chờ mà quest vẫn ở `review`; dòng chuyển quest sau nó cũng kết thúc nó (P2-04); `quest.heal_due`: hook từ chối commit nộp lần đầu trong lượt, quest về `returned` chờ phiên chữa, không chuông (ADR 0034); `quest.healing`: phiên của Y sư mở trên quest (`returned` → `healing`, ADR 0034)"
             },
             {
               "group": "Phiên agent",
@@ -2669,8 +2670,8 @@
             },
             {
               "group": "Tộc",
-              "types": ["tribe.checked"],
-              "meaning": "`elvaria tribe check` với CLI thật ghi (actor `user`, không ghi với `--scenarios`): model đã thử, số token các phiên của từng phép báo và tổng của chúng; ước lượng mana của Nhiếp chính tính tổng đó vào pool của model như phiên của một quest, đọc từ lần khởi động sau (lần chạy (221) (b))"
+              "types": ["tribe.checked", "tribe.held"],
+              "meaning": "`tribe.checked`: `elvaria tribe check` với CLI thật ghi (actor `user`, không ghi với `--scenarios`): model đã thử, số token các phiên của từng phép báo và tổng của chúng; ước lượng mana của Nhiếp chính tính tổng đó vào pool của model như phiên của một quest, đọc từ lần khởi động sau (lần chạy (221) (b)); `tribe.held`: Nhiếp chính giữ một tộc mà CLI đổi phiên bản so với lần `tribe check` đạt hay đã mất (`hold`: đường dẫn, phiên bản CLI nói, `null` khi mất, phiên bản đã thử), và `hold: null` khi thả (P2-04)"
             },
             {
               "group": "Tể tướng",

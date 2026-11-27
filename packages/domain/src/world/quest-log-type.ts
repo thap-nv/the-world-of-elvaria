@@ -8,9 +8,10 @@ import type { QuestEventType } from '../quest/events.ts';
 /**
  * Quest lines that are notices about a quest, not changes to it: data of their own, no view, no move of the table.
  * `quest.unclaimable` is about an open quest (P1-03); `quest.escaped`, the owner's report of a defect that escaped
- * with a quest already in its base branch (PS-08g).
+ * with a quest already in its base branch (PS-08g); `quest.judge_wait`, about a quest in review that waits for a judge
+ * (P2-04).
  */
-export const QUEST_NOTICE_TYPES = ['quest.unclaimable', 'quest.escaped'] as const;
+export const QUEST_NOTICE_TYPES = ['quest.unclaimable', 'quest.escaped', 'quest.judge_wait'] as const;
 
 /** The quest lines that carry the quest's view. */
 export type QuestLogType = Exclude<
