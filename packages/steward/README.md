@@ -606,8 +606,17 @@
   base branches; `BackgroundWork.trains`, which the patrol after a merge counts as heavy work). The repo's config is
   checked (SEC-02b), then `Plots.train` merges the quests' branches into origin's default branch and runs every check
   once, with its `check.start`/`check.end` (`delivery`, `train`). A quest that conflicts leaves the train:
-  `delivery.failed` at stage `train`, `conflict`, its files and the queue's merge quest. Red: `delivery.failed`
-  `checks_red` for each quest aboard. Green (`src/forge/train-push.ts`): the secret scan of the train over its base,
+  `delivery.failed` at stage `train`, `conflict`, its files and the queue's merge quest. Red (CM-08b,
+  `src/forge/train-probe.ts`): the base branch is asked first (`baseRedAt`, unless a patrol fix is aboard); red on its
+  own, `train.ran` carries `base_red`, nobody is blamed and no ride counts. Else the train's merge commits are probed
+  in the patrol's lane (`src/patrol/probe-run.ts`, `Plots.probe`), one `check.attributed` (`source: train`). The quest
+  of the first red step: `own_change` fails a session's quest late (`failLate`), else `delivery.failed` `checks_red`;
+  `combination` opens the queue's merge quest (`delivery.failed` with `merge_quest`). The quests before it leave at
+  once on a `split` train that runs only the red checks (`trainTurn` again); those after it wait for the next train,
+  and the TRAIN_RIDES_MAX-th red ride (`trainRidesOf`, `outOfRidesOf`) fails one to the owner. Nobody found (`flaky`,
+  `unknown`, no probe plots): every quest waits for the next train. The owner's `deliver` naming the territory forgets
+  its trains' failures but those a merge quest settles ((623)). Green (`src/forge/train-push.ts`): the secret scan of
+  the train over its base,
   `git push` of its head as `train/<territory>/<id>`, one pull request (its quests and their delivery notes), the
   forge's merge at that head without waiting for its required checks, the branch removed, then `delivery.merged` with
   `train` for each quest. Stopped (git, a generator, the scan, the push, the forge): `delivery.failed` for each quest
