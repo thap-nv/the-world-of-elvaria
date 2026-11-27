@@ -3,7 +3,7 @@
   "messages": {
     "cli.character.add.arg.id": "id của nhân vật: chữ thường, số và gạch ngang, ví dụ thorn.",
     "cli.character.add.option.class": "Nghề, theo registry/classes.json (knight, scribe, judge…).",
-    "cli.character.add.option.level": "Cấp ban đầu 1–10, đặt theo độ mạnh của model (mặc định theo model: Opus hoặc Astra 5, Sonnet, Pro hoặc Sol 4, Argon hoặc Terra 3, Haiku, Flash hoặc Luna 2, model khác 1).",
+    "cli.character.add.option.level": "Cấp ban đầu 1–10, đặt theo độ mạnh của model (mặc định theo model: Opus hoặc Astra 5, Sonnet, Pro, Sol hoặc Carbon 4, Neon hoặc Terra 3, Haiku, Hydrogen hoặc Luna 2, model khác 1).",
     "cli.character.add.option.model": "Model của CLI (mặc định: model gợi ý của nghề trong tộc của nó).",
     "cli.character.add.option.name": "Tên hiển thị, tối đa 24 ký tự (mặc định: id viết hoa chữ đầu).",
     "cli.character.add.option.tribe": "Tộc, một id trong kingdom.tribes (mặc định: tộc gợi ý của nghề).",
@@ -24,7 +24,7 @@
     "cli.character.level_unknown_model": "Chưa biết cấp ban đầu cho model {model}: cấp 1, chỉ được giao nhiệm vụ hạng F. Triệu hồi với --level 1–10 theo độ mạnh của model để bắt đầu cao hơn.",
     "cli.character.list.summary": "Liệt kê các nhân vật.",
     "cli.character.mana_mark": "bị chặn: {gauge} đang ngủ",
-    "cli.character.model.arg.model": "Model CLI mới, cùng tộc, ví dụ gemini-3.8-flash-high.",
+    "cli.character.model.arg.model": "Model CLI mới, cùng tộc, ví dụ gemini-4-neon-high.",
     "cli.character.model.invalid_model": "Model «{model}» không hợp lệ: chỉ chữ thường, số, dấu chấm và gạch ngang.",
     "cli.character.model.model_not_of_tribe": "Tộc {tribe} không chạy model {model}: tộc của một nhân vật cố định suốt đời. Hãy triệu hồi nhân vật của tộc khác: elvaria character add",
     "cli.character.model.pool_off": "Lưu ý: pool {pool} của tộc {tribe}, nơi chạy {model}, đang tắt trong kingdom.json: nhân vật không nhận việc cho tới khi pool được bật.",
