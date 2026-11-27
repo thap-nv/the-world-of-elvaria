@@ -24,7 +24,7 @@ import {
   WRITE_TOOLS,
 } from './constants.ts';
 import { forbiddenPathsOf } from './forbidden-changes.ts';
-import { commandLinesOf, GRAPH_COMMANDS } from '@elvaria/domain';
+import { checkPolicyOf, commandLinesOf, GRAPH_COMMANDS } from '@elvaria/domain';
 import type { Character, CharacterClass, Territory, TerritoryCheck } from '@elvaria/domain';
 
 import type { SpawnRole } from '../runner/roles.ts';
@@ -84,7 +84,7 @@ export interface ToolPolicyInput {
   readonly characterClass: Pick<CharacterClass, 'tools'>;
   /** `character.tools`: a list given there replaces the class's list (schema: "Overrides of the class default"). */
   readonly character?: Pick<Character, 'tools'>;
-  readonly territory?: Pick<Territory, 'laws' | 'checks' | 'commands' | 'vcs'>;
+  readonly territory?: Pick<Territory, 'laws' | 'checks' | 'commands' | 'vcs' | 'check_policy'>;
   /**
    * A verifier in its scratch plot (ADR 0022, P1-20): it gets Edit and Write, even when its class denies them, to
    * break what the tests guard and restore it, runs the territory's exclusive checks too (the Steward holds their lock
@@ -106,10 +106,21 @@ export interface ToolPolicyInput {
   /**
    * (CM-01, ADR 0032) The territory's checks of the narrow run a judge reads (checkModeOf gave `narrow`): its shell
    * runs their narrow commands where they have one, never the other checks' commands, nor these checks' `run` the
-   * narrow command stands for. Absent: every check's `run`, as before; ignored for any other role.
+   * narrow command stands for. Absent: every check's `run`, as before; ignored for any other role. (CM-08) In a
+   * `deferred` territory it loses `commands.test` too, its class's rule for it included (judgesDeferredRun).
    */
   readonly narrow_checks?: readonly TerritoryCheck[] | undefined;
 }
+
+/**
+ * (CM-08, ADR 0032, amending ADR 0008) A judge of a `deferred` territory's narrow run: the test suite and the checks
+ * left to the merge run on the delivery train after its verdict, so its shell holds no `commands.test` and its law 3
+ * says so (rerun-rules.md `deferred`). A whole-tree suite per judge would cost what deferring saved.
+ */
+export const judgesDeferredRun = (
+  territory: Pick<Territory, 'check_policy'> | undefined,
+  narrow: readonly TerritoryCheck[] | undefined,
+): boolean => narrow !== undefined && territory !== undefined && checkPolicyOf(territory).mode === 'deferred';
 
 const unique = (items: readonly string[]): string[] => [...new Set(items)];
 
@@ -216,6 +227,15 @@ function searchCommandsOf(tools: readonly string[], input: ToolPolicyInput): str
 export const asksGraph = (tools: readonly string[], deniedTools: ReadonlySet<string>): boolean =>
   !deniedTools.has(SHELL_TOOL) && tools.some((tool) => (SEARCH_TOOLS as readonly string[]).includes(tool));
 
+/** (CM-08) The shell rules of the territory's test suite, which the judge of a deferred run never holds. */
+function suiteRulesOf(
+  territory: ToolPolicyInput['territory'],
+  narrow: readonly TerritoryCheck[] | undefined,
+) {
+  if (territory === undefined || !judgesDeferredRun(territory, narrow)) return [];
+  return [territory.commands.test ?? []].flat().map((command) => `${SHELL_TOOL}(${command}:*)`);
+}
+
 function graphCommandsOf(tools: readonly string[], deniedTools: ReadonlySet<string>, input: ToolPolicyInput) {
   return input.graph === true && asksGraph(tools, deniedTools) ? [...GRAPH_COMMANDS] : [];
 }
@@ -249,9 +269,10 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
   const search = searchCommandsOf(tools, input);
   const graph = graphCommandsOf(tools, deniedTools, input);
   const images = verifier ? unique(input.images ?? []) : [];
+  const suite = suiteRulesOf(input.territory, narrow);
   return {
     tools,
-    allow: unique([...granted, ...shell, ...generate]),
+    allow: unique([...granted, ...shell, ...generate]).filter((rule) => !suite.includes(rule)),
     deny: unique([...classDeny, ...fences]),
     // The apprentice gets the character's tools without Agent, so it cannot start another (§3.12).
     apprentice: withApprentice ? { tools: ownTools } : null,

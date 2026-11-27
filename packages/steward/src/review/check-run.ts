@@ -3,7 +3,9 @@
 // names for the check ledger (RC-04, ADR 0035). start-checks.ts runs one; a run on the base branch merged in early
 // whose red took the merge back runs again on the head as submitted (RC-05, early-merge.ts), the red checks first and
 // then the rest, those carried by the ledger: each a run of its own, with its own pair of lines.
+import { checksOfRun } from '@elvaria/runner-core';
 import type { CarriedCheck, EventData, Quest, Result, Territory } from '@elvaria/domain';
+import type { CheckRunMode } from '@elvaria/runner-core';
 
 import { carriedFor, checkPointOf, factsOf, ranEndOf } from '../check-ledger/carry.ts';
 import { STEWARD } from '../quest/record.ts';
@@ -73,11 +75,17 @@ async function noteChecks(
   }
 }
 
-/** The territory with only the checks `only` names: the rest neither runs nor is said to. */
-const withOnly = (territory: Territory, only: readonly string[] | undefined): Territory =>
-  only === undefined
-    ? territory
-    : { ...territory, checks: territory.checks.filter(({ id }) => only.includes(id)) };
+/**
+ * The territory with the checks the run takes ((CM-08) in `deferred`, a narrow run leaves defer_to_merge ones to the
+ * train), of them only those `only` names: the rest neither runs nor is said to.
+ */
+function withOnly(territory: Territory, mode: CheckRunMode, only: readonly string[] | undefined): Territory {
+  const checks = checksOfRun(territory, mode, 'session');
+  return {
+    ...territory,
+    checks: only === undefined ? [...checks] : checks.filter(({ id }) => only.includes(id)),
+  };
+}
 
 /** One run of the checks in the quest's plot (or its judge's scratch plot), its two lines around it. */
 export async function runOnce(ctx: Context, given: RunGiven, how: RunHow = {}): Promise<Ran> {
@@ -92,7 +100,7 @@ export async function runOnce(ctx: Context, given: RunGiven, how: RunHow = {}): 
   const point = inScratch(ctx, quest) ? undefined : await checkPointOf(ctx, quest, mode);
   const carried: readonly CarriedCheck[] = how.carry === true ? await carriedFor(ctx, territory, point) : [];
   const options = { signal, secrets, mode, carried };
-  const checks = await checksOf(ctx, quest, withOnly(territory, how.only), n, options);
+  const checks = await checksOf(ctx, quest, withOnly(territory, mode, how.only), n, options);
   await started;
   const added = (await how.ended?.(checks)) ?? {};
   const facts = checks.ok ? factsOf(territory, point) : {};

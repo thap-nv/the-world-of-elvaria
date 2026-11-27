@@ -23,6 +23,9 @@ const kingdom = (): CommandRefs => refs({ kingdom: true });
 const onQuest = ({ quest }: { readonly quest: QuestId }): CommandRefs => refs({ quests: [quest] });
 const onTerritory = ({ territory }: { readonly territory: TerritoryId }): CommandRefs =>
   refs({ territories: [territory] });
+/** (CM-08) `deliver` names a done quest, or a territory whose delivery train it sends off. */
+const onDelivery = (payload: CommandPayload<'deliver'>): CommandRefs =>
+  'quest' in payload ? onQuest(payload) : onTerritory(payload);
 /** A memo command reaches the memo's quest, and the quest it names as the one doing the work. */
 const onMemo = ({ memo, quest }: { readonly memo: MemoId; readonly quest?: QuestId | undefined }) =>
   refs({ memos: [memo], quests: present(quest) });
@@ -66,7 +69,7 @@ export const COMMAND_SCOPES: ScopeTable = {
   decide_memo: onMemo,
   escalate_memo: onMemo,
   decide_amendment: onMemo,
-  deliver: onQuest,
+  deliver: onDelivery,
   hold: onQuest,
   unhold: onQuest,
   submit: onQuest,

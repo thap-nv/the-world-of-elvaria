@@ -311,7 +311,9 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   train. With `ChecksRequest.mode` `narrow` each check runs its `narrow` command where it has one (`checkLinesOf`);
   every command of a narrow run gets `ChecksRequest.base` (the plot's `PlotRecord.base`, `PlotManager.checkBase`)
   as `ELVARIA_CHECK_BASE` in its env, never in argv; a run in full gets none, as before. `toolPolicyOf({ narrow_checks })` gives the judge of a narrow run
-  those checks' commands alone, and prompt law 3 reads `prompts/rerun-rules.md` `narrow`. An `exclusive` check holds
+  those checks' commands alone, and prompt law 3 reads `prompts/rerun-rules.md` `narrow`; (CM-08) in a `deferred`
+  territory (`judgesDeferredRun`) it holds no rule for `commands.test`, its class's included, and law 3 reads `deferred`:
+  the delivery train runs the suite after the verdict. An `exclusive` check holds
   the territory's lock (`.state/checks/<territory>-exclusive`, `src/checks/exclusive-lock.ts`) so two quests never
   run one at once; a timed-out check runs its `cleanup`, under that lock too (P1-54). The checks that are not
   exclusive run first (P1-54), so a short one never waits out the lock. A check that cannot run (shell syntax, program
@@ -414,6 +416,15 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   conflict refuses, with the files), commits the tree with no ref, tells `started` the check mode of the merge's
   diff, and runs the territory's trial on that commit under `guest-<id>` (`TerritoryTrialRequest.narrow`). The
   session's branch is never written; the plot goes in the trial's `finally`.
+- Builds and tries the delivery train of a `deferred` territory (CM-08, `src/train/train-trial.ts`): `tryTrain`
+  fetches origin's default branch (`originTipOf`, shared with the guest) and runs the territory's trial on its head
+  under `train-<id>` with steps of its own (`TerritoryTrialRequest.steps`; setup and the checks are
+  `src/plot/territory/trial-steps.ts`): each quest's branch merged in order as the merge queue merges (`dryMerge`,
+  then `mergeResolved` with the rules of shared_paths), a quest that conflicts leaving with its files; then
+  commands.setup, commands.generate (no secrets; log `.runs/train-<id>-delivery/generate.log`) and every check, its
+  `run`, `started` told the head and its tree before the checks. A branch git cannot merge or a failing generator
+  stops the train; the quests' branches are never written, and the plot goes in the trial's `finally`. The push and
+  the pull request are the Steward's.
 - Gives every check of a round `ELVARIA_SCREENS_DIR`, the round's `.runs/<quest>-<n>/screens/` outside the plot, emptied before the round (PS-11b, `src/checks/screens.ts`); `screensOf` lists the PNGs there in pairs (`<name>.png`, `.ref.png`, `.diff.png`) and says what breaks the ceilings (`SCREEN_MAX_FILES` 12, `SCREEN_MAX_BYTES` 2 MiB, PNG only, kebab-case names). `ToolPolicy.images` holds the screens a judge reads (verifier only), `policy.json` hands them to the hook, and the judge's review lists them by path (`prompts/screens.md`); the images never go into a prompt. The conformance suite's `image` check (live too) has a judge of a runner that declares `vision` name the stripes of a PNG outside its plot, made by the vision spike's generator (`src/conformance/stripes.ts`); FakeRunner plays it.
 - Measures a healer's part (HL-05, ADR 0034, `src/plot/heal/trees.ts`): `PlotManager.stagedTree(plot)` stages the
   doer's work and names its tree (`stagedTreeOf` of `plot/git.ts`) and the files it changed since HEAD;

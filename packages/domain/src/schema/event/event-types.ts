@@ -73,6 +73,8 @@ export const EVENT_TYPES = [
   'delivery.enqueued',
   'delivery.guest_merged',
   'delivery.guest_refused',
+  // CM-08: the delivery train of a deferred territory, its quests merged by one pull request.
+  'train.ran',
   // PS-08g: the owner's report of a defect that escaped, and the breaker of the seal delegation (ADR 0023).
   'quest.escaped',
   'delegation.suspended',

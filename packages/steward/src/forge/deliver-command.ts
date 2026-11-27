@@ -2,9 +2,12 @@
 // never tries a failed delivery on its own (ADR 0023); this command forgets the quest's outcome, so the next plan
 // delivers it from the start: the scan, the push (up to date if nothing moved), the pull request found or opened. Its
 // `command.applied` line names the quest, which is how the log tells a later Steward the outcome was forgotten
-// (forgeOutcomesOf).
-import { forgeDue } from '@elvaria/domain';
-import type { Quest } from '@elvaria/domain';
+// (forgeOutcomesOf). (CM-08) A `deliver` naming a `deferred` territory sends its delivery train off at the next tick
+// (departure `owner`), with the quests on its platform or, the platform empty, the first that boards it. The owner's
+// clients only, as for enqueue_branch: the Chancellor's triage and the temple do not run a territory's checks. Refused
+// while a train of the territory runs: its `train.ran` would take the order with it.
+import { checkPolicyOf, forgeDue } from '@elvaria/domain';
+import type { InboxCommand, Quest, TerritoryId } from '@elvaria/domain';
 
 import { APPLIED, rejected } from '../inbox/quest-commands.ts';
 import { forget } from './book.ts';
@@ -17,4 +20,15 @@ export function deliverAgain(ctx: Context, quest: Quest): Outcome {
   if (ctx.background.view().running.includes(quest.id)) return rejected('delivery_running');
   forget(ctx.forge, quest.id);
   return { ...APPLIED, quest };
+}
+
+/** (CM-08) `deliver` naming a territory: its train's order, or why not. */
+export function sendTrainOff(ctx: Context, source: InboxCommand['source'], id: TerritoryId): Outcome {
+  if (source === 'chancellor' || source === 'monk') return rejected('owner_only');
+  const territory = ctx.world.territories.get(id);
+  if (territory === undefined) return rejected('unknown_territory');
+  if (checkPolicyOf(territory).mode !== 'deferred') return rejected('not_deferred');
+  if (ctx.trains.running().includes(id)) return rejected('train_running');
+  ctx.forge.orders.add(id);
+  return { ...APPLIED, territory: id };
 }

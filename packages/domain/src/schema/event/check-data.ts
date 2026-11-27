@@ -11,6 +11,7 @@ import {
   TreeIdSchema,
   carriedPassed,
 } from './check-tree.ts';
+import { TrainMarkSchema } from './train-data.ts';
 import { CommitShaSchema } from './upgrade-data.ts';
 
 const describe = (description: string) => ({ description });
@@ -56,7 +57,12 @@ const GuestMarkSchema = z
   );
 
 export const CheckStartDataSchema = z
-  .strictObject({ delivery: DeliveryMarkSchema, mode: CheckRunModeSchema, guest: GuestMarkSchema })
+  .strictObject({
+    delivery: DeliveryMarkSchema,
+    mode: CheckRunModeSchema,
+    guest: GuestMarkSchema,
+    train: TrainMarkSchema,
+  })
   .meta(
     describe(
       'The checks of the run the envelope\'s `attempt` names started, outside the Steward\'s tick (implementation-plan §3.1 "(P1-25)").',
@@ -81,6 +87,7 @@ export const CheckEndDataSchema = z
     delivery: DeliveryMarkSchema,
     mode: CheckRunModeSchema,
     guest: GuestMarkSchema,
+    train: TrainMarkSchema,
     // Optional and added in v2 (RC-03, ADR 0035): what makes the line's green checks facts the check ledger keeps; a
     // line without `tree`, as every line before RC-03, keeps none.
     tree: TreeIdSchema.optional(),

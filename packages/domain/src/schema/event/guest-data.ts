@@ -57,7 +57,8 @@ export const DeliveryGuestMergedDataSchema = z
     ),
   );
 
-const GuestCheckSchema = z.strictObject({
+/** A red check of a guest's try or of a delivery train (train-data.ts), or `setup`. */
+export const RedCheckSchema = z.strictObject({
   id: z.string().regex(REGISTRY_ID_PATTERN).meta(describe('The red check, or `setup` for commands.setup.')),
   timed_out: z.literal(true).optional(),
   line: NonEmptyStringSchema.optional().meta(describe('The line of its log that says why, masked.')),
@@ -77,7 +78,7 @@ export const DeliveryGuestRefusedDataSchema = z
       .meta(
         describe("With conflict: the files that conflict, relative to the territory root, '/' separators."),
       ),
-    checks: z.array(GuestCheckSchema).min(1).optional().meta(describe('With checks_red: the red ones.')),
+    checks: z.array(RedCheckSchema).min(1).optional().meta(describe('With checks_red: the red ones.')),
     detail: NonEmptyStringSchema.max(DELIVERY_DETAIL_MAX_LENGTH)
       .optional()
       .meta(describe("The forge's or git's message; redacted.")),

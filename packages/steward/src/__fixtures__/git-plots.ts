@@ -19,6 +19,7 @@ import {
   territoryHeadOf,
   tryGuest,
   tryTerritory,
+  tryTrain,
 } from '@elvaria/runner-core';
 import { fromPortable, toPortable } from '@elvaria/store';
 import type { TerritoryId } from '@elvaria/domain';
@@ -142,6 +143,8 @@ export function gitPlots(
       : {}),
     // A guest of the merge queue as `elvaria run` tries it (CM-07).
     guest: (territory, pull, signal) => tryGuest({ kingdom, territory, host, signal, ...pull }),
+    // The delivery train of a `deferred` territory as `elvaria run` builds it (CM-08).
+    train: (territory, board, signal) => tryTrain({ kingdom, territory, host, signal, ...board }),
     changedPaths: (territory, from, to) => changedPathsOf({ territory, host, from, to }),
   };
 }

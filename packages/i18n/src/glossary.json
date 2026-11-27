@@ -282,6 +282,13 @@
               "used_in": "lệnh `enqueue_branch`, `elvaria territory enqueue`, event `delivery.enqueued`, `delivery.guest_merged`, `delivery.guest_refused`, `guest` của `check.start`, `check.end`"
             },
             {
+              "vi": "Tàu giao hàng",
+              "en": "Delivery train",
+              "id": ["train"],
+              "definition": "Cách giao hàng của lãnh thổ `deferred` (CM-08, ADR 0032): quest `done` mà Nhiếp chính merge (đã có dấu hay trong ủy quyền dấu) chờ trên **sân ga** của lãnh thổ thay vì đi một mình; tàu rời ga khi chủ nhân ra lệnh, đủ `train.max_quests`, quest đầu đã chờ `train.max_wait_minutes`, có quest sẵn sàng đang chờ vùng của một quest trên sân ga, hay lãnh thổ không còn quest nào đang làm hay đang chấm. Nhiếp chính dựng tàu trong đất tách rời `train-<lãnh thổ>` từ đầu nhánh gốc xanh, mỗi quest một merge commit, chạy mọi check một lần; xanh thì push `train/<lãnh thổ>/<id>`, mở một PR, merge, mỗi quest một `delivery.merged` mang `train`. Tàu là việc nặng: mỗi lúc một việc trong cả vương quốc cùng tuần tra. Sân ga suy từ snapshot, không file riêng.",
+              "used_in": "`check_policy.train`, event `train.ran`, `train` của `check.start`, `check.end`, `delivery.merged`, `delivery.failed`, `TickPlan.train_runs` (domain)"
+            },
+            {
               "vi": "Mùa",
               "en": "Season",
               "id": ["season"],
@@ -2633,6 +2640,11 @@
               "group": "Mục khách",
               "types": ["delivery.enqueued", "delivery.guest_merged", "delivery.guest_refused"],
               "meaning": "Mục khách của hàng đợi merge (CM-07, ADR 0032): `delivery.enqueued` khi chủ nhân xếp một PR của phiên mình (`territory`, `pr`); `delivery.guest_merged` khi Nhiếp chính thử xanh và merge PR qua forge (`branch`, `head` đã thử, `merge_sha`, `method`); `delivery.guest_refused` khi không merge (`reason`: `conflict` kèm `paths`, `checks_red` kèm `checks`, `head_moved`, `not_open`, `forge_error`, `update_failed`; `detail`). Không quest; phiên của người tự sửa rồi xếp lại, không gì tự thử lại"
+            },
+            {
+              "group": "Tàu giao hàng",
+              "types": ["train.ran"],
+              "meaning": "Tàu giao hàng của lãnh thổ `deferred` chạy xong (CM-08, ADR 0032): `train`, `departure` (`owner`, `full`, `waited`, `scope`, `idle`), `base` tàu tách ra, `head` và `tree` đã kiểm, `steps` (quest, merge commit), `left` (quest rời tàu vì `conflict`), `outcome` (`green`: một PR `pr` đã merge, `merge_sha`, `patrolled` khi cây của merge commit bằng cây tàu đã kiểm nên không tuần tra `merged`; `red` kèm `checks`; `stopped` kèm `detail`). Nhiếp chính dừng giữa tàu thì không ghi gì"
             },
             {
               "group": "Khác",

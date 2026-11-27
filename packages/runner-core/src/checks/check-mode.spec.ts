@@ -3,7 +3,7 @@
 import { TerritorySchema } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
-import { checkLinesOf, checkModeOf } from './check-mode.ts';
+import { checkLinesOf, checkModeOf, checksOfRun } from './check-mode.ts';
 
 const territoryOf = (policy?: Record<string, unknown>, delivery?: Record<string, unknown>) =>
   TerritorySchema.parse({
@@ -67,10 +67,34 @@ describe('checkModeOf', () => {
     expect(checkModeOf(NARROW, CODE, { ...SESSION, role: 'part', scratch: false })).toBe('narrow');
   });
 
-  it('runs deferred as narrow after a session, and the queue in full until the train of CM-08', () => {
+  it('runs deferred as narrow after a session, and the queue (a quest alone, a guest) in full', () => {
     const deferred = territoryOf({ mode: 'deferred' }, { mode: 'pr_merge' });
     expect(checkModeOf(deferred, CODE, SESSION)).toBe('narrow');
     expect(checkModeOf(deferred, CODE, { pass: 'queue' })).toBe('full');
+  });
+});
+
+describe('checksOfRun', () => {
+  const e2e = { id: 'e2e', run: 'pnpm e2e', when: ['**'], timeout_minutes: 30, defer_to_merge: true };
+  const withE2e = (policy: Record<string, unknown>) => {
+    const territory = territoryOf(policy, { mode: 'pr_merge' });
+    return TerritorySchema.parse({ ...territory, checks: [...territory.checks, e2e] });
+  };
+  const ids = (checks: readonly { id: string }[]) => checks.map(({ id }) => id);
+
+  it('leaves defer_to_merge checks to the train in the narrow run after a session of a deferred territory', () => {
+    expect(ids(checksOfRun(withE2e({ mode: 'deferred' }), 'narrow', 'session'))).toEqual([
+      'lint',
+      'test',
+      'docs',
+    ]);
+  });
+
+  it('keeps them in a full run, in the queue and in a narrow territory', () => {
+    const all = ['lint', 'test', 'docs', 'e2e'];
+    expect(ids(checksOfRun(withE2e({ mode: 'deferred' }), 'full', 'session'))).toEqual(all);
+    expect(ids(checksOfRun(withE2e({ mode: 'deferred' }), 'narrow', 'queue'))).toEqual(all);
+    expect(ids(checksOfRun(withE2e({ mode: 'narrow' }), 'narrow', 'session'))).toEqual(all);
   });
 });
 

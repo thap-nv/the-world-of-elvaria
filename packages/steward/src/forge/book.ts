@@ -7,8 +7,17 @@
 // open pull requests whose branch no longer merges cleanly (in memory: the look at start finds them again), and how
 // many times each delivery was updated (its pushes after the first, which the log counts). (RC-04) And how many
 // times the forge answered a merge with its own error (5xx), in memory only: a later Steward asks again from none.
-import { forgeOutcomesOf, forgeRoundsOf, isEventOf, parseInstant } from '@elvaria/domain';
-import type { Event, ForgeOutcome, ForgeSize, ForgeWait, Instant, QuestId } from '@elvaria/domain';
+// (CM-08) And the territories whose delivery train the owner sent off, until a train of theirs ran (trainOrdersOf).
+import { forgeOutcomesOf, forgeRoundsOf, isEventOf, parseInstant, trainOrdersOf } from '@elvaria/domain';
+import type {
+  Event,
+  ForgeOutcome,
+  ForgeSize,
+  ForgeWait,
+  Instant,
+  QuestId,
+  TerritoryId,
+} from '@elvaria/domain';
 
 export interface ForgeBook {
   readonly outcomes: Map<QuestId, ForgeOutcome>;
@@ -26,6 +35,8 @@ export interface ForgeBook {
   readonly rounds: Map<QuestId, number>;
   /** (RC-04) The merges the forge answered with a 5xx so far, each asked again at the next poll (merge.ts). */
   readonly retries: Map<QuestId, number>;
+  /** (CM-08) Territories whose train the owner sent off (`deliver` naming one): planTick's train_orders. */
+  readonly orders: Set<TerritoryId>;
 }
 
 export const createForgeBook = (): ForgeBook => ({
@@ -37,6 +48,7 @@ export const createForgeBook = (): ForgeBook => ({
   stale: new Set(),
   rounds: new Map(),
   retries: new Map(),
+  orders: new Set(),
 });
 
 /** The outcomes the log holds, in place of what the book held, and when each latest push was written. */
@@ -44,6 +56,8 @@ export function recoverForge(book: ForgeBook, events: readonly Event[]): void {
   book.outcomes.clear();
   for (const [quest, outcome] of forgeOutcomesOf(events)) book.outcomes.set(quest, outcome);
   for (const [quest, rounds] of forgeRoundsOf(events)) book.rounds.set(quest, rounds);
+  book.orders.clear();
+  for (const territory of trainOrdersOf(events)) book.orders.add(territory);
   for (const event of events) {
     if (!isEventOf(event, 'delivery.pushed')) continue;
     const at = parseInstant(event.ts);

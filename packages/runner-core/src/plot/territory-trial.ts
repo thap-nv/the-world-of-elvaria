@@ -10,21 +10,16 @@
 // names (no fetch: the patrol fetched it) and with the red checks only.
 import process from 'node:process';
 
-import { commandLinesOf } from '@elvaria/domain';
-import type { CommitLink, Territory, TerritoryTrial, TrialCheck, TrialStep } from '@elvaria/domain';
+import type { CommitLink, Territory, TerritoryTrial } from '@elvaria/domain';
 import { fromPortable } from '@elvaria/store';
 
-import { withEnvironment } from '../checks/environment.ts';
-import { openLog, runLine } from '../checks/logged-run.ts';
-import { runChecks } from '../checks/run-checks.ts';
-import type { CheckRun, ChecksRequest } from '../checks/run-checks.ts';
 import type { ProcessHost } from '../process/program.ts';
 import { gitOf, treeOf } from './git.ts';
 import type { Git } from './git.ts';
 import { ensureLongPaths, ensurePlotExcludes } from './repo-settings.ts';
 import { removeScratch } from './scratch.ts';
-import { SETUP_TIMEOUT_MS, setupLogOf } from './setup.ts';
-import { failureInLogFile } from './trial-log.ts';
+import { stepsIn } from './territory/trial-steps.ts';
+import type { TrialSteps, TrialStepsRequest } from './territory/trial-steps.ts';
 import { forkPoint, worktreePathOf } from './worktree.ts';
 
 /** The trial's id in the kingdom's `.runs/` and in the territory's worktree folder; no quest id starts with it. */
@@ -39,15 +34,9 @@ export const patrolIdOf = (territory: string): string => `patrol-${territory}`;
 /** (CM-04) The probe's plot and run id; no quest id starts with it either. */
 export const probeIdOf = (territory: string): string => `probe-${territory}`;
 
-export interface TerritoryTrialRequest {
-  /** The kingdom root, native: the logs and the exclusive lock live there. */
-  readonly kingdom: string;
-  readonly territory: Territory;
-  readonly host: ProcessHost;
+export interface TerritoryTrialRequest extends Omit<TrialStepsRequest, 'name'> {
   /** Decides `core.longpaths` (Windows only), as for a quest plot; defaults to this machine. */
   readonly platform?: NodeJS.Platform;
-  /** Kills the running command and starts no other (Ctrl+C); the worktree still goes. */
-  readonly signal?: AbortSignal;
   /** The gazetteer's stamp: the trial counts the commits from it to the commit it tries. */
   readonly stamp?: string;
   /**
@@ -59,15 +48,11 @@ export interface TerritoryTrialRequest {
   readonly inPlot?: (worktree: string) => Promise<void>;
   /** (CM-04) The commit to try, already in the repo, instead of the fork point after a fetch. */
   readonly commit?: string;
-  /** (CM-04) Only these checks of the territory, by id; every one when absent. */
-  readonly checks?: readonly string[];
   /**
-   * (CM-07) A narrow run (the guest entry's try): the checks the paths `touched` since `base` select, each its narrow
-   * command where it has one, `base` as ELVARIA_CHECK_BASE. Absent: every check, its `run`, as a merge quest runs them.
+   * (CM-08) What runs in the plot instead of setup then the checks (stepsIn): the delivery train's merges, setup,
+   * generators and checks (train/). The plot is still made at `commit` and removed after, whatever happened.
    */
-  readonly narrow?: { readonly touched: readonly string[]; readonly base: string };
-  /** (RC-04, ADR 0035) The checks the Steward carries instead of running (runChecks' `carried`). */
-  readonly carried?: ChecksRequest['carried'];
+  readonly steps?: (worktree: string) => Promise<TrialSteps>;
 }
 
 export interface TerritoryTrialRun {
@@ -83,88 +68,6 @@ const nameOf = (request: TerritoryTrialRequest): string => request.name ?? trial
 const failed = (detail: string, base: string | null = null): TerritoryTrialRun => ({
   trial: { base, plot_failure: detail, setup: null, checks: [] },
 });
-
-/** What a failed command's log says, over what the step knew of itself. */
-async function withLog<Step extends TrialStep>(kingdom: string, step: Step): Promise<Step> {
-  if (step.pass) return step;
-  const told = await failureInLogFile(kingdom, step.log_path);
-  return {
-    ...step,
-    ...(told.command === undefined ? {} : { command: told.command }),
-    ...(told.line === undefined ? {} : { error_line: told.line }),
-  };
-}
-
-/** commands.setup in the trial's plot: the log and timeout of a quest plot's setup (setup.ts), no secrets. */
-async function setupStep(request: TerritoryTrialRequest, worktree: string): Promise<TrialStep | null> {
-  const { kingdom, territory, host, signal } = request;
-  const command = territory.commands.setup;
-  if (command === undefined) return null;
-  const logPath = setupLogOf(nameOf(request));
-  const log = await openLog(kingdom, logPath, `$ ${command}`);
-  const context = { cwd: worktree, host, ...(signal === undefined ? {} : { signal }) };
-  const run = await runLine(command, context, log, SETUP_TIMEOUT_MS).finally(() => log.close());
-  const pass = run.exit_code === 0 && signal?.aborted !== true;
-  const step = {
-    command,
-    pass,
-    duration_ms: run.duration_ms,
-    timed_out: run.timed_out,
-    exit_code: run.exit_code,
-  };
-  const known = await withEnvironment({ ...step, log_path: logPath }, kingdom, territory.environment_errors);
-  return withLog(kingdom, known);
-}
-
-async function checkStep(kingdom: string, territory: Territory, run: CheckRun): Promise<TrialCheck> {
-  const check = territory.checks.find(({ id }) => id === run.id);
-  const lines = check === undefined ? [] : commandLinesOf(check.run);
-  const step: TrialCheck = {
-    id: run.id,
-    timeout_minutes: check?.timeout_minutes ?? 0,
-    command: lines.at(-1) ?? '',
-    pass: run.pass,
-    duration_ms: run.duration_ms,
-    timed_out: run.timed_out,
-    exit_code: run.exit_code,
-    log_path: run.log_path,
-    ...(run.environment === undefined ? {} : { environment: run.environment }),
-    ...(run.carried_from === undefined ? {} : { carried_from: run.carried_from }),
-  };
-  return withLog(kingdom, step);
-}
-
-/** Setup, then every check of the territory unless the setup failed, in the trial's plot. */
-async function stepsIn(request: TerritoryTrialRequest, worktree: string) {
-  const { kingdom, host, signal } = request;
-  const only = request.checks;
-  const territory =
-    only === undefined
-      ? request.territory
-      : { ...request.territory, checks: request.territory.checks.filter(({ id }) => only.includes(id)) };
-  const setup = await setupStep(request, worktree);
-  if (setup !== null && !setup.pass) return { setup, checks: [] };
-  // A party's merge quest runs every check whatever it touched (select-checks.ts): so does the trial, unless narrow.
-  const { narrow, carried } = request;
-  const selection =
-    narrow === undefined
-      ? ({ touched: [], party_role: 'merge' } as const)
-      : ({ touched: narrow.touched, mode: 'narrow', base: narrow.base } as const);
-  const runs = await runChecks(
-    {
-      kingdom,
-      territory,
-      ...selection,
-      cwd: worktree,
-      run_dir: `.runs/${nameOf(request)}`,
-      ...(signal === undefined ? {} : { signal }),
-      ...(carried === undefined ? {} : { carried }),
-    },
-    host,
-  );
-  const checks = await Promise.all(runs.map((run) => checkStep(kingdom, territory, run)));
-  return { setup, checks };
-}
 
 /** Commits from `stamp` to `base`; null when git does not know the stamp. */
 async function commitsSince(git: Git, repo: string, stamp: string, base: string): Promise<number | null> {
@@ -230,7 +133,8 @@ async function inTrialPlot(
   const { repo, worktree } = target;
   const added = await git(repo, ['worktree', 'add', '--quiet', '--detach', worktree, base]);
   if (added.code !== 0) return failed(added.stderr.trim(), base);
-  const steps = await stepsIn(request, worktree);
+  const named = { ...request, name: nameOf(request) };
+  const steps = request.steps === undefined ? await stepsIn(named, worktree) : await request.steps(worktree);
   if (request.inPlot !== undefined && request.signal?.aborted !== true) await request.inPlot(worktree);
   const { stamp } = request;
   const commits = stamp === undefined ? {} : { commits_since: await commitsSince(git, repo, stamp, base) };

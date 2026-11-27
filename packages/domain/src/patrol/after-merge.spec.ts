@@ -3,7 +3,7 @@
 // since the latest patrol given back at start.
 import { describe, expect, it } from 'vitest';
 
-import { SHA_A, SHA_B, TERRITORY as ELVARIA, merged, ran } from './__fixtures__/patrol-log.ts';
+import { SHA_A, SHA_B, TERRITORY as ELVARIA, lineOf, merged, ran } from './__fixtures__/patrol-log.ts';
 import { afterMergeOf, mergedPatrolOf, mergesSincePatrolOf, patrolsAfterMerge } from './after-merge.ts';
 import type { MovedSource } from './after-merge.ts';
 import type { QuestId, TerritoryId } from '../core/ids.ts';
@@ -153,5 +153,45 @@ describe('mergesSincePatrolOf', () => {
     expect(mergesSincePatrolOf([...events, ran('2026-11-23T08:20:00+07:00', [], { head: SHA_B })])).toEqual(
       [],
     );
+  });
+
+  // (613)(4): a train merged on the very tree it checked needs no patrol; one the base branch overtook does, (622) as
+  // one merge: its quests' lines share the merge commit of its pull request.
+  it('counts a green train merged on the tree it checked as patrolled, and one on another tree as one merge', () => {
+    const train = (ts: string, patrolled: boolean, head = SHA_B) =>
+      lineOf('train.ran', ts, {
+        territory: ELVARIA,
+        train: '01KAZ5Q3J8M6R2T4V6X8Z0B2D4',
+        departure: 'full',
+        base: SHA_A,
+        head: SHA_C,
+        steps: [{ quest: Q1, commit: SHA_C }],
+        outcome: 'green',
+        pr: 9,
+        merge_sha: head,
+        ...(patrolled ? { patrolled: true } : {}),
+      });
+    const events = [
+      merged('2026-11-23T08:00:00+07:00', Q1, true, ELVARIA, SHA_B),
+      merged('2026-11-23T08:00:01+07:00', Q2, true, ELVARIA, SHA_B),
+    ];
+    expect(mergesSincePatrolOf([...events, train('2026-11-23T08:00:02+07:00', true)])).toEqual([]);
+    expect(mergesSincePatrolOf([...events, train('2026-11-23T08:00:02+07:00', false)])).toEqual([
+      { territory: ELVARIA, head: SHA_B, merges: 1 },
+    ]);
+    const before = merged('2026-11-23T07:00:00+07:00', Q2, true, ELVARIA, SHA_A);
+    expect(mergesSincePatrolOf([before, ...events])).toEqual([
+      { territory: ELVARIA, head: SHA_B, merges: 2 },
+    ]);
+    // A red train merged nothing: it has no merge commit, and the merges before it stay counted.
+    const red = lineOf('train.ran', '2026-11-23T08:00:03+07:00', {
+      territory: ELVARIA,
+      train: '01KAZ5Q3J8M6R2T4V6X8Z0B2D5',
+      departure: 'idle',
+      base: SHA_B,
+      outcome: 'stopped',
+      patrolled: true,
+    });
+    expect(mergesSincePatrolOf([...events, red])).toEqual([{ territory: ELVARIA, head: SHA_B, merges: 1 }]);
   });
 });

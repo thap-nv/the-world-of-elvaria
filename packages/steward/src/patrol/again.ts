@@ -77,7 +77,8 @@ export async function patrolMerged(ctx: Context, snapshot: KingdomSnapshot): Pro
     tried: patrol.tried,
     base_red: snapshot.base_red ?? [],
     queued: queueAtWorkOf(snapshot, done),
-    patrolling: patrol.runs.busy(),
+    // (CM-08) A delivery train is heavy work too: it runs every check of its territory (HEAVY_WORK_MAX).
+    patrolling: patrol.runs.busy() + ctx.trains.running().length,
     room:
       ctx.world.kingdom.dispatch.max_background -
       ctx.background.view().running.length -

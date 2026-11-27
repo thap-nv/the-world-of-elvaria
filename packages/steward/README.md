@@ -601,6 +601,22 @@
   at the head tried and `delivery.guest_merged` (the patrol after a merge follows), or `delivery.guest_refused`
   (`conflict` with the files, `checks_red` with the red checks, `head_moved`, `forge_error`, `update_failed`).
   The Steward's stop aborts a try and records nothing but the `check.end` of the checks it killed.
+- The delivery train of a `deferred` territory (CM-08, ADR 0032): each of `plan.train_runs` (`src/forge/train.ts`)
+  runs outside the tick in its territory's lane (`src/forge/lane-runs.ts`, shared with the guests and the looks at the
+  base branches; `BackgroundWork.trains`, which the patrol after a merge counts as heavy work). The repo's config is
+  checked (SEC-02b), then `Plots.train` merges the quests' branches into origin's default branch and runs every check
+  once, with its `check.start`/`check.end` (`delivery`, `train`). A quest that conflicts leaves the train:
+  `delivery.failed` at stage `train`, `conflict`, its files and the queue's merge quest. Red: `delivery.failed`
+  `checks_red` for each quest aboard. Green (`src/forge/train-push.ts`): the secret scan of the train over its base,
+  `git push` of its head as `train/<territory>/<id>`, one pull request (its quests and their delivery notes), the
+  forge's merge at that head without waiting for its required checks, the branch removed, then `delivery.merged` with
+  `train` for each quest. Stopped (git, a generator, the scan, the push, the forge): `delivery.failed` for each quest
+  with the reason; a branch pushed is removed. One `train.ran` closes every train, after its quests' lines; a quest
+  whose branch the base branch holds already is no step, and the look archives it. The Steward's stop before the merge
+  records nothing but the `check.end` of the checks it killed, and leaves no branch. The owner's `deliver` naming the
+  territory (`src/forge/deliver-command.ts`, `sendTrainOff`; owner only, refused while a train of it runs) sends the
+  next train off: `ForgeBook.orders`, rebuilt at start (`trainOrdersOf`), planTick's `train_orders`, until that
+  train's `train.ran`. (622) The patrol book counts the lines of one merge commit, a train's quests, as one merge.
 - The check ledger (RC-04, ADR 0035, `src/check-ledger/carry.ts`): every run of the checks names on its `check.end`
   (or `patrol.ran`) the tree it ran on, the territory's check config and a narrow run's base (`Plots.checkPoint`,
   `Plots.patrolHead`), and the merge queue (`src/forge/queue-rerun.ts`), a guest's try and the patrol read the ledger
@@ -779,3 +795,6 @@ generator that fails after the merge takes it back, red by the quest takes it ba
 merge runs the rest on the head as submitted with the red check carried, and a Steward stopped on the merge leaves
 one merge commit. `forge-merge.spec.ts` asks a merge again after a 5xx, then fails it once
 `FORGE_MERGE_RETRIES` are spent; `forge-guest.spec.ts` refuses a guest the forge says conflicts, before any try.
+`forge-train.spec.ts` (CM-08) merges three sealed quests of a `deferred` territory by one pull request, sends the
+train off at once for a quest that waits for the scope of one on it, fails each quest of a red train and lets a
+conflicting one leave for a merge quest, and leaves no branch and no line when the Steward stops mid-train.

@@ -9,7 +9,10 @@
 // (613) Wait for after_merge.every merges (default 3); the daily P1D schedule covers the tail. The Steward skips
 // a non-empty range matching only the territory's quiet_paths, when its latest patrol head and changed paths are known.
 // A look's head (PS-08d, a manual merge) is not counted: it waits for P1D or every delivery merges of the Steward's.
-// A merge arriving during a patrol stays counted unless that patrol tried the newest merge head.
+// A merge arriving during a patrol stays counted unless that patrol tried the newest merge head. (613)(4) In `deferred`
+// a train's merge whose tree is the tree the train checked (`train.ran` `patrolled`) is as patrolled, as in `full`;
+// one whose tree differs (the base branch moved while the train ran) counts as any merge. (622) One merge commit is
+// one merge: the quests of a train share its pull request's merge commit, so a train counts once, not once a quest.
 import { AFTER_MERGE_EVERY, HEAVY_WORK_MAX } from './constants.ts';
 import { isEventOf } from '../schema/event/event.ts';
 import { checkPolicyOf } from '../schema/territory-check-policy.ts';
@@ -78,25 +81,34 @@ export function mergedPatrolOf(source: MovedSource): BaseTip | undefined {
     .at(0);
 }
 
+/** The head a patrol tried, or (613)(4) a green train's merge on the very tree it checked: the merges up to it are seen. */
+function seenOf(event: Event): { readonly territory: TerritoryId; readonly head: string } | undefined {
+  if (isEventOf(event, 'patrol.ran') && event.data.head !== null)
+    return { territory: event.data.territory, head: event.data.head };
+  if (isEventOf(event, 'train.ran') && event.data.patrolled === true && event.data.merge_sha !== undefined)
+    return { territory: event.data.territory, head: event.data.merge_sha };
+  return undefined;
+}
+
 /**
  * The commit the Steward's latest merge left on each default branch since the latest patrol that tried a commit there
- * (`delivery.merged`, (CM-07) a guest's `delivery.guest_merged`, `patrol.ran`), by territory: what it knew of the
- * moves before it stopped, given back at start.
+ * (`delivery.merged`, (CM-07) a guest's `delivery.guest_merged`, `patrol.ran`, (CM-08) a train's `train.ran`), by territory: what it knew of the
+ * moves before it stopped, given back at start. (622) The lines of one merge commit (a train's quests) count once.
  */
 export function mergesSincePatrolOf(events: readonly Event[]): MergeTip[] {
   const heads = new Map<TerritoryId, { head: string; merges: number }>();
   for (const event of events) {
-    if (isEventOf(event, 'delivery.merged') || isEventOf(event, 'delivery.guest_merged'))
-      heads.set(event.data.territory, {
-        head: event.data.merge_sha,
-        merges: (heads.get(event.data.territory)?.merges ?? 0) + 1,
+    if (isEventOf(event, 'delivery.merged') || isEventOf(event, 'delivery.guest_merged')) {
+      const { territory, merge_sha } = event.data;
+      const tip = heads.get(territory);
+      heads.set(territory, {
+        head: merge_sha,
+        merges: (tip?.merges ?? 0) + (tip?.head === merge_sha ? 0 : 1),
       });
-    else if (
-      isEventOf(event, 'patrol.ran') &&
-      event.data.head !== null &&
-      heads.get(event.data.territory)?.head === event.data.head
-    )
-      heads.delete(event.data.territory);
+    } else {
+      const seen = seenOf(event);
+      if (seen !== undefined && heads.get(seen.territory)?.head === seen.head) heads.delete(seen.territory);
+    }
   }
   return [...heads]
     .map(([territory, tip]) => ({ territory, ...tip }))

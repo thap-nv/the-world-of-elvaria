@@ -108,11 +108,18 @@
       "status": "unreviewed"
     },
     {
-      "a": "packages/steward/src/forge/guest-book.ts",
-      "b": "packages/steward/src/forge/looks.ts",
-      "tokens": 150,
+      "a": "packages/steward/src/forge/lane-runs.ts",
+      "b": "packages/steward/src/patrol/runs.ts",
+      "tokens": 139,
       "status": "kept",
-      "reason": "CM-07: two tables of work outside the tick, one run per territory (start, idle, stop over an AbortController each), as the patrol runs are a third; each keeps what its kind needs beside them (the looks their time and tips, the guests the entries that wait, drawn from the log). A shared runner of outside work gathers the three at once (AH-14), not one pair apart."
+      "reason": "CM-08: lane-runs.ts gathers the runs outside the tick that hold one run per territory (the looks, the guests, the trains); the patrol runs keep lanes of their own beside it (busy and outside counts, a run started per trigger), which a shared runner of outside work gathers with the rest at once (AH-14), not this pair apart."
+    },
+    {
+      "a": "packages/steward/src/forge/guest.ts",
+      "b": "packages/steward/src/forge/train.ts",
+      "tokens": 65,
+      "status": "kept",
+      "reason": "CM-08: the frame of a trial of the merge queue, a `check.start` once built and a `check.end` after, around Plots.guest and Plots.train, whose requests and marks differ (the guest carries the checks the ledger holds and names its mode, the train runs every check and names its tree); the shared parts (the line, the end, the red checks) are in trial-red.ts already."
     },
     {
       "a": "apps/cli/src/territory/check-policy.ts",
@@ -175,12 +182,6 @@
       "a": "apps/cli/src/quest/edit.ts",
       "b": "apps/cli/src/quest/escaped.ts",
       "tokens": 86,
-      "status": "unreviewed"
-    },
-    {
-      "a": "packages/steward/src/forge/looks.ts",
-      "b": "packages/steward/src/patrol/runs.ts",
-      "tokens": 139,
       "status": "unreviewed"
     },
     {
@@ -835,7 +836,7 @@
       "reason": "HL-05: the healer's opening walks the verifier's (parts, secrets, spawn, the quest's move, keep), each step already a helper of sessions/open.ts (partsOf, secretsLacking, spawnFor, keep); what stays alike is the move and the Running kept, whose event, edits, before and checks differ per opening. sessions/open.ts is at its 300 lines and sessions/ at its 30 files, so one opener gathers the assignee's, the verifier's and the healer's at once (AH-14), not one pair apart."
     },
     {
-      "a": "packages/runner-core/src/plot/territory-trial.ts",
+      "a": "packages/runner-core/src/plot/territory/trial-steps.ts",
       "b": "packages/steward/src/delegation/suspend.ts",
       "tokens": 60,
       "status": "kept",
@@ -924,6 +925,69 @@
       "tokens": 60,
       "status": "kept",
       "reason": "P2-01b: the shape every CLI command shares, a CommandSpec literal (name, args, options with their help keys) and a run that opens the kingdom context and reads the entity its <id> names (command-table/command.ts). The commands write different files under different rules; folding them into one helper would change the territory, quest and list commands outside this task."
+    },
+    {
+      "a": "apps/cli/src/territory/deliver.ts",
+      "b": "apps/cli/src/territory/enqueue.ts",
+      "tokens": 187,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/territory/check-policy.ts",
+      "b": "apps/cli/src/territory/deliver.ts",
+      "tokens": 130,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/territory/deliver.ts",
+      "b": "apps/cli/src/territory/patrol.ts",
+      "tokens": 130,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/territory/deliver.ts",
+      "b": "apps/cli/src/territory/delivery.ts",
+      "tokens": 127,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/character/suspend.ts",
+      "b": "apps/cli/src/territory/deliver.ts",
+      "tokens": 104,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/quest/deliver.ts",
+      "b": "apps/cli/src/territory/deliver.ts",
+      "tokens": 101,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/quest/lifecycle.ts",
+      "b": "apps/cli/src/territory/deliver.ts",
+      "tokens": 101,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/quest/hold.ts",
+      "b": "apps/cli/src/territory/deliver.ts",
+      "tokens": 82,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/quest/reassign.ts",
+      "b": "apps/cli/src/territory/deliver.ts",
+      "tokens": 82,
+      "status": "kept",
+      "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
     }
   ]
 }

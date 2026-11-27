@@ -528,8 +528,11 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   (`queueAtWorkOf` of `src/dispatch/forge-due.ts`: a delivery runs or is due, or a sealed pull request waits), so a
   burst of merges is patrolled once at its last head; none while a patrol runs (`HEAVY_WORK_MAX`, one in the
   kingdom) or no slot of `dispatch.max_background` is free. `mergesSincePatrolOf` gives the Steward back the merges
-  since each branch's latest patrol at start. A patrol outside the tick holds a slot (`BackgroundWork.patrols`,
+  since each branch's latest patrol at start, (622) one a merge commit: a train's quests count once. A patrol outside the tick holds a slot (`BackgroundWork.patrols`,
   `startingNow`), as short work.
+- (CM-08) The inbox command `deliver` names a done quest or a `deferred` territory (`DeliverPayloadSchema`):
+  `trainOrdersOf` (`src/world/forge-outcome.ts`) reads the owner's orders from the log, each until its territory's
+  next `train.ran`, for `ForgeSource.train_orders` (departure `owner`); `commandScopeOf` places it by either.
 - Guest entries of the merge queue (CM-07, ADR 0032; `src/dispatch/guests.ts`): the schema of the inbox command
   `enqueue_branch` and of `delivery.enqueued`, `delivery.guest_merged`, `delivery.guest_refused`
   (`src/schema/event/guest-data.ts`), `guest` on `check.start` and `check.end`. `guestsWaitingOf` draws the

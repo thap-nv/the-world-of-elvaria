@@ -46,6 +46,11 @@ export interface BackgroundWork {
    * lane (busyOf) and a slot of dispatch.max_background, and is no trial (startingNow). Absent: none.
    */
   readonly guests?: readonly TerritoryId[];
+  /**
+   * (CM-08) Territories whose delivery train runs now, outside the tick: each holds its territory's lane (busyOf), a
+   * slot of dispatch.max_background and the kingdom's heavy work (HEAVY_WORK_MAX), and is no trial. Absent: none.
+   */
+  readonly trains?: readonly TerritoryId[];
 }
 
 /** Checks of a quest set aside for their environment (environmentFailureOf), ended at `at`. */

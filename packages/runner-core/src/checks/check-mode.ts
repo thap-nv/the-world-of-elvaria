@@ -1,11 +1,13 @@
 // The check mode of one run of a quest's checks (CM-01, ADR 0032, plans/check-modes.md "Ba chế độ, bốn lượt kiểm").
 // A run is the one after a session, before its judge, or the merge queue's after merging the base branch in. In a
-// territory whose check_policy is `narrow` (or `deferred`, which has no train before CM-08) both take the checks
-// `when` selects and run each one's narrow command where it has one: the part of the tree the quest did not touch is
-// its base's, which the base branch's full run vouches for. What that cannot vouch for runs as in `full`: a path of
-// full_when (the build's own configuration), a path no check watches, a party's merge quest (every check, P1-18) and
-// a quest judged in a scratch plot, whose judge breaks the tests on purpose (ADR 0022). The choice is pure, so the
-// Steward's run, its `check.*` lines and its judge's shell all read the same one.
+// territory whose check_policy is `narrow` or `deferred` both take the checks `when` selects and run each one's narrow
+// command where it has one: the part of the tree the quest did not touch is its base's, which the base branch's full
+// run vouches for. What that cannot vouch for runs as in `full`: a path of full_when (the build's own configuration), a
+// path no check watches, a party's merge quest (every check, P1-18) and a quest judged in a scratch plot, whose judge
+// breaks the tests on purpose (ADR 0022). (CM-08) In `deferred` the narrow run after a session also leaves the checks
+// marked defer_to_merge to the delivery train, which runs every check on its head (checksOfRun); a quest that boards no
+// train, and a guest entry, go alone through the queue, whose run is then the last before the base branch: in full.
+// The choice is pure, so the Steward's run, its `check.*` lines and its judge's shell all read the same one.
 import { checkPolicyOf } from '@elvaria/domain';
 import type { CommandLines, PartyRole, Territory, TerritoryCheck } from '@elvaria/domain';
 
@@ -53,9 +55,23 @@ export function checkModeOf(
 ): CheckRunMode {
   const policy = checkPolicyOf(territory);
   if (policy.mode === 'full' || run.role === 'merge' || run.scratch === true) return 'full';
-  // Until the train of CM-08, the queue is the last run before the base branch: in `deferred` it runs every check.
+  // (CM-08) A quest that boards no train and a guest entry go alone: the queue is their last run, every check.
   if (policy.mode === 'deferred' && run.pass === 'queue') return 'full';
   return forcesFull(territory, policy.full_when, touched) ? 'full' : 'narrow';
+}
+
+/**
+ * (CM-08, ADR 0032) The territory's checks the run `pass` in `mode` may take: in a `deferred` territory the narrow run
+ * after a session leaves those marked `defer_to_merge` to the train; every other run may take them all.
+ */
+export function checksOfRun(
+  territory: Pick<Territory, 'checks' | 'check_policy'>,
+  mode: CheckRunMode,
+  pass: CheckPass,
+): readonly TerritoryCheck[] {
+  const { checks } = territory;
+  if (pass !== 'session' || mode !== 'narrow' || checkPolicyOf(territory).mode !== 'deferred') return checks;
+  return checks.filter((check) => !check.defer_to_merge);
 }
 
 /** The command(s) `check` runs in a run of `mode`. */
