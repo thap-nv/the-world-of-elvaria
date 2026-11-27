@@ -152,32 +152,51 @@ describe('the script tier: a run that gives none', () => {
   });
 
   it.each([
-    ['a script that breaks', 'process.stderr.write("boom\\n"); process.exit(1);', 'broken', 'boom\n'],
+    [
+      'a script that breaks',
+      'process.stderr.write("boom\\n"); process.exit(1);',
+      'broken',
+      'boom\n',
+      'broken',
+      {},
+    ],
     [
       'a quest the script cannot use',
       'process.stderr.write("no such check\\n"); process.exitCode = 2;',
       'usage',
       'no such check\n',
+      'usage',
+      {},
     ],
-    ['output outside the contract', 'console.log("done");', 'broken', 'done'],
-    ['JSON outside the contract', 'console.log("{}");', 'broken', '{}'],
-    ['a script that exits silently', 'process.exit(1);', 'broken', ''],
-  ])('sends %s to the infirmary at once, with no retry and no follow-up', async (_, body, kind, message) => {
-    const bench = await kingdom.setup();
-    await fakeScript(bench.root, 'link-check', body);
-    await bench.command('create_quest', scriptQuest('Broken', LINKS));
-    await kingdom.run();
-    const quest = await bench.quest('Broken');
-    expect(quest).toMatchObject({ status: 'infirmary', attempts: 1 });
-    expect(quest.attempt_log[0]?.outcome).toBe('crash');
-    const line = await infirmaryLine(bench);
-    expect(line).toMatchObject({
-      reason: { code: `script:${kind}`, params: { script: 'link-check' } },
-      trip: `script_${kind}`,
-    });
-    expect(line?.detail).toEqual({ script: 'link-check', ...(message === '' ? {} : { message }) });
-    expect(await bench.quests()).toHaveLength(1);
-  });
+    ['output outside the contract', 'console.log("done");', 'broken', 'done', 'broken_not_json', {}],
+    [
+      'JSON outside the contract',
+      'console.log("{}");',
+      'broken',
+      '{}',
+      'broken_shape',
+      { produces: 'units' },
+    ],
+    ['a script that exits silently', 'process.exit(1);', 'broken', '', 'broken_exit', { exit: 1 }],
+  ])(
+    'sends %s to the infirmary at once, with no retry and no follow-up',
+    async (_, body, kind, message, code, params) => {
+      const bench = await kingdom.setup();
+      await fakeScript(bench.root, 'link-check', body);
+      await bench.command('create_quest', scriptQuest('Broken', LINKS));
+      await kingdom.run();
+      const quest = await bench.quest('Broken');
+      expect(quest).toMatchObject({ status: 'infirmary', attempts: 1 });
+      expect(quest.attempt_log[0]?.outcome).toBe('crash');
+      const line = await infirmaryLine(bench);
+      expect(line).toMatchObject({
+        reason: { code: `script:${code}`, params: { script: 'link-check', ...params } },
+        trip: `script_${kind}`,
+      });
+      expect(line?.detail).toEqual({ script: 'link-check', ...(message === '' ? {} : { message }) });
+      expect(await bench.quests()).toHaveLength(1);
+    },
+  );
 
   it('trips the time breaker on a script past its timeout and kills it', async () => {
     const short = nodeScriptRunner();

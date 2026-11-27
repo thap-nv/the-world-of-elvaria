@@ -5,6 +5,7 @@
 // patch sends the quest to the infirmary with why (trip `commit`, detail `patch`: infirmary.ts); the next run's prompt
 // reads it back (P1-31, P1-32).
 import { PATCH_FILE } from '@elvaria/runner-core';
+import { infirmaryReasonOf } from '@elvaria/domain';
 import type { PatchOutcome } from '@elvaria/runner-core';
 
 import { STEWARD } from '../quest/record.ts';
@@ -31,7 +32,13 @@ export async function applyAssigneePatch(
   try {
     outcome = await ctx.deps.plots.applyPatch(quest.plot, patchPaths);
   } catch (error) {
-    outcome = { status: 'refused', detail: messageOf(error) };
+    const text = messageOf(error);
+    outcome = {
+      status: 'refused',
+      reason: infirmaryReasonOf('breaker:patch_error', { file: PATCH_FILE }),
+      ...(text === '' ? {} : { text }),
+      detail: text,
+    };
   }
   if (outcome.status === 'applied') {
     const data = { file: PATCH_FILE, paths: [...outcome.paths] };

@@ -2,8 +2,28 @@ import { describe, expect, it } from 'vitest';
 
 import { INFIRMARY_REASONS, INFIRMARY_REASON_PARAMS, infirmaryReasonOf } from './reasons.ts';
 import { InfirmaryReasonSchema } from '../schema/event/state-data.ts';
+import { QUEST_CHANGE } from '../schema/event/__fixtures__/valid-data.ts';
+import { EVENT_VERSION, EventSchema } from '../schema/event/event.ts';
 
 describe('infirmary reasons', () => {
+  it('still reads an old patch refusal at the current event version', () => {
+    const event = {
+      v: EVENT_VERSION,
+      id: '01JCF8X4Z6Q3W9N2M5R7T8V0YB',
+      ts: '2026-11-06T10:07:30+07:00',
+      type: 'quest.infirmary',
+      actor: { kind: 'steward' },
+      data: {
+        ...QUEST_CHANGE,
+        trip: 'commit',
+        reason: {
+          code: 'breaker:patch',
+          params: { file: 'elvaria.patch', why: 'it does not apply: git said why' },
+        },
+      },
+    };
+    expect(EventSchema.parse(event)).toEqual(event);
+  });
   it('builds reasons with explicit or empty parameters', () => {
     expect(infirmaryReasonOf('legacy', { text: 'old words' })).toEqual({
       code: 'legacy',

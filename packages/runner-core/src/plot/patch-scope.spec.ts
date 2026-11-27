@@ -64,18 +64,24 @@ describe('patchProblem', () => {
   it('lets a patch touch the patch paths and nothing else', () => {
     expect(patchProblem(['.husky/pre-push', '.husky/_/h'], HUSKY)).toBeUndefined();
     expect(patchProblem(['./.husky/pre-push', '.HUSKY\\pre-commit'], HUSKY)).toBeUndefined();
-    expect(patchProblem(['.husky/pre-push', 'src/app.ts'], HUSKY)).toBe(
-      'it touches src/app.ts, outside laws.patch_paths (.husky/**)',
-    );
+    expect(patchProblem(['.husky/pre-push', 'src/app.ts'], HUSKY)).toEqual({
+      code: 'patch_outside_paths',
+      path: 'src/app.ts',
+      globs: '.husky/**',
+    });
   });
 
   it("never reaches git's own folder, outside the plot, or an absolute path, whatever the globs allow", () => {
-    expect(patchProblem(['.git/hooks/pre-commit'], ['**'])).toBe(
-      "it touches .git/hooks/pre-commit, git's own folder",
-    );
-    expect(patchProblem(['sub/.GIT/config'], ['**'])).toContain("git's own folder");
-    expect(patchProblem(['.husky/../../x'], ['**'])).toBe('it touches .husky/../../x, outside the plot');
-    expect(patchProblem(['/etc/passwd'], ['**'])).toContain('an absolute path');
-    expect(patchProblem(['C:/x'], ['**'])).toContain('an absolute path');
+    expect(patchProblem(['.git/hooks/pre-commit'], ['**'])).toEqual({
+      code: 'patch_git',
+      path: '.git/hooks/pre-commit',
+    });
+    expect(patchProblem(['sub/.GIT/config'], ['**'])).toEqual({ code: 'patch_git', path: 'sub/.GIT/config' });
+    expect(patchProblem(['.husky/../../x'], ['**'])).toEqual({
+      code: 'patch_outside_plot',
+      path: '.husky/../../x',
+    });
+    expect(patchProblem(['/etc/passwd'], ['**'])).toEqual({ code: 'patch_absolute', path: '/etc/passwd' });
+    expect(patchProblem(['C:/x'], ['**'])).toEqual({ code: 'patch_absolute', path: 'C:/x' });
   });
 });

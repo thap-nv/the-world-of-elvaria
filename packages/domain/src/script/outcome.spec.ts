@@ -93,22 +93,36 @@ describe('scriptOutcomeOf: anything else', () => {
     const stopped = run({ exit_code: 2, stderr: 'params.globs must be a non-empty list of strings\n' });
     expect(scriptOutcomeOf('units', stopped)).toEqual({
       kind: 'usage',
-      detail: 'params.globs must be a non-empty list of strings',
+      code: 'script:usage',
+      params: {},
     });
   });
 
   it.each([
-    [run({ exit_code: 1, stderr: 'boom' }), 'boom'],
-    [run({ exit_code: 1, stderr: 'y'.repeat(SCRIPT_DETAIL_MAX + 5) }), `${'y'.repeat(SCRIPT_DETAIL_MAX)}…`],
-    [run({ exit_code: 3 }), 'exit code 3'],
-    [run({ exit_code: null }), 'exit code none (killed)'],
-    [run({ stdout: '' }), 'stdout has 0 lines, the contract is one JSON line'],
-    [run({ stdout: '{}\n{}\n' }), 'stdout has 2 lines, the contract is one JSON line'],
-    [run({ stdout: 'done\n' }), 'stdout is not JSON'],
-    [said({ pass: 'yes', details: {} }), 'stdout is not the output of produces = check'],
-    [said({ pass: true }), 'stdout is not the output of produces = check'],
-  ])('a broken script: %j', (broken, detail) => {
-    expect(scriptOutcomeOf('check', broken)).toEqual({ kind: 'broken', detail });
+    [run({ exit_code: 1, stderr: 'boom' }), 'script:broken', {}],
+    [run({ exit_code: 1, stderr: 'y'.repeat(SCRIPT_DETAIL_MAX + 5) }), 'script:broken', {}],
+    [run({ exit_code: 3 }), 'script:broken_exit', { exit: 3 }],
+    [run({ exit_code: null }), 'script:broken_killed', {}],
+    [run({ stdout: '' }), 'script:broken_lines', { lines: 0 }],
+    [run({ stdout: '{}\n{}\n' }), 'script:broken_lines', { lines: 2 }],
+    [run({ stdout: 'done\n' }), 'script:broken_not_json', {}],
+    [said({ pass: 'yes', details: {} }), 'script:broken_shape', { produces: 'check' }],
+    [said({ pass: true }), 'script:broken_shape', { produces: 'check' }],
+  ])('a broken script: %j', (broken, code, params) => {
+    expect(scriptOutcomeOf('check', broken)).toEqual({ kind: 'broken', code, params });
+  });
+
+  it('distinguishes silent usage from external whitespace', () => {
+    expect(scriptOutcomeOf('check', run({ exit_code: 2 }))).toEqual({
+      kind: 'usage',
+      code: 'script:usage_silent',
+      params: {},
+    });
+    expect(scriptOutcomeOf('check', run({ exit_code: 2, stderr: '\n' }))).toEqual({
+      kind: 'usage',
+      code: 'script:usage',
+      params: {},
+    });
   });
 
   it('units outside the quest contract are output outside the script contract', () => {

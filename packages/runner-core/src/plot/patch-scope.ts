@@ -78,24 +78,28 @@ export function headerPaths(patch: string): string[] {
 const DRIVE = /^[a-z]:/i;
 
 /** Why `name` is out of the patch's reach whatever the globs say: absolute, outside the plot, git's own folder. */
-function outOfReach(name: string): string | undefined {
-  if (name.startsWith('/') || DRIVE.test(name)) return 'an absolute path';
-  if (name.split('/').includes('..')) return 'outside the plot';
-  return namesNoGitFolder(name) ? undefined : "git's own folder";
+function outOfReach(name: string): 'patch_absolute' | 'patch_outside_plot' | 'patch_git' | undefined {
+  if (name.startsWith('/') || DRIVE.test(name)) return 'patch_absolute';
+  if (name.split('/').includes('..')) return 'patch_outside_plot';
+  return namesNoGitFolder(name) ? undefined : 'patch_git';
 }
+
+export type PatchProblem =
+  | { readonly code: 'patch_absolute' | 'patch_outside_plot' | 'patch_git'; readonly path: string }
+  | { readonly code: 'patch_outside_paths'; readonly path: string; readonly globs: string };
 
 /**
  * Why a patch touching `paths` may not be applied, or undefined when every path is one of `globs`
  * (laws.patch_paths, relative to the plot) and none is git's own folder.
  */
-export function patchProblem(paths: readonly string[], globs: readonly string[]): string | undefined {
+export function patchProblem(paths: readonly string[], globs: readonly string[]): PatchProblem | undefined {
   const allowed = globs.map(globToRegExp);
   for (const raw of paths) {
     const name = raw.replaceAll('\\', '/').replace(/^(?:\.\/)+/, '');
     const reach = outOfReach(name);
-    if (reach !== undefined) return `it touches ${raw}, ${reach}`;
+    if (reach !== undefined) return { code: reach, path: raw };
     if (!allowed.some((glob) => glob.test(name))) {
-      return `it touches ${raw}, outside laws.patch_paths (${globs.join(', ')})`;
+      return { code: 'patch_outside_paths', path: raw, globs: globs.join(', ') };
     }
   }
   return undefined;

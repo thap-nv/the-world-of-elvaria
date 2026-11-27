@@ -86,6 +86,7 @@ export async function breakAssignee(
   const reason = assigneeReason(ctx, running, breaker, result);
   const said = {
     ...(patch === undefined ? {} : { patch }),
+    ...patchMessageOf(breaker),
     ...(paths === undefined ? {} : { paths: [...paths] }),
     ...wipLeft(wip),
     ...((await apprenticeLeft(ctx, running)) ? { apprentice_left: true as const } : {}),
@@ -115,12 +116,16 @@ interface AssigneeBreaker {
   readonly detail?: string | undefined;
   readonly params?: Readonly<Record<string, number>>;
   readonly patch?: string;
+  readonly patchOutcome?: { readonly reason: InfirmaryReason; readonly text?: string };
   readonly paths?: readonly string[];
   /** The submit commit the hook refused (trip `commit`), whose rescue the WIP commit of the other trips gives (P1-55). */
   readonly refused?: Refusal;
   /** Set on the quest with the move: the pending objection a refused submit's letter filed (fix/amendment-flow). */
   readonly before?: Partial<Quest>;
 }
+
+const patchMessageOf = ({ patchOutcome }: AssigneeBreaker) =>
+  patchOutcome?.text === undefined ? {} : { message: patchOutcome.text };
 
 /** Why the Steward's commit was refused: the hooks' first lines and their log, or commands.setup before them. */
 export function refusalReasonOf(quest: Quest, refused: Refusal): InfirmaryReason {
@@ -147,8 +152,7 @@ function assigneeReason(
 ): InfirmaryReason {
   const quest = ctx.world.quests.get(running.quest);
   if (quest === undefined) throw new Error(`unknown quest: ${running.quest}`);
-  if (breaker.patch !== undefined)
-    return infirmaryReasonOf('breaker:patch', { file: 'elvaria.patch', why: breaker.patch });
+  if (breaker.patchOutcome !== undefined) return breaker.patchOutcome.reason;
   if (breaker.paths !== undefined)
     return infirmaryReasonOf('breaker:forbidden_paths', { count: breaker.paths.length });
   if (breaker.refused !== undefined) return refusalReasonOf(quest, breaker.refused);

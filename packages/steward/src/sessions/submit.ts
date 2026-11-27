@@ -28,10 +28,11 @@ export const ended = (result: RunResult) => () => Promise.resolve(result);
 
 /** What the Steward could not make of the run's work: its patch, with why, or its submit commit, the hook's refusal. */
 type Refused =
-  { readonly patch: string } | { readonly refused: Extract<PlotCommit, { readonly status: 'refused' }> };
+  | { readonly patch: string; readonly patchOutcome: Extract<PatchOutcome, { readonly status: 'refused' }> }
+  | { readonly refused: Extract<PlotCommit, { readonly status: 'refused' }> };
 
 function refusedOf(patched: PatchOutcome, committed: PlotCommit | undefined): Refused | undefined {
-  if (patched.status === 'refused') return { patch: patched.detail };
+  if (patched.status === 'refused') return { patch: patched.detail, patchOutcome: patched };
   return committed?.status === 'refused' ? { refused: committed } : undefined;
 }
 
