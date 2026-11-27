@@ -131,7 +131,7 @@ async function planAndAct(
   await noteJudgeWaits(ctx, state.judgeWaits, plan.judge_waits);
   await carryOut(ctx, plan);
   patrolMoved(ctx, snapshot.base_red ?? []);
-  patrolMerged(ctx, snapshot);
+  await patrolMerged(ctx, snapshot);
 }
 
 const recorderFor = (deps: StewardDeps, state: State, held: Held, world: World) =>

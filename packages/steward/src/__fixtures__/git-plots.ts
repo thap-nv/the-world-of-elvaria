@@ -9,6 +9,7 @@ import { TerritorySchema, ok } from '@elvaria/domain';
 import {
   checkPointIn,
   commitLinksOf,
+  changedPathsOf,
   createPlotManager,
   gitOf,
   patrolIdOf,
@@ -141,6 +142,7 @@ export function gitPlots(
       : {}),
     // A guest of the merge queue as `elvaria run` tries it (CM-07).
     guest: (territory, pull, signal) => tryGuest({ kingdom, territory, host, signal, ...pull }),
+    changedPaths: (territory, from, to) => changedPathsOf({ territory, host, from, to }),
   };
 }
 

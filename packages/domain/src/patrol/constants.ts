@@ -5,6 +5,9 @@
  */
 export const HEAVY_WORK_MAX = 1;
 
+/** (613) Merge batches below this size wait for the daily patrol. */
+export const AFTER_MERGE_EVERY = 3;
+
 /**
  * (CM-04, plans/check-modes.md) Runs of the red checks one probe may spend: the binary search, the rerun of the first
  * red step, the quest's own head. Each runs the red checks in full, minutes each; a probe that would need more says

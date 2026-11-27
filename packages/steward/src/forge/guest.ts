@@ -12,6 +12,7 @@
 // (RC-04, ADR 0035) The checks green on the merge's tree are carried (the check ledger), so a guest queued again with
 // the same head on the same base runs only the checks that were red; `check.end` names the tree for the next one.
 import { DELIVERY_DETAIL_MAX_LENGTH, deliveryOf, environmentFailureOf } from '@elvaria/domain';
+import { recordPatrolMerge } from '../patrol/book.ts';
 import { fromPortable } from '@elvaria/store';
 import type { CheckRunMode, GuestTrial, GuestTrialRequest } from '@elvaria/runner-core';
 import type { EventData, GuestEntry, Territory, TerritoryTrial } from '@elvaria/domain';
@@ -216,7 +217,7 @@ export async function guestTurn(ctx: Context, guest: GuestEntry, signal: AbortSi
   if (ending.type === 'delivery.guest_merged') {
     // As after a quest's merge (recordMerged): the next tick looks at the base branch, the patrol follows (CM-03).
     ctx.looks.looked.delete(territory);
-    ctx.patrol.heads.set(territory, ending.data.merge_sha);
+    recordPatrolMerge(ctx.patrol, territory, ending.data.merge_sha);
   } else ctx.deps.log.warn(`steward: guest #${pr} of ${territory} refused (${ending.data.reason})`);
 }
 

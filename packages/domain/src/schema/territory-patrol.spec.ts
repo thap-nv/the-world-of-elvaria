@@ -15,6 +15,23 @@ const territory = (fields: Record<string, unknown> = {}) => ({
 });
 
 describe('territory.patrol', () => {
+  it('accepts partial after_merge configuration and rejects invalid thresholds, paths and unknown keys', () => {
+    const parse = (after_merge: unknown) => TerritorySchema.safeParse(territory({ patrol: { after_merge } }));
+    expect(parse({}).data?.patrol?.after_merge).toEqual({ every: 3, quiet_paths: [] });
+    expect(parse({ every: 1 }).data?.patrol?.after_merge).toEqual({ every: 1, quiet_paths: [] });
+    expect(parse({ quiet_paths: ['docs/**'] }).data?.patrol?.after_merge).toEqual({
+      every: 3,
+      quiet_paths: ['docs/**'],
+    });
+    for (const value of [
+      { every: 0 },
+      { every: 1.5 },
+      { unknown: true },
+      ...['', '/docs/**', 'C:/docs/**', '../docs/**', 'docs\\**'].map((glob) => ({ quiet_paths: [glob] })),
+    ])
+      expect(parse(value).success).toBe(false);
+  });
+
   it('stays absent when the file has none: no patrol', () => {
     expect(TerritorySchema.parse(territory())).not.toHaveProperty('patrol');
   });

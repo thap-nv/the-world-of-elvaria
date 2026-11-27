@@ -11,6 +11,7 @@ import {
   checkPointIn,
   createPlotManager,
   commitLinksOf,
+  changedPathsOf,
   gitOf,
   patrolIdOf,
   probeIdOf,
@@ -129,7 +130,7 @@ const queueOf = (
 const patrolPlots = (
   kingdom: string,
   host: ProcessHost,
-): Pick<Plots, 'patrol' | 'patrolHead' | 'probe' | 'commitLinks' | 'guest'> => ({
+): Pick<Plots, 'patrol' | 'patrolHead' | 'probe' | 'commitLinks' | 'changedPaths' | 'guest'> => ({
   // (RC-04) On the commit patrolHead named, the checks the ledger carries passed without running.
   patrol: async (territory, { signal, scan, commit, carried }) => {
     const name = patrolIdOf(territory.id);
@@ -147,6 +148,7 @@ const patrolPlots = (
     return (await tryTerritory({ kingdom, territory, host, name, signal, commit, checks })).trial;
   },
   commitLinks: (territory, head, exclude) => commitLinksOf({ territory, host, head, exclude }),
+  changedPaths: (territory, from, to) => changedPathsOf({ territory, host, from, to }),
   // (CM-07) A guest of the merge queue: its head merged into origin's default branch, tried under `guest-<id>`.
   guest: (territory, pull, signal) => tryGuest({ kingdom, territory, host, signal, ...pull }),
 });

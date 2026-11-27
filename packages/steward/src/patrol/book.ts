@@ -18,6 +18,8 @@ export interface PatrolBook {
   readonly tried: Map<TerritoryId, string>;
   /** (CM-03) The newest head of each default branch the Steward saw: its own merge's commit, or a look's tip. */
   readonly heads: Map<TerritoryId, string>;
+  /** (613) Delivery merges since the latest patrol that tried their head. */
+  readonly merges: Map<TerritoryId, number>;
   /** (PS-09d) Every patrol of a territory runs in its lane; those outside the scheduled job start here. */
   readonly runs: PatrolRuns;
 }
@@ -28,12 +30,24 @@ export const createPatrolBook = (log: Logger = QUIET, ended?: () => void): Patro
   health: [],
   tried: new Map(),
   heads: new Map(),
+  merges: new Map(),
   runs: createPatrolRuns(log, ended),
 });
 
 export function recoverPatrol(book: PatrolBook, events: readonly Event[]): void {
   book.health = baseHealthOf(events);
-  for (const { territory, head } of mergesSincePatrolOf(events)) book.heads.set(territory, head);
+  book.heads.clear();
+  book.merges.clear();
+  for (const { territory, head, merges } of mergesSincePatrolOf(events)) {
+    book.heads.set(territory, head);
+    book.merges.set(territory, merges);
+  }
+}
+
+/** Count a delivery merge. */
+export function recordPatrolMerge(book: PatrolBook, territory: TerritoryId, head: string): void {
+  book.heads.set(territory, head);
+  book.merges.set(territory, (book.merges.get(territory) ?? 0) + 1);
 }
 
 /** The book's health with `health` in place of its territory's: a patrol of one territory leaves the others as they are. */
