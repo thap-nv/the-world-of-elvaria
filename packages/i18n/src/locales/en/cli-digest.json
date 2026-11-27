@@ -85,6 +85,6 @@
     "cli.digest.advice.read_letters_then_release": "Read the Monk's letters first (elvaria memo show <memo>) and do what they ask (a check, a stronger model), then release it.",
     "cli.digest.advice.add_monk": "Add a character of a class of the Monk; with the Temple off, also turn it on in kingdom.json: \"schedule\": {\"temple\": {\"enabled\": true}}. Each run of the Temple spends mana.",
     "cli.digest.advice.enable_temple": "Turn it on in kingdom.json: \"schedule\": {\"temple\": {\"enabled\": true}}; the Steward reads it again at its next tick. Each run spends mana: at most one session a day, and one for each suspension.",
-    "cli.digest.live_note": "Built now from the files and the event log. Quests waiting for a judge, and tribes held by their CLI (elvaria doctor names those too), are in the digest the Steward writes to digest/ only."
+    "cli.digest.live_note": "Built now from the files and the event log; the digest the Steward writes to digest/ lists the same."
   }
 }

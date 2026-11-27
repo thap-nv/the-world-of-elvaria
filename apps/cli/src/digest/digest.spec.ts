@@ -4,7 +4,7 @@ import { EVENT_VERSION, EventSchema, MemoSchema, TribeIdSchema } from '@elvaria/
 import type { AttentionItem, QuestId, WaitGauge } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { translator } from '@elvaria/i18n';
-import { inKingdom, openKingdom, pathExists, readTextFile, writeFileAtomic } from '@elvaria/store';
+import { inKingdom, openKingdom, pathExists, readTextFile } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
@@ -48,7 +48,7 @@ describe('elvaria digest', () => {
       '',
       'Nothing waits for you.',
       '',
-      'Built now from the files and the event log. Quests waiting for a judge, and tribes held by their CLI (elvaria doctor names those too), are in the digest the Steward writes to digest/ only.',
+      'Built now from the files and the event log; the digest the Steward writes to digest/ lists the same.',
     ]);
     expect(await pathExists(inKingdom(kingdom, 'digest'))).toBe(false);
   });
@@ -57,10 +57,15 @@ describe('elvaria digest', () => {
     await plantQuests(kingdom, questFixture('draft'), questFixture('open', OTHER_QUEST_ID));
     expect((await openKingdom(kingdom).memos.write(MEMO)).ok).toBe(true);
     const unclaimable = { reason: 'no_class', rank: 'D', class: 'knight' };
-    await writeFileAtomic(
-      inKingdom(kingdom, '.state/unclaimable.json'),
-      JSON.stringify({ version: 1, quests: { [OTHER_QUEST_ID]: unclaimable } }),
-    );
+    const told = EventSchema.parse({
+      v: EVENT_VERSION,
+      id: '01JCF8X4Z6Q3W9N2M5R7T8V000',
+      ts: '2026-11-06T08:20:00+07:00',
+      type: 'quest.unclaimable',
+      actor: { kind: 'steward' },
+      quest: OTHER_QUEST_ID,
+      data: unclaimable,
+    });
     const asleep = EventSchema.parse({
       v: EVENT_VERSION,
       id: '01JCF8X4Z6Q3W9N2M5R7T8V001',
@@ -69,7 +74,7 @@ describe('elvaria digest', () => {
       actor: { kind: 'steward' },
       data: { tribe: 'claude', pool: 'claude', resets_at: '2026-11-06T13:00:00+07:00' },
     });
-    await openEventLog(kingdom).append([asleep]);
+    await openEventLog(kingdom).append([told, asleep]);
     const out = await digest();
     expect(out.slice(0, 13)).toEqual([
       '# Digest 2026-11-06 · Bình Minh',

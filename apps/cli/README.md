@@ -240,11 +240,13 @@ show` prints the brief apart from the rest of the description and, while the pla
   drafts and blocked quests, followed by the attention queue from the snapshot files and event log.
   Refreshes every 5 seconds by default; the interval must be a positive integer in seconds.
   Non-TTY output prints once. Ctrl+C clears the timer and removes the signal listener; no raw terminal mode is used.
-- `digest` (PS-03, `src/digest/`): the digest as it stands, from the files, the open memos, the mana lines of the
-  log and `.state/unclaimable.json` (`digestStateOf` of `@elvaria/steward`, `attentionQueue` of the domain), worded
-  by `digestMarkdown` and printed; writes nothing and spends no mana. Quests waiting for a judge are known to the
-  running Steward only, so they are in the digest it writes; a quest in review whose latest judge could not open a
-  session (`judge_no_session`, from the quest files, fix/review-no-session) is in both, with `character suspend`. A
+- `digest` (PS-03, `src/digest/`): the digest as it stands, from the files, the open memos, the verdicts, the
+  registry and the event log (`attentionOf` of the domain, P2-04: the list the Steward's digest and the herald build
+  from them too), worded by `digestMarkdown` and printed; writes nothing and spends no mana. The quests waiting for
+  a judge and the tribes held by their CLI come from their `quest.judge_wait` and `tribe.held` lines, so they are
+  listed without a running Steward; only a branch a running Steward found with nothing to push is its own (here such
+  a quest counts as carried). A quest in review whose latest judge could not open a session (`judge_no_session`,
+  from the quest files, fix/review-no-session) is listed with `character suspend`. A
   pull request the Steward merges itself under the delegation of the seal names nothing for the owner, as in the
   Steward's digest: the policy is `sealPolicyOf` of the domain, from `kingdom.delegation.seal` and the breaker's lines
   of the log (fix/run-221-followups). `run` gives the Steward the `Digest` port
