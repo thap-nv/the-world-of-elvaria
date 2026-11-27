@@ -37,6 +37,11 @@
     "cli.column.scope": "Phạm vi",
     "cli.column.fail_kind": "Loại lỗi",
     "cli.column.source": "Nguồn",
-    "cli.column.load": "Nạp"
+    "cli.column.load": "Nạp",
+    "cli.column.label": "Nhãn",
+    "cli.column.role": "Vai",
+    "cli.column.created": "Tạo lúc",
+    "cli.column.last_seen": "Thấy cuối",
+    "cli.column.revoked": "Thu hồi"
   }
 }

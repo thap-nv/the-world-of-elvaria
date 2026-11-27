@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { ULID_MAX_TIME_MS } from './constants.ts';
 import { InstantSchema } from './clock.ts';
 import { createIdSource, formatDatedId, formatUlid } from './id-source.ts';
-import { CAMPAIGN_ID_PATTERN, LESSON_ID_PATTERN, QUEST_ID_PATTERN, ULID_PATTERN } from './ids.ts';
+import {
+  CAMPAIGN_ID_PATTERN,
+  DEVICE_ID_PATTERN,
+  LESSON_ID_PATTERN,
+  QUEST_ID_PATTERN,
+  ULID_PATTERN,
+} from './ids.ts';
 import type { Clock, Instant } from './clock.ts';
 import type { IdSource, RandomSource } from './id-source.ts';
 
@@ -49,13 +55,15 @@ describe('createIdSource', () => {
     });
   });
 
-  it('makes quest, campaign and lesson ids dated by the kingdom day', () => {
+  it('makes quest, campaign, lesson and device ids dated by the kingdom day', () => {
     const late = Date.parse('2026-11-05T18:00:00Z'); // already 6 November in Ho Chi Minh City
     const ids = source(manualClock(late), filled(7));
     expect(ids.quest()).toMatch(QUEST_ID_PATTERN);
     expect(ids.quest()).toMatch(/^q_20261106_/);
     expect(ids.campaign()).toMatch(CAMPAIGN_ID_PATTERN);
     expect(ids.lesson()).toMatch(LESSON_ID_PATTERN);
+    expect(ids.device()).toMatch(DEVICE_ID_PATTERN);
+    expect(ids.device()).toMatch(/^dev_20261106_/);
   });
 
   it('keeps ulids strictly increasing within one millisecond', () => {

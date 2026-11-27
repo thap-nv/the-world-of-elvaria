@@ -37,6 +37,11 @@
     "cli.column.scope": "Scope",
     "cli.column.fail_kind": "Fail kind",
     "cli.column.source": "Source",
-    "cli.column.load": "Load"
+    "cli.column.load": "Load",
+    "cli.column.label": "Label",
+    "cli.column.role": "Role",
+    "cli.column.created": "Created",
+    "cli.column.last_seen": "Last seen",
+    "cli.column.revoked": "Revoked"
   }
 }

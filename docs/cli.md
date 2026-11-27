@@ -59,6 +59,11 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria memo decide <memo> <decision>` | Quyết một thư, một lần: gác lại (shelved), bác (rejected), hoặc nêu nhiệm vụ làm việc đó (handled --quest); không nhiệm vụ nào đổi, trừ nhiệm vụ đang chờ thư phản biện đề bài bạn quyết (accepted hay rejected): nó đi tiếp với ghi chú của bạn làm câu trả lời (lệnh decide_memo). |
 | `elvaria triage` | Tể tướng phân loại các thư gửi tới mình đang chờ: một lần gọi model cho cả lô (tối đa 20 thư, cũ nhất trước). Trong phạm vi ủy quyền (kingdom.delegation), Nhiếp chính áp quyết định mà không cần bạn; thư còn lại tới bạn kèm lời khuyên, trong bản tấu. kingdom.schedule.triage chạy việc này mỗi ngày trước bản tấu. |
 | `elvaria run` | Chạy Nhiếp chính: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C). |
+| `elvaria herald` | Chạy Sứ giả: máy chủ của thế giới trên 127.0.0.1 (cổng kingdom.herald.port), chỉ trả lời trình duyệt đã ghép đôi (elvaria herald pair). Chạy tới khi Ctrl+C. 0 mana. |
+| `elvaria herald pair` | Ghép đôi một trình duyệt hay điện thoại: tạo thiết bị mới (devices/<id>.json) với vai và lãnh thổ được cấp, rồi in đường dẫn có mã dùng một lần, hạn 5 phút. Mở đường dẫn trên thiết bị đó khi elvaria herald đang chạy. 0 mana. |
+| `elvaria herald devices` | Các thiết bị đã ghép đôi: vai, lãnh thổ được cấp, ngày tạo, lần Sứ giả thấy cuối, ngày thu hồi. |
+| `elvaria herald device <id>` | Xem một thiết bị, hay đổi vai, lãnh thổ được cấp hoặc nhãn của nó. Sứ giả đọc lại file thiết bị ở mỗi request, Nhiếp chính ở mỗi lệnh: thay đổi có hiệu lực ngay. |
+| `elvaria herald revoke [<id>]` | Thu hồi một thiết bị, hay mọi thiết bị với --all: Sứ giả kết thúc phiên của nó ở request kế tiếp, Nhiếp chính từ chối lệnh của nó. File thiết bị còn lại để log vẫn nêu được tên. |
 | `elvaria wake <tribe>` | Nhờ Nhiếp chính thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake). |
 | `elvaria digest` | In bản tấu lúc này: mọi việc chờ bạn, chia hai nhóm (phải quyết để việc chạy tiếp, chờ được), mỗi việc kèm khuyến nghị và lệnh. Chỉ đọc vương quốc, không tốn mana. |
 | `elvaria watch` | Theo dõi nhiệm vụ chưa kết thúc và việc chờ bạn. Chỉ đọc; tự làm mới trong terminal. |
@@ -540,6 +545,50 @@ Không có tham số riêng, chỉ các tùy chọn chung.
 Chạy Nhiếp chính: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C).
 
 Không có tham số riêng, chỉ các tùy chọn chung.
+
+## `elvaria herald`
+
+Chạy Sứ giả: máy chủ của thế giới trên 127.0.0.1 (cổng kingdom.herald.port), chỉ trả lời trình duyệt đã ghép đôi (elvaria herald pair). Chạy tới khi Ctrl+C. 0 mana.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `--port <port>` | Cổng của lần chạy này thay cho kingdom.herald.port; 0 chọn một cổng trống. |
+
+## `elvaria herald pair`
+
+Ghép đôi một trình duyệt hay điện thoại: tạo thiết bị mới (devices/<id>.json) với vai và lãnh thổ được cấp, rồi in đường dẫn có mã dùng một lần, hạn 5 phút. Mở đường dẫn trên thiết bị đó khi elvaria herald đang chạy. 0 mana.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `--role <full\|scoped\|inquiry>` | Vai: full (mọi việc chủ nhân làm), scoped (việc của các lãnh thổ được cấp) hay inquiry (hỏi đáp trên các lãnh thổ được cấp). (bắt buộc) |
+| `--territory <id>` | Lãnh thổ được cấp, lặp lại được; scoped và inquiry cần ít nhất một, full không nhận. |
+| `--label <name>` | Tên của thiết bị, tới 64 ký tự (ví dụ «Điện thoại cá nhân»). (bắt buộc) |
+
+## `elvaria herald devices`
+
+Các thiết bị đã ghép đôi: vai, lãnh thổ được cấp, ngày tạo, lần Sứ giả thấy cuối, ngày thu hồi.
+
+Không có tham số riêng, chỉ các tùy chọn chung.
+
+## `elvaria herald device`
+
+Xem một thiết bị, hay đổi vai, lãnh thổ được cấp hoặc nhãn của nó. Sứ giả đọc lại file thiết bị ở mỗi request, Nhiếp chính ở mỗi lệnh: thay đổi có hiệu lực ngay.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | Id của thiết bị (dev_…), xem elvaria herald devices. |
+| `--role <full\|scoped\|inquiry>` | Vai: full (mọi việc chủ nhân làm), scoped (việc của các lãnh thổ được cấp) hay inquiry (hỏi đáp trên các lãnh thổ được cấp). |
+| `--territory <id>` | Thay danh sách lãnh thổ được cấp, lặp lại được. |
+| `--label <name>` | Tên của thiết bị, tới 64 ký tự (ví dụ «Điện thoại cá nhân»). |
+
+## `elvaria herald revoke`
+
+Thu hồi một thiết bị, hay mọi thiết bị với --all: Sứ giả kết thúc phiên của nó ở request kế tiếp, Nhiếp chính từ chối lệnh của nó. File thiết bị còn lại để log vẫn nêu được tên.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `[<id>]` | Id của thiết bị (dev_…); bỏ trống khi có --all. |
+| `--all` | Thu hồi mọi thiết bị chưa thu hồi. |
 
 ## `elvaria wake`
 

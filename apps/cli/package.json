@@ -16,6 +16,7 @@
     "@elvaria/chancellor": "workspace:*",
     "@elvaria/domain": "workspace:*",
     "@elvaria/eventlog": "workspace:*",
+    "@elvaria/herald": "workspace:*",
     "@elvaria/hooks": "workspace:*",
     "@elvaria/i18n": "workspace:*",
     "@elvaria/registry-default": "workspace:*",
