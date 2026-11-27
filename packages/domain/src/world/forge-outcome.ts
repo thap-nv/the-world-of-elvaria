@@ -55,7 +55,7 @@ const trainOrderOf = (event: Event): TerritoryId | undefined =>
  * (623) A failure on `territory`'s train the owner's order forgets, so the quest boards the next train: every failure
  * at stage `train` but one a merge quest resolves (PS-09b: a `conflict`, or one naming its `merge_quest`).
  */
-const forgottenByOrder = (outcome: ForgeOutcome, territory: TerritoryId): boolean =>
+export const forgottenByOrder = (outcome: ForgeOutcome, territory: TerritoryId): boolean =>
   outcome.type === 'delivery.failed' &&
   outcome.data.stage === 'train' &&
   outcome.data.territory === territory &&

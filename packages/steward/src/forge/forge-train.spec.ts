@@ -1,77 +1,30 @@
 // The delivery train of a `deferred` territory (CM-08, plans/check-modes.md "Tàu giao hàng") on the forge bench. Three
 // sealed quests leave on one train once it is full: one pull request merges them, each quest has its `delivery.merged`
 // naming the train and is archived, and no train branch stays. A quest ready to start that waits for the scope of one on
-// the platform sends the train off at once. A red train fails each quest aboard ((620)), and a quest whose branch
-// conflicts with main leaves it for a merge quest. A Steward stopped mid-train leaves no branch and writes no line;
-// the next one runs the train anew.
-import { writeFile } from 'node:fs/promises';
-import path from 'node:path';
-
-import { tempDir } from '@elvaria/testkit';
+// the platform sends the train off at once. A Steward stopped mid-train leaves no branch and writes no line; the next one
+// runs the train anew. A red train is probed: train-probe.spec.ts.
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { forgeBench } from '../__fixtures__/forge-bench.ts';
 import { git, gitPlots } from '../__fixtures__/git-plots.ts';
 import { questPayload, settled, tickUntil } from '../__fixtures__/kingdom.ts';
 import { onMain, sealedTogether, statusOf } from '../__fixtures__/queue.ts';
-import type { TempDir } from '@elvaria/testkit';
+import { ranOf as ran, trainBenchOf, trainBranchesOf as trainBranches } from '../__fixtures__/train.ts';
 import type { ForgeBench } from '../__fixtures__/forge-bench.ts';
 import type { Plots } from '../types.ts';
 
 let current: ForgeBench | undefined;
-const clones: TempDir[] = [];
 
 afterEach(async () => {
   await current?.remove();
   current = undefined;
-  await Promise.all(clones.splice(0).map((folder) => folder.remove()));
 });
 
-/** The territory's one check, left to the train: red while the tree holds red.txt. */
-const CHECK = [
-  "import { existsSync } from 'node:fs';",
-  "if (existsSync('red.txt')) console.error('error: red.txt is here');",
-  "process.exit(existsSync('red.txt') ? 1 : 0);",
-  '',
-].join('\n');
-const CHECKS = [
-  { id: 'state', run: 'node check.mjs', when: ['**'], timeout_minutes: 1, defer_to_merge: true },
-];
-const IDENTITY = ['-c', 'user.name=Owner', '-c', 'user.email=owner@elvaria.invalid'];
-const LEAVES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
-  Alpha: { 'src/alpha.ts': 'alpha\n' },
-  Beta: { 'src/beta.ts': 'beta\n' },
-  Gamma: { 'src/gamma.ts': 'gamma\n' },
-  Clash: { 'README.md': '# clash\n' },
-  Red: { 'red.txt': 'red\n' },
-};
-
 async function trainBench(): Promise<ForgeBench> {
-  current = await forgeBench({
-    delivery: { mode: 'pr_merge', merge_method: 'merge' },
-    files: { 'check.mjs': CHECK },
-    territory: {
-      checks: CHECKS,
-      check_policy: { mode: 'deferred', train: { max_quests: 3, max_wait_minutes: 600 } },
-    },
-    leaves: (req) => LEAVES[req.quest?.title ?? ''] ?? {},
-  });
+  current = await trainBenchOf();
   return current;
 }
 
-const ran = async (bench: ForgeBench) => (await bench.lines('train.ran')).map(({ data }) => data);
-const trainBranches = (bench: ForgeBench) => git(bench.remote, 'for-each-ref', 'refs/heads/train');
 const idOf = async (bench: ForgeBench, title: string) => (await bench.kingdom.quest(title)).id;
-
-/** The owner moves main's README on the remote. */
-async function moveMain(bench: ForgeBench): Promise<void> {
-  const folder = await tempDir('train clone');
-  clones.push(folder);
-  git(folder.root, 'clone', '-q', '-c', 'core.autocrlf=false', bench.remote, '.');
-  await writeFile(path.join(folder.root, 'README.md'), '# moved\n');
-  git(folder.root, ...IDENTITY, 'commit', '-q', '-am', 'move');
-  git(folder.root, 'push', '-q', 'origin', 'main');
-}
 
 describe('the delivery train of a deferred territory (CM-08)', () => {
   it('merges three sealed quests by one pull request, archives them and leaves no train branch', async () => {
@@ -137,39 +90,6 @@ describe('the delivery train of a deferred territory (CM-08)', () => {
     const [train] = await ran(bench);
     expect(train).toMatchObject({ outcome: 'green', departure: 'scope' });
     expect(onMain(bench, 'src/alpha.ts')).toBe('alpha');
-  });
-
-  it('fails each quest aboard a red train, and one that conflicts with main leaves it for a merge quest', async () => {
-    const bench = await trainBench();
-    const steward = await bench.start();
-    await sealedTogether(bench, steward, ['Clash', 'Red', 'Alpha']);
-    await moveMain(bench);
-    const main = git(bench.remote, 'rev-parse', 'main');
-    await tickUntil(steward, bench.kingdom.clock, async () => (await ran(bench)).length === 1, 200);
-    const [clash, red, alpha] = await Promise.all(
-      ['Clash', 'Red', 'Alpha'].map((title) => idOf(bench, title)),
-    );
-    const [train] = await ran(bench);
-    expect(train).toMatchObject({
-      outcome: 'red',
-      left: [{ quest: clash, reason: 'conflict' }],
-      checks: [{ id: 'state', line: expect.stringContaining('red.txt is here') as string }],
-    });
-    expect((train?.steps as { quest: string }[]).map(({ quest }) => quest)).toEqual([red, alpha]);
-    const failed = (await bench.lines('delivery.failed')).map(({ data }) => data);
-    expect(failed.map(({ quest, stage, reason }) => [quest, stage, reason])).toEqual([
-      [clash, 'train', 'conflict'],
-      [red, 'train', 'checks_red'],
-      [alpha, 'train', 'checks_red'],
-    ]);
-    expect(failed[0]).toMatchObject({ paths: ['README.md'], merge_quest: expect.any(String) as string });
-    expect(failed[1]).toMatchObject({
-      train: train?.train,
-      checks: [{ name: 'state', conclusion: 'failure' }],
-    });
-    expect(bench.forge.pulls.size).toBe(0);
-    expect(git(bench.remote, 'rev-parse', 'main')).toBe(main);
-    expect(trainBranches(bench)).toBe('');
   });
 
   // (CM-08) `deliver` naming a territory: refused where no train goes, from the Chancellor and while a train runs; the

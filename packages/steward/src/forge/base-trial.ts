@@ -7,17 +7,20 @@
 import { baseRedOf, baseVerdictOf, isPatrolFix } from '@elvaria/domain';
 
 import { patrolled, patrolTerritory } from '../patrol/patrol.ts';
-import { stopped } from './delivery.ts';
 import type { Context } from '../context.ts';
 import type { Delivery } from './delivery.ts';
 
-/** Whether the base branch at `commit`, merged into the quest's branch, is red on its own. */
-export async function baseRedAt(ctx: Context, d: Delivery, commit: string): Promise<boolean> {
-  if (!patrolled(d.territory) || ctx.deps.plots.patrol === undefined || isPatrolFix(d.quest)) return false;
+/** What asks the base branch: a quest's delivery, or (CM-08b) a red delivery train, which has no quest of its own. */
+export type BaseAsker = Pick<Delivery, 'territory' | 'signal'> & { readonly quest?: Delivery['quest'] };
+
+/** Whether the base branch at `commit`, merged into the quest's branch or cut by a train, is red on its own. */
+export async function baseRedAt(ctx: Context, d: BaseAsker, commit: string): Promise<boolean> {
+  if (!patrolled(d.territory) || ctx.deps.plots.patrol === undefined) return false;
+  if (d.quest !== undefined && isPatrolFix(d.quest)) return false;
   const territory = d.territory.id;
   if (baseVerdictOf(ctx.patrol.health, territory, commit) === 'unknown')
     await patrolTerritory(ctx, d.territory, 'queue', d.signal);
-  if (stopped(d)) return false;
+  if (d.signal.aborted) return false;
   const verdict = baseVerdictOf(ctx.patrol.health, territory, commit);
   if (verdict !== 'unknown') return verdict === 'red';
   // The branch moved on since the merge: what holds the territory now holds the quest too.

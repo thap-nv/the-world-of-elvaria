@@ -5,14 +5,15 @@
 // once on the train's head, its `check.*` lines marked `delivery` and `train`. A quest whose branch conflicts outside
 // every rule of shared_paths leaves the train: `delivery.failed` at stage `train` with its files and the merge queue's
 // merge quest (PS-09b). Green: train-push.ts takes it into the base branch by one pull request, and each quest has its
-// `delivery.merged` naming the train. Red ((620)): each quest aboard has `delivery.failed` `checks_red`, and waits for
-// the owner's `deliver`. Stopped ((621)(l): git, commands.generate, the scan, the push, the forge): each has
+// `delivery.merged` naming the train. Red: (CM-08b) train-probe.ts probes its merge commits, the quest found fails late
+// or goes to a merge quest, those merged before it leave at once as a `split` train with the red checks only, those
+// after it wait on the platform; the base branch red on its own blames nobody. Stopped ((621)(l): git, commands.generate, the scan, the push, the forge): each has
 // `delivery.failed` with the reason. Every train that ran writes one `train.ran` after its quests' lines; a stop of
 // the Steward before the merge writes nothing, and the next Steward builds the train anew under a new id.
 // (3) A quest whose branch the base branch holds already gives the train no merge commit: it is no step of the train,
 // and as a quest's branch with nothing to push (push.ts) the look at the base branch archives it (PS-08d).
 import { DELIVERY_DETAIL_MAX_LENGTH, TrainIdSchema } from '@elvaria/domain';
-import type { EventData, Quest, QuestId, TrainId, TrainRun } from '@elvaria/domain';
+import type { EventData, QuestId, TrainId, TrainRun } from '@elvaria/domain';
 import type { TrainHead, TrainLeaving, TrainStep, TrainTrial } from '@elvaria/runner-core';
 
 import { factsOf } from '../check-ledger/carry.ts';
@@ -20,14 +21,16 @@ import { STEWARD } from '../quest/record.ts';
 import { detailOf, foundOf, messageOf } from './delivery.ts';
 import { recordFailed, recordMerged } from './outcome.ts';
 import { openQueueMerge } from './queue-merge.ts';
+import { branchOf, probeTrain, recordProbed } from './train-probe.ts';
 import { configStop, deliverTrain, stopped } from './train-push.ts';
 import { noteCheckLine, trialEndOf, trialRedOf } from './trial-red.ts';
 import type { Context } from '../context.ts';
 import type { QueueChecks } from './checked-head.ts';
 import type { PullRequest } from './forge.ts';
 import type { Failure } from './outcome.ts';
+import type { TrainProbed } from './train-probe.ts';
 import type { Train, TrainStop } from './train-push.ts';
-import type { CheckLine, TrialRed } from './trial-red.ts';
+import type { CheckLine } from './trial-red.ts';
 
 type Ran = EventData<'train.ran'>;
 type Tried = Extract<TrainTrial, { state: 'tried' }>;
@@ -37,7 +40,7 @@ type RanFacts = Partial<
 >;
 
 /** The train before it is found on its forge: its id, why it left, its quests. */
-type Aboard = Pick<Train, 'ctx' | 'id' | 'run' | 'quests'>;
+type Aboard = Pick<Train, 'ctx' | 'id' | 'run' | 'quests' | 'checks'>;
 
 /** How the train's run ended. */
 interface TrainEnd {
@@ -48,10 +51,12 @@ interface TrainEnd {
   /** (3) The quests whose branch the base branch holds already. */
   readonly already: readonly QuestId[];
   readonly ran: RanFacts;
-  /** What each quest still aboard fails with; absent: none fails (green, or nobody left aboard). */
+  /** What each quest still aboard fails with; absent: none fails (green, red, or nobody left aboard). */
   readonly failure?: Omit<Failure, 'stage' | 'train' | 'branch'>;
   /** Green: the train's pull request. */
   readonly pr?: PullRequest;
+  /** Red, the base branch green: what the probe found (train-probe.ts). */
+  readonly probed?: TrainProbed;
 }
 
 const ranDetail = (detail: string | undefined): RanFacts => {
@@ -68,8 +73,6 @@ const stoppedEnd = (stop: TrainStop, ran: RanFacts = {}, boarded: Boarded = NOBO
   ran: { ...ran, ...ranDetail(stop.detail) },
   failure: stop,
 });
-
-const branchOf = ({ plot }: Quest) => (plot.branch === undefined ? {} : { branch: plot.branch });
 
 const markOf = (train: Pick<Train, 'id'>) => ({ delivery: true, train: train.id });
 
@@ -97,7 +100,8 @@ async function tryIt(train: Train): Promise<TrainTrial> {
   const boarding = quests.map((quest) => ({ quest: quest.id, branch: quest.plot.branch ?? '' }));
   let tried: TrainTrial | undefined;
   try {
-    tried = await plots.train(territory, { quests: boarding, started }, signal);
+    const only = train.checks === undefined ? {} : { checks: train.checks };
+    tried = await plots.train(territory, { quests: boarding, started, ...only }, signal);
     return tried;
   } finally {
     const trial = tried?.state === 'tried' ? tried.run.trial : undefined;
@@ -123,10 +127,7 @@ function sortSteps(base: string | undefined, steps: readonly TrainStep[]) {
   return { merged, already };
 }
 
-const forgeChecksOf = (red: TrialRed) =>
-  red.map(({ id, timed_out }) => ({ name: id, conclusion: timed_out === true ? 'timed_out' : 'failure' }));
-
-/** A train built and tried at its head: stopped, red ((620)), or delivered by train-push.ts. */
+/** A train built and tried at its head: stopped, red and probed (train-probe.ts), or delivered by train-push.ts. */
 async function endOfTried(train: Train, tried: Tried, boarded: Boarded): Promise<TrainEnd | undefined> {
   const { base, head, tree } = tried;
   const ran = { base, head, ...(tree === undefined ? {} : { tree }) };
@@ -141,8 +142,10 @@ async function endOfTried(train: Train, tried: Tried, boarded: Boarded): Promise
     );
   });
   if (red !== undefined) {
-    const failure = { reason: 'checks_red' as const, checks: forgeChecksOf(red) };
-    return { ...boarded, outcome: 'red', ran: { ...ran, checks: red }, failure };
+    const probed = await probeTrain(train, tried, boarded.steps, red);
+    if (probed === undefined) return undefined;
+    const end = { ...boarded, outcome: 'red' as const, ran: { ...ran, checks: red } };
+    return probed === 'base_red' ? end : { ...end, probed };
   }
   const merged = boarded.steps.flatMap((step) => train.quests.find(({ id }) => id === step.quest) ?? []);
   const delivered = await deliverTrain(train, { base, head, tree }, checked, merged);
@@ -242,6 +245,7 @@ async function recordEnd(aboard: Aboard, end: TrainEnd): Promise<void> {
   const { ctx, id, run } = aboard;
   for (const quest of end.already) ctx.forge.nothing.add(quest);
   await recordLeft(aboard, end);
+  if (end.probed !== undefined) await recordProbed(aboard, end.probed);
   const off = new Set([...end.left.map(({ quest }) => quest), ...end.already]);
   if (end.failure !== undefined)
     for (const quest of aboard.quests.filter(({ id: aboardId }) => !off.has(aboardId)))
@@ -269,15 +273,24 @@ function trainOf(aboard: Aboard, signal: AbortSignal): Train | TrainStop | undef
   return { ...aboard, territory, forge, repo, git, base, signal };
 }
 
-/** One train's run, from its departure to its lines. */
-export async function trainTurn(ctx: Context, run: TrainRun, signal: AbortSignal): Promise<void> {
+/** One train's run, from its departure to its lines; (CM-08b) a `split` train runs only the `checks` given. */
+export async function trainTurn(
+  ctx: Context,
+  run: TrainRun,
+  signal: AbortSignal,
+  checks?: readonly string[],
+): Promise<void> {
   const id: TrainId = TrainIdSchema.parse(ctx.deps.ids.ulid());
   const quests = run.quests.flatMap((quest) => ctx.world.quests.get(quest) ?? []);
-  const aboard: Aboard = { ctx, id, run, quests };
+  const aboard: Aboard = { ctx, id, run, quests, ...(checks === undefined ? {} : { checks }) };
   const train = trainOf(aboard, signal);
   if (train === undefined) return;
   const end = 'ctx' in train ? await rideOf(train) : stoppedEnd(train);
-  if (end !== undefined) await recordEnd(aboard, end);
+  if (end === undefined) return;
+  await recordEnd(aboard, end);
+  const split = end.probed === undefined ? [] : end.probed.split.before;
+  if (end.probed !== undefined && split.length > 0)
+    await trainTurn(ctx, { ...run, departure: 'split', quests: split }, signal, end.probed.checks);
 }
 
 /** Starts the train `run` outside the tick, in its territory's lane (planTick's train_runs). */

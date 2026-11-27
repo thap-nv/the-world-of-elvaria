@@ -20,7 +20,7 @@ import {
   verdictIdOf,
 } from '@elvaria/domain';
 import { toVerdictCheck } from '@elvaria/runner-core';
-import type { ProbeRun } from '@elvaria/domain';
+import type { ProbeRun, Quest } from '@elvaria/domain';
 import type { CheckRun } from '@elvaria/runner-core';
 
 import { suspendDelegation } from '../delegation/suspend.ts';
@@ -84,26 +84,29 @@ async function stepFour(ctx: Context, d: Delivery, plots: ProbePlots, base: stri
   }
 }
 
-/** The late fail of the quest's own change: its verdict, its move back with the judge's share, the breaker. */
-async function failLate(ctx: Context, d: Delivery, queue: QueueRed): Promise<boolean> {
-  const [first] = queue.red;
+/**
+ * The late fail of the quest's own change: its verdict, its move back with the judge's share, the breaker. (CM-08b) The
+ * probe of a red delivery train fails its quest the same way (train-probe.ts).
+ */
+export async function failLate(ctx: Context, quest: Quest, red: readonly CheckRun[]): Promise<boolean> {
+  const [first] = red;
   if (first === undefined) return false;
-  const late = await writeLateVerdict(ctx, d.quest, queue.red.map(toVerdictCheck));
+  const late = await writeLateVerdict(ctx, quest, red.map(toVerdictCheck));
   if (!late.ok) {
-    ctx.deps.log.warn(`steward: ${d.quest.id}: no late verdict: ${late.error}`);
+    ctx.deps.log.warn(`steward: ${quest.id}: no late verdict: ${late.error}`);
     return false;
   }
-  const moved = await moveOnVerdict(ctx, d.quest, late.value.verdict, {
+  const moved = await moveOnVerdict(ctx, quest, late.value.verdict, {
     event: { type: 'verdict_fail' },
     actor: 'steward',
-    edits: overturnedEdits(ctx, d.quest, late.value),
+    edits: overturnedEdits(ctx, quest, late.value),
     infirmary: OUT_OF_ATTEMPTS,
   });
   if (!moved.ok) {
-    ctx.deps.log.warn(`steward: ${d.quest.id}: its late fail did not move it: ${moved.error}`);
+    ctx.deps.log.warn(`steward: ${quest.id}: its late fail did not move it: ${moved.error}`);
     return false;
   }
-  const suspension = lateFailSuspension({ quest: d.quest, check: first.id }, ctx.delegation.suspensions);
+  const suspension = lateFailSuspension({ quest, check: first.id }, ctx.delegation.suspensions);
   if (suspension !== undefined) await suspendDelegation(ctx, suspension);
   return true;
 }
@@ -128,5 +131,5 @@ export async function lateFailAt(ctx: Context, d: Delivery, base: string, queue:
     ...(run === undefined ? {} : { run }),
   });
   await ctx.record.note({ type: 'check.attributed', actor: STEWARD, quest: d.quest, data });
-  return data.cause === 'own_change' && (await failLate(ctx, d, queue));
+  return data.cause === 'own_change' && (await failLate(ctx, d.quest, queue.red));
 }
