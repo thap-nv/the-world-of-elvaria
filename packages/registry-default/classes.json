@@ -119,7 +119,7 @@
       "is_verifier": false,
       "is_monk": false,
       "default_tribe": "gemini",
-      "default_model": "gemini-4-argon-medium",
+      "default_model": "gemini-4-neon-medium",
       "tools": {
         "allow": ["Read", "Edit", "Write", "Glob", "Grep", "WebFetch", "WebSearch"],
         "deny": ["Bash(git push:*)"]
@@ -134,7 +134,7 @@
       "is_verifier": false,
       "is_monk": false,
       "default_tribe": "gemini",
-      "default_model": "gemini-4-argon-medium",
+      "default_model": "gemini-4-neon-medium",
       "tools": {
         "allow": ["Read", "Edit", "Write", "Glob", "Grep"],
         "deny": ["WebFetch", "Bash(git push:*)"]
@@ -233,7 +233,7 @@
       "is_verifier": false,
       "is_monk": true,
       "default_tribe": "gemini",
-      "default_model": "gemini-3.8-flash-low",
+      "default_model": "gemini-4-hydrogen-low",
       "tools": {
         "allow": ["Read", "Glob", "Grep"],
         "deny": ["Edit", "Write", "Bash"]

@@ -49,6 +49,27 @@ describe('elvaria character add', () => {
     ]);
   });
 
+  it.each([
+    ['gemini-4-carbon-medium', 4],
+    ['gemini-4-neon-xhigh', 3],
+    ['gemini-4-hydrogen-low', 2],
+    ['gemini-4-hydrogen-xhigh', 2],
+    ['gemini-4-argon-medium', 3],
+    ['gemini-3.8-flash-low', 2],
+  ])('summons %s at starting level %i (607)', async (model, level) => {
+    expect(await add(testIo(), 'vela', '--class', 'judge', '--tribe', 'gemini', '--model', model)).toBe(0);
+    expect(await readCharacter('vela')).toMatchObject({ tribe: 'gemini', model, level });
+  });
+
+  it.each([
+    ['scout', 'gemini-4-neon-medium', 3],
+    ['scribe', 'gemini-4-neon-medium', 3],
+    ['monk', 'gemini-4-hydrogen-low', 2],
+  ])('summons a %s with its agy 1.5.18 default (607)', async (classId, model, level) => {
+    expect(await add(testIo(), 'vela', '--class', classId)).toBe(0);
+    expect(await readCharacter('vela')).toMatchObject({ tribe: 'gemini', model, level });
+  });
+
   it('starts at level 1 on a model it knows no level for, and says how to start higher (P1-26)', async () => {
     const io = testIo();
     expect(await add(io, 'otto', '--class', 'knight', '--model', 'claude-next-1')).toBe(0);
@@ -65,7 +86,7 @@ describe('elvaria character add', () => {
       '--tribe',
       'gemini',
       '--model',
-      'gemini-4-argon-medium',
+      'gemini-4-neon-medium',
       '--level',
       '8',
       '--name',
@@ -73,15 +94,15 @@ describe('elvaria character add', () => {
     ];
     const io = testIo();
     expect(await add(io, 'vela', ...args)).toBe(0);
-    // Above Argon's starting level (3): the Steward takes the level as the model's strength (P1-43).
+    // Above Neon's starting level (3): the Steward takes the level as the model's strength (P1-43).
     expect(io.printed.out).toEqual([
       'Summoned «Vela» (vela): Judge, level 8.',
-      'Tribe gemini, model gemini-4-argon-medium.',
-      "Level 8 is above the starting level of model gemini-4-argon-medium (3): the Steward takes a level as the model's strength, so it gives this character quests up to rank A. If the model is not that strong, lower it: elvaria character level vela 3.",
+      'Tribe gemini, model gemini-4-neon-medium.',
+      "Level 8 is above the starting level of model gemini-4-neon-medium (3): the Steward takes a level as the model's strength, so it gives this character quests up to rank A. If the model is not that strong, lower it: elvaria character level vela 3.",
     ]);
     expect(await readCharacter('vela')).toMatchObject({
       tribe: 'gemini',
-      model: 'gemini-4-argon-medium',
+      model: 'gemini-4-neon-medium',
       level: 8,
       name: 'Vela',
       vow_no_production: true,
