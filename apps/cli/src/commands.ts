@@ -6,6 +6,11 @@ import { CHARACTER_MODEL } from './character/model.ts';
 import { CHARACTER_RELEASE, CHARACTER_SUSPEND } from './character/suspend.ts';
 import { DIGEST } from './digest/digest.ts';
 import { DOCTOR } from './doctor/doctor.ts';
+import { HERALD } from './herald/herald.ts';
+import { HERALD_DEVICE } from './herald/device.ts';
+import { HERALD_DEVICES } from './herald/list.ts';
+import { HERALD_PAIR } from './herald/pair.ts';
+import { HERALD_REVOKE } from './herald/revoke.ts';
 import { INIT } from './init/init.ts';
 import { MEMO_DECIDE } from './memo/decide.ts';
 import { MEMO_LIST } from './memo/list.ts';
@@ -101,6 +106,11 @@ export const COMMANDS: readonly CommandSpec[] = [
   MEMO_DECIDE,
   TRIAGE,
   RUN,
+  HERALD,
+  HERALD_PAIR,
+  HERALD_DEVICES,
+  HERALD_DEVICE,
+  HERALD_REVOKE,
   WAKE,
   DIGEST,
   WATCH,

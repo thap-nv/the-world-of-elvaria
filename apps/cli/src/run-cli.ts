@@ -24,15 +24,15 @@ export function lookupCommand(argv: readonly string[], commands: readonly Comman
   const [first, second] = argv;
   if (first === undefined || HELP_WORDS.includes(first)) return { kind: 'overview' };
   const group = commands.filter((spec) => spec.name[0] === first);
+  // `herald` runs the Herald and `herald pair` pairs a device: a second word naming a command of the group wins.
+  const named = group.find((spec) => spec.name.length > 1 && spec.name[1] === second);
+  if (named !== undefined) return { kind: 'command', spec: named, rest: argv.slice(2) };
   const single = group.find((spec) => spec.name.length === 1);
   if (single !== undefined) return { kind: 'command', spec: single, rest: argv.slice(1) };
   if (group.length === 0) return { kind: 'unknown', words: first };
   if (second === undefined || second === 'help' || second.startsWith('-'))
     return { kind: 'overview', group: first };
-  const spec = group.find((candidate) => candidate.name[1] === second);
-  return spec === undefined
-    ? { kind: 'unknown', words: `${first} ${second}` }
-    : { kind: 'command', spec, rest: argv.slice(2) };
+  return { kind: 'unknown', words: `${first} ${second}` };
 }
 
 /** `--locale` read before anything else, so even a usage error comes in the language asked for. */

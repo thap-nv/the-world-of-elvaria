@@ -17,6 +17,15 @@ describe('lookupCommand', () => {
     expect(init.kind === 'command' && init.rest).toEqual(['--name', 'x']);
   });
 
+  it('lets a one-word command and a group of the same word live together', () => {
+    const herald = lookupCommand(['herald', '--port', '0']);
+    expect(herald.kind === 'command' && herald.spec.name).toEqual(['herald']);
+    expect(herald.kind === 'command' && herald.rest).toEqual(['--port', '0']);
+    const pair = lookupCommand(['herald', 'pair', '--role', 'full']);
+    expect(pair.kind === 'command' && pair.spec.name).toEqual(['herald', 'pair']);
+    expect(pair.kind === 'command' && pair.rest).toEqual(['--role', 'full']);
+  });
+
   it('answers help for nothing, help words, and a bare group', () => {
     expect(lookupCommand([])).toEqual({ kind: 'overview' });
     expect(lookupCommand(['--help'])).toEqual({ kind: 'overview' });

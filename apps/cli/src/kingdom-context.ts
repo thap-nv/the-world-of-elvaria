@@ -3,7 +3,7 @@
 import path from 'node:path';
 
 import { createIdSource, zonedTime } from '@elvaria/domain';
-import type { IdSource, Kingdom } from '@elvaria/domain';
+import type { IdSource, Instant, Kingdom } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { openKingdom } from '@elvaria/store';
 import type { KingdomStore } from '@elvaria/store';
@@ -20,6 +20,8 @@ export interface KingdomContext extends CliContext {
   readonly ids: IdSource;
   /** The clock's now as kingdom files store it: ISO 8601 with the kingdom's offset (implementation-plan §2.1). */
   readonly now: () => string;
+  /** Any instant as kingdom files store it; `now` is this of the clock's now. */
+  readonly format: (at: Instant) => string;
 }
 
 /** `--kingdom`, else ELVARIA_KINGDOM (the variable the hooks read too, §3.6), resolved from the cwd. */
@@ -67,5 +69,6 @@ export async function openKingdomContext(
     kingdom,
     ids: ids.value,
     now: () => format(ctx.io.clock.now()),
+    format,
   };
 }

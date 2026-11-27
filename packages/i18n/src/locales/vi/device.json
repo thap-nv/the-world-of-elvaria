@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "messages": {
+    "device.role.full": "Toàn quyền",
+    "device.role.scoped": "Theo lãnh thổ",
+    "device.role.inquiry": "Hỏi đáp",
+    "device.refusal.unknown_device": "Thiết bị này không có trong vương quốc.",
+    "device.refusal.device_revoked": "Thiết bị này đã bị thu hồi.",
+    "device.refusal.role_forbids": "Vai của thiết bị này không được gửi lệnh này.",
+    "device.refusal.outside_territories": "Lệnh chạm tới lãnh thổ mà thiết bị này không được cấp.",
+    "device.refusal.passkey_required": "Lệnh này từ điện thoại cần chữ ký passkey."
+  }
+}

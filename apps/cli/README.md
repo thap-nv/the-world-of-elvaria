@@ -408,6 +408,20 @@ delivery`), with no event; `deferred` is refused unless the territory delivers b
   job on call (`templeJob`, `kingdom.schedule.temple`): ready once the Temple is due, a Monk is free, its tribe is
   not held by its CLI's version and a pool opens a session; unlike the triage it holds no tribe free. No Monk at all
   is printed once. `temple run` runs it now, whether the schedule is on or off.
+- The Herald (P2-01b, `src/herald/`, 0 mana): `herald [--port <n>]` runs `startHerald` of `@elvaria/herald` on
+  127.0.0.1 (port `kingdom.herald.port`, 0 picks a free one) with the kingdom's origins, the clock and randomness of
+  the machine, its page texts in the owner's language (`src/herald/pages.ts`: `cli.herald.page.*`, a device's
+  refusals from `device.refusal.*`) and its redacted log as lines, until Ctrl+C or a stop signal, then closes it; a
+  port in use prints the system's code (`EADDRINUSE`) and exits 1. `herald pair --role full|scoped|inquiry --label
+<name> [--territory <id>]…` writes a new `devices/<id>.json` (id `ids.device()`; full carries no territory,
+  scoped and inquiry at least one, each attached) and a one-time code with `issuePairingCode` (only its hash lands in
+  `.state/herald-pairing.json`), and prints the code once as `<origin>/pair?code=…` for loopback and each origin of
+  `kingdom.herald`. `herald devices` lists the devices with their role (`device.role.*`), territories, creation, last
+  seen (`readSessions`: the latest `last_seen_at`) and revocation; `herald device <id>` prints one, or changes
+  `--role`, `--territory` (replaces the list) or `--label`, refusing a revoked device; `herald revoke <id>|--all`
+  sets `revoked_at` once. The three write the device files themselves (ADR 0005 exception, .claude/rules/cli.md).
+  `doctor` adds one line for `kingdom.herald`: the port and the origins besides loopback, a warning for one that is
+  plain http off this machine (`doctor/check-herald.ts`).
 
 ## Does not
 
@@ -432,7 +446,8 @@ delivery`), with no event; `deferred` is refused unless the territory delivers b
   `draftCommands` for `say`), `@elvaria/runner-core` (`PlotManager`, the adapter kit, the conformance
   suite, `killTree` for `upgrade`), `@elvaria/runner-claude` (the
   `claude_code` adapter), `@elvaria/runner-antigravity` (the `antigravity` adapter, P1-15), `@elvaria/runner-codex`
-  (the `codex_cli` adapter), `@elvaria/hooks` (the hook's command).
+  (the `codex_cli` adapter), `@elvaria/hooks` (the hook's command), `@elvaria/herald` (the Herald's server, pairing
+  codes and sessions, P2-01b).
 - `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
 - `@elvaria/testkit` (dev only: throwaway folders and their cleanup).
 

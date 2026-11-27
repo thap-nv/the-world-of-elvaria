@@ -13,6 +13,7 @@ import cliDoctor from './vi/cli-doctor.json' with { type: 'json' };
 import cliError from './vi/cli-error.json' with { type: 'json' };
 import cliForge from './vi/cli-forge.json' with { type: 'json' };
 import cliHelp from './vi/cli-help.json' with { type: 'json' };
+import cliHerald from './vi/cli-herald.json' with { type: 'json' };
 import cliInbox from './vi/cli-inbox.json' with { type: 'json' };
 import cliInit from './vi/cli-init.json' with { type: 'json' };
 import cliMana from './vi/cli-mana.json' with { type: 'json' };
@@ -37,6 +38,7 @@ import cliTribe from './vi/cli-tribe.json' with { type: 'json' };
 import cliUpgrade from './vi/cli-upgrade.json' with { type: 'json' };
 import cliWake from './vi/cli-wake.json' with { type: 'json' };
 import cliWatch from './vi/cli-watch.json' with { type: 'json' };
+import device from './vi/device.json' with { type: 'json' };
 import locale from './vi/locale.json' with { type: 'json' };
 import quest from './vi/quest.json' with { type: 'json' };
 import registry from './vi/registry.json' with { type: 'json' };
@@ -58,6 +60,7 @@ export const VI = {
   'cli.error': cliError,
   'cli.forge': cliForge,
   'cli.help': cliHelp,
+  'cli.herald': cliHerald,
   'cli.inbox': cliInbox,
   'cli.init': cliInit,
   'cli.mana': cliMana,
@@ -82,6 +85,7 @@ export const VI = {
   'cli.upgrade': cliUpgrade,
   'cli.wake': cliWake,
   'cli.watch': cliWatch,
+  device,
   locale,
   quest,
   registry,
