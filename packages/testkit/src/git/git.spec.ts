@@ -50,18 +50,24 @@ describe('gitRepo and commitFiles', () => {
     expect(git(repo, 'rev-list', '--count', 'HEAD')).toBe('2');
   });
 
-  it("never touches the repo the caller's GIT_DIR names, as in husky's pre-push (implementation-plan §6)", async () => {
-    const outside = await gitRepo(path.join(dir.root, 'outside'));
-    const before = git(outside, 'rev-parse', 'HEAD');
-    vi.stubEnv('GIT_DIR', path.join(outside, '.git'));
-    vi.stubEnv('GIT_WORK_TREE', outside);
-    const repo = await gitRepo(path.join(dir.root, 'inside'), { 'in.txt': 'in\n' });
-    await commitFiles(repo, { 'more.txt': 'more\n' });
-    vi.unstubAllEnvs();
-    expect(git(outside, 'rev-parse', 'HEAD')).toBe(before);
-    expect(git(outside, 'config', '--get', 'core.bare')).toBe('false');
-    expect(git(repo, 'rev-list', '--count', 'HEAD')).toBe('2');
-  });
+  // Makes two repos and runs ~20 git processes: ~1 s alone, 6979 ms (past the 5 s default) when every package's tests
+  // run at once on a loaded machine (q_20261126_88mhg2-2 test.log). 20 s leaves ~3x over that, ~20x over the quiet run.
+  it(
+    "never touches the repo the caller's GIT_DIR names, as in husky's pre-push (implementation-plan §6)",
+    { timeout: 20_000 },
+    async () => {
+      const outside = await gitRepo(path.join(dir.root, 'outside'));
+      const before = git(outside, 'rev-parse', 'HEAD');
+      vi.stubEnv('GIT_DIR', path.join(outside, '.git'));
+      vi.stubEnv('GIT_WORK_TREE', outside);
+      const repo = await gitRepo(path.join(dir.root, 'inside'), { 'in.txt': 'in\n' });
+      await commitFiles(repo, { 'more.txt': 'more\n' });
+      vi.unstubAllEnvs();
+      expect(git(outside, 'rev-parse', 'HEAD')).toBe(before);
+      expect(git(outside, 'config', '--get', 'core.bare')).toBe('false');
+      expect(git(repo, 'rev-list', '--count', 'HEAD')).toBe('2');
+    },
+  );
 
   it('throws when git fails', () => {
     expect(() => git(dir.root, 'no-such-command')).toThrow();
