@@ -110,7 +110,8 @@ async function record(ctx: Context, ledger: PatrolLedger, territory: Territory, 
   const suspension = baseRedSuspension(territory.id, turned, ctx.delegation.suspensions);
   if (suspension !== undefined) await suspendDelegation(ctx, suspension);
   await ctx.record.note({ type: 'patrol.ran', actor: STEWARD, territory: territory.id, data });
-  if (data.head !== null) {
+  // A merge can arrive while this patrol checks an older head; leave that newer batch pending.
+  if (data.head !== null && ctx.patrol.heads.get(territory.id) === data.head) {
     ctx.patrol.heads.delete(territory.id);
     ctx.patrol.merges.delete(territory.id);
   }

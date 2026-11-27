@@ -18,7 +18,7 @@ export interface PatrolBook {
   readonly tried: Map<TerritoryId, string>;
   /** (CM-03) The newest head of each default branch the Steward saw: its own merge's commit, or a look's tip. */
   readonly heads: Map<TerritoryId, string>;
-  /** (613) Delivery merges since the latest patrol that tried a head. */
+  /** (613) Delivery merges and new tips found by looks, since the latest patrol that tried their head. */
   readonly merges: Map<TerritoryId, number>;
   /** (PS-09d) Every patrol of a territory runs in its lane; those outside the scheduled job start here. */
   readonly runs: PatrolRuns;
@@ -44,7 +44,7 @@ export function recoverPatrol(book: PatrolBook, events: readonly Event[]): void 
   }
 }
 
-/** Keep the live book identical to replaying delivery.merged or delivery.guest_merged. */
+/** Count a delivery merge or a new base tip a look discovered. */
 export function recordPatrolMerge(book: PatrolBook, territory: TerritoryId, head: string): void {
   book.heads.set(territory, head);
   book.merges.set(territory, (book.merges.get(territory) ?? 0) + 1);
