@@ -541,6 +541,7 @@
       "additionalProperties": false,
       "properties": {
         "desktop": {
+          "description": "Desktop bell (P2-03): what waits on the owner (seal, infirmary, question, a whole pool out of mana) and the alarms also show as a system notification on Windows and macOS while `elvaria run` runs on a terminal; false: the terminal only.",
           "type": "boolean",
           "default": true
         },

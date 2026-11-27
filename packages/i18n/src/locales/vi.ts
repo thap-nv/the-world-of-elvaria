@@ -1,5 +1,6 @@
 // Vietnamese, the reference, by namespace: each key lives in the file of its longest namespace (AH-04).
 // A new namespace is a file in vi/ and en/ and one line here and in en.ts; `pnpm i18n:check` holds the rest.
+import bell from './vi/bell.json' with { type: 'json' };
 import character from './vi/character.json' with { type: 'json' };
 import cli from './vi/cli.json' with { type: 'json' };
 import cliAmend from './vi/cli-amend.json' with { type: 'json' };
@@ -47,6 +48,7 @@ import store from './vi/store.json' with { type: 'json' };
 import tribeLook from './vi/tribe-look.json' with { type: 'json' };
 
 export const VI = {
+  bell,
   character,
   cli,
   'cli.amend': cliAmend,
