@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "messages": {
+    "device.role.full": "Full",
+    "device.role.scoped": "Scoped",
+    "device.role.inquiry": "Inquiry",
+    "device.refusal.unknown_device": "This device is not known to the kingdom.",
+    "device.refusal.device_revoked": "This device has been revoked.",
+    "device.refusal.role_forbids": "This device's role may not send this command.",
+    "device.refusal.outside_territories": "The command reaches a territory this device was not given.",
+    "device.refusal.passkey_required": "This command from a phone needs a passkey signature."
+  }
+}

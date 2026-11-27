@@ -13,7 +13,7 @@ import {
 import { zonedTime } from './clock.ts';
 import { ok } from './result.ts';
 import type { Clock, Instant } from './clock.ts';
-import type { CampaignId, LessonId, QuestId, Ulid } from './ids.ts';
+import type { CampaignId, DeviceId, LessonId, QuestId, Ulid } from './ids.ts';
 import type { Result } from './result.ts';
 
 export interface RandomSource {
@@ -27,6 +27,8 @@ export interface IdSource {
   quest(): QuestId;
   campaign(): CampaignId;
   lesson(): LessonId;
+  /** A device paired with the Herald (ADR 0037): `elvaria herald pair` names it before the first code. */
+  device(): DeviceId;
 }
 
 const RADIX = BigInt(CROCKFORD_ALPHABET.length);
@@ -64,8 +66,11 @@ export function crockfordDigits(bytes: Uint8Array, length: number): string {
 }
 
 /** `<prefix>_<yyyymmdd>_<6 random base32>`, readable in logs and sorted by day (implementation-plan §2.1). */
-export const formatDatedId = (prefix: 'q' | 'c' | 'L' | 'm', localDate: string, random: Uint8Array): string =>
-  `${prefix}_${localDate}_${crockfordDigits(random, DATED_ID_RANDOM_CHARS)}`;
+export const formatDatedId = (
+  prefix: 'q' | 'c' | 'L' | 'm' | 'dev',
+  localDate: string,
+  random: Uint8Array,
+): string => `${prefix}_${localDate}_${crockfordDigits(random, DATED_ID_RANDOM_CHARS)}`;
 
 export interface IdSourceDeps {
   clock: Clock;
@@ -92,14 +97,15 @@ export function createIdSource({ clock, random, tz }: IdSourceDeps): Result<IdSo
     return formatUlid(last.time as Instant, last.random);
   };
 
-  const dated = (prefix: 'q' | 'c' | 'L'): string =>
+  const dated = (prefix: 'q' | 'c' | 'L' | 'dev'): string =>
     formatDatedId(prefix, localDate(clock.now()), random.bytes(DATED_RANDOM_BYTES));
 
   return ok({
     ulid,
-    // formatDatedId with these prefixes produces exactly the quest, campaign and lesson patterns.
+    // formatDatedId with these prefixes produces exactly the quest, campaign, lesson and device patterns.
     quest: () => dated('q') as QuestId,
     campaign: () => dated('c') as CampaignId,
     lesson: () => dated('L') as LessonId,
+    device: () => dated('dev') as DeviceId,
   });
 }

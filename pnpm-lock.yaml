@@ -71,6 +71,9 @@ importers:
       '@elvaria/eventlog':
         specifier: workspace:*
         version: link:../../packages/eventlog
+      '@elvaria/herald':
+        specifier: workspace:*
+        version: link:../../packages/herald
       '@elvaria/hooks':
         specifier: workspace:*
         version: link:../../packages/hooks

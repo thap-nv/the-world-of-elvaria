@@ -840,6 +840,90 @@
       "tokens": 60,
       "status": "kept",
       "reason": "RC-04: two object literals that end in optional fields spread when set (a trial step with its environment and carried_from, a ring with its check and note); nothing shared but the language's way to leave out an absent field, in two packages with no common home."
+    },
+    {
+      "a": "apps/cli/src/herald/device.ts",
+      "b": "apps/cli/src/territory/graph.ts",
+      "tokens": 120,
+      "status": "kept",
+      "reason": "P2-01b: the shape every CLI command shares, a CommandSpec literal (name, args, options with their help keys) and a run that opens the kingdom context and reads the entity its <id> names (command-table/command.ts). The commands write different files under different rules; folding them into one helper would change the territory, quest and list commands outside this task."
+    },
+    {
+      "a": "apps/cli/src/herald/device.ts",
+      "b": "apps/cli/src/territory/delivery.ts",
+      "tokens": 115,
+      "status": "kept",
+      "reason": "P2-01b: the shape every CLI command shares, a CommandSpec literal (name, args, options with their help keys) and a run that opens the kingdom context and reads the entity its <id> names (command-table/command.ts). The commands write different files under different rules; folding them into one helper would change the territory, quest and list commands outside this task."
+    },
+    {
+      "a": "apps/cli/src/herald/device.ts",
+      "b": "apps/cli/src/territory/patrol.ts",
+      "tokens": 112,
+      "status": "kept",
+      "reason": "P2-01b: the shape every CLI command shares, a CommandSpec literal (name, args, options with their help keys) and a run that opens the kingdom context and reads the entity its <id> names (command-table/command.ts). The commands write different files under different rules; folding them into one helper would change the territory, quest and list commands outside this task."
+    },
+    {
+      "a": "apps/cli/src/herald/device.ts",
+      "b": "apps/cli/src/territory/check-policy.ts",
+      "tokens": 110,
+      "status": "kept",
+      "reason": "P2-01b: the shape every CLI command shares, a CommandSpec literal (name, args, options with their help keys) and a run that opens the kingdom context and reads the entity its <id> names (command-table/command.ts). The commands write different files under different rules; folding them into one helper would change the territory, quest and list commands outside this task."
+    },
+    {
+      "a": "apps/cli/src/herald/device.ts",
+      "b": "apps/cli/src/territory/delegation.ts",
+      "tokens": 104,
+      "status": "kept",
+      "reason": "P2-01b: the shape every CLI command shares, a CommandSpec literal (name, args, options with their help keys) and a run that opens the kingdom context and reads the entity its <id> names (command-table/command.ts). The commands write different files under different rules; folding them into one helper would change the territory, quest and list commands outside this task."
+    },
+    {
+      "a": "apps/cli/src/herald/device.ts",
+      "b": "apps/cli/src/territory/add.ts",
+      "tokens": 103,
+      "status": "kept",
+      "reason": "P2-01b: the shape every CLI command shares, a CommandSpec literal (name, args, options with their help keys) and a run that opens the kingdom context and reads the entity its <id> names (command-table/command.ts). The commands write different files under different rules; folding them into one helper would change the territory, quest and list commands outside this task."
+    },
+    {
+      "a": "apps/cli/src/herald/pair.ts",
+      "b": "apps/cli/src/quest/add.ts",
+      "tokens": 68,
+      "status": "kept",
+      "reason": "P2-01b: the shape every CLI command shares, a CommandSpec literal (name, args, options with their help keys) and a run that opens the kingdom context and reads the entity its <id> names (command-table/command.ts). The commands write different files under different rules; folding them into one helper would change the territory, quest and list commands outside this task."
+    },
+    {
+      "a": "packages/domain/src/quest/transition-table.ts",
+      "b": "packages/herald/src/server/static.ts",
+      "tokens": 65,
+      "status": "kept",
+      "reason": "P2-01b: both are string-to-string lookup tables (content types by file extension; notes by transition row). The shared shape is a Record literal; there is no behavior to extract."
+    },
+    {
+      "a": "apps/cli/src/herald/list.ts",
+      "b": "apps/cli/src/territory/list.ts",
+      "tokens": 63,
+      "status": "kept",
+      "reason": "P2-01b: the shape every CLI command shares, a CommandSpec literal (name, args, options with their help keys) and a run that opens the kingdom context and reads the entity its <id> names (command-table/command.ts). The commands write different files under different rules; folding them into one helper would change the territory, quest and list commands outside this task."
+    },
+    {
+      "a": "apps/cli/src/herald/pair.ts",
+      "b": "apps/cli/src/quest/list.ts",
+      "tokens": 63,
+      "status": "kept",
+      "reason": "P2-01b: the shape every CLI command shares, a CommandSpec literal (name, args, options with their help keys) and a run that opens the kingdom context and reads the entity its <id> names (command-table/command.ts). The commands write different files under different rules; folding them into one helper would change the territory, quest and list commands outside this task."
+    },
+    {
+      "a": "apps/cli/src/herald/revoke.ts",
+      "b": "apps/cli/src/territory/check.ts",
+      "tokens": 60,
+      "status": "kept",
+      "reason": "P2-01b: the shape every CLI command shares, a CommandSpec literal (name, args, options with their help keys) and a run that opens the kingdom context and reads the entity its <id> names (command-table/command.ts). The commands write different files under different rules; folding them into one helper would change the territory, quest and list commands outside this task."
+    },
+    {
+      "a": "apps/cli/src/herald/revoke.ts",
+      "b": "apps/cli/src/territory/graph.ts",
+      "tokens": 60,
+      "status": "kept",
+      "reason": "P2-01b: the shape every CLI command shares, a CommandSpec literal (name, args, options with their help keys) and a run that opens the kingdom context and reads the entity its <id> names (command-table/command.ts). The commands write different files under different rules; folding them into one helper would change the territory, quest and list commands outside this task."
     }
   ]
 }
