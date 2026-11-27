@@ -53,6 +53,7 @@ describe('startingNow', () => {
       scripts: [],
       deliveries: [],
       guests: [],
+      trains: [],
     });
   });
 
@@ -63,6 +64,7 @@ describe('startingNow', () => {
       scripts: [],
       deliveries: [],
       guests: [],
+      trains: [],
     });
     // The lane is taken: the next short work waits.
     expect(startingNow(sourceOf(quests, [Q1, Q2, Q3]), [Q5], [Q4])).toEqual({
@@ -70,6 +72,7 @@ describe('startingNow', () => {
       scripts: [],
       deliveries: [],
       guests: [],
+      trains: [],
     });
     // A script is short work too.
     const scripts = [trial(Q1), trial(Q2), quest(Q4, { script: true })];
@@ -78,6 +81,7 @@ describe('startingNow', () => {
       scripts: [Q4],
       deliveries: [],
       guests: [],
+      trains: [],
     });
   });
 
@@ -88,12 +92,14 @@ describe('startingNow', () => {
       scripts: [],
       deliveries: [],
       guests: [],
+      trains: [],
     });
     expect(startingNow(sourceOf(quests, [Q3, Q4]), [Q5], [])).toEqual({
       checks: [],
       scripts: [],
       deliveries: [],
       guests: [],
+      trains: [],
     });
   });
 
@@ -104,6 +110,7 @@ describe('startingNow', () => {
       scripts: [],
       deliveries: [],
       guests: [],
+      trains: [],
     });
     const { background: _none, ...sandbox } = sourceOf(quests, []);
     expect(startingNow(sandbox, [Q1, Q2, Q3], [Q4], [Q5])).toEqual({
@@ -111,6 +118,7 @@ describe('startingNow', () => {
       scripts: [Q4],
       deliveries: [Q5],
       guests: [],
+      trains: [],
     });
   });
 
@@ -123,6 +131,7 @@ describe('startingNow', () => {
       scripts: [],
       deliveries: [],
       guests: [],
+      trains: [],
     });
     // Trials hold both slots: one delivery runs beside them, as short work does.
     expect(startingNow(sourceOf([...quests, trial(Q5)], [Q1, Q5]), [], [], [Q3, Q4])).toEqual({
@@ -130,6 +139,7 @@ describe('startingNow', () => {
       scripts: [],
       deliveries: [Q3],
       guests: [],
+      trains: [],
     });
     // A running delivery of a quest a trial judged is short work: no lane is left beside it.
     expect(startingNow(sourceOf(quests, [Q1, Q3]), [], [], [Q4])).toEqual({
@@ -137,6 +147,7 @@ describe('startingNow', () => {
       scripts: [],
       deliveries: [],
       guests: [],
+      trains: [],
     });
   });
 
@@ -147,6 +158,7 @@ describe('startingNow', () => {
       scripts: [],
       deliveries: [],
       guests: [],
+      trains: [],
     });
   });
 
@@ -160,6 +172,7 @@ describe('startingNow', () => {
       scripts: [],
       deliveries: [],
       guests: [],
+      trains: [],
     });
     // A trial holds the other slot: the patrol is the short work beside it, nothing more starts.
     expect(startingNow(patrolling([Q1], 1), [Q2], [])).toEqual({
@@ -167,6 +180,7 @@ describe('startingNow', () => {
       scripts: [],
       deliveries: [],
       guests: [],
+      trains: [],
     });
   });
 });

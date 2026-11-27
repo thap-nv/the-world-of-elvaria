@@ -15,7 +15,7 @@ import { questFinished } from '../quest/finished.ts';
 import { heldByBase } from '../patrol/base-red.ts';
 import { isHeld } from '../quest/hold.ts';
 import { startingNow } from './background-room.ts';
-import { forgeQueueOf } from './forge-due.ts';
+import { forgeQueueOf } from './train.ts';
 import { forgePolls } from './forge-polls.ts';
 import { baseLooks, forgeArchives } from './in-base.ts';
 import { reassignsOf } from './reassigns.ts';
@@ -27,7 +27,7 @@ import { wakesOf } from './wakes.ts';
 import { RANKS } from '../schema/common.ts';
 import type { Breaker, HeldSession } from '../breaker/breakers.ts';
 import type { BaseRed } from '../patrol/base-red.ts';
-import type { ForgeSize } from './forge-due.ts';
+import type { ForgeSize, ForgeSource } from './forge-due.ts';
 import type { ForgePoll, ForgeWait } from './forge-polls.ts';
 import type { BaseLook, BaseLookDone } from './in-base.ts';
 import type { JudgeWait } from './judge-waits.ts';
@@ -43,12 +43,12 @@ import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { SealPolicy } from '../delegation/seal.ts';
 import type { StartingNow } from './background-room.ts';
-import type { GuestEntry } from './guests.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
 export type { Claim, Unclaimable } from './tick-steps.ts';
 
-export interface KingdomSnapshot extends RosterSource, ReviewSource {
+export interface KingdomSnapshot
+  extends RosterSource, ReviewSource, Pick<ForgeSource, 'guests' | 'train_orders'> {
   /**
    * Tribes, and the rules of judging: dispatch.verifier_same_family, breakers.same_fail_suspend, max_turns; and
    * mana.reassign_after_hours (absent: never, as null).
@@ -88,8 +88,6 @@ export interface KingdomSnapshot extends RosterSource, ReviewSource {
   readonly base_red?: readonly BaseRed[];
   /** (PS-08b) The delegation of the seal: done quests without it the forge merges (mergeDue). Absent: none. */
   readonly seal_policy?: SealPolicy;
-  /** (CM-07) The guest entries of the merge queues that wait (guestsWaitingOf). Absent: none. */
-  readonly guests?: readonly GuestEntry[];
 }
 
 export interface TickPlan {
@@ -178,8 +176,9 @@ export interface TickPlan {
   readonly base_looks: readonly BaseLook[];
   /** (PS-08d) Done quests in the base branch: the Steward archives them and releases their plot. */
   readonly forge_archives: readonly QuestId[];
-  /** (CM-07) Guest entries whose try the Steward starts now, outside the tick, in their territory's lane (guestRunsOf). */
-  readonly guest_runs: readonly GuestEntry[];
+  /** (CM-07) Guest entries whose try starts now, in their lane (guestRunsOf); (CM-08) trains that leave (trainRunsOf). */
+  readonly guest_runs: StartingNow['guests'];
+  readonly train_runs: StartingNow['trains'];
 }
 
 const rankOrder = (quest: Quest): number => RANKS.indexOf(quest.rank);
@@ -219,6 +218,7 @@ const deliveriesOf = (
   deliveries: done.filter(({ deliverable }) => deliverable.delivered_at === undefined).map(({ id }) => id),
   forge_deliveries: room.deliveries,
   guest_runs: room.guests,
+  train_runs: room.trains,
   forge_polls: forgePolls(snapshot, done, now),
   base_looks: baseLooks(snapshot, done, now),
   forge_archives: forgeArchives(snapshot, done),
@@ -273,7 +273,8 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   );
   const running = new Set(snapshot.background?.running);
   const scripts = open.filter(({ tier }) => tier === 'script').map(({ id }) => id);
-  const machine = startingNow(snapshot, judged.checks, scripts, ...forgeQueueOf(snapshot, inStatus('done')));
+  const queue = forgeQueueOf(snapshot, inStatus('done'), now);
+  const machine = startingNow(snapshot, judged.checks, scripts, ...queue);
   return {
     breakers: heldPastBreakers(snapshot, byId, now),
     suspensions: suspended,

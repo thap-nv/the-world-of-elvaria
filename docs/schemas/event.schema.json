@@ -3396,6 +3396,11 @@
                 "description": "The pull request number of a guest entry of the merge queue (CM-07), whose checks these are; the envelope names the territory and no quest. Absent: a quest's checks.",
                 "type": "integer",
                 "minimum": 1
+              },
+              "train": {
+                "description": "The delivery train of a `deferred` territory (CM-08) these lines belong to. Absent: a quest's own delivery or checks.",
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
               }
             }
           }
@@ -3434,6 +3439,11 @@
                 "description": "The pull request number of a guest entry of the merge queue (CM-07), whose checks these are; the envelope names the territory and no quest. Absent: a quest's checks.",
                 "type": "integer",
                 "minimum": 1
+              },
+              "train": {
+                "description": "The delivery train of a `deferred` territory (CM-08) these lines belong to. Absent: a quest's own delivery or checks.",
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
               },
               "tree": {
                 "description": "The tree of the commit checked (`git rev-parse <commit>^{tree}`): a forge's merge commit and the queue's trial merge of the same content share it (ADR 0035). Absent: the plot had uncommitted changes, the territory has no git, or the line is older than RC-03; its checks are then no fact the check ledger keeps.",
@@ -4566,6 +4576,11 @@
               "branch_deleted": {
                 "description": "The Steward deleted quest/<id> on the remote.",
                 "type": "boolean"
+              },
+              "train": {
+                "description": "The delivery train of a `deferred` territory (CM-08) these lines belong to. Absent: a quest's own delivery or checks.",
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
               }
             }
           }
@@ -4614,7 +4629,8 @@
                   "open",
                   "checks",
                   "merge",
-                  "cleanup"
+                  "cleanup",
+                  "train"
                 ]
               },
               "reason": {
@@ -4631,6 +4647,11 @@
                   "generate_failed",
                   "update_failed"
                 ]
+              },
+              "train": {
+                "description": "The delivery train of a `deferred` territory (CM-08) these lines belong to. Absent: a quest's own delivery or checks.",
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
               },
               "branch": {
                 "description": "The quest branch, quest/<id>.",
@@ -4908,6 +4929,173 @@
               },
               "detail": {
                 "description": "The forge's or git's message; redacted.",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "train.ran"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "A delivery train of a `deferred` territory ran its course (CM-08): every check of the territory ran once on its head. Green: one pull request merged them all, each quest with its `delivery.merged` and `train`. Red or stopped: nothing merged, no train branch left.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "territory",
+              "train",
+              "departure",
+              "base",
+              "outcome"
+            ],
+            "properties": {
+              "territory": {
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                "not": {
+                  "enum": [
+                    "global"
+                  ]
+                }
+              },
+              "train": {
+                "description": "The delivery train (CM-08): a ULID, the last part of its branch train/<territory>/<id>.",
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "departure": {
+                "enum": [
+                  "owner",
+                  "full",
+                  "waited",
+                  "scope",
+                  "idle"
+                ]
+              },
+              "base": {
+                "description": "The base branch's head the train was cut from.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "head": {
+                "description": "The train's last commit, the one its checks ran on. Absent: no quest boarded it cleanly.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "tree": {
+                "description": "The tree of `head`, the fact the train's checks are about.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "steps": {
+                "description": "The train's quests in the order merged, each with its merge commit.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "quest",
+                    "commit"
+                  ],
+                  "properties": {
+                    "quest": {
+                      "type": "string",
+                      "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                    },
+                    "commit": {
+                      "description": "The train's merge commit of the quest's branch.",
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+                    }
+                  }
+                },
+                "default": []
+              },
+              "left": {
+                "description": "The quests that left the train while it was built (to a merge quest, PS-09b).",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "quest",
+                    "reason"
+                  ],
+                  "properties": {
+                    "quest": {
+                      "type": "string",
+                      "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                    },
+                    "reason": {
+                      "enum": [
+                        "conflict"
+                      ]
+                    }
+                  }
+                }
+              },
+              "checks": {
+                "description": "With outcome red: the red checks, or `setup`.",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id"
+                  ],
+                  "properties": {
+                    "id": {
+                      "description": "The red check, or `setup` for commands.setup.",
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "timed_out": {
+                      "const": true
+                    },
+                    "line": {
+                      "description": "The line of its log that says why, masked.",
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              },
+              "outcome": {
+                "enum": [
+                  "green",
+                  "red",
+                  "stopped"
+                ]
+              },
+              "pr": {
+                "description": "With outcome green: the train's pull request.",
+                "type": "integer",
+                "minimum": 1
+              },
+              "merge_sha": {
+                "description": "With outcome green: the commit the merge left on the base branch.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "patrolled": {
+                "description": "With outcome green: the merge commit's tree is the tree the train checked, so no patrol `merged` follows the merge ((613)(4) of implementation-plan §11). Absent: the base branch moved while the train ran, and the patrol after a merge follows as for any merge.",
+                "const": true
+              },
+              "detail": {
+                "description": "With outcome stopped: git's, a generator's or the forge's message; redacted.",
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 2000
@@ -6412,6 +6600,7 @@
         "delivery.enqueued",
         "delivery.guest_merged",
         "delivery.guest_refused",
+        "train.ran",
         "quest.escaped",
         "delegation.suspended",
         "delegation.resumed",

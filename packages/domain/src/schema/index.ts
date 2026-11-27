@@ -17,6 +17,7 @@ export * from './event/check-tree.ts';
 export * from './event/delegation-data.ts';
 export * from './event/delivery-data.ts';
 export * from './event/guest-data.ts';
+export * from './event/train-data.ts';
 export * from './event/patrol-data.ts';
 export { CHECK_CAUSES, CheckAttributedDataSchema, PROBE_SOURCES } from './event/check-data.ts';
 export type { CheckAttributedData, CheckCause, ProbeSource } from './event/check-data.ts';

@@ -8,6 +8,7 @@
     "cli.forge.stage.checks": "check của PR",
     "cli.forge.stage.merge": "merge",
     "cli.forge.stage.cleanup": "xóa nhánh",
+    "cli.forge.stage.train": "tàu giao hàng",
     "cli.forge.reason.secret": "một dòng mà nhánh hay một commit của nhánh thêm vào có secret (một giá trị của kho bảo vật hay một dạng khóa); push đẩy mọi commit, nên một commit xóa nó sau đó là chưa đủ: gỡ nó khỏi lịch sử của nhánh (ví dụ git reset --soft về nhánh gốc rồi commit lại), đổi secret nếu nó có thể đã lộ, rồi giao lại.",
     "cli.forge.reason.push_refused": "git hay hook pre-push của lãnh thổ từ chối push; xem log push (.runs/<nhiệm vụ>-delivery/push.log), sửa rồi giao lại.",
     "cli.forge.reason.no_credential": "git không có credential cho forge; đăng nhập (git credential, Git Credential Manager) rồi giao lại.",

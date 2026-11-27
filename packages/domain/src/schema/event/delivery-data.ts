@@ -9,15 +9,26 @@ import { DELIVERY_DETAIL_MAX_LENGTH } from '../constants.ts';
 import { QuestIdSchema, TerritoryIdSchema } from '../../core/ids.ts';
 import { NonEmptyStringSchema } from '../common.ts';
 import { DELIVERY_FORGES, MERGE_METHODS } from '../territory-delivery.ts';
+import { TrainMarkSchema } from './train-data.ts';
 import { CommitShaSchema } from './upgrade-data.ts';
 
 const describe = (description: string) => ({ description });
 
 /**
  * Where a delivery stopped: the merge queue's update of the branch (PS-09: the base branch merged in, the generators,
- * every check), the secret scan, the push, finding or opening the PR, its checks, the merge, the branch's removal.
+ * every check), the secret scan, the push, finding or opening the PR, its checks, the merge, the branch's removal;
+ * (CM-08) or the delivery train of a `deferred` territory, which merges its quests by one pull request.
  */
-export const DELIVERY_STAGES = ['update', 'scan', 'push', 'open', 'checks', 'merge', 'cleanup'] as const;
+export const DELIVERY_STAGES = [
+  'update',
+  'scan',
+  'push',
+  'open',
+  'checks',
+  'merge',
+  'cleanup',
+  'train',
+] as const;
 export type DeliveryStage = (typeof DELIVERY_STAGES)[number];
 
 /**
@@ -97,6 +108,7 @@ export const DeliveryMergedDataSchema = z
     method: z.enum(MERGE_METHODS),
     sealed: z.boolean().meta(describe('The quest had the royal seal; false only under delegation (PS-08b).')),
     branch_deleted: z.boolean().meta(describe('The Steward deleted quest/<id> on the remote.')),
+    train: TrainMarkSchema,
   })
   .meta(describe("Under `pr_merge`, the Steward merged the quest's pull request into the base branch."));
 
@@ -106,6 +118,7 @@ export const DeliveryFailedDataSchema = z
     territory: TerritoryIdSchema,
     stage: z.enum(DELIVERY_STAGES),
     reason: z.enum(DELIVERY_FAILURES),
+    train: TrainMarkSchema,
     branch: BranchSchema.optional(),
     head: HeadSchema.optional().meta(
       describe('Present: the branch was pushed at this tip before the delivery stopped.'),

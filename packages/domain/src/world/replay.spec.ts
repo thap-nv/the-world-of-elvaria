@@ -128,6 +128,7 @@ describe('replaying a fake day', () => {
       'delivery.enqueued',
       'delivery.guest_merged',
       'delivery.guest_refused',
+      'train.ran',
       'quest.escaped',
       'delegation.suspended',
       'delegation.resumed',

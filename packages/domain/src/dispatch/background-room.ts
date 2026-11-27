@@ -10,9 +10,10 @@
 // branch and the push runs its pre-push hook. It is never a trial, so it may run beside trials as short work does; a
 // question to the forge about a pull request takes none (it runs for seconds), though it sits in `running` while it
 // does. (CM-03) A patrol outside the tick holds a slot too (BackgroundWork.patrols), never a trial; (CM-07) so does a
-// guest entry of the merge queue, after the deliveries.
+// guest entry of the merge queue, after the deliveries; (CM-08) and a delivery train, after the guests.
 import { judgedInScratch } from '../verify/ritual-of.ts';
 import type { GuestEntry } from './guests.ts';
+import type { TrainRun } from './train.ts';
 import type { BackgroundWork } from './reviews.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
@@ -33,6 +34,7 @@ export interface StartingNow {
   readonly scripts: QuestId[];
   readonly deliveries: QuestId[];
   readonly guests: GuestEntry[];
+  readonly trains: TrainRun[];
 }
 
 /**
@@ -53,7 +55,7 @@ function isTrial(quest: Quest | undefined, registry: RoomSource['registry']): bo
 }
 
 /**
- * The checks (acceptance parts first, then in the order given), scripts, deliveries and guests that start now. Each takes a
+ * The checks (acceptance parts first, then in the order given), scripts, deliveries, guests and trains that start now. Each takes a
  * free slot of dispatch.max_background; when none is free and only trials run, one piece of work that is no trial
  * runs beside them. What finds no room waits for a later tick's plan.
  */
@@ -63,14 +65,23 @@ export function startingNow(
   scripts: readonly QuestId[],
   deliveries: readonly QuestId[] = [],
   guests: readonly GuestEntry[] = [],
+  trains: readonly TrainRun[] = [],
 ): StartingNow {
   const { background } = source;
   if (background === undefined)
-    return { checks: [...checks], scripts: [...scripts], deliveries: [...deliveries], guests: [...guests] };
+    return {
+      checks: [...checks],
+      scripts: [...scripts],
+      deliveries: [...deliveries],
+      guests: [...guests],
+      trains: [...trains],
+    };
   const byId = new Map(source.quests.map((quest) => [quest.id, quest]));
   const trial = (id: QuestId): boolean => isTrial(byId.get(id), source.registry);
-  // (CM-03) A patrol outside the tick holds a slot and is short work: no lane is left beside it either; (CM-07) a guest too.
-  const patrols = (background.patrols ?? 0) + (background.guests?.length ?? 0);
+  // (CM-03) A patrol outside the tick holds a slot and is short work: no lane is left beside it either; (CM-07) a guest
+  // and (CM-08) a train too.
+  const patrols =
+    (background.patrols ?? 0) + (background.guests?.length ?? 0) + (background.trains?.length ?? 0);
   let room = source.kingdom.dispatch.max_background - background.running.length - patrols;
   let short = background.running.filter((id) => !trial(id)).length + patrols;
   const takes = (isTrial: boolean): boolean => {
@@ -91,5 +102,6 @@ export function startingNow(
     scripts: ran,
     deliveries: delivering,
     guests: guests.filter(() => takes(false)),
+    trains: trains.filter(() => takes(false)),
   };
 }

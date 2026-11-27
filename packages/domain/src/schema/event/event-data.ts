@@ -24,11 +24,7 @@ import {
   DeliveryMergedDataSchema,
   DeliveryPushedDataSchema,
 } from './delivery-data.ts';
-import {
-  DeliveryEnqueuedDataSchema,
-  DeliveryGuestMergedDataSchema,
-  DeliveryGuestRefusedDataSchema,
-} from './guest-data.ts';
+import { MERGE_QUEUE_EVENT_DATA } from './train-data.ts';
 import {
   MemoClosedDataSchema,
   MemoDeliveredDataSchema,
@@ -240,9 +236,7 @@ export const EVENT_DATA_SCHEMAS = {
   'delivery.pushed': DeliveryPushedDataSchema,
   'delivery.merged': DeliveryMergedDataSchema,
   'delivery.failed': DeliveryFailedDataSchema,
-  'delivery.enqueued': DeliveryEnqueuedDataSchema,
-  'delivery.guest_merged': DeliveryGuestMergedDataSchema,
-  'delivery.guest_refused': DeliveryGuestRefusedDataSchema,
+  ...MERGE_QUEUE_EVENT_DATA,
   'quest.escaped': QuestEscapedDataSchema,
   'delegation.suspended': DelegationSuspendedDataSchema,
   'delegation.resumed': DelegationResumedDataSchema,
