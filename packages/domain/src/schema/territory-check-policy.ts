@@ -40,7 +40,7 @@ export const TerritoryCheckPolicySchema = z
       .default(CHECK_POLICY_DEFAULTS.mode)
       .meta(
         describe(
-          "`full`: a quest's checks are those whose `when` meets what it touched, each running `run`, and the merge queue runs every check again after merging the base branch in. `narrow`: the same checks, each running its `narrow` command where it has one, with the diff's base commit in ELVARIA_CHECK_BASE, and the queue does the same on the diff since the new base; the base branch's patrol is the full run. `deferred`: as `narrow`, the checks marked `defer_to_merge` then left to a delivery train of sealed quests (CM-08; until then the queue runs every check). A quest that touches a path of `full_when` or a path no check watches, a merge quest and a quest judged in a scratch plot are checked as in `full`, in every mode.",
+          "`full`: a quest's checks are those whose `when` meets what it touched, each running `run`, and the merge queue runs every check again after merging the base branch in. `narrow`: the same checks, each running its `narrow` command where it has one, with the diff's base commit in ELVARIA_CHECK_BASE, and the queue does the same on the diff since the new base; the base branch's patrol is the full run. `deferred`: as `narrow`, the checks marked `defer_to_merge` left out, and the sealed quests merged by a delivery train (CM-08) that runs every check once on their merged tree and merges them by one pull request; its judge holds no `commands.test`. A quest that touches a path of `full_when` or a path no check watches, a merge quest and a quest judged in a scratch plot are checked as in `full`, in every mode.",
         ),
       ),
     full_when: z

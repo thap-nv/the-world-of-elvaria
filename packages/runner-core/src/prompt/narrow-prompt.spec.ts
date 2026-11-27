@@ -70,3 +70,19 @@ describe('the verifier prompt of a narrow run', () => {
     expect(system).not.toContain('narrowly:');
   });
 });
+
+// CM-08 (ADR 0032 amending ADR 0008): the judge of a deferred territory's narrow run reads that the suite runs on the
+// delivery train after its verdict, and its shell lists no test suite.
+describe('the verifier prompt of a narrow run in a deferred territory', () => {
+  it('says the test suite runs on the train, after the verdict, and lists only the run and lint, typecheck', () => {
+    const train = { max_quests: 5, max_wait_minutes: 30 };
+    const territory = { ...TERRITORY, check_policy: { mode: 'deferred' as const, full_when: [], train } };
+    const { system } = buildPrompt({ ...narrow, territory }, templates);
+    expect(system).toContain('they run after your verdict, on the delivery train');
+    expect(system).toContain('Your shell holds neither the test suite nor a check over the whole tree');
+    expect(system).not.toContain("the base branch's own full run vouches for the rest of the tree");
+    expect(system).toContain('- `pnpm test:changed`');
+    expect(system).toContain('- `pnpm typecheck`');
+    expect(system).not.toMatch(/^- `pnpm test`$/mu);
+  });
+});

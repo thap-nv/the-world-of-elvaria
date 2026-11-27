@@ -3,7 +3,7 @@
 // one; the user part carries the quest, the gazetteer, the lessons and what the role must read.
 import { BREAKER_DEFAULTS, FAIL_KINDS, judgedInScratch, ritualOf } from '@elvaria/domain';
 
-import { toolPolicyOf } from '../policy/tool-policy.ts';
+import { judgesDeferredRun, toolPolicyOf } from '../policy/tool-policy.ts';
 import {
   LANGUAGE_NAMES,
   classBlock,
@@ -240,7 +240,8 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
   if (ritual === undefined) throw new Error(`registry has no ritual for kind "${quest.kind}"`);
   const scratch = judgedInScratch(quest, registry);
   const plotRule = sectionsOf(t['plot-rules']).get(scratch ? 'scratch_plot' : 'plot');
-  const rerunRule = sectionsOf(t['rerun-rules']).get(input.narrow_checks === undefined ? 'full' : 'narrow');
+  const narrowRule = judgesDeferredRun(input.territory, input.narrow_checks) ? 'deferred' : 'narrow';
+  const rerunRule = sectionsOf(t['rerun-rules']).get(input.narrow_checks === undefined ? 'full' : narrowRule);
   if (plotRule === undefined || rerunRule === undefined)
     throw new Error('prompts/plot-rules.md or rerun-rules.md lacks a section');
   const policy = toolPolicyOf({

@@ -41,4 +41,19 @@ describe('the shell of a judge of a narrow run', () => {
       expect(policy.allow).not.toContain('Bash(pnpm test:changed:*)');
     }
   });
+
+  // CM-08 (ADR 0032 amending ADR 0008): the train runs the test suite after the verdict, so the judge of a deferred
+  // territory's narrow run has no commands.test; its lint and typecheck stay, and a full run's judge there keeps it.
+  it('loses the test suite in a deferred territory, and keeps it for a run in full there', () => {
+    const train = { max_quests: 5, max_wait_minutes: 30 };
+    const deferred = { ...territory, check_policy: { mode: 'deferred' as const, full_when: [], train } };
+    const allowOf = (narrow?: (typeof territory.checks)[number][]) =>
+      toolPolicyOf({ role: 'verifier', characterClass: judge, territory: deferred, narrow_checks: narrow })
+        .allow;
+    expect(allowOf([narrowUnit])).toEqual(
+      expect.arrayContaining(['Bash(pnpm test:changed:*)', 'Bash(pnpm lint:*)', 'Bash(pnpm typecheck:*)']),
+    );
+    expect(allowOf([narrowUnit])).not.toContain('Bash(pnpm test:*)');
+    expect(allowOf()).toContain('Bash(pnpm test:*)');
+  });
 });

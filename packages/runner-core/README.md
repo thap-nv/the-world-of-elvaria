@@ -311,7 +311,9 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   train. With `ChecksRequest.mode` `narrow` each check runs its `narrow` command where it has one (`checkLinesOf`);
   every command of a narrow run gets `ChecksRequest.base` (the plot's `PlotRecord.base`, `PlotManager.checkBase`)
   as `ELVARIA_CHECK_BASE` in its env, never in argv; a run in full gets none, as before. `toolPolicyOf({ narrow_checks })` gives the judge of a narrow run
-  those checks' commands alone, and prompt law 3 reads `prompts/rerun-rules.md` `narrow`. An `exclusive` check holds
+  those checks' commands alone, and prompt law 3 reads `prompts/rerun-rules.md` `narrow`; (CM-08) in a `deferred`
+  territory (`judgesDeferredRun`) it holds no rule for `commands.test`, its class's included, and law 3 reads `deferred`:
+  the delivery train runs the suite after the verdict. An `exclusive` check holds
   the territory's lock (`.state/checks/<territory>-exclusive`, `src/checks/exclusive-lock.ts`) so two quests never
   run one at once; a timed-out check runs its `cleanup`, under that lock too (P1-54). The checks that are not
   exclusive run first (P1-54), so a short one never waits out the lock. A check that cannot run (shell syntax, program
