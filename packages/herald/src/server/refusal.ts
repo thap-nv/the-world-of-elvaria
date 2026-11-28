@@ -16,6 +16,8 @@ export const REFUSAL_STATUS = {
   bad_request: 400,
   not_found: 404,
   body_too_large: 413,
+  // A stream (P2-01c): past the streams per device or in all.
+  too_many_streams: 429,
   failed: 500,
 } as const;
 

@@ -8,7 +8,7 @@ import { contentTypeOf, staticPath } from './static.ts';
 
 const DIR = path.join('build dir', 'lite');
 
-describe('staticPath', () => {
+describe('staticPath (measure 5)', () => {
   it('maps a plain path under the folder, and / to index.html', () => {
     expect(staticPath(DIR, '/')).toBe(path.join(DIR, 'index.html'));
     expect(staticPath(DIR, '/assets/index-Ab_1.js')).toBe(path.join(DIR, 'assets', 'index-Ab_1.js'));

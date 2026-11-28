@@ -1,7 +1,7 @@
 # @elvaria/testkit
 
 Test tools that every package needs and that must not be copied again (architecture-health V7, K6; rule R7):
-throwaway folders and git repos. Dev-only: a workspace lists it in `devDependencies` and imports it only from
+throwaway folders, git repos and fake secrets. Dev-only: a workspace lists it in `devDependencies` and imports it only from
 `*.spec.ts`, `__fixtures__/` and config files (`DEV_ONLY` in `packages/config/boundaries.mjs`, ADR 0001).
 
 ## Does
@@ -15,6 +15,9 @@ throwaway folders and git repos. Dev-only: a workspace lists it in `devDependenc
   the sha.
 - `git(cwd, ...args)`: git without a shell and without the caller's `GIT_*` variables (`envWithoutGit`), so a spec
   running inside husky's pre-push never writes into the repo being pushed.
+- `SECRET_SAMPLES`, `KNOWN_SECRET`: one fake secret per pattern of `@elvaria/eventlog`'s `redact-patterns.json`, plus
+  a treasury value with no shape, each inside the line it would show up in. Built from pieces at run time, so no
+  scanner flags the repo. The event log checks its redactor with them, the Herald that none reaches a client.
 
 ## Does not
 

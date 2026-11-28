@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
+import { heldIo, send, worldStream } from '../__fixtures__/herald.ts';
 
 const DATE = '2026-11-06';
 const dayFile = (kingdom: string, date = DATE) => path.join(kingdom, 'events', 'sandbox', `${date}.jsonl`);
@@ -179,9 +180,47 @@ describe('elvaria sandbox replay', () => {
     for (const speed of ['0', '-2', 'fast']) {
       expect(await run(testIo(), 'sandbox', 'replay', file, '--speed', speed)).toBe(2);
     }
-    const herald = testIo();
-    expect(await run(herald, 'sandbox', 'replay', file, '--to', 'herald')).toBe(2);
-    expect(printed(herald)).toContain('--to chỉ nhận một trong: terminal.');
+    const world = testIo();
+    expect(await run(world, 'sandbox', 'replay', file, '--to', 'world', '--port', '70000')).toBe(2);
+    expect(printed(world)).toContain('--to chỉ nhận một trong: terminal, herald.');
+    expect(printed(world)).toContain('70000');
+  });
+
+  it('plays the day through a Herald over a throwaway kingdom to the browser it pairs (P2-01c)', async () => {
+    const held = heldIo();
+    const exit = run(
+      held.io,
+      'sandbox',
+      'replay',
+      file,
+      '--to',
+      'herald',
+      '--speed',
+      '1000',
+      '--locale',
+      'en',
+    );
+    await Promise.race([held.listening, exit]);
+    const link = /http:\/\/127\.0\.0\.1:\d+\/pair\?code=[\w-]+/.exec(printed(held.io))?.[0] ?? '';
+    const { origin, searchParams } = new URL(link);
+    const posted = await send(origin, '/pair', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Origin: origin },
+      body: `code=${searchParams.get('code') ?? ''}`,
+    });
+    const cookie = (posted.headers['set-cookie']?.[0] ?? '').split(';')[0] ?? '';
+    const stream = worldStream(origin, cookie);
+    expect((await stream.first('snapshot')).state).toMatchObject({ sandbox: true, quests: {} });
+    const day = (await lines()).map((line) => (JSON.parse(line) as { id: string }).id);
+    const seen = await stream.lines(day.length);
+    expect(seen).toEqual(day);
+
+    held.stop();
+    expect(await exit).toBe(0);
+    expect(await stream.closed).toBe(1001);
+    const out = printed(held.io);
+    expect(out).toContain(`── end of the fake day: ${day.length} lines;`);
+    expect(out).toContain('The Herald has stopped.');
   });
 
   it('fails when the kingdom it was told to use is not one', async () => {

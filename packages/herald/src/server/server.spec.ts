@@ -17,6 +17,8 @@ import {
   format,
   fullDevice,
   harness,
+  idsOf,
+  KINGDOM,
   movableClock,
   PAGES,
   postCode,
@@ -44,7 +46,7 @@ describe('startHerald', () => {
     return cookieOf(answer);
   }
 
-  it('listens on loopback and refuses a request without a session cookie with 401', async () => {
+  it('listens on loopback and refuses a request without a session cookie with 401 (measure 1)', async () => {
     h = await harness();
     expect(h.herald.origin).toBe(`http://127.0.0.1:${h.herald.port}`);
     const answer = await ask(h.herald.port);
@@ -53,7 +55,7 @@ describe('startHerald', () => {
     expect(h.logged).toEqual([{ kind: 'refused', refusal: 'no_session', method: 'GET' }]);
   });
 
-  it('refuses a foreign Origin with 403, even with a valid cookie and on /pair', async () => {
+  it('refuses a foreign Origin with 403, even with a valid cookie and on /pair (measure 1)', async () => {
     h = await harness();
     const cookie = await paired();
     const evil = { origin: 'https://evil.example', cookie };
@@ -65,7 +67,7 @@ describe('startHerald', () => {
     );
   });
 
-  it('refuses a foreign Host with 403, the way a DNS-rebound name arrives', async () => {
+  it('refuses a foreign Host with 403, the way a DNS-rebound name arrives (measure 1)', async () => {
     h = await harness();
     const cookie = await paired();
     const answer = await ask(h.herald.port, { headers: { host: `evil.example:${h.herald.port}`, cookie } });
@@ -76,7 +78,7 @@ describe('startHerald', () => {
     ).toBe(200);
   });
 
-  it('sends the four security headers on every answer and no CORS header, preflight included', async () => {
+  it('sends the four security headers on every answer and no CORS header, preflight included (measure 5)', async () => {
     h = await harness();
     const cookie = await paired();
     const answers = [
@@ -96,7 +98,7 @@ describe('startHerald', () => {
     expect(answers.map((answer) => answer.status)).toEqual([200, 401, 200, 403, 404]);
   });
 
-  it('serves the static folder to a session, never a path out of it', async () => {
+  it('serves the static folder to a session, never a path out of it (measure 5)', async () => {
     const build = await tempDir('herald build');
     const dir = path.join(build.root, 'build');
     await mkdir(path.join(dir, 'assets'), { recursive: true });
@@ -134,14 +136,14 @@ describe('startHerald', () => {
     expect(home.body).toContain('This is Phone &lt;one&gt; (full).');
   });
 
-  it('refuses a body over the ceiling with 413', async () => {
+  it('refuses a body over the ceiling with 413 (measure 4)', async () => {
     h = await harness();
     const answer = await postCode(h.herald.port, 'x'.repeat(BODY_BYTES_MAX));
     expect(answer.status).toBe(413);
     expect(answer.headers.connection).toBe('close');
   });
 
-  it('closes sockets past the connection ceiling', async () => {
+  it('closes sockets past the connection ceiling (measure 4)', async () => {
     h = await harness();
     const open = (): Promise<Socket> =>
       new Promise((resolve) => {
@@ -171,6 +173,8 @@ describe('startHerald on a port in use', () => {
     const port = (taken.address() as { port: number }).port;
     const started = await startHerald({
       store: openKingdom('unused kingdom'),
+      kingdom: KINGDOM,
+      ids: idsOf(movableClock()),
       port,
       origins: [],
       clock: movableClock(),

@@ -84,9 +84,9 @@
     "cli.sandbox.replay.end": "── end of the fake day: {lines} lines ──",
     "cli.sandbox.replay.end_issues": "── end of the fake day: {lines} lines, {issues} unreadable ──",
     "cli.sandbox.replay.option.speed": "How many times faster than real time (default 20: ten hours in thirty minutes).",
-    "cli.sandbox.replay.option.to": "Where to play it: terminal (the herald streams it over the WebSocket from stage 2).",
+    "cli.sandbox.replay.option.to": "Where to play it: terminal (a timeline), or herald (a Herald over a throwaway kingdom streams it over the WebSocket to a paired browser).",
     "cli.sandbox.replay.start": "── {fake} · day {date} · {lines} lines · {from}–{to} · ×{speed} speed, {duration} ──",
-    "cli.sandbox.replay.summary": "Replay a fake day as a timeline in the terminal.",
+    "cli.sandbox.replay.summary": "Replay a fake day: a timeline in the terminal, or through a Herald over a throwaway kingdom (--to herald). 0 mana.",
     "cli.sandbox.replay_hint": "Replay it: elvaria sandbox replay \"{file}\" --speed 20",
     "cli.sandbox.tool.bash": "runs",
     "cli.sandbox.tool.other": "uses a tool on",
@@ -103,6 +103,11 @@
     "cli.sandbox.who.steward": "The Steward",
     "cli.sandbox.window.five_hour": "five-hour window",
     "cli.sandbox.window.weekly": "weekly window",
-    "cli.sandbox.written": "Written to {file}"
+    "cli.sandbox.written": "Written to {file}",
+    "cli.sandbox.herald.kingdom": "Sandbox kingdom",
+    "cli.sandbox.herald.device": "Fake day viewer",
+    "cli.sandbox.herald.pair": "Open the link below in a browser to watch the fake day (the code works once, for 5 minutes); the day starts when the browser opens its world stream:",
+    "cli.sandbox.herald.played": "── end of the fake day: {lines} lines; the Herald keeps running, Ctrl+C stops it and removes the throwaway kingdom ──",
+    "cli.sandbox.replay.option.port": "With --to herald: the Herald’s port on 127.0.0.1 (default 0: a free one)."
   }
 }

@@ -138,6 +138,10 @@ show` prints the brief apart from the rest of the description and, while the pla
 - `sandbox generate` writes a fake day of `@elvaria/sandbox` to `events/sandbox/<date>.jsonl` (nothing else of the
   kingdom changes); `sandbox replay <file> --speed 20` plays it back as a timeline, one sentence per line in the
   owner's language (`src/sandbox/timeline.ts`), paced by `CliIo.sleep`. Closing the pipe (`| head`) ends it quietly.
+  `--to herald [--port <n>]` (P2-01c, `src/sandbox/replay-herald.ts`) plays the same schedule through a Herald over a
+  throwaway kingdom made with `init`'s defaults in the OS temp folder: it pairs one `full` device and prints its link,
+  appends the day's lines to that kingdom's sandbox log once the browser opens its stream (`sandbox: true`), and on
+  Ctrl+C stops the Herald and removes the folder.
 - `tribe add <id> --adapter <adapter>` (P1-19, implementation-plan §3.14, ADR 0021): a new tribe in
   `kingdom.tribes[]`, disabled, its adapter a built-in one or an owner file `adapters/<name>.mjs` that must be there;
   no character changes. `--sibling-of <root>` (PS-27b) writes `sibling_of`, the adapter the root's when `--adapter`
@@ -241,8 +245,8 @@ show` prints the brief apart from the rest of the description and, while the pla
   Refreshes every 5 seconds by default; the interval must be a positive integer in seconds.
   Non-TTY output prints once. Ctrl+C clears the timer and removes the signal listener; no raw terminal mode is used.
 - `digest` (PS-03, `src/digest/`): the digest as it stands, from the files, the open memos, the verdicts, the
-  registry and the event log (`attentionOf` of the domain, P2-04: the list the Steward's digest and the herald build
-  from them too), worded by `digestMarkdown` and printed; writes nothing and spends no mana. The quests waiting for
+  registry and the event log, read by the store's `readKingdomSource` like the Herald's (P2-01c) (`attentionOf` of
+  the domain, P2-04: the list the Steward's digest and the herald build from them too), worded by `digestMarkdown` and printed; writes nothing and spends no mana. The quests waiting for
   a judge and the tribes held by their CLI come from their `quest.judge_wait` and `tribe.held` lines, so they are
   listed without a running Steward; only a branch a running Steward found with nothing to push is its own (here such
   a quest counts as carried). A quest in review whose latest judge could not open a session (`judge_no_session`,
@@ -416,11 +420,15 @@ delivery`), with no event; `deferred` is refused unless the territory delivers b
   127.0.0.1 (port `kingdom.herald.port`, 0 picks a free one) with the kingdom's origins, the clock and randomness of
   the machine, its page texts in the owner's language (`src/herald/pages.ts`: `cli.herald.page.*`, a device's
   refusals from `device.refusal.*`) and its redacted log as lines, until Ctrl+C or a stop signal, then closes it; a
-  port in use prints the system's code (`EADDRINUSE`) and exits 1. `herald pair --role full|scoped|inquiry --label
+  port in use prints the system's code (`EADDRINUSE`) and exits 1. (P2-01c) It hands the Herald the kingdom and
+  `ctx.ids`, so the Herald streams the world at `/ws` and writes the commands of paired devices to `inbox/`; each
+  stream opened or closed and each command accepted or refused is a log line (`cli.herald.log.*`). `herald pair --role full|scoped|inquiry --label
 <name> [--territory <id>]…` writes a new `devices/<id>.json` (id `ids.device()`; full carries no territory,
   scoped and inquiry at least one, each attached) and a one-time code with `issuePairingCode` (only its hash lands in
   `.state/herald-pairing.json`), and prints the code once as `<origin>/pair?code=…` for loopback and each origin of
-  `kingdom.herald`. `herald devices` lists the devices with their role (`device.role.*`), territories, creation, last
+  `kingdom.herald`. `herald pair --device <id>` (P2-01c) pairs a device that exists again when its browser lost the
+  cookie: a new code for the same id, role and territories, no device file written, never for a revoked device and
+  with no `--role`, `--label` or `--territory` beside it. `herald devices` lists the devices with their role (`device.role.*`), territories, creation, last
   seen (`readSessions`: the latest `last_seen_at`) and revocation; `herald device <id>` prints one, or changes
   `--role`, `--territory` (replaces the list) or `--label`, refusing a revoked device; `herald revoke <id>|--all`
   sets `revoked_at` once. The three write the device files themselves (ADR 0005 exception, .claude/rules/cli.md).

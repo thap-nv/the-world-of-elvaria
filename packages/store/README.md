@@ -24,6 +24,9 @@
   `src/migrations/<contract>/v<n>-to-v<n+1>.ts`, fixtures `v<n>.json` beside them (no step yet: all 14 stored
   contracts are at v1, each with its `v1.json`), and `migrateKingdom` for
   `elvaria migrate` (rewrite every old file once, old text in `.backup/<stamp>/`).
+- Reads what the owner's attention queue and the world state are built from (`world/`, P2-01c, rule R7):
+  `readKingdomFiles` (every list without its bad files, the registry or none) and `readKingdomSource` (those files,
+  the whole log or the sandbox's, and the cursor to follow it from), for `elvaria digest` and the Herald alike.
 - Runs the inbox (ADR 0005): `inbox.write` drops `inbox/<ulid>.json`, `inbox.read` lists commands oldest first
   (unusable files too, so the Steward can reject them), `inbox.ack` moves one to `inbox/done/`.
 - Loads `registry/` (`loadRegistry`: migrate each file, then the domain's `parseRegistry`, then every
@@ -70,7 +73,8 @@
 ## Depends on
 
 - `@elvaria/domain` (schemas, ids, `Result`, `parseRegistry`).
-- `@elvaria/eventlog` (`journalOf`, `createRedactor`): one source for the journal's name and the patterns.
+- `@elvaria/eventlog` (`journalOf`, `createRedactor`, `openEventLog`): one source for the journal's name and the
+  patterns, and the log's reader for `readKingdomSource`.
 - `proper-lockfile` (file locks that survive a crashed holder, on Windows and macOS).
 - `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
 - `@elvaria/testkit` (dev only: throwaway folders for the specs; `remove.spec.ts` checks its `RM_TEMP` equals

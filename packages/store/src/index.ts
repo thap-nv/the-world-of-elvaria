@@ -22,3 +22,4 @@ export { acquireLock, isLocked, withLock } from './io/lock.ts';
 export type { HeldLock, LockOptions } from './io/lock.ts';
 export { pathExists, readTextFile, writeFileAtomic } from './io/atomic.ts';
 export { RM_RETRY } from './io/remove.ts';
+export * from './world/index.ts';

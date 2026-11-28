@@ -1,6 +1,5 @@
 // The Herald's ceilings, named (wave-1 plan P2-01b; threat model "Trước P2-01" 4). Each bounds what one request or one
-// stranger can cost: a guess at a pairing code, a body, an open socket. The WebSocket frame and the commands a minute
-// come with the stream (P2-01c).
+// stranger can cost: a guess at a pairing code, a body, an open socket, a frame, a burst of commands (P2-01c).
 
 /** A pairing code: 128 random bits (ADR 0031 item 2). */
 export const PAIRING_CODE_BYTES = 16;
@@ -23,3 +22,16 @@ export const BODY_BYTES_MAX = 4 * 1024;
 export const CONNECTIONS_MAX = 32;
 /** Time for a client to send its headers, and its whole request, before Node closes the socket. */
 export const REQUEST_TIMEOUT_MS = 10_000;
+/** The largest WebSocket frame a client may send, a command with its quest's text; a larger one closes the stream. */
+export const FRAME_BYTES_MAX = 64 * 1024;
+/** Streams one device holds open at once: a few tabs or windows of the same pairing. */
+export const STREAMS_PER_DEVICE_MAX = 4;
+/** Streams open at once, every device together; below CONNECTIONS_MAX, so plain requests still get through. */
+export const STREAMS_MAX = 16;
+/** What may wait unsent on one stream; a client that reads slower than the kingdom moves is dropped. */
+export const STREAM_BUFFER_BYTES_MAX = 8 * 1024 * 1024;
+/** Commands one device sends in COMMAND_WINDOW_MS, every stream of it together; the next is refused. */
+export const COMMANDS_PER_WINDOW_MAX = 30;
+export const COMMAND_WINDOW_MS = 60 * 1000;
+/** How long a closing stream waits for the client's close frame before its socket is dropped. */
+export const STREAM_CLOSE_GRACE_MS = 1000;

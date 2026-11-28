@@ -63,7 +63,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria triage` | Tể tướng phân loại các thư gửi tới mình đang chờ: một lần gọi model cho cả lô (tối đa 20 thư, cũ nhất trước). Trong phạm vi ủy quyền (kingdom.delegation), Nhiếp chính áp quyết định mà không cần bạn; thư còn lại tới bạn kèm lời khuyên, trong bản tấu. kingdom.schedule.triage chạy việc này mỗi ngày trước bản tấu. |
 | `elvaria run` | Chạy Nhiếp chính: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C). |
 | `elvaria herald` | Chạy Sứ giả: máy chủ của thế giới trên 127.0.0.1 (cổng kingdom.herald.port), chỉ trả lời trình duyệt đã ghép đôi (elvaria herald pair). Chạy tới khi Ctrl+C. 0 mana. |
-| `elvaria herald pair` | Ghép đôi một trình duyệt hay điện thoại: tạo thiết bị mới (devices/<id>.json) với vai và lãnh thổ được cấp, rồi in đường dẫn có mã dùng một lần, hạn 5 phút. Mở đường dẫn trên thiết bị đó khi elvaria herald đang chạy. 0 mana. |
+| `elvaria herald pair` | Ghép đôi một trình duyệt hay điện thoại: tạo thiết bị mới (devices/<id>.json) với vai và lãnh thổ được cấp, rồi in đường dẫn có mã dùng một lần, hạn 5 phút. Mở đường dẫn trên thiết bị đó khi elvaria herald đang chạy. --device <id> ghép lại một thiết bị đã có (trình duyệt mất cookie), giữ id, vai và lãnh thổ. 0 mana. |
 | `elvaria herald devices` | Các thiết bị đã ghép đôi: vai, lãnh thổ được cấp, ngày tạo, lần Sứ giả thấy cuối, ngày thu hồi. |
 | `elvaria herald device <id>` | Xem một thiết bị, hay đổi vai, lãnh thổ được cấp hoặc nhãn của nó. Sứ giả đọc lại file thiết bị ở mỗi request, Nhiếp chính ở mỗi lệnh: thay đổi có hiệu lực ngay. |
 | `elvaria herald revoke [<id>]` | Thu hồi một thiết bị, hay mọi thiết bị với --all: Sứ giả kết thúc phiên của nó ở request kế tiếp, Nhiếp chính từ chối lệnh của nó. File thiết bị còn lại để log vẫn nêu được tên. |
@@ -72,7 +72,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria watch` | Theo dõi nhiệm vụ chưa kết thúc và việc chờ bạn. Chỉ đọc; tự làm mới trong terminal. |
 | `elvaria metrics` | Sổ đo: lượt, làm lại theo nguyên nhân, đạt lượt đầu, lỗi lọt, lần cần chủ nhân. Chỉ đọc vương quốc, không tốn mana. |
 | `elvaria sandbox generate` | Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): không chạy phiên nào, không chạm nhiệm vụ thật. |
-| `elvaria sandbox replay <file>` | Phát lại một ngày giả thành dòng thời gian trên terminal. |
+| `elvaria sandbox replay <file>` | Phát lại một ngày giả: dòng thời gian trong terminal, hay qua một Sứ giả trên vương quốc tạm (--to herald). 0 mana. |
 | `elvaria migrate` | Chuyển mọi file cũ của vương quốc lên phiên bản hiện tại, có sao lưu, và thêm file, mục registry mà bản Elvaria này có và vương quốc còn thiếu. |
 | `elvaria upgrade` | Dựng một bản mới của Elvaria cạnh bản đang ghim, thử nó (migrate, doctor và bộ test hợp đồng với CLI giả trên một bản sao cấu hình của vương quốc, một nhiệm vụ bậc script trên vương quốc tạm), qua hết mới ghim rồi chạy migrate của nó trên vương quốc; --rollback về bản trước. 0 mana; không chạy khi Nhiếp chính đang chạy. |
 
@@ -581,13 +581,14 @@ Chạy Sứ giả: máy chủ của thế giới trên 127.0.0.1 (cổng kingdom
 
 ## `elvaria herald pair`
 
-Ghép đôi một trình duyệt hay điện thoại: tạo thiết bị mới (devices/<id>.json) với vai và lãnh thổ được cấp, rồi in đường dẫn có mã dùng một lần, hạn 5 phút. Mở đường dẫn trên thiết bị đó khi elvaria herald đang chạy. 0 mana.
+Ghép đôi một trình duyệt hay điện thoại: tạo thiết bị mới (devices/<id>.json) với vai và lãnh thổ được cấp, rồi in đường dẫn có mã dùng một lần, hạn 5 phút. Mở đường dẫn trên thiết bị đó khi elvaria herald đang chạy. --device <id> ghép lại một thiết bị đã có (trình duyệt mất cookie), giữ id, vai và lãnh thổ. 0 mana.
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
-| `--role <full\|scoped\|inquiry>` | Vai: full (mọi việc chủ nhân làm), scoped (việc của các lãnh thổ được cấp) hay inquiry (hỏi đáp trên các lãnh thổ được cấp). (bắt buộc) |
+| `--role <full\|scoped\|inquiry>` | Vai: full (mọi việc chủ nhân làm), scoped (việc của các lãnh thổ được cấp) hay inquiry (hỏi đáp trên các lãnh thổ được cấp). |
 | `--territory <id>` | Lãnh thổ được cấp, lặp lại được; scoped và inquiry cần ít nhất một, full không nhận. |
-| `--label <name>` | Tên của thiết bị, tới 64 ký tự (ví dụ «Điện thoại cá nhân»). (bắt buộc) |
+| `--label <name>` | Tên của thiết bị, tới 64 ký tự (ví dụ «Điện thoại cá nhân»). |
+| `--device <id>` | Ghép lại thiết bị đã có này thay vì tạo thiết bị mới; không đi cùng --role, --label, --territory. Không có nó thì --role và --label là bắt buộc. |
 
 ## `elvaria herald devices`
 
@@ -660,13 +661,14 @@ Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): khô
 
 ## `elvaria sandbox replay`
 
-Phát lại một ngày giả thành dòng thời gian trên terminal.
+Phát lại một ngày giả: dòng thời gian trong terminal, hay qua một Sứ giả trên vương quốc tạm (--to herald). 0 mana.
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `<file>` | File ngày giả, ví dụ <vương quốc>/events/sandbox/2026-11-06.jsonl. |
 | `--speed <n>` | Nhanh gấp bao nhiêu lần thời gian thật (mặc định 20: mười giờ trong ba mươi phút). |
-| `--to <terminal>` | Phát tới đâu: terminal (Sứ giả phát qua WebSocket từ giai đoạn 2). |
+| `--to <terminal\|herald>` | Phát ở đâu: terminal (dòng thời gian), hay herald (một Sứ giả trên vương quốc tạm phát qua WebSocket cho trình duyệt đã ghép đôi). |
+| `--port <port>` | Với --to herald: cổng của Sứ giả trên 127.0.0.1 (mặc định 0: một cổng trống). |
 
 ## `elvaria migrate`
 

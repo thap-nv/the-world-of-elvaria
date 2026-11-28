@@ -1,23 +1,32 @@
 // startHerald: one `node:http` server on 127.0.0.1 (ADR 0031 item 1; no option for another address), the ceilings of
-// limit/ on its sockets, and handle() for every request. A port already taken is an answer with the system's code
+// limit/ on its sockets, handle() for every request, and the streams of `/ws` (P2-01c) for every upgrade. A port already taken is an answer with the system's code
 // (EADDRINUSE), not a throw, so `elvaria herald` says so and exits non-zero on Windows and macOS alike.
 import { createServer } from 'node:http';
+import type { IncomingMessage } from 'node:http';
+import type { Duplex } from 'node:stream';
 import type { AddressInfo } from 'node:net';
 
 import { err, ok } from '@elvaria/domain';
-import type { Clock, Instant, RandomSource, Result } from '@elvaria/domain';
+import type { Clock, IdSource, Instant, Kingdom, RandomSource, Result } from '@elvaria/domain';
+import { TAIL_INTERVAL_MS } from '@elvaria/eventlog';
 import type { KingdomStore } from '@elvaria/store';
 
 import { CONNECTIONS_MAX, REQUEST_TIMEOUT_MS } from '../limit/limits.ts';
 import { LOOPBACK_HOST, allowedOrigins, loopbackOrigin } from '../origin/origin.ts';
+import { openStream } from '../stream/stream.ts';
+import { refuseUpgrade, upgradeGate } from '../stream/upgrade.ts';
+import type { Stream } from '../stream/stream.ts';
+import type { UpgradeContext } from '../stream/upgrade.ts';
 import { handle } from './handle.ts';
 import { heraldLog } from './log.ts';
 import { sendRefusal } from './respond.ts';
-import type { HeraldLogEntry } from './log.ts';
+import type { HeraldLog, HeraldLogEntry } from './log.ts';
 import type { HeraldPages } from './pages.ts';
 
 export interface HeraldOptions {
   readonly store: KingdomStore;
+  /** kingdom.json as the composition root read it: the world state's name, zone and tribes. */
+  readonly kingdom: Kingdom;
   /** `kingdom.herald.port`, or `--port` for one run; 0 picks a free port (tests). */
   readonly port: number;
   /** `kingdom.herald.origins`: the tunnel's, besides loopback. */
@@ -25,10 +34,16 @@ export interface HeraldOptions {
   readonly clock: Clock;
   readonly format: (at: Instant) => string;
   readonly random: RandomSource;
+  /** The ids of the commands the Herald writes to inbox/. */
+  readonly ids: Pick<IdSource, 'ulid'>;
   readonly pages: HeraldPages;
   /** Already redacted (log.ts). */
   readonly log: (entry: HeraldLogEntry) => void;
   readonly staticDir?: string;
+  /** Streams the sandbox's log of a fake day (`elvaria sandbox replay --to herald`); the state says `sandbox`. */
+  readonly sandbox?: boolean;
+  /** How often the log and the streams' device files are read again; TAIL_INTERVAL_MS by default. */
+  readonly intervalMs?: number;
 }
 
 export interface RunningHerald {
@@ -50,7 +65,38 @@ const codeOf = (error: unknown): string =>
     ? error.code
     : 'UNKNOWN';
 
+/** Every upgrade: the gate and the session (upgrade.ts), then a stream, or a refusal on the socket. */
+const upgradeListener =
+  (stream: Stream, ctx: UpgradeContext & { readonly log: HeraldLog }) =>
+  (req: IncomingMessage, socket: Duplex, head: Buffer): void => {
+    // A client that drops the socket while the session is read must not throw out of the server.
+    socket.on('error', () => socket.destroy());
+    upgradeGate(req, ctx)
+      .then((passed) => {
+        const refusal = passed.ok
+          ? stream.accept(
+              { req, socket, head },
+              { device: passed.value.device, source: passed.value.gate.source },
+            )
+          : passed;
+        if (refusal.ok) return;
+        ctx.log.write({ kind: 'refused', refusal: refusal.error, method: req.method ?? '' });
+        refuseUpgrade(socket, refusal.error);
+      })
+      .catch((error: unknown) => {
+        ctx.log.write({ kind: 'failed', message: error instanceof Error ? error.message : String(error) });
+        refuseUpgrade(socket, 'failed');
+      });
+  };
+
 export async function startHerald(options: HeraldOptions): Promise<Result<RunningHerald, HeraldStartError>> {
+  const log = heraldLog(options.log);
+  const stream = await openStream({
+    ...options,
+    log,
+    sandbox: options.sandbox ?? false,
+    intervalMs: options.intervalMs ?? TAIL_INTERVAL_MS,
+  });
   const server = createServer({ requestTimeout: REQUEST_TIMEOUT_MS, headersTimeout: REQUEST_TIMEOUT_MS });
   server.maxConnections = CONNECTIONS_MAX;
   const listened = await new Promise<Result<number, HeraldStartError>>((resolve) => {
@@ -61,9 +107,11 @@ export async function startHerald(options: HeraldOptions): Promise<Result<Runnin
       resolve(ok((server.address() as AddressInfo).port));
     });
   });
-  if (!listened.ok) return listened;
+  if (!listened.ok) {
+    await stream.close();
+    return listened;
+  }
   const port = listened.value;
-  const log = heraldLog(options.log);
   const ctx = {
     ...options,
     allowed: allowedOrigins(port, options.origins),
@@ -77,15 +125,18 @@ export async function startHerald(options: HeraldOptions): Promise<Result<Runnin
       else sendRefusal(res, options.pages, 'failed');
     });
   });
+  server.on('upgrade', upgradeListener(stream, ctx));
   return ok({
     port,
     origin: loopbackOrigin(port),
-    close: () =>
-      new Promise<void>((resolve) => {
+    close: async () => {
+      await stream.close();
+      await new Promise<void>((resolve) => {
         server.close(() => {
           resolve();
         });
         server.closeAllConnections();
-      }),
+      });
+    },
   });
 }

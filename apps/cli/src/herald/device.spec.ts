@@ -128,6 +128,45 @@ describe('elvaria herald pair, devices, device, revoke', () => {
     }
   });
 
+  it('pairs a device again with --device: a new code, the same file; never a revoked one (P2-01c)', async () => {
+    const refusals: [string[], number, string][] = [
+      [['--label', 'x'], 2, 'Missing required option --role.'],
+      [['--role', 'full'], 2, 'Missing required option --label.'],
+      [['--device', 'dev_20261106_aaaaaa', '--role', 'full'], 2, '--device pairs an existing device again'],
+      [
+        ['--device', 'dev_20261106_aaaaaa', '--territory', 'north'],
+        2,
+        'drop --role, --label and --territory',
+      ],
+      [['--device', 'dev_20261106_aaaaaa'], 1, 'No device «dev_20261106_aaaaaa»'],
+    ];
+    for (const [args, exit, line] of refusals) {
+      const { code, text } = await herald('pair', ...args);
+      expect({ args, code }).toEqual({ args, code: exit });
+      expect(text).toContain(line);
+    }
+
+    const id = idIn(
+      (await herald('pair', '--role', 'scoped', '--label', 'Lost', '--territory', 'north')).text,
+    );
+    const before = { files: await deviceFiles(), file: await deviceFile(id) };
+    const again = await herald('pair', '--device', id);
+    expect(again.code).toBe(0);
+    expect(again.text).toContain(`Pairing the device ${id} «Lost» again, role Scoped.`);
+    const secret = /\/pair\?code=([\w-]+)/.exec(again.text)?.[1] ?? '';
+    expect(secret).not.toBe('');
+    expect({ files: await deviceFiles(), file: await deviceFile(id) }).toEqual(before);
+    const pairing = await readFile(path.join(kingdom, '.state', 'herald-pairing.json'), 'utf8');
+    expect(pairing.split(id).length - 1).toBe(2);
+    expect(pairing).not.toContain(secret);
+
+    expect((await herald('revoke', id)).code).toBe(0);
+    const revoked = await herald('pair', '--device', id);
+    expect(revoked.code).toBe(1);
+    expect(revoked.text).toContain(`The device ${id} was revoked at`);
+    expect(revoked.text).not.toContain('/pair?code=');
+  });
+
   it('revokes one device or all, once, and a revoked device takes no change', async () => {
     const first = idIn((await herald('pair', '--role', 'full', '--label', 'One')).text);
     expect((await herald('revoke')).code).toBe(2);

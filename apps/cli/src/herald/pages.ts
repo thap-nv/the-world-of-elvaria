@@ -18,6 +18,7 @@ const REFUSAL_TEXT: Readonly<Record<HeraldRefusal, MessageKey>> = {
   bad_request: 'cli.herald.page.refusal.bad_request',
   not_found: 'cli.herald.page.refusal.not_found',
   body_too_large: 'cli.herald.page.refusal.body_too_large',
+  too_many_streams: 'cli.herald.page.refusal.too_many_streams',
   failed: 'cli.herald.page.refusal.failed',
 };
 
@@ -34,12 +35,36 @@ export function heraldPages({ t, locale }: CliContext): HeraldPages {
   };
 }
 
+/** The line of one entry the Herald logs, and whether it is an error. */
+function logLine(
+  t: CliContext['t'],
+  entry: HeraldLogEntry,
+): { readonly text: string; readonly error?: true } {
+  switch (entry.kind) {
+    case 'paired':
+      return { text: t('cli.herald.log.paired', { device: entry.device }) };
+    case 'refused':
+      return { text: t('cli.herald.log.refused', { method: entry.method, refusal: entry.refusal }) };
+    case 'stream':
+      return {
+        text: t(entry.open ? 'cli.herald.log.stream_opened' : 'cli.herald.log.stream_closed', {
+          device: entry.device,
+        }),
+      };
+    case 'command':
+      return entry.answer === 'accepted'
+        ? { text: t('cli.herald.log.command_accepted', entry) }
+        : { text: t('cli.herald.log.command_refused', entry) };
+    case 'failed':
+      return { text: t('cli.herald.log.failed', { message: entry.message }), error: true };
+  }
+}
+
 /** One line per entry the Herald logs; it has already masked every code and session id in it (ADR 0031 item 7). */
 export const heraldLogLine =
   ({ t, io }: CliContext) =>
   (entry: HeraldLogEntry): void => {
-    if (entry.kind === 'paired') io.out(t('cli.herald.log.paired', { device: entry.device }));
-    else if (entry.kind === 'refused')
-      io.out(t('cli.herald.log.refused', { method: entry.method, refusal: entry.refusal }));
-    else io.err(t('cli.herald.log.failed', { message: entry.message }));
+    const line = logLine(t, entry);
+    if (line.error === true) io.err(line.text);
+    else io.out(line.text);
   };
