@@ -7,12 +7,13 @@ import type { IncomingMessage } from 'node:http';
 import type { Duplex } from 'node:stream';
 
 import { err, ok } from '@elvaria/domain';
-import type { Device, Result } from '@elvaria/domain';
+import type { Result } from '@elvaria/domain';
 
 import { gateRequest } from '../origin/origin.ts';
 import { REFUSAL_STATUS } from '../server/refusal.ts';
 import { cookieValue } from '../session/cookie.ts';
-import { sessionDevice } from '../session/session.ts';
+import { liveSession } from '../session/session.ts';
+import type { LiveSession } from '../session/session.ts';
 import type { AllowedOrigins, Gate } from '../origin/origin.ts';
 import type { HeraldRefusal } from '../server/refusal.ts';
 import type { SessionDeps } from '../session/session.ts';
@@ -28,7 +29,7 @@ export interface UpgradeContext extends SessionDeps {
 export async function upgradeGate(
   req: IncomingMessage,
   ctx: UpgradeContext,
-): Promise<Result<{ readonly device: Device; readonly gate: Gate }, HeraldRefusal>> {
+): Promise<Result<{ readonly session: LiveSession; readonly gate: Gate }, HeraldRefusal>> {
   // Only the path is read; the base never shows.
   const url = new URL(req.url ?? '/', 'http://herald.invalid');
   if (url.pathname !== STREAM_PATH || req.method !== 'GET') return err('not_found');
@@ -36,9 +37,9 @@ export async function upgradeGate(
   if (origin === undefined) return err('origin_refused');
   const gate = gateRequest({ host, origin }, ctx.allowed);
   if (!gate.ok) return err(gate.error);
-  const device = await sessionDevice(ctx, cookieValue(req.headers.cookie));
-  if (!device.ok) return err(device.error);
-  return ok({ device: device.value, gate: gate.value });
+  const session = await liveSession(ctx, cookieValue(req.headers.cookie));
+  if (!session.ok) return err(session.error);
+  return ok({ session: session.value, gate: gate.value });
 }
 
 /** Answers a refused upgrade with its status and no body, and closes the socket. */

@@ -35,3 +35,13 @@ export const COMMANDS_PER_WINDOW_MAX = 30;
 export const COMMAND_WINDOW_MS = 60 * 1000;
 /** How long a closing stream waits for the client's close frame before its socket is dropped. */
 export const STREAM_CLOSE_GRACE_MS = 1000;
+/**
+ * (SEC-08, ADR 0038) A passkey challenge: 256 random bits for a registration (a command's is its hash). It waits for
+ * the browser's answer as long as WebAuthn's own default timeout, then is dropped.
+ */
+export const PASSKEY_CHALLENGE_BYTES = 32;
+export const PASSKEY_CHALLENGE_TTL_MS = 5 * 60 * 1000;
+/** Challenges one device may hold unanswered; the oldest is dropped past it. */
+export const PASSKEY_CHALLENGES_PER_DEVICE_MAX = 8;
+/** A device's first passkey needs no signature, only a session a pairing code opened this recently (ADR 0038 item 5). */
+export const FIRST_PASSKEY_WINDOW_MS = PAIRING_CODE_TTL_MS;

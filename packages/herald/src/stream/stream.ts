@@ -8,12 +8,21 @@ import type { Duplex } from 'node:stream';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 import { err, ok } from '@elvaria/domain';
-import type { Device, DeviceId, DeviceSource, IdSource, Instant, Result } from '@elvaria/domain';
+import type {
+  Device,
+  DeviceId,
+  DeviceSource,
+  IdSource,
+  Instant,
+  RandomSource,
+  Result,
+} from '@elvaria/domain';
 import { WebSocketServer } from 'ws';
 import type { RawData, WebSocket } from 'ws';
 
 import { answerCommand } from '../command/command.ts';
 import type { CommandDeps } from '../command/command.ts';
+import { challenges } from '../command/challenges.ts';
 import { commandRate } from '../command/rate.ts';
 import {
   FRAME_BYTES_MAX,
@@ -29,15 +38,18 @@ import type { FeedDeps, WorldFeed } from './world-feed.ts';
 
 export interface StreamDeps extends FeedDeps {
   readonly format: (at: Instant) => string;
-  readonly ids: Pick<IdSource, 'ulid'>;
+  readonly ids: Pick<IdSource, 'ulid' | 'device'>;
+  readonly random: RandomSource;
   readonly log: HeraldLog;
   readonly intervalMs: number;
 }
 
-/** The device of an upgrade's session, through the origin it came from. */
+/** The device of an upgrade's session, through the origin it came from, and when its pairing opened the session. */
 interface Who {
   readonly device: Device;
   readonly source: DeviceSource;
+  readonly origin: string;
+  readonly opened_at: string;
 }
 
 /** A text frame as one string, however ws handed its bytes. */
@@ -119,7 +131,7 @@ interface Frame {
 
 /** Answers one text frame on its stream; a frame without a ref to answer closes it. */
 async function answerFrame({ socket, connection, who, deps }: Frame, text: string): Promise<void> {
-  const sender = { device: who.device.id, source: who.source };
+  const sender = { device: who.device.id, source: who.source, origin: who.origin, opened_at: who.opened_at };
   try {
     const answered = await answerCommand(text, sender, deps);
     if (answered === undefined) {
@@ -130,6 +142,9 @@ async function answerFrame({ socket, connection, who, deps }: Frame, text: strin
     const answer = reply.type === 'refused' ? reply.reason : 'accepted';
     deps.log.write({ kind: 'command', device: sender.device, command: kind, answer });
     connection.reply(reply);
+    // (SEC-08) A pair_device's code goes to the device that asked, then joins the redactor's known values: from now on
+    // no log line, snapshot or other reply can show it (ADR 0031 item 7).
+    if (reply.type === 'accepted' && reply.pairing !== undefined) deps.log.remember(reply.pairing.code);
   } catch (error) {
     deps.log.write({ kind: 'failed', message: error instanceof Error ? error.message : String(error) });
   }
@@ -142,7 +157,7 @@ export async function openStream(deps: StreamDeps): Promise<Stream> {
   const open = new Map<WebSocket, Connection>();
   const controller = new AbortController();
   const running = run(feed, open, deps, controller.signal);
-  const commandDeps = { ...deps, rate, view: () => feed.view() };
+  const commandDeps = { ...deps, rate, challenges: challenges(), view: () => feed.view() };
 
   const attach = (socket: WebSocket, who: Who) => {
     const connection = openConnection(socket, who.device, feed.view(), deps.log);
