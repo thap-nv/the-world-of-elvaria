@@ -7,6 +7,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 import { InstantSchema } from '@elvaria/domain';
 
+import { untilSignal } from './process/stop-signal.ts';
 import type { CliIo, Env } from './io.ts';
 
 /**
@@ -38,16 +39,7 @@ export function nodeIo(): CliIo {
     sleep: async (ms) => {
       await delay(ms);
     },
-    untilStopped: () =>
-      new Promise((resolve) => {
-        const stop = (): void => {
-          process.off('SIGINT', stop);
-          process.off('SIGTERM', stop);
-          resolve();
-        };
-        process.once('SIGINT', stop);
-        process.once('SIGTERM', stop);
-      }),
+    untilStopped: () => untilSignal(process),
     random: { bytes: (count) => new Uint8Array(randomBytes(count)) },
     fetch: (input, init) => globalThis.fetch(input, init),
   };
