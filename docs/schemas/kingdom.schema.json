@@ -288,17 +288,18 @@
       "default": {}
     },
     "schedule": {
-      "$comment": "Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03) and the triage (PS-03b) have a runner and are on by default; the patrol (PS-26) has one and is off by default, since it runs every check of each territory it watches; chronicle and temple have none yet, so they default to disabled.",
+      "$comment": "Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03), the triage (PS-03b) and the chronicle (P2-06) have a runner and are on by default; the patrol (PS-26) has one and is off by default, since it runs every check of each territory it watches; the Temple (PS-12d) spends mana and is off by default.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "chronicle": {
+          "description": "The chronicle (P2-06): at `at` the Steward reads the day's ledger from the event log (quests done, returned, sealed, sent to the infirmary, delivered and merged; verdicts; levels; pools asleep and awake) and writes chronicle/YYYY-MM-DD.json and chronicle/YYYY-MM-DD.md, its counts and lists in the owner's language; a file already there is kept. No model, no mana; once a day.",
           "type": "object",
           "additionalProperties": false,
           "properties": {
             "enabled": {
               "type": "boolean",
-              "default": false
+              "default": true
             },
             "at": {
               "type": "string",
@@ -970,7 +971,7 @@
       },
       "schedule": {
         "chronicle": {
-          "enabled": false,
+          "enabled": true,
           "at": "21:00"
         },
         "triage": {
@@ -1114,7 +1115,7 @@
       },
       "schedule": {
         "chronicle": {
-          "enabled": false,
+          "enabled": true,
           "at": "21:00"
         },
         "triage": {

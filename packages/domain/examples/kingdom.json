@@ -91,7 +91,7 @@
     },
     "schedule": {
       "chronicle": {
-        "enabled": false,
+        "enabled": true,
         "at": "21:00"
       },
       "triage": {
@@ -229,7 +229,7 @@
     },
     "schedule": {
       "chronicle": {
-        "enabled": false,
+        "enabled": true,
         "at": "21:00"
       },
       "triage": {

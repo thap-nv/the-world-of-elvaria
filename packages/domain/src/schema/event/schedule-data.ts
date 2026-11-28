@@ -36,3 +36,32 @@ export const DigestWrittenDataSchema = z
       "The Steward wrote the day's digest (attentionQueue, in the owner's language) and rang the bell once. No model ran.",
     ),
   );
+
+export const ChronicleWrittenDataSchema = z
+  .strictObject({
+    day: LocalDaySchema,
+    file: z
+      .string()
+      .regex(/^chronicle\/\d{4}-\d{2}-\d{2}\.md$/)
+      .meta(describe('The chronicle, relative to the kingdom; its ledger is the .json beside it.')),
+    quests: CountSchema.meta(describe('Distinct quests the day’s ledger names.')),
+    prose: z
+      .boolean()
+      .meta(
+        describe(
+          "Whether the chronicle holds the Bard's prose (P2-06b) after the machine's part; false: the machine's part alone.",
+        ),
+      ),
+  })
+  .meta(
+    describe(
+      "The Steward wrote the day's chronicle (P2-06): chronicle/<day>.md in the owner's language, from the day's ledger saved as chronicle/<day>.json. The machine's part runs no model.",
+    ),
+  );
+
+/** The lines of the scheduled jobs, spread into EVENT_DATA_SCHEMAS. */
+export const SCHEDULE_EVENT_DATA = {
+  'schedule.ran': ScheduleRanDataSchema,
+  'digest.written': DigestWrittenDataSchema,
+  'chronicle.written': ChronicleWrittenDataSchema,
+} as const;
