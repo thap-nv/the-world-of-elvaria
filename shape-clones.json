@@ -382,12 +382,6 @@
       "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
-      "a": "apps/cli/src/quest/assignee.ts",
-      "b": "apps/cli/src/quest/lifecycle.ts",
-      "tokens": 88,
-      "status": "unreviewed"
-    },
-    {
       "a": "apps/cli/src/quest/escaped.ts",
       "b": "apps/cli/src/quest/show.ts",
       "tokens": 65,

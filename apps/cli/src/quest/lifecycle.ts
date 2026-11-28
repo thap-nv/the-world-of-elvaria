@@ -7,7 +7,7 @@ import type { Quest, QuestEventType } from '@elvaria/domain';
 import { textOption } from '../args.ts';
 import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
-import { assigneeFor, ceilingLines, classNames, giveQuestTo } from './assignee.ts';
+import { classNames, giveQuestTo, sendForCharacter } from './assignee.ts';
 import { questUnless } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
@@ -44,18 +44,12 @@ async function runConfirm(input: CommandInput, cli: CliContext): Promise<ExitCod
  * `confirm --to`: the draft opens for the character named, in the one command, so no tick between a confirm and a
  * reassign can give it to another (q_20261120_tpzvk5). The CLI checks the character first, as `reassign --to` does.
  */
-async function confirmFor(ctx: KingdomContext, quest: Quest, to: string): Promise<ExitCode> {
-  const character = await assigneeFor(ctx, to, quest.class_required);
-  if (Array.isArray(character)) {
-    character.forEach(ctx.io.err);
-    return EXIT.failed;
-  }
-  const payload = { quest: quest.id, assignee: character.id };
-  const command = { ...commandHeader(ctx), kind: 'confirm', payload } as const;
-  const params = { id: quest.id, character: character.id };
-  const code = await sendCommand(ctx, command, 'cli.quest.confirm.sent_to', params);
-  if (code === EXIT.ok) ceilingLines(ctx, character, quest.rank).forEach(ctx.io.out);
-  return code;
+function confirmFor(ctx: KingdomContext, quest: Quest, to: string): Promise<ExitCode> {
+  return sendForCharacter(ctx, quest, to, 'cli.quest.confirm.sent_to', (assignee) => ({
+    ...commandHeader(ctx),
+    kind: 'confirm',
+    payload: { quest: quest.id, assignee },
+  }));
 }
 
 /**
