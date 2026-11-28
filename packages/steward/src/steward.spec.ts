@@ -47,6 +47,8 @@ describe('the Steward, one quest', () => {
       'agent.session.end',
     ]);
     expect(types.filter((type) => !isSession(type))).toEqual([
+      // LL-04: the Steward's own start, once it holds the lock.
+      'steward.started',
       'quest.created',
       'command.applied',
       'quest.claimed',

@@ -56,10 +56,21 @@ describe('commitPlot after commands.setup again (fix/plot-setup-on-lockfile)', (
     detail: 'pnpm install: ended with 1',
     log_path: '.runs/q-setup.log',
   };
-  const ctxWith = (stopping: AbortSignal) =>
+  type Ran = { ok: false; error: typeof failed } | { ok: true; value: object | null };
+  let notes: { type: string; data: unknown }[] = [];
+  afterEach(() => {
+    notes = [];
+  });
+  const ctxWith = (stopping: AbortSignal, ran: Ran = { ok: false, error: failed }) =>
     ({
       root: 'E:/kingdom',
       stopping,
+      record: {
+        note: (line: { type: string; data: unknown }) => {
+          notes.push({ type: line.type, data: line.data });
+          return Promise.resolve();
+        },
+      },
       world: {
         quests: new Map([[id, { ...quest, secrets_required: [] }]]),
         territories: new Map([['elvaria', territory]]),
@@ -68,7 +79,7 @@ describe('commitPlot after commands.setup again (fix/plot-setup-on-lockfile)', (
         log: { warn: () => undefined },
         plots: {
           touched: () => Promise.resolve(['pnpm-lock.yaml']),
-          refreshSetup: () => Promise.resolve({ ok: false, error: failed }),
+          refreshSetup: () => Promise.resolve(ran),
           commit: () => Promise.resolve({ status: 'committed', sha: 'abc' }),
         },
       },
@@ -88,6 +99,40 @@ describe('commitPlot after commands.setup again (fix/plot-setup-on-lockfile)', (
       },
       setup: { detail: 'pnpm install: ended with 1', log: '.runs/q-setup.log' },
     });
+    // LL-04: the log says the setup ran again and failed, as the infirmary's reason does.
+    expect(notes).toEqual([
+      {
+        type: 'plot.setup',
+        data: {
+          trigger: 'changed',
+          pass: false,
+          log_path: '.runs/q-setup.log',
+          detail: 'pnpm install: ended with 1',
+        },
+      },
+    ]);
+  });
+
+  it('tells a setup that ran again and passed with plot.setup, trigger changed (LL-04)', async () => {
+    const run = { exit_code: 0, timed_out: false, duration_ms: 4200, log_path: '.runs/q-setup.log' };
+    const ctx = ctxWith(new AbortController().signal, { ok: true, value: run });
+    expect(await commitPlot(ctx, id, 'submit')).toEqual({ status: 'committed', sha: 'abc' });
+    expect(notes).toEqual([
+      {
+        type: 'plot.setup',
+        data: { trigger: 'changed', pass: true, duration_ms: 4200, log_path: '.runs/q-setup.log' },
+      },
+    ]);
+  });
+
+  it('writes no plot.setup when setup was not due', async () => {
+    expect(
+      await commitPlot(ctxWith(new AbortController().signal, { ok: true, value: null }), id, 'submit'),
+    ).toEqual({
+      status: 'committed',
+      sha: 'abc',
+    });
+    expect(notes).toEqual([]);
   });
 
   it('goes on to the commit when the Steward stopping cut the setup short', async () => {
@@ -95,5 +140,6 @@ describe('commitPlot after commands.setup again (fix/plot-setup-on-lockfile)', (
       status: 'committed',
       sha: 'abc',
     });
+    expect(notes).toEqual([]);
   });
 });

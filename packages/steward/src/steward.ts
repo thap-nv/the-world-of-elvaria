@@ -28,6 +28,7 @@ import { createScheduler } from './schedule/scheduler.ts';
 import { createSessions } from './sessions/running.ts';
 import { leftSessions, pidsWriter, reapOrphans } from './sessions/pids.ts';
 import type { LeftSession } from './sessions/pids.ts';
+import { noteStart, noteStop } from './tick/lifecycle.ts';
 import { recover, tickOf } from './tick/tick.ts';
 import { createVersionBook } from './tick/tribe-versions.ts';
 import { createJudgeWaitBook } from './waits/judge-waits.ts';
@@ -71,7 +72,8 @@ async function begin(deps: StewardDeps, state: State): Promise<Result<Held, Star
   const held = { lock: lock.value, zone: zone.value, templates, tickMs };
   state.held = held;
   state.stopping = new AbortController();
-  await recover(deps, state);
+  const events = await recover(deps, state);
+  await noteStart(deps, held, events);
   return ok(held);
 }
 
@@ -157,7 +159,9 @@ export function createSteward(deps: StewardDeps): Steward {
       }
       return ok(undefined);
     },
-    stop: async () => {
+    stop: async (reason = 'owner') => {
+      // Counted before the stop kills them: the stop line says how much work it cut (LL-04).
+      const sessions = state.sessions.size();
       state.beat = undefined;
       clearTimeout(state.timer);
       state.timer = undefined;
@@ -177,6 +181,7 @@ export function createSteward(deps: StewardDeps): Steward {
       await state.judgeLocks.releaseAll();
       // A gauge read after a session's end may still run its CLI: let it finish before the lock goes.
       await Promise.all(state.mana.reading.values());
+      if (state.held !== undefined) await noteStop(deps, state.held, reason, sessions);
       await state.held?.lock.release();
       state.held = undefined;
     },
