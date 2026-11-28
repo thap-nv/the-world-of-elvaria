@@ -122,4 +122,3 @@ export type ServerMessage = z.infer<typeof ServerMessageSchema>;
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
 export type ProtocolMessage = z.infer<typeof ProtocolMessageSchema>;
 export type CommandMessage = z.infer<typeof CommandMessageSchema>;
-export type RegisterMessage = z.infer<typeof RegisterMessageSchema>;

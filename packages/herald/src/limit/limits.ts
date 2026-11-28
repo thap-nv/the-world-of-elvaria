@@ -43,5 +43,8 @@ export const PASSKEY_CHALLENGE_BYTES = 32;
 export const PASSKEY_CHALLENGE_TTL_MS = 5 * 60 * 1000;
 /** Challenges one device may hold unanswered; the oldest is dropped past it. */
 export const PASSKEY_CHALLENGES_PER_DEVICE_MAX = 8;
-/** A device's first passkey needs no signature, only a session a pairing code opened this recently (ADR 0038 item 5). */
-export const FIRST_PASSKEY_WINDOW_MS = PAIRING_CODE_TTL_MS;
+/**
+ * A device's first passkey needs no signature, only a session a pairing code opened this recently (ADR 0038 item 5):
+ * as long as the code itself was good, so the owner pairs and registers in one sitting.
+ */
+export const FIRST_PASSKEY_WINDOW_MS = 5 * 60 * 1000;
