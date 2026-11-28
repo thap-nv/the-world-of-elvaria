@@ -19,9 +19,7 @@ export const ManaReadingViewSchema = z.strictObject({
   observed_at: DateTimeSchema,
 });
 
-export const PoolViewSchema = z.strictObject({
-  tribe: TribeIdSchema,
-  pool: z.string().regex(REGISTRY_ID_PATTERN),
+const GaugeViewSchema = z.strictObject({
   asleep: z.boolean(),
   /** The reset reported by the sleep event; cleared when the pool wakes. */
   resets_at: DateTimeSchema.nullable(),
@@ -29,6 +27,16 @@ export const PoolViewSchema = z.strictObject({
   readings: z.array(ManaReadingViewSchema),
 });
 
+export const ModelCapViewSchema = GaugeViewSchema.extend({ model: z.string().regex(REGISTRY_ID_PATTERN) });
+export const PoolViewSchema = GaugeViewSchema.extend({
+  tribe: TribeIdSchema,
+  pool: z.string().regex(REGISTRY_ID_PATTERN),
+  /** Caps of individual models, independent of the pool's own band and sleep. */
+  models: z.array(ModelCapViewSchema).optional(),
+});
+
+type GaugeView = z.infer<typeof GaugeViewSchema>;
+type GaugeChange = <T extends GaugeView>(gauge: T) => T;
 export type ManaReadingView = z.infer<typeof ManaReadingViewSchema>;
 export type PoolView = z.infer<typeof PoolViewSchema>;
 /**
@@ -57,22 +65,34 @@ export const poolsOf = (tribes: readonly Tribe[]): PoolView[] =>
 /** `pools` with the pool of `key` changed; a pool kingdom.json does not name (yet) is added awake. */
 export function updatePool(
   pools: readonly PoolView[],
-  key: Pick<PoolKey, 'tribe' | 'pool'>,
-  change: (pool: PoolView) => PoolView,
+  key: Pick<PoolKey, 'tribe' | 'pool'> & { readonly model?: string | undefined },
+  change: GaugeChange,
 ): PoolView[] {
+  const apply = (pool: PoolView): PoolView => changeGauge(pool, key.model, change);
   const index = pools.findIndex(({ tribe, pool }) => tribe === key.tribe && pool === key.pool);
   if (index === -1)
     return [
       ...pools,
-      change({ tribe: key.tribe, pool: key.pool, asleep: false, resets_at: null, readings: [] }),
+      apply({ tribe: key.tribe, pool: key.pool, asleep: false, resets_at: null, readings: [] }),
     ];
-  return pools.map((pool, at) => (at === index ? change(pool) : pool));
+  return pools.map((pool, at) => (at === index ? apply(pool) : pool));
+}
+
+/** A model cap changes only its own gauge; other models can still use the pool (ADR 0009). */
+function changeGauge(pool: PoolView, model: string | undefined, change: GaugeChange): PoolView {
+  if (model === undefined) return change(pool);
+  const models = pool.models ?? [];
+  const known = models.some((cap) => cap.model === model);
+  const next = known
+    ? models.map((cap) => (cap.model === model ? change(cap) : cap))
+    : [...models, change({ model, asleep: false, resets_at: null, readings: [] })];
+  return { ...pool, models: next };
 }
 
 /** Keeps the latest reading of each window, in place, so a bar does not jump when a window is read again. */
 export const withReading =
   (reading: ManaReadingView) =>
-  (pool: PoolView): PoolView => {
+  <T extends GaugeView>(pool: T): T => {
     const known = pool.readings.some(({ window }) => window === reading.window);
     const readings = known
       ? pool.readings.map((old) => (old.window === reading.window ? reading : old))
@@ -82,4 +102,4 @@ export const withReading =
 
 export const withSleep =
   (asleep: boolean, resets_at: string | null = null) =>
-  (pool: PoolView): PoolView => ({ ...pool, asleep, resets_at: asleep ? resets_at : null });
+  <T extends GaugeView>(pool: T): T => ({ ...pool, asleep, resets_at: asleep ? resets_at : null });
