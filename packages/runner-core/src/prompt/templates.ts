@@ -81,6 +81,9 @@ export const PROMPT_TEMPLATES = [
   // PS-12f: the Monk's session of the Temple, its rules and its evidence pack.
   'temple',
   'temple-context',
+  // P2-06b: the Bard's session of the chronicle, its rules and the day's ledger.
+  'chronicle',
+  'chronicle-context',
 ] as const;
 export type PromptTemplateName = (typeof PROMPT_TEMPLATES)[number];
 export type PromptTemplates = Readonly<Record<PromptTemplateName, string>>;

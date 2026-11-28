@@ -10,3 +10,8 @@ export const MS_PER_MINUTE = 60_000;
 // prompt of up to TEMPLE_PROMPT_MAX_CHARS of evidence to weigh, group by group, so it may take longer to answer.
 export const TEMPLE_MAX_TURNS = 3;
 export const TEMPLE_MAX_MINUTES = 10;
+
+// (P2-06b) Limits of one session of the chronicle's Bard: no tool and one tale of under 600 words from a ledger of at
+// most 12 000 characters, so as quick as the Chancellor's.
+export const BARD_MAX_TURNS = 3;
+export const BARD_MAX_MINUTES = 5;

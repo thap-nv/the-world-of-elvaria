@@ -30,6 +30,10 @@
     "chronicle.what.level_up": "Lên cấp",
     "chronicle.what.level_down": "Xuống cấp",
     "chronicle.what.pool_asleep": "Pool ngủ",
-    "chronicle.what.pool_awake": "Pool thức"
+    "chronicle.what.pool_awake": "Pool thức",
+    "chronicle.prose.heading": "## Lời Nhà thơ",
+    "chronicle.prose.note": "Nhà thơ {name} viết phần này từ bảng sự kiện ở trên; máy đã kiểm mọi quest và nhân vật được nhắc.",
+    "chronicle.prose.refused": "Biên niên sử {day}: văn của {name} bị từ chối hai lần ({issues}); phần của máy giữ nguyên.",
+    "chronicle.prose.failed": "Biên niên sử {day}: phiên của {name} không ra văn ({problem}); phần của máy giữ nguyên. Thư mục lần chạy: {run_dir}"
   }
 }

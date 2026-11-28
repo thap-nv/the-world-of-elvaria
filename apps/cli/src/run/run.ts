@@ -20,6 +20,7 @@ import { runningLine } from '../upgrade/running.ts';
 import { consoleBell } from './bell.ts';
 import { crewOf } from './crew.ts';
 import { fileChronicle } from '../chronicle/chronicle-file.ts';
+import { filePoet } from '../chronicle/poet.ts';
 import { fileDigest } from './digest-file.ts';
 import { forgesOf } from './forges.ts';
 import { graphsOf } from './graphs.ts';
@@ -83,6 +84,8 @@ function stewardOf(
     digest: fileDigest(t, store.root, ctx.kingdom.name),
     // The chronicle, once a day at kingdom.schedule.chronicle.at, in the owner's language (P2-06).
     chronicle: fileChronicle(t, store.root, ctx.kingdom.name),
+    // Then the Bard's prose, which spends mana, unless schedule.chronicle.prose is off (P2-06b, W10).
+    poet: filePoet(ctx, crew.runners),
     // A newer build than the pinned one, read as the digest is made (PS-08d).
     upgradeOffer: () => upgradeOffer(io, store.root),
     // The Chancellor's triage of the memos waiting, before the digest, outside the tick (PS-03b).

@@ -153,7 +153,7 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 
 | Type | `data` |
 |---|---|
-| `chronicle.written` | `day`: string (khớp `^\d{4}-\d{2}-\d{2}$`) — The kingdom's local day, yyyy-mm-dd (kingdom.tz).<br>`file`: string (khớp `^chronicle/\d{4}-\d{2}-\d{2}\.md$`) — The chronicle, relative to the kingdom; its ledger is the .json beside it.<br>`quests`: integer ≥ 0 — Distinct quests the day’s ledger names.<br>`prose`: boolean — Whether the chronicle holds the Bard's prose (P2-06b) after the machine's part; false: the machine's part alone. |
+| `chronicle.written` | `day`: string (khớp `^\d{4}-\d{2}-\d{2}$`) — The kingdom's local day, yyyy-mm-dd (kingdom.tz).<br>`file`: string (khớp `^chronicle/\d{4}-\d{2}-\d{2}\.md$`) — The chronicle, relative to the kingdom; its ledger is the .json beside it.<br>`quests`: integer ≥ 0 — Distinct quests the day’s ledger names.<br>`prose`: boolean — Whether the chronicle holds the Bard's prose (P2-06b) after the machine's part; false: the machine's part alone.<br>`tribe` (tùy chọn): string (khớp `^[a-z][a-z0-9_]*$`) — The Bard's tribe; absent when no session ran.<br>`model` (tùy chọn): string (khớp `^[a-z0-9][a-z0-9.-]*$`) — The model the Bard's session ran on; absent when none ran.<br>`tokens` (tùy chọn): integer ≥ 0 — What the Bard's sessions spent, the retry's included, also when the prose was refused.<br>`session` (tùy chọn): string (không rỗng) — The id of the Bard's last session. |
 
 ## `schedule` · 1 type
 

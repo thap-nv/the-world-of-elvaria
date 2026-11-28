@@ -41,7 +41,7 @@ async function open(jobs: readonly ScheduledJob[]) {
     ...settings.value,
     schedule: {
       ...schedule,
-      chronicle: { enabled: true, at: '06:00' },
+      chronicle: { enabled: true, at: '06:00', prose: false },
       triage: { enabled: true, at: '07:30' },
     },
   });

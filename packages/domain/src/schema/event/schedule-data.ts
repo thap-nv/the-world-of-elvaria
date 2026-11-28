@@ -2,6 +2,7 @@
 // which is how the next start knows not to run it again that day; and the digest it wrote.
 import { z } from 'zod';
 
+import { TribeIdSchema } from '../../core/ids.ts';
 import { DAILY_JOBS, LOCAL_DAY_PATTERN } from '../../schedule/constants.ts';
 
 const describe = (description: string) => ({ description });
@@ -20,6 +21,8 @@ export const ScheduleRanDataSchema = z
   );
 
 const CountSchema = z.int().min(0);
+// The pattern of ModelSlugSchema (common.ts) without its `id`, for the reason event-data.ts gives.
+const ModelSlugSchema = z.string().regex(/^[a-z0-9][a-z0-9.-]*$/);
 
 export const DigestWrittenDataSchema = z
   .strictObject({
@@ -52,10 +55,23 @@ export const ChronicleWrittenDataSchema = z
           "Whether the chronicle holds the Bard's prose (P2-06b) after the machine's part; false: the machine's part alone.",
         ),
       ),
+    // P2-06b: optional, so a line of P2-06 (no Bard) reads as before and needs no new `v`.
+    tribe: TribeIdSchema.optional().meta(describe("The Bard's tribe; absent when no session ran.")),
+    model: ModelSlugSchema.optional().meta(
+      describe("The model the Bard's session ran on; absent when none ran."),
+    ),
+    tokens: CountSchema.optional().meta(
+      describe("What the Bard's sessions spent, the retry's included, also when the prose was refused."),
+    ),
+    session: z.string().min(1).optional().meta(describe("The id of the Bard's last session.")),
+  })
+  .refine((data) => (data.tribe === undefined) === (data.model === undefined), {
+    path: ['model'],
+    message: 'a session names its tribe and its model, or neither',
   })
   .meta(
     describe(
-      "The Steward wrote the day's chronicle (P2-06): chronicle/<day>.md in the owner's language, from the day's ledger saved as chronicle/<day>.json. The machine's part runs no model.",
+      "The Steward wrote the day's chronicle (P2-06): chronicle/<day>.md in the owner's language, from the day's ledger saved as chronicle/<day>.json. The machine's part runs no model. With the Bard's session (P2-06b) the line names its tribe, model and tokens: the mana estimate counts them against the pool of `model` at the line's time, as a session of a quest, from the Steward's next start.",
     ),
   );
 

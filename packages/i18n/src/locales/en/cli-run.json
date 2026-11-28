@@ -52,6 +52,8 @@
     "cli.run.tribe_idle": "Tribe {tribe}: adapter {adapter} has no runner yet, so this tribe takes no quest.",
     "cli.run.tribe_broken": "Tribe {tribe}: adapter file {adapter} does not load, so this tribe takes no quest:",
     "cli.run.tribe_ready": "Tribe {tribe}: adapter {adapter} ready.",
-    "cli.run.warning": "Steward: {message}"
+    "cli.run.warning": "Steward: {message}",
+    "cli.run.notice.chronicle": "Chronicle {day}: the machine’s part, in {file}.",
+    "cli.run.notice.chronicle_prose": "Chronicle {day}, with the Bard’s tale: {file}."
   }
 }

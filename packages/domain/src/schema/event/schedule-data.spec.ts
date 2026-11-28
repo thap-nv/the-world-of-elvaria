@@ -18,10 +18,17 @@ describe('chronicle.written data (P2-06)', () => {
     expect(EventSchema.safeParse(line(WRITTEN)).success).toBe(true);
   });
 
+  it("reads the Bard's session beside it, a P2-06 line staying valid (P2-06b)", () => {
+    const bard = { ...WRITTEN, prose: true, tribe: 'codex', model: 'gpt-5.5', tokens: 9800, session: 's-1' };
+    expect(EventSchema.safeParse(line(bard)).success).toBe(true);
+  });
+
   it.each([
     ['a file outside chronicle/', { ...WRITTEN, file: 'digest/2026-11-06.md' }],
     ['no prose flag', { day: WRITTEN.day, file: WRITTEN.file, quests: 3 }],
     ['a negative count', { ...WRITTEN, quests: -1 }],
+    ['a tribe without its model', { ...WRITTEN, tribe: 'codex', tokens: 10 }],
+    ['negative tokens', { ...WRITTEN, tribe: 'codex', model: 'gpt-5.5', tokens: -1 }],
   ])('refuses %s', (_, data) => {
     expect(EventSchema.safeParse(line(data)).success).toBe(false);
   });

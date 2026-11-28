@@ -29,6 +29,7 @@ export const DESKTOP_RINGS = {
   unjudgeable: false,
   judge_mana: false,
   digest: false,
+  chronicle: false,
   wrap_up: false,
   environment: false,
   subquests_refused: false,

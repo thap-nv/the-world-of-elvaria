@@ -86,6 +86,11 @@ describe('KingdomSchema', () => {
       'schedule.chronicle.at',
     ],
     [
+      'a prose flag that is not a boolean',
+      { ...minimal, schedule: { chronicle: { prose: 'yes' } } },
+      'schedule.chronicle.prose',
+    ],
+    [
       'a patrol interval in weeks',
       { ...minimal, schedule: { patrol: { every: 'P1W' } } },
       'schedule.patrol.every',

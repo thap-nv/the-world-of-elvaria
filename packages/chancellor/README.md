@@ -64,6 +64,10 @@ signal)` runs one session with no tool (`buildAmendmentPrompt`; the amendment-de
   `templeReplyIssues`). A tribe with no JSON Schema flag gets one retry on a reply that fails the check; a session
   that fails (`TempleFailure`: invalid reply, CLI error, timeout, rate limit, no reply, stopped) still carries the
   tokens it spent.
+- Asks the chronicle's Bard (P2-06b): `askBard(context, session, signal)` runs one session in role `bard` with no
+  tool (`withoutTools` and `speak` of `session.ts`, which the Monk's `askTemple` uses too; `BARD_MAX_TURNS`, `BARD_MAX_MINUTES`) on the day's ledger (`buildChroniclePrompt` of runner-core).
+  It is asked without a schema (`Asking.schema?`): the reply is the session's last text, the prose, refused only when
+  empty. The caller checks it against the ledger; `chronicleIssueText` words what a second try is told.
 
 ## Does not
 

@@ -19,6 +19,8 @@ export { CONTEXT_FILE_MAX_CHARS, contextPathsIn, readContextFiles } from './cont
 export type { ContextFile } from './context-files.ts';
 export type { ChancellorContext } from './chancellor.ts';
 export type { TriageContext, TriageMemo } from './triage.ts';
+export { buildChroniclePrompt } from './chronicle.ts';
+export type { ChronicleContext } from './chronicle.ts';
 export { buildTemplePrompt } from './temple.ts';
 export type { TempleContext } from './temple.ts';
 export { PROMPT_BLOCK_IDS } from './prompt-blocks.ts';

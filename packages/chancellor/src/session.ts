@@ -2,7 +2,8 @@
 // structured output, given to a CLI with a JSON Schema flag, or JSON in text with one retry in a folder of its own on a
 // tribe without it (runner-core's spawnParsed, P1-33). Shared by the owner's words (draftQuests) and the triage of
 // memos (triageMemos, PS-03b), which also ends when the Steward stops. (PS-12f) The Temple's Monk speaks the same way,
-// in its own role and within its own caps (askTemple): who speaks and within what come from the session.
+// in its own role and within its own caps (askTemple): who speaks and within what come from the session. (P2-06b) So
+// does the Bard of the chronicle (askBard), whose reply is plain text: asked without a schema, the last text is the reply.
 import { mkdir } from 'node:fs/promises';
 
 import { err, ok } from '@elvaria/domain';
@@ -31,7 +32,7 @@ export interface ChancellorSession {
   /** Its class in the registry: the tool policy (no tool at all). */
   readonly characterClass: CharacterClass;
   /** (PS-12f) The role it speaks in: `chancellor` when absent; the Temple's session is the Monk's. */
-  readonly role?: Extract<SpawnRole, 'chancellor' | 'monk'>;
+  readonly role?: Extract<SpawnRole, 'chancellor' | 'monk' | 'bard'>;
   /** (PS-12f) Turns and minutes the CLI is given: CHANCELLOR_MAX_TURNS and CHANCELLOR_MAX_MINUTES when absent. */
   readonly budget?: Budget;
   readonly templates: PromptTemplates;
@@ -57,10 +58,13 @@ export type ChancellorFailure =
   /** The caller's signal ended it (PS-03b: the Steward stopped while its triage ran). */
   | { readonly code: 'stopped' };
 
-/** What one session is asked: its prompt, the reply's schema, and the check of what comes back. */
+/**
+ * What one session is asked: its prompt, the reply's schema, and the check of what comes back. (P2-06b) No schema: the
+ * reply is the session's last text, checked as it is, with no retry.
+ */
 export interface Asking<T> {
   readonly prompt: BuiltPrompt;
-  readonly schema: JsonSchema;
+  readonly schema?: JsonSchema;
   readonly check: (value: unknown) => ReplyCheck<T>;
   /** Aborted when nobody waits for the reply any more: the session is killed. */
   readonly signal?: AbortSignal | undefined;
@@ -94,7 +98,7 @@ function requestOf<T>(session: ChancellorSession, asking: Asking<T>) {
     prompt: asking.prompt,
     permissions: toolPolicyOf({ role, characterClass: session.characterClass, character }),
     budget: budgetOf(session),
-    structured: asking.schema,
+    ...(asking.schema === undefined ? {} : { structured: asking.schema }),
     env: session.env,
     run_dir: session.run_dir,
   } satisfies SpawnRequest;
@@ -103,8 +107,13 @@ function requestOf<T>(session: ChancellorSession, asking: Asking<T>) {
 /** The CLI's own flag, or the schema in the prompt with one retry for a reply that cannot be used (a fresh session). */
 async function spawned<T>(session: ChancellorSession, asking: Asking<T>): Promise<RunningSession> {
   const request = requestOf(session, asking);
-  if (native(session)) return session.runner.spawn(request);
-  return spawnParsed(session.runner, request, { check: issuesOf(asking.check), resume: false });
+  const { schema } = asking;
+  if (schema === undefined || native(session)) return session.runner.spawn(request);
+  return spawnParsed(
+    session.runner,
+    { ...request, structured: schema },
+    { check: issuesOf(asking.check), resume: false },
+  );
 }
 
 /** The structured output, or the last text where the schema was in the prompt; undefined when there is none. */
@@ -114,6 +123,7 @@ function replyOf<T>(
   structured: unknown,
   text: string | undefined,
 ): ReplyCheck<T> | undefined {
+  if (asking.schema === undefined) return text === undefined ? undefined : asking.check(text);
   if (native(session)) return structured === undefined ? undefined : asking.check(structured);
   return text === undefined ? undefined : checkTextReply(text, asking.check);
 }
@@ -174,3 +184,42 @@ export const sessionIdsOf = (result: RunResult): string[] => [
   result.session_id,
   ...(result.sequels ?? []).map(({ session_id }) => session_id),
 ];
+
+/** What a session spent: its tokens, its retry's included, and the ids of both. */
+export interface Spent {
+  readonly tokens: number;
+  readonly session_ids: readonly string[];
+}
+
+/** Why there is no reply to use, and what the session spent all the same (0 when it said nothing). */
+export interface SpokenFailure extends Spent {
+  readonly failure: ChancellorFailure;
+}
+
+/**
+ * A session the caller opened, in `role` and within `budget`, with no tool whatever its class allows (its deny list
+ * stays): the Temple's Monk (PS-12f) and the chronicle's Bard (P2-06b) read their prompt only.
+ */
+export const withoutTools = (
+  session: ChancellorSession,
+  role: NonNullable<ChancellorSession['role']>,
+  budget: Budget,
+): ChancellorSession => ({
+  ...session,
+  characterClass: { ...session.characterClass, tools: { ...session.characterClass.tools, allow: [] } },
+  role,
+  budget,
+});
+
+/** One session and its reply, with what it spent; a reply that fails its check is `invalid_reply`, its tokens kept. */
+export async function speak<T>(
+  session: ChancellorSession,
+  asking: Asking<T>,
+): Promise<Result<Spent & { readonly reply: T }, SpokenFailure>> {
+  const heard = await hear(session, asking);
+  if (!heard.ok) return err({ failure: heard.error, tokens: 0, session_ids: [] });
+  const { reply, result } = heard.value;
+  const spent = { tokens: result.usage.tokens, session_ids: sessionIdsOf(result) };
+  if (!reply.ok) return err({ failure: { code: 'invalid_reply', issues: reply.issues }, ...spent });
+  return ok({ reply: reply.value, ...spent });
+}

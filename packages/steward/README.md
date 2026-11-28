@@ -130,7 +130,12 @@
   one bell (`digest`). No model, no mana. (P2-06) The chronicle (`chronicleJob`, given `StewardDeps.chronicle`) runs
   in the tick at `schedule.chronicle.at`: the domain's `dayLedgerOf` over the whole log, the files naming what the log
   names by id alone; the `Chronicle` port writes `chronicle/<day>.json` and `.md`, then one `chronicle.written` line
-  (`prose: false`). No model, no mana, no bell.
+  (`prose: false`). No model, no mana. (P2-06b) Given `StewardDeps.poet` too, the job runs outside the tick: after the
+  machine's part, the domain's `poetCallOf` decides whether the roster's first Bard writes prose (no call when
+  `schedule.chronicle.prose` is off, the day is empty, there is no Bard, its tribe is held or its pool closed), the
+  `Poet` port appends what passes, and the one `chronicle.written` line names `prose` and the Bard's `tribe`, `model`,
+  `tokens`, `session`, which `outsideFromLog` counts for the mana estimate. Then one bell, `chronicle` (terminal only).
+  Stopped during the Bard's session, it writes nothing and runs again at the next start.
 - Tells a submitted quest that waits for a judge (`src/waits/judge-waits.ts`): none in the roster (`unjudgeable`,
   P1-15: `different_model` and no judge of the kind outside its doers on another model; PS-11: `vision` when the
   quest's ritual asks for eyes), or every judge held by its mana (`judge_mana`, PS-03, (d) of P1-50, with the pools

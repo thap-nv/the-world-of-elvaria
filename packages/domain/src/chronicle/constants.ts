@@ -26,5 +26,20 @@ export const LEDGER_TABLE: ReadonlyMap<string, LedgerKind> = new Map<string, Led
  */
 export const CHRONICLE_TEXT_MAX = 6000;
 
+/**
+ * (P2-06b) The class whose first character writes the day's prose: the default registry's `bard`. An id of the data,
+ * as the plan names it, not a switch on the class: a kingdom without it has no prose.
+ */
+export const BARD_CLASS = 'bard';
+
+/**
+ * (P2-06b) The most of the day's ledger the Bard's prompt holds, in characters of its JSON lines: about 3 000 tokens,
+ * so the session stays near 10 000 tokens a day (W10). Entries past it are left out and counted.
+ */
+export const CHRONICLE_PROMPT_LEDGER_MAX = 12_000;
+
+/** (P2-06b) The words the Bard's prose is asked to stay under; CHRONICLE_TEXT_MAX holds the check. */
+export const CHRONICLE_PROSE_WORDS_MAX = 600;
+
 /** `yyyy-mm-dd` of `zone.format`'s ISO text. */
 export const LOCAL_DAY_LENGTH = 'yyyy-mm-dd'.length;

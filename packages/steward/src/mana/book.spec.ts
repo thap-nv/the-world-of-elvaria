@@ -105,6 +105,21 @@ describe('outsideFromLog', () => {
     ]);
   });
 
+  // P2-06b: the Bard's session of the chronicle spends its tribe's account; the machine's part alone spent nothing.
+  it('reads each chronicle.written line whose Bard spent tokens, and skips one with no session', () => {
+    const written = { day: '2026-11-07', file: 'chronicle/2026-11-07.md', quests: 2 };
+    const bard = { tribe: 'codex', model: 'gpt-5.1-codex', session: 's-1' };
+    const events = [
+      line('chronicle.written', { ...written, prose: false }),
+      line('chronicle.written', { ...written, prose: true, ...bard, tokens: 9_400 }),
+      line('chronicle.written', { ...written, prose: false, ...bard, tokens: 0 }),
+      line('chronicle.written', { ...written, prose: false, ...bard }),
+    ];
+    expect(outsideFromLog(events)).toEqual([
+      { tribe: 'codex', model: 'gpt-5.1-codex', tokens: 9_400, at: '2026-11-07T09:00:00+07:00' },
+    ]);
+  });
+
   // PS-12d: the Monk's session of the Temple spends its tribe's account; a run that called no model spent nothing.
   it('reads each temple.ran line whose session spent tokens, and skips a run with no session', () => {
     const ran = { trigger: 'quests', day: '2026-11-07', groups: 2, operations: 1, letters: 0 };

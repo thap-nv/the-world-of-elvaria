@@ -76,12 +76,12 @@ async function begin(deps: StewardDeps, state: State): Promise<Result<Held, Star
 }
 
 /**
- * The digest and (P2-06) the chronicle when the composition root gives their ports, the patrol when its plots can
+ * The digest and (P2-06) the chronicle, with (P2-06b) the Bard's prose, when the composition root gives their ports, the patrol when its plots can
  * patrol (PS-26), then the jobs it injects, which ignore the tick (PS-03).
  */
 const jobsOf = (deps: StewardDeps): StewardJob[] => [
   ...(deps.digest === undefined ? [] : [digestJob(deps.digest)]),
-  ...(deps.chronicle === undefined ? [] : [chronicleJob(deps.chronicle)]),
+  ...(deps.chronicle === undefined ? [] : [chronicleJob(deps.chronicle, deps.poet)]),
   ...(deps.plots.patrol === undefined ? [] : [patrolJob()]),
   ...(deps.jobs ?? []).map((job): StewardJob => ({
     id: job.id,

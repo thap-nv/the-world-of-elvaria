@@ -248,6 +248,11 @@ show` prints the brief apart from the rest of the description and, while the pla
   wrote one, otherwise built on the spot from the files and the log with the same ledger (`dayLedgerOf` of the
   domain) and words (`chronicleMarkdown`, namespace `chronicle`), redacted, and written nowhere. `run` gives the Steward
   the `Chronicle` port (`fileChronicle`), which writes `chronicle/<day>.json` and `.md` once, redacted (ADR 0013).
+  (P2-06b) `run` also gives the `Poet` port (`filePoet`, `src/chronicle/poet.ts`): the Bard's session with no tool
+  (`askBard` of the chancellor) on the redacted ledger, its prose redacted and held against the ledger
+  (`checkChronicle`), asked once more with the errors, then appended under the machine's part or dropped with one
+  stderr line; a file that holds the prose already opens no session. The bell's `chronicle` line is said on the
+  terminal only.
 - `digest` (PS-03, `src/digest/`): the digest as it stands, from the files, the open memos, the verdicts, the
   registry and the event log, read by the store's `readKingdomSource` like the Herald's (P2-01c) (`attentionOf` of
   the domain, P2-04: the list the Steward's digest and the herald build from them too), worded by `digestMarkdown` and printed; writes nothing and spends no mana. The quests waiting for

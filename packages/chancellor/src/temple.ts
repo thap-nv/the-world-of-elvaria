@@ -3,7 +3,7 @@
 // reply is checked against the contract, then against the pack it answered (templeReplyIssues): on a tribe without a
 // JSON Schema flag a reply that breaks either is tried once more, told what was wrong (spawnParsed). Nothing is written
 // here: the caller turns the reply into one temple_report command (templeCommands) and the Steward applies it.
-import { TempleReplySchema, contractOf, err, ok, templeReplyIssues } from '@elvaria/domain';
+import { TempleReplySchema, contractOf, templeReplyIssues } from '@elvaria/domain';
 import { buildTemplePrompt, issueLines } from '@elvaria/runner-core';
 import type {
   Result,
@@ -16,8 +16,8 @@ import type { JsonSchema, ReplyCheck, TempleContext } from '@elvaria/runner-core
 
 import { TEMPLE_MAX_MINUTES, TEMPLE_MAX_TURNS } from './constants.ts';
 import { forTheCli } from './reply.ts';
-import { hear, sessionIdsOf } from './session.ts';
-import type { ChancellorFailure, ChancellorSession } from './session.ts';
+import { speak, withoutTools } from './session.ts';
+import type { ChancellorSession, Spent, SpokenFailure } from './session.ts';
 
 /** `--json-schema` of the Temple: docs/schemas/temple-reply.schema.json, less what the CLI refuses. */
 export const TEMPLE_REPLY_JSON_SCHEMA = forTheCli(
@@ -50,31 +50,17 @@ export const templeCheckOf =
     return issues.length === 0 ? { ok: true, value: parsed.data } : { ok: false, issues };
   };
 
-export interface TempleAnswer {
-  readonly reply: TempleReply;
-  /** The session's id, and its retry's when there was one. */
-  readonly session_ids: readonly string[];
-  /** What the session spent, its retry's included. */
-  readonly tokens: number;
-}
+/** The reply, the session's id and its retry's when there was one, and what both spent. */
+export type TempleAnswer = Spent & { readonly reply: TempleReply };
 
-/** Why there is no reply to use, and what the session spent all the same (0 when it said nothing). */
-export interface TempleFailure {
-  readonly failure: ChancellorFailure;
-  readonly tokens: number;
-  readonly session_ids: readonly string[];
-}
+export type TempleFailure = SpokenFailure;
 
 /**
  * The Monk's own role and caps, on a session the caller opened for it, and no tool whatever its class allows: the
  * Temple's session reads its prompt only (temple-first plan, PS-12d: no tool to read files); its deny list stays.
  */
-export const asMonk = (session: ChancellorSession): ChancellorSession => ({
-  ...session,
-  characterClass: { ...session.characterClass, tools: { ...session.characterClass.tools, allow: [] } },
-  role: 'monk',
-  budget: { max_turns: TEMPLE_MAX_TURNS, max_minutes: TEMPLE_MAX_MINUTES },
-});
+export const asMonk = (session: ChancellorSession): ChancellorSession =>
+  withoutTools(session, 'monk', { max_turns: TEMPLE_MAX_TURNS, max_minutes: TEMPLE_MAX_MINUTES });
 
 /** One session for the pack; `signal` ends it (the Steward stopped), with failure `stopped`. */
 export async function askTemple(
@@ -84,10 +70,5 @@ export async function askTemple(
 ): Promise<Result<TempleAnswer, TempleFailure>> {
   const prompt = buildTemplePrompt(context, session.templates);
   const check = templeCheckOf(context.evidence);
-  const heard = await hear(asMonk(session), { prompt, schema: TEMPLE_REPLY_JSON_SCHEMA, check, signal });
-  if (!heard.ok) return err({ failure: heard.error, tokens: 0, session_ids: [] });
-  const { reply, result } = heard.value;
-  const spent = { tokens: result.usage.tokens, session_ids: sessionIdsOf(result) };
-  if (!reply.ok) return err({ failure: { code: 'invalid_reply', issues: reply.issues }, ...spent });
-  return ok({ reply: reply.value, ...spent });
+  return speak(asMonk(session), { prompt, schema: TEMPLE_REPLY_JSON_SCHEMA, check, signal });
 }

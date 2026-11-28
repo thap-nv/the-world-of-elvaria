@@ -147,6 +147,8 @@ const OUTSIDE_LINES = {
   'tribe.checked': EVENT_DATA_SCHEMAS['tribe.checked'],
   'chancellor.answered': EVENT_DATA_SCHEMAS['chancellor.answered'],
   'temple.ran': EVENT_DATA_SCHEMAS['temple.ran'],
+  // P2-06b: the Bard's sessions of the chronicle.
+  'chronicle.written': EVENT_DATA_SCHEMAS['chronicle.written'],
 } as const;
 
 const spendsOutside = (type: string): type is keyof typeof OUTSIDE_LINES =>
@@ -154,7 +156,7 @@ const spendsOutside = (type: string): type is keyof typeof OUTSIDE_LINES =>
 
 /**
  * What `elvaria tribe check` spent with the real CLI (`tribe.checked`, run (221) (b)) and what the sessions of the
- * Chancellor's office and the Monk's spent (`chancellor.answered`, fix/run-221-followups; `temple.ran`, PS-12d), from the log, which the estimate counts as
+ * Chancellor's office, the Monk's and (P2-06b) the Bard's spent (`chancellor.answered`, fix/run-221-followups; `temple.ran`, PS-12d; `chronicle.written`), from the log, which the estimate counts as
  * it counts a quest's sessions. A line written while the Steward runs (its own triage among them) is read at its next
  * start; the account's own figure, read every probe_interval_minutes while work is in play, shows it before that.
  */
@@ -162,8 +164,11 @@ export function outsideFromLog(events: readonly Event[]): OutsideSpend[] {
   return events.flatMap((event) => {
     const line = spendsOutside(event.type) ? OUTSIDE_LINES[event.type].safeParse(event.data) : undefined;
     // A run of the Temple that called no model names no tribe and spent nothing.
-    if (line?.success !== true || line.data.tokens === 0) return [];
-    const { tribe, model, tokens } = line.data;
-    return tribe === undefined || model === undefined ? [] : [{ tribe, model, tokens, at: event.ts }];
+    if (line?.success !== true) return [];
+    // A chronicle without the Bard's session names no tribe and spent nothing.
+    const { tribe, model, tokens = 0 } = line.data;
+    return tribe === undefined || model === undefined || tokens === 0
+      ? []
+      : [{ tribe, model, tokens, at: event.ts }];
   });
 }
