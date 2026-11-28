@@ -56,6 +56,15 @@ export const QuestViewSchema = z.strictObject({
       ),
     ),
   sealed_at: DateTimeSchema.nullable(),
+  // P2-01d: optional like seal_raised, so the lines written before it still read; absent: the quest may change files.
+  read_only: z
+    .literal(true)
+    .optional()
+    .meta(
+      describe(
+        "quest.read_only: an inquiry device's question, which changes no file and is never delivered; a renderer draws it apart, and a limited device answers or cancels only such a quest.",
+      ),
+    ),
   question: NonEmptyStringSchema.nullable().meta(
     describe(
       "blocked.question while it waits for the owner's answer: the throne asks the owner to answer it. (PS-22b) Null while the quest's author decides the amendment it waits on.",
@@ -103,6 +112,7 @@ export function questViewOf(quest: Quest): QuestView {
     seal_required: quest.seal_required,
     ...(quest.seal_raised === undefined ? {} : { seal_raised: quest.seal_raised }),
     sealed_at: quest.seal?.at ?? null,
+    ...(quest.read_only === undefined ? {} : { read_only: quest.read_only }),
     question: ownerAsked(blocked) ? blocked.question : null,
     party_id: quest.party_id ?? null,
     party_role: quest.party_role ?? null,

@@ -38,8 +38,12 @@ export interface BaseLook {
   readonly quests: readonly QuestId[];
 }
 
-/** A done quest whose work went to the owner on a branch of its own: what a look asks about. */
+/**
+ * A done quest whose work went to the owner on a branch of its own: what a look asks about. Not a read-only quest
+ * (P2-01d): its branch goes nowhere, and its plot is given back once it is delivered.
+ */
 const onBranch = (quest: Quest): boolean =>
+  quest.read_only !== true &&
   quest.deliverable.delivered_at !== undefined &&
   quest.plot.type === 'worktree' &&
   quest.plot.branch !== undefined;

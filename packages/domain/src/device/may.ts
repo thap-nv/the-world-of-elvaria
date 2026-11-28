@@ -65,9 +65,15 @@ export interface DeviceAsk {
   readonly confirmation?: Result<unknown, PasskeyRefusal> | undefined;
   /** create_quest: the `deliverable_type` of its quest kind in the registry; undefined when the kind is unknown. */
   readonly deliverable?: (typeof DELIVERABLE_TYPES)[number] | undefined;
-  /** The quest the command acts on, when the caller knows it; `read_only` comes with P2-01d. */
+  /** The quest the command acts on, when the caller knows it, with its `read_only` mark (P2-01d). */
   readonly quest?: { readonly id: QuestId; readonly read_only?: boolean } | undefined;
 }
+
+/**
+ * (P2-01d, 383a) Whether the quest a device's create_quest makes is read-only: an inquiry device asks questions and
+ * changes no file. The Steward sets the mark from the device file, never from the payload.
+ */
+export const readOnlyFor = (device: Pick<Device, 'role'> | undefined): boolean => device?.role === 'inquiry';
 
 const refuse = (code: DeviceRefusalCode): Result<never, DeviceRefusal> => err({ code });
 

@@ -4,7 +4,7 @@ import { scriptTierNeedsScript, sessionTierNeedsClass } from './shared.ts';
 import { issueIf } from './rules.ts';
 import type { QuestStatus } from './shared.ts';
 import type { QuestFieldsSchema } from './quest-fields.ts';
-import type { Rule } from './rules.ts';
+import type { Rule, RuleIssue } from './rules.ts';
 import type { z } from 'zod';
 
 type QuestFields = z.output<typeof QuestFieldsSchema>;
@@ -21,6 +21,34 @@ const HELD: readonly QuestStatus[] = [
 ];
 /** The royal seal is the last step: a sealed quest is done, or archived after that. */
 const SEALED: readonly QuestStatus[] = ['done', 'archived'];
+
+/** (P2-01d) Fields of the seal a read-only quest never has: it is never sealed, nor spared the seal. */
+const READ_ONLY_NEVER = ['seal', 'seal_delegated', 'seal_raised'] as const;
+
+/**
+ * (P2-01d, 383a) A read-only quest asks a question of a session: a report, no secret (the treasury stays shut), no
+ * seal, since its branch is never delivered. A script runs outside the session's fence, so it may not be one.
+ */
+const readOnlyIssues = (quest: QuestFields): readonly RuleIssue[] => {
+  if (quest.read_only !== true) return [];
+  return [
+    ...issueIf(
+      quest.deliverable.type !== 'report',
+      ['deliverable', 'type'],
+      'a read-only quest delivers a report',
+    ),
+    ...issueIf(quest.tier !== 'session', ['tier'], 'a read-only quest runs as a session'),
+    ...issueIf(
+      quest.secrets_required.length > 0,
+      ['secrets_required'],
+      'a read-only quest asks for no secret',
+    ),
+    ...issueIf(quest.seal_required, ['seal_required'], 'a read-only quest never waits for the seal'),
+    ...READ_ONLY_NEVER.flatMap((field) =>
+      issueIf(quest[field] !== undefined, [field], `a read-only quest has no ${field}`),
+    ),
+  ];
+};
 
 const CONDITIONALS: readonly Rule<QuestFields>[] = [
   {
@@ -97,6 +125,23 @@ const CONDITIONALS: readonly Rule<QuestFields>[] = [
         ['status'],
         'a sealed quest is done or archived',
       ),
+  },
+  {
+    contract: {
+      $comment:
+        '(P2-01d) A read-only quest asks for a report from a session, with no secret, and never waits for the royal seal: no rule raises it, so nothing the delegation spares either.',
+      if: { required: ['read_only'] },
+      then: {
+        properties: {
+          deliverable: { properties: { type: { const: 'report' } } },
+          tier: { const: 'session' },
+          secrets_required: { maxItems: 0 },
+          seal_required: { const: false },
+        },
+        not: { anyOf: READ_ONLY_NEVER.map((field) => ({ required: [field] })) },
+      },
+    },
+    check: readOnlyIssues,
   },
   {
     contract: { if: { properties: { status: { const: 'blocked' } } }, then: { required: ['blocked'] } },

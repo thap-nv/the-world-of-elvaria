@@ -302,6 +302,10 @@
                     ],
                     "format": "date-time"
                   },
+                  "read_only": {
+                    "description": "quest.read_only: an inquiry device's question, which changes no file and is never delivered; a renderer draws it apart, and a limited device answers or cancels only such a quest.",
+                    "const": true
+                  },
                   "question": {
                     "description": "blocked.question while it waits for the owner's answer: the throne asks the owner to answer it. (PS-22b) Null while the quest's author decides the amendment it waits on.",
                     "type": [
@@ -807,6 +811,10 @@
                       "null"
                     ],
                     "format": "date-time"
+                  },
+                  "read_only": {
+                    "description": "quest.read_only: an inquiry device's question, which changes no file and is never delivered; a renderer draws it apart, and a limited device answers or cancels only such a quest.",
+                    "const": true
                   },
                   "question": {
                     "description": "blocked.question while it waits for the owner's answer: the throne asks the owner to answer it. (PS-22b) Null while the quest's author decides the amendment it waits on.",
@@ -1504,6 +1512,10 @@
                     ],
                     "format": "date-time"
                   },
+                  "read_only": {
+                    "description": "quest.read_only: an inquiry device's question, which changes no file and is never delivered; a renderer draws it apart, and a limited device answers or cancels only such a quest.",
+                    "const": true
+                  },
                   "question": {
                     "description": "blocked.question while it waits for the owner's answer: the throne asks the owner to answer it. (PS-22b) Null while the quest's author decides the amendment it waits on.",
                     "type": [
@@ -2087,6 +2099,10 @@
                     ],
                     "format": "date-time"
                   },
+                  "read_only": {
+                    "description": "quest.read_only: an inquiry device's question, which changes no file and is never delivered; a renderer draws it apart, and a limited device answers or cancels only such a quest.",
+                    "const": true
+                  },
                   "question": {
                     "description": "blocked.question while it waits for the owner's answer: the throne asks the owner to answer it. (PS-22b) Null while the quest's author decides the amendment it waits on.",
                     "type": [
@@ -2606,6 +2622,10 @@
                     ],
                     "format": "date-time"
                   },
+                  "read_only": {
+                    "description": "quest.read_only: an inquiry device's question, which changes no file and is never delivered; a renderer draws it apart, and a limited device answers or cancels only such a quest.",
+                    "const": true
+                  },
                   "question": {
                     "description": "blocked.question while it waits for the owner's answer: the throne asks the owner to answer it. (PS-22b) Null while the quest's author decides the amendment it waits on.",
                     "type": [
@@ -3111,6 +3131,10 @@
                       "null"
                     ],
                     "format": "date-time"
+                  },
+                  "read_only": {
+                    "description": "quest.read_only: an inquiry device's question, which changes no file and is never delivered; a renderer draws it apart, and a limited device answers or cancels only such a quest.",
+                    "const": true
                   },
                   "question": {
                     "description": "blocked.question while it waits for the owner's answer: the throne asks the owner to answer it. (PS-22b) Null while the quest's author decides the amendment it waits on.",

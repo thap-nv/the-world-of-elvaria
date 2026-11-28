@@ -29,9 +29,14 @@ import type { Territory } from '../schema/territory.ts';
 import type { GuestEntry } from './guests.ts';
 import type { BackgroundWork } from './reviews.ts';
 
-/** A quest that may go to its forge, the outcome aside: `done`, delivered, on a branch, its territory not manual. */
+/**
+ * A quest that may go to its forge, the outcome aside: `done`, delivered, on a branch, its territory not manual.
+ * (P2-01d, 383a) Never a read-only quest: it answers a question, so its branch is never pushed, nor its pull request
+ * opened or merged.
+ */
 export function forgeDue(quest: Quest, territory: Pick<Territory, 'delivery'> | undefined): boolean {
   if (territory === undefined || deliveryOf(territory).mode === 'manual') return false;
+  if (quest.read_only === true) return false;
   if (quest.status !== 'done' || quest.deliverable.delivered_at === undefined) return false;
   if (quest.plot.type !== 'worktree' || quest.plot.branch === undefined) return false;
   return quest.party_role === undefined || quest.party_role === 'merge';
