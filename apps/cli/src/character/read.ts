@@ -5,6 +5,7 @@ import { CharacterIdSchema } from '@elvaria/domain';
 import type { Character } from '@elvaria/domain';
 
 import { storeIssueLines } from '../issues.ts';
+import { namedBy } from '../kingdom-context.ts';
 import type { CommandInput } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
@@ -18,16 +19,6 @@ export async function readCharacter(ctx: KingdomContext, id: string): Promise<Ch
   return read.error.code === 'not_found' ? unknown : storeIssueLines(ctx.t, read.error);
 }
 
-/**
- * The character the command line names first (`character <verb> <id> …`), or undefined once the reasons it cannot
- * be read are printed.
- */
-export async function namedCharacter(
-  input: CommandInput,
-  ctx: KingdomContext,
-): Promise<Character | undefined> {
-  const character = await readCharacter(ctx, input.positionals[0] ?? '');
-  if (!Array.isArray(character)) return character;
-  character.forEach(ctx.io.err);
-  return undefined;
-}
+/** The character the command line names first (`character <verb> <id> …`), or undefined once why not is printed. */
+export const namedCharacter = (input: CommandInput, ctx: KingdomContext): Promise<Character | undefined> =>
+  namedBy(input, ctx, readCharacter);
