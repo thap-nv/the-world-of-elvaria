@@ -14,12 +14,16 @@ import type { KingdomContext } from '../kingdom-context.ts';
 
 const PORT_MAX = 65_535;
 
-/** `--port`, else kingdom.herald.port; undefined for a value that is no port (0 is: it picks a free one). */
-function portOf(input: CommandInput, ctx: KingdomContext): number | undefined {
-  const text = textOption(input, 'port');
-  if (text === undefined) return ctx.kingdom.herald.port;
+/** The port `text` names; undefined for a value that is no port (0 is: it picks a free one). */
+export function portFrom(text: string): number | undefined {
   const port = /^\d{1,5}$/.test(text) ? Number(text) : Number.NaN;
   return port <= PORT_MAX ? port : undefined;
+}
+
+/** `--port`, else kingdom.herald.port. */
+function portOf(input: CommandInput, ctx: KingdomContext): number | undefined {
+  const text = textOption(input, 'port');
+  return text === undefined ? ctx.kingdom.herald.port : portFrom(text);
 }
 
 async function runHerald(input: CommandInput, cli: CliContext): Promise<ExitCode> {

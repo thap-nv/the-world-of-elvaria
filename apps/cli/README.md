@@ -138,6 +138,10 @@ show` prints the brief apart from the rest of the description and, while the pla
 - `sandbox generate` writes a fake day of `@elvaria/sandbox` to `events/sandbox/<date>.jsonl` (nothing else of the
   kingdom changes); `sandbox replay <file> --speed 20` plays it back as a timeline, one sentence per line in the
   owner's language (`src/sandbox/timeline.ts`), paced by `CliIo.sleep`. Closing the pipe (`| head`) ends it quietly.
+  `--to herald [--port <n>]` (P2-01c, `src/sandbox/replay-herald.ts`) plays the same schedule through a Herald over a
+  throwaway kingdom made with `init`'s defaults in the OS temp folder: it pairs one `full` device and prints its link,
+  appends the day's lines to that kingdom's sandbox log once the browser opens its stream (`sandbox: true`), and on
+  Ctrl+C stops the Herald and removes the folder.
 - `tribe add <id> --adapter <adapter>` (P1-19, implementation-plan §3.14, ADR 0021): a new tribe in
   `kingdom.tribes[]`, disabled, its adapter a built-in one or an owner file `adapters/<name>.mjs` that must be there;
   no character changes. `--sibling-of <root>` (PS-27b) writes `sibling_of`, the adapter the root's when `--adapter`

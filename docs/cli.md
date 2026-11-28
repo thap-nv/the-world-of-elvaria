@@ -70,7 +70,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria watch` | Theo dõi nhiệm vụ chưa kết thúc và việc chờ bạn. Chỉ đọc; tự làm mới trong terminal. |
 | `elvaria metrics` | Sổ đo: lượt, làm lại theo nguyên nhân, đạt lượt đầu, lỗi lọt, lần cần chủ nhân. Chỉ đọc vương quốc, không tốn mana. |
 | `elvaria sandbox generate` | Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): không chạy phiên nào, không chạm nhiệm vụ thật. |
-| `elvaria sandbox replay <file>` | Phát lại một ngày giả thành dòng thời gian trên terminal. |
+| `elvaria sandbox replay <file>` | Phát lại một ngày giả: dòng thời gian trong terminal, hay qua một Sứ giả trên vương quốc tạm (--to herald). 0 mana. |
 | `elvaria migrate` | Chuyển mọi file cũ của vương quốc lên phiên bản hiện tại, có sao lưu, và thêm file, mục registry mà bản Elvaria này có và vương quốc còn thiếu. |
 | `elvaria upgrade` | Dựng một bản mới của Elvaria cạnh bản đang ghim, thử nó (migrate, doctor và bộ test hợp đồng với CLI giả trên một bản sao cấu hình của vương quốc, một nhiệm vụ bậc script trên vương quốc tạm), qua hết mới ghim rồi chạy migrate của nó trên vương quốc; --rollback về bản trước. 0 mana; không chạy khi Nhiếp chính đang chạy. |
 
@@ -645,13 +645,14 @@ Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): khô
 
 ## `elvaria sandbox replay`
 
-Phát lại một ngày giả thành dòng thời gian trên terminal.
+Phát lại một ngày giả: dòng thời gian trong terminal, hay qua một Sứ giả trên vương quốc tạm (--to herald). 0 mana.
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `<file>` | File ngày giả, ví dụ <vương quốc>/events/sandbox/2026-11-06.jsonl. |
 | `--speed <n>` | Nhanh gấp bao nhiêu lần thời gian thật (mặc định 20: mười giờ trong ba mươi phút). |
-| `--to <terminal>` | Phát tới đâu: terminal (Sứ giả phát qua WebSocket từ giai đoạn 2). |
+| `--to <terminal\|herald>` | Phát ở đâu: terminal (dòng thời gian), hay herald (một Sứ giả trên vương quốc tạm phát qua WebSocket cho trình duyệt đã ghép đôi). |
+| `--port <port>` | Với --to herald: cổng của Sứ giả trên 127.0.0.1 (mặc định 0: một cổng trống). |
 
 ## `elvaria migrate`
 

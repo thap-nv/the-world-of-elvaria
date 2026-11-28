@@ -84,9 +84,9 @@
     "cli.sandbox.replay.end": "── hết ngày giả: {lines} dòng ──",
     "cli.sandbox.replay.end_issues": "── hết ngày giả: {lines} dòng, {issues} dòng lỗi ──",
     "cli.sandbox.replay.option.speed": "Nhanh gấp bao nhiêu lần thời gian thật (mặc định 20: mười giờ trong ba mươi phút).",
-    "cli.sandbox.replay.option.to": "Phát tới đâu: terminal (Sứ giả phát qua WebSocket từ giai đoạn 2).",
+    "cli.sandbox.replay.option.to": "Phát ở đâu: terminal (dòng thời gian), hay herald (một Sứ giả trên vương quốc tạm phát qua WebSocket cho trình duyệt đã ghép đôi).",
     "cli.sandbox.replay.start": "── {fake} · ngày {date} · {lines} dòng · {from}–{to} · nhanh ×{speed}, {duration} ──",
-    "cli.sandbox.replay.summary": "Phát lại một ngày giả thành dòng thời gian trên terminal.",
+    "cli.sandbox.replay.summary": "Phát lại một ngày giả: dòng thời gian trong terminal, hay qua một Sứ giả trên vương quốc tạm (--to herald). 0 mana.",
     "cli.sandbox.replay_hint": "Xem lại: elvaria sandbox replay \"{file}\" --speed 20",
     "cli.sandbox.tool.bash": "chạy",
     "cli.sandbox.tool.other": "dùng công cụ",
@@ -103,6 +103,11 @@
     "cli.sandbox.who.steward": "Nhiếp chính",
     "cli.sandbox.window.five_hour": "cửa sổ 5 giờ",
     "cli.sandbox.window.weekly": "cửa sổ tuần",
-    "cli.sandbox.written": "Ghi vào {file}"
+    "cli.sandbox.written": "Ghi vào {file}",
+    "cli.sandbox.herald.kingdom": "Vương quốc thử",
+    "cli.sandbox.herald.device": "Trình duyệt xem ngày giả",
+    "cli.sandbox.herald.pair": "Mở đường dẫn dưới đây trong trình duyệt để xem ngày giả (mã dùng một lần, hạn 5 phút); ngày bắt đầu khi trình duyệt mở luồng thế giới:",
+    "cli.sandbox.herald.played": "── hết ngày giả: {lines} dòng; Sứ giả vẫn chạy, Ctrl+C để dừng và xóa vương quốc tạm ──",
+    "cli.sandbox.replay.option.port": "Với --to herald: cổng của Sứ giả trên 127.0.0.1 (mặc định 0: một cổng trống)."
   }
 }

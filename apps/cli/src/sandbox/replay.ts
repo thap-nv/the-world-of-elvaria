@@ -2,6 +2,8 @@
 // (implementation-plan §7; the milestone of stage 0). The file is read by the event log's own reader, so every
 // line shown has passed the event contract; a line that does not is reported and skipped. The kingdom is
 // optional: with one (--kingdom or ELVARIA_KINGDOM), the owner's language and the registry's names are used.
+// (P2-01c) `--to herald [--port <n>]` plays the same schedule through a Herald over a throwaway kingdom
+// (replay-herald.ts).
 import path from 'node:path';
 
 import { readDay, replay, replaySpan } from '@elvaria/sandbox';
@@ -11,13 +13,15 @@ import { pathExists } from '@elvaria/store';
 import { textOption } from '../args.ts';
 import { EXIT } from '../command-table/command.ts';
 import { kingdomDir, openKingdomContext } from '../kingdom-context.ts';
+import { portFrom } from '../herald/herald.ts';
+import { replayToHerald } from './replay-herald.ts';
 import { timeline } from './timeline.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { TimelineContext } from './timeline.ts';
 
 const DEFAULT_SPEED = 20;
 const MINUTE_MS = 60_000;
-const DESTINATIONS = ['terminal'] as const;
+const DESTINATIONS = ['terminal', 'herald'] as const;
 /** `HH:MM` of an ISO 8601 time with offset. */
 const CLOCK = { from: 11, to: 16 } as const;
 const DATE_LENGTH = 10;
@@ -25,6 +29,9 @@ const DATE_LENGTH = 10;
 interface ReplayRequest {
   readonly file: string;
   readonly speed: number;
+  readonly to: (typeof DESTINATIONS)[number];
+  /** The Herald's port with --to herald; 0 picks a free one. */
+  readonly port: number;
 }
 
 function readRequest(input: CommandInput, ctx: CliContext): ReplayRequest | string[] {
@@ -35,12 +42,17 @@ function readRequest(input: CommandInput, ctx: CliContext): ReplayRequest | stri
   if (!/^\d+(?:\.\d+)?$/.test(speedText ?? String(DEFAULT_SPEED)) || !(speed > 0)) {
     problems.push(t('cli.sandbox.bad_speed'));
   }
-  const to = textOption(input, 'to') ?? 'terminal';
-  if (!(DESTINATIONS as readonly string[]).includes(to)) {
+  const toText = textOption(input, 'to') ?? 'terminal';
+  const to = DESTINATIONS.find((destination) => destination === toText);
+  if (to === undefined) {
     problems.push(t('cli.error.choice', { option: '--to', choices: DESTINATIONS.join(', ') }));
   }
+  const portText = textOption(input, 'port');
+  const port = portText === undefined ? 0 : portFrom(portText);
+  if (port === undefined) problems.push(t('cli.herald.bad_port', { value: portText ?? '' }));
   const file = path.resolve(io.cwd, input.positionals[0] ?? '');
-  return problems.length > 0 ? problems : { file, speed };
+  if (problems.length > 0 || to === undefined || port === undefined) return problems;
+  return { file, speed, to, port };
 }
 
 /** The owner's language and names when a kingdom is known; the command line's language otherwise. */
@@ -83,6 +95,10 @@ async function play(context: TimelineContext, cli: CliContext, request: ReplayRe
     duration,
   };
   io.out(t('cli.sandbox.replay.start', header));
+  if (request.to === 'herald') {
+    const played = await replayToHerald(cli, { events, speed: request.speed, port: request.port });
+    return issues.length === 0 ? played : EXIT.failed;
+  }
   const line = timeline(context);
   const emit = (event: Parameters<typeof line>[0]): void => {
     io.out(line(event));
@@ -116,7 +132,8 @@ export const SANDBOX_REPLAY: CommandSpec = {
   args: [{ name: '<file>', help: 'cli.sandbox.replay.arg.file' }],
   options: {
     speed: { type: 'string', value: '<n>', help: 'cli.sandbox.replay.option.speed' },
-    to: { type: 'string', value: '<terminal>', help: 'cli.sandbox.replay.option.to' },
+    to: { type: 'string', value: '<terminal|herald>', help: 'cli.sandbox.replay.option.to' },
+    port: { type: 'string', value: '<port>', help: 'cli.sandbox.replay.option.port' },
   },
   run: runReplay,
 };

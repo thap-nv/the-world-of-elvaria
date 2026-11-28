@@ -3,118 +3,15 @@
 // on loopback, no mana. A port in use is the system's code and exit 1, on every OS. (P2-01c) The paired browser opens
 // a world stream at /ws, gets the snapshot, sends a command into inbox/, and the revoke closes its stream.
 import { readFile } from 'node:fs/promises';
-import { request } from 'node:http';
 import { createServer } from 'node:net';
-import type { IncomingHttpHeaders } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { WebSocket } from 'ws';
 
 import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
-import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
-
-interface Answer {
-  readonly status: number;
-  readonly headers: IncomingHttpHeaders;
-  readonly body: string;
-}
-
-/** One request with exactly these headers (Node adds Host); redirects are not followed. */
-function send(
-  origin: string,
-  path: string,
-  init: { method?: string; headers?: Record<string, string>; body?: string } = {},
-): Promise<Answer> {
-  const url = new URL(path, origin);
-  return new Promise((resolve, reject) => {
-    const req = request(
-      {
-        host: url.hostname,
-        port: url.port,
-        path: `${url.pathname}${url.search}`,
-        method: init.method ?? 'GET',
-        headers: init.headers,
-      },
-      (res) => {
-        const chunks: Buffer[] = [];
-        res.on('data', (chunk: Buffer) => chunks.push(chunk));
-        res.on('end', () => {
-          resolve({
-            status: res.statusCode ?? 0,
-            headers: res.headers,
-            body: Buffer.concat(chunks).toString('utf8'),
-          });
-        });
-      },
-    );
-    req.on('error', reject);
-    req.end(init.body);
-  });
-}
-
-type Message = Readonly<Record<string, unknown>> & { readonly type: string };
-
-/** A world stream of the session `cookie`: the first message of a type, a frame to send, and how it closed. */
-function worldStream(origin: string, cookie: string) {
-  const socket = new WebSocket(`${origin.replace('http:', 'ws:')}/ws`, {
-    origin,
-    headers: { Cookie: cookie },
-  });
-  const messages: Message[] = [];
-  let waiting: (() => void)[] = [];
-  socket.on('message', (data: Buffer) => {
-    messages.push(JSON.parse(data.toString('utf8')) as Message);
-    const now = waiting;
-    waiting = [];
-    now.forEach((look) => {
-      look();
-    });
-  });
-  const first = (type: string) =>
-    new Promise<Message>((resolve) => {
-      const look = () => {
-        const found = messages.find((message) => message.type === type);
-        if (found === undefined) waiting.push(look);
-        else resolve(found);
-      };
-      look();
-    });
-  const closed = new Promise<number>((resolve) => socket.on('close', resolve));
-  const opened = new Promise<void>((resolve) =>
-    socket.once('open', () => {
-      resolve();
-    }),
-  );
-  return {
-    first,
-    closed,
-    opened,
-    send: (value: unknown) => {
-      socket.send(JSON.stringify(value));
-    },
-  };
-}
-
-/** An io whose owner presses Ctrl+C only when the test says, and which says when the Herald listens. */
-function heldIo(): { io: TestIo; listening: Promise<void>; stop: () => void } {
-  let ready = (): void => undefined;
-  let stop = (): void => undefined;
-  const listening = new Promise<void>((resolve) => {
-    ready = resolve;
-  });
-  const stopped = new Promise<void>((resolve) => {
-    stop = resolve;
-  });
-  const io = testIo({
-    untilStopped: () => {
-      ready();
-      return stopped;
-    },
-  });
-  return { io, listening, stop };
-}
+import type { TempDir } from '../__fixtures__/cli.ts';
+import { heldIo, send, worldStream } from '../__fixtures__/herald.ts';
 
 describe('elvaria herald', () => {
   let dir: TempDir;
