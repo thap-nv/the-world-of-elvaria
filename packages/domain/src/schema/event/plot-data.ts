@@ -97,3 +97,35 @@ export const PlotMergedDataSchema = z
       "The Steward merged a party's part branches, then the territory's base branch (PS-08e), into its merge quest's branch, or tried to (implementation-plan §3.13, P1-21 (d)): in the machine's run, before each knight's session and before the checks, never before a judge's. (PS-09) The merge queue merged the base branch into a done quest's branch before its delivery. A merge with nothing left to take in writes no line.",
     ),
   );
+
+/**
+ * Why commands.setup ran in a quest's plot (LL-04): `first`, it never succeeded there; `changed`, it did, and a file
+ * of commands.setup_when differs since (fix/plot-setup-on-lockfile: a quest that adds a dependency).
+ */
+export const PLOT_SETUP_TRIGGERS = ['first', 'changed'] as const;
+
+export const PlotSetupDataSchema = z
+  .strictObject({
+    trigger: z.enum(PLOT_SETUP_TRIGGERS),
+    pass: z.boolean(),
+    duration_ms: z.int().min(0).optional().meta(describe('How long it ran, when it ran to its end.')),
+    log_path: NonEmptyStringSchema.meta(describe('Its log, relative to the kingdom, `/` separators.')),
+    detail: NonEmptyStringSchema.optional().meta(
+      describe(
+        'With pass false: the command and how it ended (an exit code, a timeout), one line, redacted.',
+      ),
+    ),
+  })
+  .meta(
+    describe(
+      "The Steward ran the territory's commands.setup in a quest's plot (LL-04), outside the patrol, which tells its own in patrol.ran. A setup the Steward's stop cut short writes none.",
+    ),
+  );
+
+/** The lines about a quest's plot, spread into EVENT_DATA_SCHEMAS. */
+export const PLOT_EVENT_DATA = {
+  'plot.patched': PlotPatchedDataSchema,
+  'plot.merged': PlotMergedDataSchema,
+  'plot.restored': PlotRestoredDataSchema,
+  'plot.setup': PlotSetupDataSchema,
+} as const;

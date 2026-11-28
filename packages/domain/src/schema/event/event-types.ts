@@ -84,6 +84,8 @@ export const EVENT_TYPES = [
   'plot.patched',
   'plot.merged',
   'plot.restored',
+  // LL-04: commands.setup ran in a quest's plot, outside the patrol.
+  'plot.setup',
   'chronicle.written',
   // PS-03: the Steward's scheduled jobs; the digest is the first.
   'schedule.ran',
@@ -122,6 +124,9 @@ export const EVENT_TYPES = [
   'tribe.held',
   // fix/run-221-followups: a session of the Chancellor's office says what it spent, for the mana estimate.
   'chancellor.answered',
+  // LL-04: a Steward started, saying how the one before it ended, and stopped.
+  'steward.started',
+  'steward.stopped',
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

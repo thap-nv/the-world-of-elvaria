@@ -94,6 +94,20 @@ const QUEST_CHANGE = {
 
 export const QuestChangeDataSchema = z.strictObject(QUEST_CHANGE);
 
+// Optional and added after v2 (LL-04), as `sequels`: a line written before it has none, and a reader that knows the
+// field reads both, so `v` stays 2. Names only, never values: the line's view already says what they are now.
+export const QuestEditedDataSchema = z.strictObject({
+  ...QUEST_CHANGE,
+  fields: z
+    .array(z.string().regex(REGISTRY_ID_PATTERN))
+    .optional()
+    .meta(
+      describe(
+        "The top-level fields of the quest file the edit changed (`description`, `rank`, `held`…), updated_at aside, in the file's order; empty when it changed none.",
+      ),
+    ),
+});
+
 /**
  * The parts of an infirmary reason (P1-32), each a piece the Steward used to write into `reason` alone. All optional:
  * a trip says only what it knows.

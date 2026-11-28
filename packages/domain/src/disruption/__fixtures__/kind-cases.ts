@@ -17,6 +17,9 @@ const guest = (type: string, at: number, pr = 7): LineSpec => ({
   at,
   data: { territory: TERRITORY, pr },
 });
+/** The line that answers an inbox command naming the quest (LL-04). */
+const command = (kind: string, at: number): LineSpec =>
+  q({ type: 'command.applied', at, data: { command_id: '01JD0000000000000000000099', kind } });
 const verdictFail = (attempt: number): LineSpec =>
   q({ type: 'verdict.fail', attempt, data: { verdict: `${QUEST}-${attempt}`, fail_kind: 'style' } });
 
@@ -44,8 +47,8 @@ export const KIND_CASES: Readonly<Record<string, KindCase>> = {
     miss: [q({ type: 'quest.edited', data: questView('open') })],
   },
   retry_dropped_assignee: {
-    match: [reason('script:fail'), q({ type: 'quest.released', data: questView('open') })],
-    miss: [reason('script:fail'), q({ type: 'quest.archived', data: questView('archived') })],
+    match: [q({ type: 'quest.released', at: 0, data: questView('open') }), command('retry', 1)],
+    miss: [q({ type: 'quest.released', at: 0, data: questView('open') }), command('cancel', 1)],
   },
   guest_waited: {
     match: [guest('delivery.enqueued', 0), guest('delivery.guest_merged', 1800)],
@@ -90,5 +93,17 @@ export const KIND_CASES: Readonly<Record<string, KindCase>> = {
   tribe_check_failed: {
     match: [{ type: 'tribe.checked', data: { tribe: 'codex', outcome: 'failed' } }],
     miss: [{ type: 'tribe.checked', data: { tribe: 'codex', outcome: 'passed' } }],
+  },
+  stopped_with_sessions: {
+    match: [{ type: 'steward.stopped', data: { reason: 'owner', sessions: 2 } }],
+    miss: [{ type: 'steward.stopped', data: { reason: 'owner', sessions: 0 } }],
+  },
+  steward_died: {
+    match: [{ type: 'steward.started', data: { build: null, previous: 'unclean', down_minutes: 9 } }],
+    miss: [{ type: 'steward.started', data: { build: null, previous: 'clean', down_minutes: 9 } }],
+  },
+  plot_setup_failed: {
+    match: [q({ type: 'plot.setup', data: { trigger: 'changed', pass: false, log_path: 'a.log' } })],
+    miss: [q({ type: 'plot.setup', data: { trigger: 'changed', pass: true, log_path: 'a.log' } })],
   },
 };

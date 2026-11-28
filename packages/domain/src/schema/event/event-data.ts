@@ -10,13 +10,14 @@ import {
   ManaExhaustedDataSchema,
   ManaPoolDataSchema,
   QuestChangeDataSchema,
+  QuestEditedDataSchema,
   QuestInfirmaryDataSchema,
   QuestUnclaimableDataSchema,
   TerritoryChangeDataSchema,
 } from './state-data.ts';
 import { QuestHealDueDataSchema, QuestHealingDataSchema, QuestSubmittedDataSchema } from './heal-data.ts';
 import { GraphBuiltDataSchema, GraphFailedDataSchema } from './graph-data.ts';
-import { PlotMergedDataSchema, PlotPatchedDataSchema, PlotRestoredDataSchema } from './plot-data.ts';
+import { PLOT_EVENT_DATA } from './plot-data.ts';
 import { CommandResultDataSchema } from './command-data.ts';
 import { CheckAttributedDataSchema, CheckEndDataSchema, CheckStartDataSchema } from './check-data.ts';
 import {
@@ -51,6 +52,7 @@ import { AgentSessionUsageDataSchema } from './session-data.ts';
 import { ChancellorAnsweredDataSchema } from './chancellor-data.ts';
 import { LessonAddedDataSchema, LessonRefusedDataSchema, LessonRetiredDataSchema } from './lesson-data.ts';
 import { TempleRanDataSchema } from './temple-data.ts';
+import { STEWARD_EVENT_DATA } from './steward-data.ts';
 import type { EventType } from './event-types.ts';
 
 // Where it always was for the Steward and the specs (P1-21); plot-data.ts holds it since P1-44.
@@ -200,7 +202,7 @@ export const EVENT_DATA_SCHEMAS = {
   'quest.heal_due': QuestHealDueDataSchema,
   'quest.healing': QuestHealingDataSchema,
   'quest.delivered': QuestChangeDataSchema,
-  'quest.edited': QuestChangeDataSchema,
+  'quest.edited': QuestEditedDataSchema,
   'quest.unclaimable': QuestUnclaimableDataSchema,
   ...WAIT_EVENT_DATA,
   'agent.tool': AgentToolDataSchema,
@@ -232,9 +234,7 @@ export const EVENT_DATA_SCHEMAS = {
   'character.model_changed': CharacterChangeDataSchema,
   'command.applied': CommandResultDataSchema,
   'command.rejected': CommandResultDataSchema,
-  'plot.patched': PlotPatchedDataSchema,
-  'plot.merged': PlotMergedDataSchema,
-  'plot.restored': PlotRestoredDataSchema,
+  ...PLOT_EVENT_DATA,
   'delivery.pushed': DeliveryPushedDataSchema,
   'delivery.merged': DeliveryMergedDataSchema,
   'delivery.failed': DeliveryFailedDataSchema,
@@ -264,6 +264,7 @@ export const EVENT_DATA_SCHEMAS = {
   'upgrade.failed': UpgradeFailedDataSchema,
   'tribe.checked': TribeCheckedDataSchema,
   'chancellor.answered': ChancellorAnsweredDataSchema,
+  ...STEWARD_EVENT_DATA,
 } as const satisfies Partial<Record<EventType, z.ZodType>>;
 
 export type TypedEventType = keyof typeof EVENT_DATA_SCHEMAS;

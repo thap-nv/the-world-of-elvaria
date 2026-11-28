@@ -60,7 +60,7 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   },
   'quest.healing': { healer: 'mira', ...QUEST_CHANGE },
   'quest.delivered': QUEST_CHANGE,
-  'quest.edited': { quest: QUEST_VIEW },
+  'quest.edited': { quest: QUEST_VIEW, fields: ['description', 'scope_paths'] },
   'quest.unclaimable': {
     reason: 'level_too_low',
     rank: 'A',
@@ -129,6 +129,12 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
     restored: ['README.md'],
   },
   'plot.restored': { paths: ['apps/api/openapi.json', 'coverage/'] },
+  'plot.setup': {
+    trigger: 'changed',
+    pass: false,
+    log_path: '.runs/q_20261106_7k3m2a-setup.log',
+    detail: 'pnpm install --frozen-lockfile: ended with 1',
+  },
   'delivery.pushed': {
     ...DELIVERED,
     forge: 'github',
@@ -261,4 +267,6 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
     ],
   },
   'chancellor.answered': { tribe: 'claude', model: 'claude-opus-4-7', matter: 'triage', tokens: 48_310 },
+  'steward.started': { build: SHA_NEW, previous: 'unclean', down_minutes: 42 },
+  'steward.stopped': { reason: 'owner', sessions: 2 },
 };

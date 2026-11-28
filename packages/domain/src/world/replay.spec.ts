@@ -125,6 +125,7 @@ describe('replaying a fake day', () => {
       'plot.patched',
       'plot.merged',
       'plot.restored',
+      'plot.setup',
       'delivery.pushed',
       'delivery.merged',
       'delivery.failed',
@@ -156,6 +157,8 @@ describe('replaying a fake day', () => {
       'upgrade.failed',
       'tribe.checked',
       'chancellor.answered',
+      'steward.started',
+      'steward.stopped',
     ]);
     for (const ignored of ['agent.tool', 'verdict.pass', 'command.applied', 'campaign.declared']) {
       expect(types).toContain(ignored);

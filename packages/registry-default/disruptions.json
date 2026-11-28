@@ -55,15 +55,19 @@
       "id": "retry_dropped_assignee",
       "name_vi": "Thử lại bỏ người làm",
       "name_en": "Retry dropped the assignee",
-      "description": "A quest left the infirmary by a retry, which opens it to the whole class: another character may take it without the context of the runs before.",
+      "description": "The owner retried a quest, which opens it to the whole class: another character may take it without the context of the runs before. The command names its quest (LL-04).",
       "shape": "sequence",
-      "first": { "type": "quest.infirmary" },
-      "then": {
+      "first": {
         "type": "quest.released",
         "where": [{ "path": "data.quest.status", "in": ["open"] }]
       },
+      "then": {
+        "type": "command.applied",
+        "where": [{ "path": "data.kind", "in": ["retry"] }]
+      },
       "same": ["quest"],
-      "within_seconds": 604800
+      "within_seconds": 60,
+      "cause": "then.data.kind"
     },
     {
       "id": "guest_waited",
@@ -177,6 +181,36 @@
       "shape": "event",
       "type": "tribe.checked",
       "where": [{ "path": "data.outcome", "in": ["failed"] }]
+    },
+    {
+      "id": "stopped_with_sessions",
+      "name_vi": "Nhiếp chính dừng giữa phiên",
+      "name_en": "Steward stopped mid-session",
+      "description": "The Steward stopped while sessions ran: the stop killed them, and their runs start again from their handover.",
+      "shape": "event",
+      "type": "steward.stopped",
+      "where": [{ "path": "data.sessions", "gte": 1 }],
+      "cause": "data.reason"
+    },
+    {
+      "id": "steward_died",
+      "name_vi": "Nhiếp chính chết giữa chừng",
+      "name_en": "Steward died halfway",
+      "description": "A Steward started after one that wrote no stop: it was killed, crashed or lost its machine, and whatever it ran then was cut.",
+      "shape": "event",
+      "type": "steward.started",
+      "where": [{ "path": "data.previous", "in": ["unclean"] }],
+      "cause": "data.previous"
+    },
+    {
+      "id": "plot_setup_failed",
+      "name_vi": "Setup trong đất của quest hỏng",
+      "name_en": "Setup failed in a plot",
+      "description": "The territory's setup failed in a quest's plot; changed: it ran again because a file of commands.setup_when changed, such as the lockfile.",
+      "shape": "event",
+      "type": "plot.setup",
+      "where": [{ "path": "data.pass", "in": [false] }],
+      "cause": "data.trigger"
     }
   ]
 }
