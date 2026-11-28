@@ -6,7 +6,7 @@ import { tempDir } from '@elvaria/testkit';
 import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
-import { batches, narrowCommands } from './check-changed-narrow.mjs';
+import { batches, groupOf, narrowCommands } from './check-changed-narrow.mjs';
 import { changedPaths, main, parseArgs, plan, toolEnv } from './check-changed.mjs';
 
 let dir: string;
@@ -63,6 +63,20 @@ it.each([
 it('selects both documentation checks in the docs group', () => {
   const commands = plan(['packages/i18n/package.json']).commands;
   expect(narrowCommands(commands, [], dir, 'docs')).toEqual([['docs:gen', '--check'], ['docs:check']]);
+});
+
+it('selects filtered test and typecheck commands separately', () => {
+  const commands = plan(['apps/cli/src/cli.ts']).commands;
+  expect(narrowCommands(commands, [], dir, 'typecheck')).toEqual([
+    ['--filter', '...@elvaria/cli', '--filter', '!the-world-of-elvaria', 'typecheck'],
+  ]);
+  expect(narrowCommands(commands, [], dir, 'test')).toEqual([
+    ['--filter', '...@elvaria/cli', '--filter', '!the-world-of-elvaria', 'test'],
+  ]);
+});
+
+it.each(['test', 'typecheck'])('groups the filtered %s command', (script) => {
+  expect(groupOf(['--filter', '...@elvaria/cli', '--filter', '!the-world-of-elvaria', script])).toBe(script);
 });
 
 it('selects root test and typecheck commands too', () => {
