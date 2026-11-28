@@ -27,4 +27,5 @@ export * from './script/index.ts';
 export * from './temple/index.ts';
 export * from './tribe/index.ts';
 export * from './verify/index.ts';
+export * from './wait/index.ts';
 export * from './world/index.ts';

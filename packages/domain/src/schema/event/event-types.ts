@@ -127,6 +127,9 @@ export const EVENT_TYPES = [
   // LL-04: a Steward started, saying how the one before it ended, and stopped.
   'steward.started',
   'steward.stopped',
+  // LL-03: ready work waited 2 minutes or more for the machinery, and the wait ended.
+  'wait.started',
+  'wait.ended',
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

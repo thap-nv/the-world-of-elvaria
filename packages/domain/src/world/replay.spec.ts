@@ -115,6 +115,9 @@ describe('replaying a fake day', () => {
       // P2-04: a quest waiting for a judge and a tribe held by its CLI, notices the digest reads from the log.
       'quest.judge_wait',
       'tribe.held',
+      // LL-03: waits of ready work on the machinery, read from the log by disruptionsOf, not kept by the world.
+      'wait.started',
+      'wait.ended',
       'mana.warning',
       'character.meditate',
       'character.suspend',

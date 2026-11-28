@@ -19,9 +19,9 @@ declare module 'vitest' {
 const parsed = parseDisruptionKinds(JSON.parse(inject('defaultDisruptions')));
 const KINDS: readonly DisruptionKind[] = parsed.ok ? parsed.value : [];
 
-/** Plan §8: recognised with their cause, and with a symptom at least, after LL-04 (LL-01: 9 and 18). */
-const TARGET_FULL = 13;
-const SYMPTOM_TODAY = 21;
+/** Plan §8: recognised with their cause, and with a symptom at least, after LL-03 (LL-01: 9 and 18; LL-04: 13 and 21). */
+const TARGET_FULL = 15;
+const SYMPTOM_TODAY = 22;
 const SUITE_SIZE = 30;
 
 function levelOf(entry: SuiteCase, kinds: readonly string[]): Level {

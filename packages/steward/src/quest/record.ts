@@ -89,7 +89,8 @@ export interface Recorder {
     actor?: Actor,
     line?: ChangeLine,
   ): Promise<Result<Character, string>>;
-  note(line: Line): Promise<void>;
+  /** The line as the log took it: its id names it in a later line (wait.ended, LL-03). */
+  note(line: Line): Promise<Event>;
 }
 
 export const STEWARD: Actor = { kind: 'steward' };
@@ -135,7 +136,7 @@ const reasonOf = (error: unknown): string =>
 export type LineDeps = Pick<RecorderDeps, 'events' | 'ids' | 'store' | 'onEvent'>;
 
 /** Redacted (ADR 0013), checked by the event schema, appended to the log and to the quest's journal. */
-export async function appendLine(deps: LineDeps, line: Line, ts: string): Promise<void> {
+export async function appendLine(deps: LineDeps, line: Line, ts: string): Promise<Event> {
   const run = line.quest === undefined ? 0 : currentRun(line.quest);
   const draft = {
     v: EVENT_VERSION,
@@ -154,6 +155,7 @@ export async function appendLine(deps: LineDeps, line: Line, ts: string): Promis
   deps.onEvent?.(event);
   // The quest's journal carries its own lines too: a revived session reads its tail (ADR 0010, 0017).
   if (line.quest !== undefined) await openJournal(deps.store.root, line.quest.id).append([event]);
+  return event;
 }
 
 function editAll(world: World, edits: Edits, at: string): Result<Character[], string> {

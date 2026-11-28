@@ -3629,6 +3629,166 @@
       "if": {
         "properties": {
           "type": {
+            "const": "wait.started"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "Ready work has waited 2 minutes for the same reason: the quest of the line, or a guest entry (`pr`). A shorter wait writes nothing.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "reason",
+              "since",
+              "holder"
+            ],
+            "properties": {
+              "reason": {
+                "enum": [
+                  "base_red",
+                  "scope_held",
+                  "mana",
+                  "tribe_held",
+                  "room_full"
+                ]
+              },
+              "since": {
+                "description": "When the Steward first saw the wait: 2 minutes before the line or more.",
+                "type": "string",
+                "format": "date-time"
+              },
+              "pr": {
+                "description": "A guest entry of the merge queue (CM-07) that waits, on the territory of the line.",
+                "type": "integer",
+                "minimum": 1
+              },
+              "holder": {
+                "description": "What holds the work, as the Steward saw it when it wrote the line.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "territory": {
+                    "description": "base_red: the territory whose branch is red.",
+                    "type": "string",
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "global"
+                      ]
+                    }
+                  },
+                  "quest": {
+                    "description": "scope_held: the quest that holds the files.",
+                    "type": "string",
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "gauges": {
+                    "description": "mana: the pools of the characters it waits for, with when each resets.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "tribe",
+                        "pool"
+                      ],
+                      "properties": {
+                        "tribe": {
+                          "type": "string",
+                          "pattern": "^[a-z][a-z0-9_]*$"
+                        },
+                        "pool": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "resets_at": {
+                          "description": "When the last window that closes it resets, if a reading says.",
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  },
+                  "tribes": {
+                    "description": "tribe_held: the held tribes of the characters it waits for.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "running": {
+                    "description": "room_full: the quests whose machine work holds the slots (patrols and guests aside).",
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "wait.ended"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The wait is over: the work moved, or waits for something else, or is gone. A wait a Steward left open ends at the next start (its steward.started time) when it no longer holds.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "started",
+              "reason",
+              "minutes"
+            ],
+            "properties": {
+              "started": {
+                "description": "The id of the wait.started line it ends.",
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "reason": {
+                "enum": [
+                  "base_red",
+                  "scope_held",
+                  "mana",
+                  "tribe_held",
+                  "room_full"
+                ]
+              },
+              "minutes": {
+                "description": "Whole minutes from `since` of the wait.started line to the end of the wait.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "pr": {
+                "description": "A guest entry of the merge queue (CM-07) that waits, on the territory of the line.",
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "const": "agent.tool"
           }
         }
@@ -7467,7 +7627,9 @@
         "tribe.held",
         "chancellor.answered",
         "steward.started",
-        "steward.stopped"
+        "steward.stopped",
+        "wait.started",
+        "wait.ended"
       ]
     }
   },

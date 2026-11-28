@@ -4,7 +4,7 @@
 // herald and a restarted Steward then read the waits from the log (stewardNoticesOf), and a restart rings no bell again.
 import { z } from 'zod';
 
-import { TribeIdSchema } from '../../core/ids.ts';
+import { QuestIdSchema, TerritoryIdSchema, TribeIdSchema, UlidSchema } from '../../core/ids.ts';
 import { DateTimeSchema, NonEmptyStringSchema } from '../common.ts';
 
 const describe = (description: string) => ({ description });
@@ -67,8 +67,81 @@ export const TribeHeldDataSchema = z
     ),
   );
 
+/**
+ * (LL-03, plans/learning-loop.md §4.1) Why work ready to go does not move (tickWaitsOf): `base_red`, its territory's
+ * default branch is red (PS-09d); `scope_held`, another quest holds the files it needs (R2, R3); `mana`, every
+ * character that may take it has its mana closed; `tribe_held`, every such character's tribe is held by its CLI's
+ * version; `room_full`, dispatch.max_background has no slot for its machine work. A judge's wait stays
+ * `quest.judge_wait`, a quest nobody can take `quest.unclaimable`.
+ */
+export const WAIT_REASONS = ['base_red', 'scope_held', 'mana', 'tribe_held', 'room_full'] as const;
+export type WaitReason = (typeof WAIT_REASONS)[number];
+
+const GuestPrSchema = z
+  .int()
+  .min(1)
+  .optional()
+  .meta(describe('A guest entry of the merge queue (CM-07) that waits, on the territory of the line.'));
+
+const WaitHolderSchema = z
+  .strictObject({
+    territory: TerritoryIdSchema.optional().meta(describe('base_red: the territory whose branch is red.')),
+    quest: QuestIdSchema.optional().meta(describe('scope_held: the quest that holds the files.')),
+    gauges: z
+      .array(WaitGaugeSchema)
+      .min(1)
+      .optional()
+      .meta(describe('mana: the pools of the characters it waits for, with when each resets.')),
+    tribes: z
+      .array(TribeIdSchema)
+      .min(1)
+      .optional()
+      .meta(describe('tribe_held: the held tribes of the characters it waits for.')),
+    running: z
+      .array(QuestIdSchema)
+      .optional()
+      .meta(describe('room_full: the quests whose machine work holds the slots (patrols and guests aside).')),
+  })
+  .meta(describe('What holds the work, as the Steward saw it when it wrote the line.'));
+
+/** What holds the work, one field by the reason (tickWaitsOf). */
+export type WaitHolder = z.infer<typeof WaitHolderSchema>;
+
+export const WaitStartedDataSchema = z
+  .strictObject({
+    reason: z.enum(WAIT_REASONS),
+    since: DateTimeSchema.meta(
+      describe('When the Steward first saw the wait: 2 minutes before the line or more.'),
+    ),
+    pr: GuestPrSchema,
+    holder: WaitHolderSchema,
+  })
+  .meta(
+    describe(
+      'Ready work has waited 2 minutes for the same reason: the quest of the line, or a guest entry (`pr`). A shorter wait writes nothing.',
+    ),
+  );
+
+export const WaitEndedDataSchema = z
+  .strictObject({
+    started: UlidSchema.meta(describe('The id of the wait.started line it ends.')),
+    reason: z.enum(WAIT_REASONS),
+    minutes: z
+      .int()
+      .min(0)
+      .meta(describe('Whole minutes from `since` of the wait.started line to the end of the wait.')),
+    pr: GuestPrSchema,
+  })
+  .meta(
+    describe(
+      'The wait is over: the work moved, or waits for something else, or is gone. A wait a Steward left open ends at the next start (its steward.started time) when it no longer holds.',
+    ),
+  );
+
 /** The waits' lines, spread into EVENT_DATA_SCHEMAS. */
 export const WAIT_EVENT_DATA = {
   'quest.judge_wait': QuestJudgeWaitDataSchema,
   'tribe.held': TribeHeldDataSchema,
+  'wait.started': WaitStartedDataSchema,
+  'wait.ended': WaitEndedDataSchema,
 } as const;

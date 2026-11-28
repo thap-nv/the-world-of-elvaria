@@ -106,4 +106,8 @@ export const KIND_CASES: Readonly<Record<string, KindCase>> = {
     match: [q({ type: 'plot.setup', data: { trigger: 'changed', pass: false, log_path: 'a.log' } })],
     miss: [q({ type: 'plot.setup', data: { trigger: 'changed', pass: true, log_path: 'a.log' } })],
   },
+  long_wait: {
+    match: [q({ type: 'wait.ended', data: { reason: 'scope_held', minutes: 10 } })],
+    miss: [q({ type: 'wait.ended', data: { reason: 'scope_held', minutes: 9 } })],
+  },
 };
