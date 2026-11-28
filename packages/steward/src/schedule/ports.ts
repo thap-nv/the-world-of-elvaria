@@ -4,6 +4,7 @@
 import type {
   AttentionItem,
   CharacterId,
+  ChronicleLedger,
   DailyJobId,
   QuestId,
   StewardNotices,
@@ -96,4 +97,19 @@ export interface DigestRequest {
  */
 export interface Digest {
   write(request: DigestRequest): Promise<string>;
+}
+
+/** The chronicle of a day as the Steward read it (P2-06): the day's ledger from the log (dayLedgerOf). */
+export interface ChronicleRequest {
+  readonly day: string;
+  readonly ledger: ChronicleLedger;
+}
+
+/**
+ * The chronicle's port (P2-06): apps/cli writes `chronicle/<day>.json` (the ledger) and `chronicle/<day>.md` (its
+ * counts and lists in the owner's language, redacted), keeps a pair already there, and returns the .md path relative
+ * to the kingdom. The Steward then writes `chronicle.written`. No model runs (ADR 0017).
+ */
+export interface Chronicle {
+  write(request: ChronicleRequest): Promise<string>;
 }

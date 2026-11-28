@@ -28,6 +28,8 @@ export { createSteward, sessionsLeftBehind, stewardRuns } from './steward.ts';
 export type { LeftSession } from './sessions/pids.ts';
 export type {
   Bell,
+  Chronicle,
+  ChronicleRequest,
   Digest,
   DigestRequest,
   JobMode,
