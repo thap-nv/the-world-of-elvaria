@@ -1,6 +1,10 @@
 {
   "version": 1,
   "messages": {
+    "bell.doctor.on": "Chuông máy tính bật: thông báo trên {platform} khi elvaria run chạy trong terminal, hoặc với --desktop-bell.",
+    "bell.doctor.off": "Chuông máy tính tắt (kingdom.bell.desktop = false).",
+    "bell.doctor.unsupported": "Chuông máy tính bật, nhưng máy này ({platform}) không hiện thông báo; chỉ có chuông terminal.",
+    "bell.doctor.windows_source": "Windows hiển thị nguồn thông báo là SnoreToast.",
     "bell.failed": "một chuông không rung được: {message}",
     "bell.desktop.unsupported": "máy này ({platform}) không hiện được thông báo hệ thống; chuông chỉ rung ở terminal.",
     "bell.desktop.failed": "thông báo hệ thống không hiện được: {why}",

@@ -553,7 +553,9 @@ Không có tham số riêng, chỉ các tùy chọn chung.
 
 Chạy Nhiếp chính: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C).
 
-Không có tham số riêng, chỉ các tùy chọn chung.
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `--desktop-bell` | Cho phép thông báo máy tính khi không có terminal nếu kingdom.bell.desktop là true. |
 
 ## `elvaria herald`
 

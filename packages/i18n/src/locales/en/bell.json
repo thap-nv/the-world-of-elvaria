@@ -1,6 +1,10 @@
 {
   "version": 1,
   "messages": {
+    "bell.doctor.on": "Desktop bell on: toasts on {platform} while elvaria run runs on a terminal, or with --desktop-bell.",
+    "bell.doctor.off": "Desktop bell off (kingdom.bell.desktop = false).",
+    "bell.doctor.unsupported": "Desktop bell on, but this machine ({platform}) shows no toast; terminal only.",
+    "bell.doctor.windows_source": "Windows shows the notification source as SnoreToast.",
     "bell.failed": "a bell could not ring: {message}",
     "bell.desktop.unsupported": "this machine ({platform}) shows no desktop notification; the bell rings on the terminal only.",
     "bell.desktop.failed": "a desktop notification could not be shown: {why}",

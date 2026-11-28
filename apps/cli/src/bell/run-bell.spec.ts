@@ -1,5 +1,5 @@
-// The bell of `elvaria run` (P2-03): the desktop bell rings beside the console only on a watched terminal with
-// kingdom.bell.desktop on. Linux stands in for "a desktop bell was added": it shows no toast and says so once, so no
+// The bell of `elvaria run` (P2-03): the desktop bell rings with kingdom.bell.desktop on and a watched terminal or
+// --desktop-bell. Linux stands in for "a desktop bell was added": it shows no toast and says so once, so no
 // spec ever shows a real one.
 import { QuestIdSchema } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
@@ -28,6 +28,14 @@ function consoleOf(heard: string[]): Bell {
 }
 
 describe('the bell of elvaria run', () => {
+  it.each([true, false])('honours the background flag only when desktop is %s', async (desktop) => {
+    const io = testIo({ platform: 'linux', interactive: false });
+    const heard: string[] = [];
+    await runBell({ io, t, kingdom: bellOf(desktop) }, consoleOf(heard), true).ring(seal);
+    expect(heard).toEqual(['awaiting_seal']);
+    expect(io.printed.err).toEqual(desktop ? [NO_TOAST] : []);
+  });
+
   it('adds the desktop bell on a watched terminal with kingdom.bell.desktop on', async () => {
     const io = testIo({ platform: 'linux', interactive: true });
     const heard: string[] = [];

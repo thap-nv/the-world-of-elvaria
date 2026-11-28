@@ -552,8 +552,8 @@
 - Offers a newer build in the digest (`upgrade_available`, PS-08d) when the optional `deps.upgradeOffer` port of the
   composition root says the pinned build's repo has one; read as the digest is made.
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with
-  `reason: null`, and keeps the notices in `.state/unclaimable.json` (`readUnclaimable`) for `elvaria quest list`
-  and `show`, rebuilt from the log at start (the domain's `unclaimableOf`).
+  `reason: null`, and rebuilds its in-memory notices from the log at start (the domain's `unclaimableOf`).
+  `elvaria quest list` and `show` read the notices from the log; an old `.state/unclaimable.json` is ignored.
 - Builds the territories' code graphs outside the tick (PS-21, ADR 0029, `src/background/graph-builds.ts`) through the optional
   `deps.graphs` port (runner-core's `codeGraphsOf`): for each territory with `code_graph` on, the default branch's tip
   every tick and a quest's base commit when its session opens; one build per territory, the latest commit next,
