@@ -158,6 +158,16 @@ export async function userPromptLengthOf(ctx: Context, input: SessionInput): Pro
   return prompt.user.length;
 }
 
+/** The places of the owner's secrets a session's tools never name (SEC-01b): the treasury, each tribe's CLI folder. */
+const secretPathsOf = (ctx: Context): string[] => [
+  ctx.world.kingdom.paths.treasury.startsWith('~')
+    ? ctx.world.kingdom.paths.treasury
+    : path.resolve(ctx.root, ctx.world.kingdom.paths.treasury),
+  ...ctx.world.kingdom.tribes.flatMap(({ tool }) =>
+    tool?.config_dir === undefined ? [] : [`${tool.config_dir}/**`],
+  ),
+];
+
 export async function requestOf(
   ctx: Context,
   input: SessionInput,
@@ -190,14 +200,7 @@ export async function requestOf(
     permissions: toolPolicyOf({
       role,
       characterClass,
-      secret_paths: [
-        ctx.world.kingdom.paths.treasury.startsWith('~')
-          ? ctx.world.kingdom.paths.treasury
-          : path.resolve(ctx.root, ctx.world.kingdom.paths.treasury),
-        ...ctx.world.kingdom.tribes.flatMap(({ tool }) =>
-          tool?.config_dir === undefined ? [] : [`${tool.config_dir}/**`],
-        ),
-      ],
+      secret_paths: secretPathsOf(ctx),
       character,
       territory,
       scratch: input.scratch === true,
@@ -207,6 +210,8 @@ export async function requestOf(
       // Exactly the screens its prompt lists, outside the plot (PS-11b): never the run folder.
       images: screens?.files,
       narrow_checks: narrow,
+      // (P2-01d) Every session of a read-only quest: reading tools, its report and its letter, no shell, no web.
+      read_only: quest.read_only,
     }),
     budget: budgetOf(ctx, input),
     env,

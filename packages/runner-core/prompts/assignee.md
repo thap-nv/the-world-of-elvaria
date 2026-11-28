@@ -1,6 +1,7 @@
 <!-- System part of an assignee, new or continuing (implementation-plan §2.4, §3.7; ADR 0010, 0017).
 {{apprentice}} is apprentice.md when the class may start one, else empty; {{shell}} is shell.md with the commands
-the class may run, else empty; {{read_only}} is read-only.md when the territory has read-only paths, else empty;
+the class may run, else empty; {{read_only}} is read-only.md when the territory has read-only paths, then read-only-quest.md for a read-only quest
+(P2-01d), else empty;
 {{patch}} is patch.md when the territory has patch paths (P1-28), else empty. Laws 8 and 9 are the grammar memosOf
 reads in the Memos section of the letter (src/runner/handover.ts; PS-02, PS-22b, ADR 0024). Law 3 holds three lessons
 a real kingdom first kept in its scripture, true of every kingdom: the judge fails what the letter calls untested, the

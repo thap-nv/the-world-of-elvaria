@@ -15,6 +15,7 @@ export const FAKE_SCENARIOS = [
   'structured',
   'image',
   'secret_place',
+  'read_only_write',
 ] as const;
 export type FakeScenario = (typeof FAKE_SCENARIOS)[number];
 
@@ -48,6 +49,12 @@ export const FAKE_SECRET_COMMANDS = [
   'git status --short -- ~/.aws/credentials',
   'git status --short -- ~/.docker/config.json',
 ] as const;
+
+/**
+ * What the fake character of a read-only quest tries in `read_only_write` (P2-01d, W7): write a source file of its
+ * plot. Its class has Edit and Write; the write fence of a read-only quest lets it write its report and letter alone.
+ */
+export const FAKE_READ_ONLY_FILE = 'probe-source.ts';
 
 /**
  * The schema of `structured`, in the shape of the judge's verdict (the Steward's VERDICT_OUTPUT_SCHEMA): two keys

@@ -66,7 +66,7 @@ export interface DeviceAsk {
   /** create_quest: the `deliverable_type` of its quest kind in the registry; undefined when the kind is unknown. */
   readonly deliverable?: (typeof DELIVERABLE_TYPES)[number] | undefined;
   /** The quest the command acts on, when the caller knows it, with its `read_only` mark (P2-01d). */
-  readonly quest?: { readonly id: QuestId; readonly read_only?: boolean } | undefined;
+  readonly quest?: { readonly id: QuestId; readonly read_only?: boolean | undefined } | undefined;
 }
 
 /**

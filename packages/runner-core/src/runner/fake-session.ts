@@ -1,11 +1,14 @@
 // One session of FakeRunner: a scenario played in process, with the same shapes a real CLI's session yields,
 // so the Steward's tests run every path (submit, crash, hang, rate limit, a blocked command, a question) without
 // spawning anything (ADR 0006).
+import path from 'node:path';
+
 import { writeFileAtomic } from '@elvaria/store';
 
 import {
   FAKE_FORBIDDEN_COMMAND,
   FAKE_QUESTION,
+  FAKE_READ_ONLY_FILE,
   FAKE_SCRATCH_COMMANDS,
   FAKE_SECRET_COMMANDS,
   FAKE_STRUCTURED_ANSWER,
@@ -15,6 +18,7 @@ import { fakeImageAnswer } from '../conformance/image-probe.ts';
 import { runSpawnProbe } from '../conformance/spawn-probe.ts';
 import { writeFakeLines } from './fake-lines.ts';
 import { commandRefusal } from '../policy/command-refusal.ts';
+import { writeRefusal } from '../policy/read-only.ts';
 import { SHELL_TOOL } from '../policy/constants.ts';
 import { readQuestion } from './handover.ts';
 import { createSignalChannel } from './signal-channel.ts';
@@ -78,6 +82,21 @@ function forbidden(play: Play, commands: readonly string[] = [FAKE_FORBIDDEN_COM
   return denials.length === 0 ? COMPLETED : { ...COMPLETED, denials };
 }
 
+/**
+ * (P2-01d) A read-only quest's write of a source file: a gate refuses it by the policy's write fence; without one the
+ * file is written, as a CLI without a hook would.
+ */
+async function readOnlyWrite(play: Play): Promise<Ending> {
+  const { req, capabilities } = play.start;
+  const reason = capabilities.tool_gate ? writeRefusal(req.permissions, FAKE_READ_ONLY_FILE) : undefined;
+  if (reason === undefined) await writeFileAtomic(path.join(req.cwd, FAKE_READ_ONLY_FILE), 'export {};\n');
+  else play.push({ kind: 'tool_blocked', tool: 'Write', reason });
+  const ending = await work(play);
+  return reason === undefined
+    ? ending
+    : { ...ending, denials: [{ tool: 'Write', detail: FAKE_READ_ONLY_FILE }] };
+}
+
 /** Each scenario's script; `undefined` is a session that never ends until it is killed. */
 const SCRIPTS: Readonly<Record<FakeScenario, (play: Play) => Promise<Ending | undefined>>> = {
   submit: (play) => work(play),
@@ -94,6 +113,7 @@ const SCRIPTS: Readonly<Record<FakeScenario, (play: Play) => Promise<Ending | un
   forbidden_command: (play) => Promise.resolve(forbidden(play)),
   scratch_commit: (play) => Promise.resolve(forbidden(play, FAKE_SCRATCH_COMMANDS)),
   secret_place: (play) => Promise.resolve(forbidden(play, FAKE_SECRET_COMMANDS)),
+  read_only_write: readOnlyWrite,
   // The probe runs for real: what this machine allows a session's command (P1-12e).
   spawn_child: async (play) => {
     await runSpawnProbe(play.start.req.cwd);

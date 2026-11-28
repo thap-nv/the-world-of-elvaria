@@ -76,6 +76,11 @@ export interface HookPolicy {
    * and no word of a shell line may name one, at any depth, unless the word stays inside the plot. Absent: none.
    */
   readonly secret_paths?: readonly string[];
+  /**
+   * Globs from the root of the plot, the only places a write tool may change besides the quest's handover letter
+   * (P2-01d; runner-core's ToolPolicy `writable_paths`): a read-only quest's report (write-fence.ts). Absent: none.
+   */
+  readonly writable_paths?: readonly string[];
   /** `territory.laws`; other law kinds may be present and are not the hook's to enforce. */
   readonly laws?: LawsInput;
 }
@@ -94,6 +99,7 @@ const LIST_FIELDS = [
   'graph_commands',
   'images',
   'secret_paths',
+  'writable_paths',
 ] as const;
 const LAW_LISTS = ['forbidden_paths', 'read_only_paths', 'patch_paths', 'forbidden_commands'] as const;
 

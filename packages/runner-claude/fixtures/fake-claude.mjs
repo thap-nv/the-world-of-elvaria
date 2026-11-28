@@ -16,6 +16,7 @@ import { COMMANDS, noteCall, usage } from './fake-claude-commands.mjs';
 import { hookDenial, ruleDenial } from './fake-claude-denials.mjs';
 import { image } from './fake-claude-image.mjs';
 import { leak } from './fake-claude-leak.mjs';
+import { readOnlyWrite } from './fake-claude-read-only.mjs';
 import { readStdin } from './read-stdin.mjs';
 
 const FIXTURES = import.meta.dirname;
@@ -204,6 +205,7 @@ const SCENARIOS = {
   scratch_commit: (play) => forbidden(play, play.core.FAKE_SCRATCH_COMMANDS),
   // SEC-01: a command naming a file of a CLI's folder, then git's credential helper.
   secret_place: (play) => forbidden(play, play.core.FAKE_SECRET_COMMANDS),
+  read_only_write: (play) => readOnlyWrite(play, { out, speak, runHooks, writeLetter, finish }),
   // The suite's spawn probe runs for real once the hooks and rules let it through (P1-12e).
   spawn_child: (play) => {
     const command = play.core.SPAWN_PROBE_COMMAND;

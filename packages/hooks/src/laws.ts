@@ -62,7 +62,7 @@ export const NO_LAWS: CompiledLaws = {
 
 export const brokenLaws = (problem: string): CompiledLaws => ({ ...NO_LAWS, broken: problem });
 
-const compilePaths = (globs: readonly string[] = []): CompiledPaths =>
+export const compilePaths = (globs: readonly string[] = []): CompiledPaths =>
   globs.map((glob) => ({ glob, regex: globToRegExp(glob) }));
 
 /**

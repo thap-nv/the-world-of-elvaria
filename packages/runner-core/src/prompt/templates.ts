@@ -16,6 +16,8 @@ export const PROMPT_TEMPLATES = [
   'graph',
   'graph-first',
   'read-only',
+  // P2-01d: the session of a read-only quest writes its report and its letter alone.
+  'read-only-quest',
   'patch',
   'handover',
   'letter-reminder',

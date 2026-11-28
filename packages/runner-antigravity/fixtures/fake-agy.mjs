@@ -15,6 +15,7 @@ import process from 'node:process';
 
 import { declaredHooks, hookList } from './fake-agy-hooks.mjs';
 import { readImage } from './fake-agy-image.mjs';
+import { writeProbe } from './fake-agy-read-only.mjs';
 
 const FIXTURES = import.meta.dirname;
 const argv = process.argv.slice(2);
@@ -246,6 +247,13 @@ const SCENARIOS = {
   },
   // SEC-01: a command naming a file of a CLI's folder, then git's credential helper.
   secret_place: () => SCENARIOS.commands(core.FAKE_SECRET_COMMANDS),
+  // P2-01d: a read-only quest's knight writes a source file of its plot.
+  read_only_write: () => {
+    writeProbe({ core, runHook, base, step, run });
+    respond('done');
+    letter();
+    return finish();
+  },
   // Each shell line of ELVARIA_FAKE_COMMANDS (a JSON list) once, in order, as a model told to run them (P1-53).
   commands: (lines = JSON.parse(env.ELVARIA_FAKE_COMMANDS ?? '[]')) => {
     for (const command of lines) if (!shell(command)) return softDenied();

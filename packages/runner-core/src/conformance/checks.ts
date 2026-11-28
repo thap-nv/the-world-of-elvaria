@@ -14,6 +14,7 @@ import {
   visionProblems,
 } from '../kit/adapter-module.ts';
 import { imageCheck } from './image-check.ts';
+import { readOnlyCheck } from './read-only-check.ts';
 import { secretCheck } from './secret-check.ts';
 import { FAKE_QUESTION, FAKE_STRUCTURED_ANSWER, FAKE_STRUCTURED_SCHEMA } from './scenarios.ts';
 import { SPAWN_PROBE_COMMAND, SPAWN_PROBE_OK } from './spawn-probe.ts';
@@ -271,6 +272,7 @@ export const CONFORMANCE_CHECKS: readonly ConformanceCheck[] = [
   rateLimit,
   forbiddenCommand,
   secretCheck,
+  readOnlyCheck,
   spawnChild,
   structured,
   imageCheck,

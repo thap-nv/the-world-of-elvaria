@@ -6,6 +6,7 @@ import { graphLineViolation, shelllessViolation } from '../graph.ts';
 import { commandViolation, forbiddenPathOf, matchingGlobOf, readOnlyReason } from '../laws.ts';
 import { outsideReadViolation } from '../outside.ts';
 import { secretPlaceViolation } from '../secret-place.ts';
+import { writeFenceViolation } from '../write-fence.ts';
 import { plotPath, toolCallOf } from './tools.ts';
 import type { HookContext } from '../context.ts';
 import type { Translation } from '../draft.ts';
@@ -103,8 +104,8 @@ export interface Refusal {
 
 /**
  * Why a call is stopped once the dialect has read its own rules (`rule`), in the order of every dialect: Elvaria's
- * rule, then the territory's law, which names the path first, then Elvaria's fences on the places that hold the
- * owner's secrets (SEC-01) and on reading outside the plot (PS-11b). `cwd` is the session's folder as the payload names it.
+ * rule, then the territory's law, which names the path first, then Elvaria's fences on a read-only quest's writes
+ * (P2-01d), on the places that hold the owner's secrets (SEC-01) and on reading outside the plot (PS-11b). `cwd` is the session's folder as the payload names it.
  */
 export function refusalOf(
   rule: string | undefined,
@@ -114,7 +115,11 @@ export function refusalOf(
 ): Refusal | undefined {
   const law = rule === undefined ? lawViolation(call, ctx.laws) : undefined;
   const reason =
-    rule ?? law ?? secretPlaceViolation(call, cwd, ctx.laws) ?? outsideReadViolation(call, cwd, ctx);
+    rule ??
+    law ??
+    writeFenceViolation(call, cwd, ctx) ??
+    secretPlaceViolation(call, cwd, ctx.laws) ??
+    outsideReadViolation(call, cwd, ctx);
   if (reason === undefined) return undefined;
   return { reason, text: refusalText(law === undefined ? 'rule' : 'law of this territory', reason) };
 }

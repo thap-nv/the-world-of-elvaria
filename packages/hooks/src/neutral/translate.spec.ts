@@ -7,42 +7,16 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { DC1_LAWS } from '../__fixtures__/claude-payloads.ts';
+import { FLINT_DIALECT } from '../__fixtures__/flint-dialect.ts';
 import { tempKingdom } from '../__fixtures__/temp.ts';
 import { runHook } from '../run-hook.ts';
 import { answerOf, dialectProblem, dialectToolOf } from './dialect.ts';
 import type { TempKingdom } from '../__fixtures__/temp.ts';
 import type { HookOutcome } from '../run-hook.ts';
-import type { HookDialect } from './dialect.ts';
 
 const NOW = Date.parse('2026-11-13T09:00:00Z');
 const ASSIGNEE = { ELVARIA_ROLE: 'assignee' };
 const KNIGHT = ['Read', 'Edit', 'Write', 'Glob', 'Grep', 'Bash'];
-
-const FLINT_DIALECT: HookDialect = {
-  version: 1,
-  event: 'kind',
-  events: { session_start: 'begin', pre_tool: 'before_action', post_tool: 'after_action', stop: 'finish' },
-  session: 'thread',
-  model: 'engine',
-  cwd: 'dir',
-  tool_name: 'action.name',
-  tool_input: 'action.params',
-  exit: 'status',
-  tools: {
-    shell: { kind: 'bash', grants: ['Bash'], command: 'line' },
-    open: { kind: 'read', grants: ['Read'], paths: ['file'] },
-    save: { kind: 'write', grants: ['Edit', 'Write'], paths: ['file', 'files'] },
-    patch: { kind: 'write', grants: ['Edit', 'Write'], patch: 'text' },
-    'delegate*': { kind: 'other', refuse: 'subagent' },
-    ask_human: { kind: 'other', refuse: 'ask' },
-    fetch: { kind: 'web', grants: ['WebFetch'], url: 'address' },
-  },
-  answers: {
-    deny: { verdict: 'refuse', why: '{reason}' },
-    stop: { verdict: 'again', why: '{reason}' },
-    pass: { verdict: 'go' },
-  },
-};
 
 let kingdom: TempKingdom;
 let policy: string;
