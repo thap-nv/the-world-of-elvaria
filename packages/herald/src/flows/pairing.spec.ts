@@ -74,7 +74,7 @@ describe('pairing a browser with the Herald', () => {
     expect((await postCode(h.herald.port, late)).status).toBe(403);
   });
 
-  it('closes pairing after five wrong codes, until herald pair runs again', async () => {
+  it('closes pairing after five wrong codes, until herald pair runs again (measure 4)', async () => {
     h = await harness();
     const good = await h.code(fullDevice());
     for (let wrong = 1; wrong < PAIRING_FAILURES_MAX; wrong += 1)

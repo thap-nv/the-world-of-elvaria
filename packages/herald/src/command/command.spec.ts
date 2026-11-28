@@ -69,7 +69,7 @@ describe('a command from a stream', () => {
     });
   });
 
-  it('refuses a frame that names its own source, id or device, and writes nothing', async () => {
+  it('refuses a frame that names its own source, id or device, and writes nothing (measure 2)', async () => {
     const herald = await started();
     const client = await streamOf(herald, fullDevice());
     for (const extra of [
@@ -125,7 +125,7 @@ describe('a command from a stream', () => {
     expect((await inbox(herald)).length).toBe(1);
   });
 
-  it(`refuses a device's command past ${COMMANDS_PER_WINDOW_MAX} a minute, every stream of it together`, async () => {
+  it(`refuses a device's command past ${COMMANDS_PER_WINDOW_MAX} a minute, every stream of it together (measure 4)`, async () => {
     const herald = await started();
     const device = fullDevice();
     const [one, two] = [await streamOf(herald, device), await streamOf(herald, device)];

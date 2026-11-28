@@ -57,7 +57,7 @@ async function linesUntil(client: Client, last: Event, ids: readonly string[] = 
 const pairedCookie = async (herald: Harness, device: Device): Promise<string> =>
   cookieOf(await postCode(herald.herald.port, await herald.code(device)));
 
-describe('the upgrade to /ws (threat model "Trước P2-01" 1)', () => {
+describe('the upgrade to /ws (measure 1)', () => {
   it('refuses no cookie, a foreign or missing Origin, a foreign Host and another path', async () => {
     const herald = await started();
     const port = herald.herald.port;
