@@ -242,7 +242,15 @@
 - Checks a command of source `herald` or `lite` against the device it names before anything else (P2-01, ADR 0037,
   `inbox/device-check.ts`): it reads `devices/<id>.json` and the memos the command names, and the domain's `deviceMay`
   refuses it with `unknown_device`, `device_revoked`, `role_forbids`, `outside_territories` or `passkey_required`;
-  `command.applied` and `command.rejected` name the device. Commands of other sources are not checked.
+  `command.applied` and `command.rejected` name the device. Commands of other sources are not checked. (SEC-08, ADR 0038) A passkey signature on the command (`confirmation`) is checked again with the domain's `checkConfirmation`
+  and the store's `nodePasskeyCrypto`: one of another command, by a revoked or unknown passkey, or with a counter
+  that did not move on is refused (`passkey_mismatch`, `passkey_revoked`, `passkey_unknown`, `passkey_invalid`),
+  in every group; a good one writes its counter back to the device file.
+- Applies the device commands (SEC-08, `inbox/device-commands.ts`, the domain's `device/change.ts`): `pair_device`
+  writes a new device file under the id the Herald drew (`device_exists`, `unknown_territory`, `bad_grant`),
+  `set_device` changes a label, role or territories as `elvaria herald device`, `revoke_device` revokes a device or
+  one passkey, `add_passkey` adds a passkey to the sending device (`passkey_exists`); passkeys and `revoked_at`
+  survive every change. The owner's clients only (`owner_only` for the Chancellor and the temple).
 - Applies the owner's commands: `create_quest` (an id derived from the command id, so a command applied twice
   never makes two quests), `confirm`, `cancel` (kills the session), `archive`, `retry`, `seal` and `return` (the owner's
   verdict, `verdicts/<quest>-<n>-user.json`, weighed three times; a return needs notes of 20 characters and takes

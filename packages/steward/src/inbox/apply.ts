@@ -14,6 +14,7 @@ import { escalate } from '../memos/escalate.ts';
 import { STEWARD } from '../quest/record.ts';
 import { release, suspend } from './character-commands.ts';
 import { deviceRefusal } from './device-check.ts';
+import { deviceCommand } from './device-commands.ts';
 import { reportEscape, resumeDelegation } from './delegation-commands.ts';
 import { enqueueBranch } from './guest-commands.ts';
 import { setLevel, setModel } from './character-settings.ts';
@@ -103,9 +104,16 @@ function territoryCommand(ctx: Context, command: InboxCommand): Outcome | Promis
   return undefined;
 }
 
+/** A command on no quest or territory: the temple's report (PS-12c), a device command (SEC-08); else undefined. */
+function questlessCommand(ctx: Context, command: InboxCommand): Promise<Outcome> | undefined {
+  if (command.kind === 'temple_report') return applyTempleReport(ctx, command);
+  return deviceCommand(ctx, command);
+}
+
 /**
  * What one command does; a command kind of a later task is refused with `unsupported`. A paired device's command
- * is first checked against its device's role (P2-01): a refusal names why (unknown_device, role_forbids…).
+ * is first checked against its device's role (P2-01) and its passkey signature (SEC-08): a refusal names why
+ * (unknown_device, role_forbids, passkey_required…).
  */
 export async function applyCommand(ctx: Context, command: InboxCommand): Promise<Outcome> {
   const refusal = await deviceRefusal(ctx, command);
@@ -122,7 +130,8 @@ export async function applyCommand(ctx: Context, command: InboxCommand): Promise
   if (command.kind === 'decide_amendment') return decideAmendment(ctx, command);
   const onTerritory = territoryCommand(ctx, command);
   if (onTerritory !== undefined) return onTerritory;
-  if (command.kind === 'temple_report') return applyTempleReport(ctx, command);
+  const questless = questlessCommand(ctx, command);
+  if (questless !== undefined) return questless;
   const quest = questOf(ctx, command);
   return quest === undefined ? rejected('unknown_quest') : onQuest(ctx, command, quest);
 }
