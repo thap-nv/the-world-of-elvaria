@@ -26,7 +26,7 @@ import { heldReadingsOf, noteStamina } from '../sessions/usage.ts';
 import { noteWrapUps } from '../sessions/wrap-up.ts';
 import { carryOut } from './steps.ts';
 import { recoverVersions, versionStep } from './tribe-versions.ts';
-import { noteUnclaimable, writeUnclaimable } from '../waits/unclaimable.ts';
+import { noteUnclaimable } from '../waits/unclaimable.ts';
 import { loadWorld, modelsOf, snapshotOf } from './world.ts';
 import type { Context, Counts } from '../context.ts';
 import type { Held, State } from './steward-state.ts';
@@ -55,7 +55,6 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
   // P2-04: the waits for a judge and the tribes held, as the log says them, so the first tick rings none of them again.
   recoverJudgeWaits(state.judgeWaits, log.events);
   recoverVersions(state.versions, log.events);
-  await writeUnclaimable(deps.store.root, state.reported);
   state.mana.asleep = asleepFromLog(log.events);
   state.mana.warned = warnedFromLog(log.events);
   state.mana.history = levelsFromLog(log.events);
@@ -132,8 +131,7 @@ async function planAndAct(
   now: Instant,
 ): Promise<void> {
   const plan = planTick(snapshot, now);
-  if (await noteUnclaimable(ctx, state.reported, plan.unclaimable))
-    await writeUnclaimable(ctx.root, state.reported);
+  await noteUnclaimable(ctx, state.reported, plan.unclaimable);
   await noteJudgeWaits(ctx, state.judgeWaits, plan);
   await carryOut(ctx, plan);
   patrolMoved(ctx, snapshot.base_red ?? []);

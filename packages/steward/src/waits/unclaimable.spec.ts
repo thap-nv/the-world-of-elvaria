@@ -1,11 +1,11 @@
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { openEventLog } from '@elvaria/eventlog';
+import { unclaimableOf } from '@elvaria/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, characterOf, questPayload } from '../__fixtures__/kingdom.ts';
-import { UNCLAIMABLE_FILE, readUnclaimable } from './unclaimable.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Steward } from '../types.ts';
 
@@ -37,7 +37,7 @@ const notices = async (kingdom: Bench) =>
     .map(({ type, data }) => (type === 'quest.claimed' ? 'claimed' : data));
 
 describe('a quest nobody can take', () => {
-  it('is told once, rings once, and is kept in .state/unclaimable.json', async () => {
+  it('is told once, rings once, and is kept in the log', async () => {
     const { kingdom, steward } = await open();
     await kingdom.command('create_quest', questPayload('Rework the sign-in flow', { rank: 'A' }));
     for (let tick = 0; tick < 3; tick += 1) await steward.tick();
@@ -59,7 +59,9 @@ describe('a quest nobody can take', () => {
         best: { character: 'thorn', level: 5, ceiling: 'C' },
       },
     ]);
-    expect(await readUnclaimable(kingdom.root)).toEqual(new Map([[quest.id, note]]));
+    expect(unclaimableOf((await openEventLog(kingdom.root).read()).events)).toEqual(
+      new Map([[quest.id, note]]),
+    );
     expect(quest.status).toBe('open');
   });
 
@@ -76,7 +78,7 @@ describe('a quest nobody can take', () => {
       'claimed',
     ]);
     expect((await kingdom.quest('Rework the sign-in flow')).assignee).toBe('brann');
-    expect(await readUnclaimable(kingdom.root)).toEqual(new Map());
+    expect(unclaimableOf((await openEventLog(kingdom.root).read()).events)).toEqual(new Map());
   });
 
   it('names a class nobody has, and changes its notice when the owner lowers the rank', async () => {
@@ -112,12 +114,12 @@ describe('a quest nobody can take', () => {
     await kingdom.command('create_quest', questPayload('Rework the sign-in flow', { rank: 'A' }));
     await steward.tick();
     await steward.stop();
-    await writeFile(path.join(kingdom.root, UNCLAIMABLE_FILE), '{ torn');
-    expect(await readUnclaimable(kingdom.root)).toEqual(new Map());
+    await writeFile(path.join(kingdom.root, '.state/unclaimable.json'), '{ torn');
     running = kingdom.steward();
     await running.start({ loop: false });
     await running.tick();
     expect(await notices(kingdom)).toHaveLength(1);
-    expect((await readUnclaimable(kingdom.root)).size).toBe(1);
+    expect(unclaimableOf((await openEventLog(kingdom.root).read()).events).size).toBe(1);
+    expect(await readFile(path.join(kingdom.root, '.state/unclaimable.json'), 'utf8')).toBe('{ torn');
   });
 });

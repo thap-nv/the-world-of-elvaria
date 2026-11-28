@@ -1,9 +1,15 @@
-// Quests nobody can take (implementation-plan §3.1 "Quest không ai nhận được"): the Steward keeps its notices in
-// `.state/unclaimable.json`; `quest list` marks those quests and `quest show` says why, with the commands that
+// Quests nobody can take (implementation-plan §3.1 "Quest không ai nhận được"): the log holds the notices;
+// `quest list` marks those quests and `quest show` says why, with the commands that
 // would change it: give it to the highest of the class (with the seal, P1-26), lower the rank, summon a character
 // of the class, give it to a character its party bars (P1-37 (ii): the owner's reassign is not barred), or cancel it.
-import { CHARACTER_LEVEL_MAX, RANKS, canTake, rankCeilingOf } from '@elvaria/domain';
-import { readUnclaimable } from '@elvaria/steward';
+import {
+  CHARACTER_LEVEL_MAX,
+  RANKS,
+  canTake,
+  rankCeilingOf,
+  unclaimableOf as loggedUnclaimableOf,
+} from '@elvaria/domain';
+import { openEventLog } from '@elvaria/eventlog';
 import type { Quest, QuestId, Rank, Registry, UnclaimableNote } from '@elvaria/domain';
 
 import { nameIn } from '../labels.ts';
@@ -14,7 +20,7 @@ export async function unclaimableOf(
   ctx: KingdomContext,
   quests: readonly Quest[],
 ): Promise<Map<QuestId, UnclaimableNote>> {
-  const notes = await readUnclaimable(ctx.store.root);
+  const notes = loggedUnclaimableOf((await openEventLog(ctx.store.root).read()).events);
   const open = new Set(quests.filter(({ status }) => status === 'open').map(({ id }) => id));
   return new Map([...notes].filter(([id]) => open.has(id)));
 }

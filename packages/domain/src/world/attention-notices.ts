@@ -23,7 +23,7 @@ import type { AttentionItem, AttentionKind, AttentionSubject } from './attention
 
 /** What the Steward knows that the world state does not: its notices, kept in its memory or in `.state/`. */
 export interface StewardNotices {
-  /** Open quests nobody can take (`quest.unclaimable`, `.state/unclaimable.json`). */
+  /** Open quests nobody can take, as the log says (`quest.unclaimable`). */
   readonly unclaimable?: readonly QuestId[];
   /**
    * Quests in review whose judge the roster does not have (P1-15), with a judging class of their kind; `vision` when the

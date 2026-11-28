@@ -48,4 +48,3 @@ export type {
   StewardDeps,
   TickReport,
 } from './types.ts';
-export { UNCLAIMABLE_FILE, readUnclaimable } from './waits/unclaimable.ts';

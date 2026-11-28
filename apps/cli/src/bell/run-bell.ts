@@ -1,5 +1,5 @@
 // The bell of `elvaria run` (P2-03): the console bell, and the desktop bell next to it unless kingdom.bell.desktop is
-// off or nobody watches the terminal (CI, a sandbox, output sent to a file). A failing bell is one warning line, the
+// off or nobody watches the terminal (unless --desktop-bell is given). A failing bell is one warning line, the
 // way the Steward warns.
 import type { Kingdom } from '@elvaria/domain';
 import type { Bell } from '@elvaria/steward';
@@ -11,12 +11,12 @@ import type { KingdomContext } from '../kingdom-context.ts';
 /** What the bell reads of the kingdom's context: its terminal, its language and kingdom.bell. */
 type BellContext = Pick<KingdomContext, 'io' | 't'> & { readonly kingdom: Pick<Kingdom, 'bell'> };
 
-export function runBell({ io, t, kingdom }: BellContext, console: Bell): Bell {
+export function runBell({ io, t, kingdom }: BellContext, console: Bell, desktopBellFlag = false): Bell {
   const warn = (message: string): void => {
     io.err(t('cli.run.warning', { message }));
   };
   const desktop =
-    kingdom.bell.desktop && io.interactive === true
+    kingdom.bell.desktop && (io.interactive === true || desktopBellFlag)
       ? [desktopBell({ t, notify: toastProcess(io), platform: io.platform, warn })]
       : [];
   return fanOut([console, ...desktop], (error) => {

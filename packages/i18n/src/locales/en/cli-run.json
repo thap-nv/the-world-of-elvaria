@@ -1,6 +1,7 @@
 {
   "version": 1,
   "messages": {
+    "cli.run.option.desktop_bell": "Allow desktop notifications without a terminal when kingdom.bell.desktop is true.",
     "cli.run.locked": "Another Steward is already running in {kingdom}: one kingdom has one Steward.",
     "cli.run.notice.awaiting_seal": "Quest {quest} «{title}» passed review and waits for your seal.",
     "cli.run.notice.environment": "Quest {quest} «{title}» waits in review: its check {check} failed because of its environment, not the work ({line}). No judge reads it and nobody loses a level; the checks run again in {minutes} minutes. Log: {log}",
