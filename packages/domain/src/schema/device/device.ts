@@ -1,10 +1,12 @@
 // device v1: devices/<id>.json, one device paired with the Herald and the role it was given (P2-01, ADR 0037). A
 // role is trusted configuration, not a cache: the Steward reads it again when it applies a command from the Herald or
-// the phone, and no one but the owner's own commands writes it (`elvaria herald pair|device|revoke`, P2-01b).
+// the phone, and no one but the owner's own commands writes it (`elvaria herald pair|device|revoke`, P2-01b; the
+// Steward applying pair_device, set_device, revoke_device and add_passkey, SEC-08).
 import { z } from 'zod';
 
 import { DeviceIdSchema, TerritoryIdSchema } from '../../core/ids.ts';
-import { DateTimeSchema, GENERATED_NOTE, unique } from '../common.ts';
+import { DateTimeSchema, GENERATED_NOTE, rejectDuplicateIds, unique } from '../common.ts';
+import { PasskeySchema } from './passkey.ts';
 
 const describe = (description: string) => ({ description });
 
@@ -32,9 +34,19 @@ const times = {
   created_at: DateTimeSchema,
   revoked_at: DateTimeSchema.optional().meta(
     describe(
-      'Set once by `elvaria herald revoke`: from then on the Herald ends its session and the Steward refuses its commands (device_revoked). The file stays, so the log still names the device.',
+      'Set once by `elvaria herald revoke` or a `revoke_device` command: from then on the Herald ends its session and the Steward refuses its commands (device_revoked). The file stays, so the log still names the device.',
     ),
   ),
+  // Optional and added after v1 (SEC-08, ADR 0038): a device paired before it, or never through the tunnel, has none.
+  passkeys: z
+    .array(PasskeySchema)
+    .superRefine(rejectDuplicateIds)
+    .optional()
+    .meta(
+      describe(
+        'The WebAuthn keys the device registered through the tunnel (add_passkey). A command of group 2 or 3 from the phone carries the signature of one that is not revoked.',
+      ),
+    ),
 };
 
 const FullDeviceSchema = z.strictObject({ ...fields, role: z.literal('full'), ...times });

@@ -28,6 +28,7 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Sứ giả | Herald | `herald` | World server trên localhost: đọc event log, phát qua WebSocket, ghi lệnh vào inbox. | `packages/herald`, `actor.kind`, inbox `source` |
 | Thiết bị | Device | `device` | Trình duyệt hay điện thoại đã ghép đôi với Sứ giả; mỗi thiết bị một file mang vai và lãnh thổ được cấp, Sứ giả và Nhiếp chính đều gác lệnh theo vai đó (ADR 0037). | `devices/<id>.json`, `InboxCommand.device`, `command.applied`/`command.rejected` `device`, `packages/domain/src/device` |
 | Ghép đôi | Pairing | `pairing` | Cấp cho một thiết bị phiên của Sứ giả bằng mã dùng một lần in trên máy (ADR 0031). | `elvaria herald pair` (P2-01b) |
+| Passkey | Passkey | `passkey` | Khóa WebAuthn mà thiết bị đăng ký qua đường hầm; lệnh nhóm 2 và 3 từ điện thoại phải mang chữ ký của nó trên mã băm của id, `kind` và `payload` của chính lệnh đó (ADR 0031, ADR 0038). | `passkeys` của `devices/<id>.json`, `InboxCommand.confirmation`, lệnh `add_passkey`, `packages/domain/src/passkey` (SEC-08) |
 | Hệ thống | System | `system` | Tác nhân không phải người, không phải nhân vật (migrate, replay…). | `actor.kind` |
 | Hội quán / bảng nhiệm vụ | Guild hall / quest board | `quests/` | Nơi lưu quest và trạng thái. | thư mục kingdom, màn Guild |
 | Lệnh (của người dùng) | Command | `inbox` | File lệnh người dùng ghi cho Nhiếp chính xử lý. | `inbox/<ulid>.json` |
@@ -325,6 +326,10 @@ Họ model (suy ra từ slug, không lưu): `claude`, `gemini`, `gpt` (Codex thu
 | Bật lại ủy quyền dấu | `resume_delegation` | — | `elvaria territory delegation <id> --resume` (PS-08g): lãnh thổ mà cầu dao đã ngừng ủy quyền dấu lại được miễn dấu từ quest mới kế tiếp; ghi `delegation.resumed`. Lãnh thổ không ngừng bị từ chối `not_suspended` |
 | Xếp mục khách | `enqueue_branch` | — | `elvaria territory enqueue <id> --pr <số>` (CM-07): chỉ chủ nhân (nguồn `chancellor`, `monk` bị từ chối `owner_only`); lãnh thổ phải giao hàng theo `pr_merge` (`not_pr_merge`), PR đang chờ thì `already_enqueued`, lãnh thổ lạ `unknown_territory`; ghi `delivery.enqueued` |
 | Tờ trình của Đền | `temple_report` | — | chỉ việc của Đền ghi (nguồn `monk`, PS-12c): các thao tác `add`, `retire`, `merge` trên từng dòng kinh và các thư của Thầy tu; Nhiếp chính kiểm từng thao tác bằng hàm thuần rồi mới ghi, từ chối cả tờ trình (`replaces_scripture`) khi nó thêm quá 3 dòng hay lấy đi quá nửa số dòng của Thầy tu trong một file; ghi `lesson.added`, `lesson.retired`, `lesson.refused` |
+| Ghép thiết bị | `pair_device` | — | (SEC-08) thiết bị `full` tạo thiết bị mới từ điện thoại như `elvaria herald pair`: Sứ giả chọn id, Nhiếp chính ghi `devices/<id>.json`, Sứ giả trả mã ghép đôi cho thiết bị đã hỏi; nhóm 3 (cần passkey qua đường hầm); `device_exists`, `unknown_territory`, `bad_grant` |
+| Đổi thiết bị | `set_device` | — | (SEC-08) đổi tên, vai hay lãnh thổ của một thiết bị như `elvaria herald device`; giữ passkey và `revoked_at`; nhóm 3; `unknown_device`, `device_revoked`, `unknown_territory`, `bad_grant` |
+| Thu hồi thiết bị | `revoke_device` | — | (SEC-08) thu hồi một thiết bị như `elvaria herald revoke`, hay chỉ một passkey của nó (`passkey`, khóa bảo mật bị mất); nhóm 3; `unknown_device`, `passkey_unknown` |
+| Thêm passkey | `add_passkey` | — | (SEC-08) thiết bị thêm passkey cho chính nó; Sứ giả kiểm lượt đăng ký WebAuthn trước khi ghi lệnh. Mọi vai đều gửi được; passkey đầu không cần chữ ký (Sứ giả chỉ nhận trong 5 phút sau khi ghép đôi), passkey sau cần chữ ký của một passkey còn hiệu lực; `passkey_exists` |
 
 Nguồn lệnh (`source`): `cli`, `herald`, `lite`.
 

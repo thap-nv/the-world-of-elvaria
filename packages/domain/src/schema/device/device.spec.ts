@@ -32,4 +32,18 @@ describe('DeviceSchema', () => {
     expect(DeviceSchema.safeParse({ ...SCOPED, label: '' }).success).toBe(false);
     expect(DeviceSchema.safeParse({ ...SCOPED, label: 'x'.repeat(65) }).success).toBe(false);
   });
+
+  it('keeps the passkeys a device registered (SEC-08), each once, from an HTTPS origin only', () => {
+    const passkey = SCOPED.passkeys![0]!;
+    expect(DeviceSchema.parse(SCOPED).passkeys?.map(({ id }) => id)).toEqual(['Pz3Vr0bq2y8xWQ4k1nB7tg']);
+    expect(DeviceSchema.safeParse({ ...SCOPED, passkeys: [passkey, passkey] }).success).toBe(false);
+    for (const origin of ['http://127.0.0.1:7411', 'https://Keep.example', 'https://keep.example/path'])
+      expect(DeviceSchema.safeParse({ ...SCOPED, passkeys: [{ ...passkey, origin }] }).success).toBe(false);
+    expect(
+      DeviceSchema.safeParse({ ...SCOPED, passkeys: [{ ...passkey, algorithm: 'ps256' }] }).success,
+    ).toBe(false);
+    expect(DeviceSchema.safeParse({ ...SCOPED, passkeys: [{ ...passkey, sign_count: -1 }] }).success).toBe(
+      false,
+    );
+  });
 });

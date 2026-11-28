@@ -102,11 +102,17 @@ async function touch(deps: SessionDeps, session: StoredSession, now: Instant): P
   }));
 }
 
-/** The device the session id `cookie` names, while the session is valid (ADR 0031 item 4). */
-export async function sessionDevice(
+/** A valid session: its device, and when a pairing code opened it (SEC-08: a first passkey only soon after). */
+export interface LiveSession {
+  readonly device: Device;
+  readonly opened_at: string;
+}
+
+/** The session id `cookie` names, while the session is valid (ADR 0031 item 4). */
+export async function liveSession(
   deps: SessionDeps,
   cookie: string | undefined,
-): Promise<Result<Device, SessionRefusal>> {
+): Promise<Result<LiveSession, SessionRefusal>> {
   if (cookie === undefined || cookie === '') return err('no_session');
   const session = matchSecret(await readSessions(deps.store.root), cookie);
   const now = deps.clock.now();
@@ -116,5 +122,14 @@ export async function sessionDevice(
   if (!device.ok) return err('unknown_device');
   if (device.value.revoked_at !== undefined) return err('device_revoked');
   await touch(deps, session, now);
-  return ok(device.value);
+  return ok({ device: device.value, opened_at: session.created_at });
+}
+
+/** The device the session id `cookie` names, while the session is valid. */
+export async function sessionDevice(
+  deps: SessionDeps,
+  cookie: string | undefined,
+): Promise<Result<Device, SessionRefusal>> {
+  const live = await liveSession(deps, cookie);
+  return live.ok ? ok(live.value.device) : live;
 }

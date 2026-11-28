@@ -9,6 +9,7 @@ import { decodeClientMessage, decodeServerMessage, encodeMessage } from './codec
 import { commandOf } from './envelope.ts';
 import { ProtocolMessageSchema } from './messages.ts';
 import type { DeviceId, QuestId, Ulid } from '../core/ids.ts';
+import type { PasskeyId } from '../schema/device/passkey.ts';
 import type { CommandMessage, ProtocolMessage } from './messages.ts';
 
 const STATE = worldStateOf({
@@ -46,6 +47,44 @@ const ATTENTION: ProtocolMessage = {
   ],
 };
 
+// SEC-08: the passkey's round trip, and the pairing code a pair_device command answers with.
+const CHALLENGE: ProtocolMessage = {
+  type: 'challenge',
+  ref: 'seal-1',
+  challenge: 'kZ3c1lJ9oQx8VQ2b7zjv0m5W7p1G3k6sA2dYq4tHf8E',
+  passkeys: ['cred-1' as PasskeyId],
+};
+const CONFIRM: ProtocolMessage = {
+  type: 'confirm',
+  ref: 'seal-1',
+  confirmation: {
+    passkey: 'cred-1' as PasskeyId,
+    authenticator_data: 'AAAA',
+    client_data: 'e30',
+    signature: 'MEU',
+  },
+};
+const ENROLL: ProtocolMessage = { type: 'enroll', ref: 'key-1' };
+const REGISTER: ProtocolMessage = {
+  type: 'register',
+  ref: 'key-1',
+  registration: {
+    id: 'cred-2' as PasskeyId,
+    public_key: 'MFkw',
+    algorithm: 'rs256',
+    authenticator_data: 'AAAA',
+    client_data: 'e30',
+  },
+};
+const PAIRED: ProtocolMessage = {
+  ...ACCEPTED,
+  pairing: {
+    device: 'dev_20261128_9tw3hx' as DeviceId,
+    code: 'c0de',
+    expires_at: '2026-11-28T10:05:00+07:00',
+  },
+};
+
 const ENVELOPE = {
   id: '01JCFB7Q2R8S4T6V9W3X5Y1Z0A' as Ulid,
   ts: '2026-11-26T19:45:00+07:00',
@@ -55,22 +94,34 @@ const ENVELOPE = {
 
 describe('the WebSocket protocol', () => {
   it('has the messages of stage 2: snapshot, events, accepted, refused, attention, and a command', () => {
-    for (const message of [SNAPSHOT, LINES, ACCEPTED, REFUSED, ATTENTION, SEAL]) {
+    for (const message of [
+      SNAPSHOT,
+      LINES,
+      ACCEPTED,
+      REFUSED,
+      ATTENTION,
+      SEAL,
+      CHALLENGE,
+      CONFIRM,
+      ENROLL,
+      REGISTER,
+    ]) {
       expect(ProtocolMessageSchema.parse(message)).toEqual(message);
     }
   });
 
   it('carries a snapshot, log lines and the answers to a command from the herald to a client unchanged', () => {
-    for (const message of [SNAPSHOT, LINES, ACCEPTED, REFUSED, ATTENTION])
+    for (const message of [SNAPSHOT, LINES, ACCEPTED, REFUSED, ATTENTION, CHALLENGE, PAIRED])
       expect(decodeServerMessage(encodeMessage(message))).toEqual({ ok: true, value: message });
   });
 
-  it('carries a command from a client to the herald unchanged', () => {
-    expect(decodeClientMessage(encodeMessage(SEAL))).toEqual({ ok: true, value: SEAL });
+  it('carries a command, and the passkey messages of SEC-08, from a client to the herald unchanged', () => {
+    for (const message of [SEAL, CONFIRM, ENROLL, REGISTER])
+      expect(decodeClientMessage(encodeMessage(message))).toEqual({ ok: true, value: message });
   });
 
   it('lets each end accept only what the other may send', () => {
-    for (const message of [SEAL])
+    for (const message of [SEAL, CONFIRM])
       expect(decodeServerMessage(encodeMessage(message))).toMatchObject({
         ok: false,
         error: { code: 'invalid_message' },
@@ -138,6 +189,25 @@ describe('the envelope the herald writes (commandOf)', () => {
         device: 'dev_20261126_4k2pqz',
         payload: { quest: 'q_20261106_7k3m2a', note: 'Đã xem diff trên điện thoại.' },
       },
+    });
+  });
+
+  it("names the new device of a pair_device command with the id the herald drew, never the client's", () => {
+    const pair: CommandMessage = {
+      type: 'command',
+      ref: 'pair-1',
+      kind: 'pair_device',
+      payload: { device: 'dev_20261128_aaaaaa', label: 'Tablet', role: 'full' },
+    };
+    const drawn = 'dev_20261128_9tw3hx' as DeviceId;
+    expect(commandOf(pair, { ...ENVELOPE, pairs: drawn })).toMatchObject({
+      ok: true,
+      value: { kind: 'pair_device', device: ENVELOPE.device, payload: { device: drawn, label: 'Tablet' } },
+    });
+    expect(commandOf(pair, ENVELOPE)).toMatchObject({ ok: false, error: { code: 'invalid_message' } });
+    expect(commandOf(SEAL, { ...ENVELOPE, pairs: drawn })).toMatchObject({
+      ok: true,
+      value: { payload: SEAL.payload },
     });
   });
 

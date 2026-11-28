@@ -18,6 +18,10 @@ throwaway folders, git repos and fake secrets. Dev-only: a workspace lists it in
 - `SECRET_SAMPLES`, `KNOWN_SECRET`: one fake secret per pattern of `@elvaria/eventlog`'s `redact-patterns.json`, plus
   a treasury value with no shape, each inside the line it would show up in. Built from pieces at run time, so no
   scanner flags the repo. The event log checks its redactor with them, the Herald that none reaches a client.
+- `testPasskey(algorithm?, origin?)` (SEC-08): a real `node:crypto` key pair (ES256, RS256 or Ed25519) and the bytes
+  a browser and its authenticator send, `sign(challenge)` as `navigator.credentials.get` and `register(challenge)`
+  as `create` with attestation `none`; each field of the answer can be bent to meet one refusal. The caller hands in
+  the challenge, since testkit imports no workspace.
 
 ## Does not
 
@@ -27,7 +31,7 @@ throwaway folders, git repos and fake secrets. Dev-only: a workspace lists it in
 
 ## Depends on
 
-- Node only at run time (`node:fs`, `node:os`, `node:path`, `node:child_process`); `git` on PATH for the git
+- Node only at run time (`node:fs`, `node:os`, `node:path`, `node:child_process`, `node:crypto`); `git` on PATH for the git
   helpers. No third-party package.
 - `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
 

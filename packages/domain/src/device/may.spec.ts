@@ -21,6 +21,16 @@ const device = (role: string, territories?: readonly string[], revoked?: string)
   });
 
 const FULL = device('full');
+const SIGNED = { ok: true, value: undefined } as const;
+const WRONG = { ok: false, error: { code: 'passkey_mismatch' } } as const;
+const PASSKEY = {
+  id: 'cred-1',
+  public_key: 'MFkw',
+  algorithm: 'es256',
+  origin: 'https://keep.tail1234.ts.net',
+  sign_count: 0,
+  added_at: '2026-11-28T08:00:00+07:00',
+};
 const SCOPED = device('scoped', [HOME]);
 const INQUIRY = device('inquiry', [HOME]);
 
@@ -95,11 +105,41 @@ describe('deviceMay: role × group × scope × source', () => {
     },
   );
 
-  it('lets a phone send groups 2 and 3 once the passkey signed the command (SEC-08)', () => {
+  it('lets a phone send groups 2 and 3 once a passkey signed the command (SEC-08)', () => {
     const ask = { source: 'lite', device: FULL, kind: 'seal', group: 2, scope: [HOME] } as const;
-    expect(answer({ ...ask, confirmed: true })).toBe('ok');
-    expect(answer({ ...ask, confirmed: false })).toBe('passkey_required');
-    expect(answer({ ...ask, group: 3, device: SCOPED, confirmed: true })).toBe('role_forbids');
+    expect(answer({ ...ask, confirmation: SIGNED })).toBe('ok');
+    expect(answer({ ...ask, confirmation: undefined })).toBe('passkey_required');
+    expect(answer({ ...ask, group: 3, device: SCOPED, confirmation: SIGNED })).toBe('role_forbids');
+  });
+
+  it("refuses a signature that does not confirm the command with checkConfirmation's reason, in any group", () => {
+    const ask = { device: FULL, kind: 'retry', group: 1, scope: [HOME], confirmation: WRONG } as const;
+    expect(answer({ ...ask, source: 'lite' })).toBe('passkey_mismatch');
+    expect(answer({ ...ask, source: 'herald', kind: 'seal', group: 2 })).toBe('passkey_mismatch');
+  });
+});
+
+describe('deviceMay: a device adds its own passkey (SEC-08)', () => {
+  const ask = { source: 'lite', kind: 'add_passkey', group: 3, scope: 'kingdom' } as const;
+  const keyed = (role: string, territories?: readonly string[]) =>
+    DeviceSchema.parse({ ...device(role, territories), passkeys: [PASSKEY] });
+
+  it('takes the first passkey of any role without a signature, as the Herald takes it from a fresh pairing only', () => {
+    for (const role of [FULL, SCOPED, INQUIRY]) expect(answer({ ...ask, device: role })).toBe('ok');
+  });
+
+  it('needs the signature of a live passkey for every later one, of any role', () => {
+    expect(answer({ ...ask, device: keyed('inquiry', [HOME]) })).toBe('passkey_required');
+    expect(answer({ ...ask, device: keyed('scoped', [HOME]), confirmation: SIGNED })).toBe('ok');
+    const revoked = { ...PASSKEY, revoked_at: '2026-11-28T09:00:00+07:00' };
+    expect(answer({ ...ask, device: DeviceSchema.parse({ ...FULL, passkeys: [revoked] }) })).toBe('ok');
+  });
+
+  it('still refuses a revoked device, and asks nothing on loopback', () => {
+    expect(answer({ ...ask, device: device('full', undefined, '2026-11-28T09:00:00+07:00') })).toBe(
+      'device_revoked',
+    );
+    expect(answer({ ...ask, source: 'herald', device: keyed('full') })).toBe('ok');
   });
 });
 

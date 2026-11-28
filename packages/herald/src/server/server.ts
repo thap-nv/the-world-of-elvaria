@@ -34,8 +34,8 @@ export interface HeraldOptions {
   readonly clock: Clock;
   readonly format: (at: Instant) => string;
   readonly random: RandomSource;
-  /** The ids of the commands the Herald writes to inbox/. */
-  readonly ids: Pick<IdSource, 'ulid'>;
+  /** The ids of the commands the Herald writes to inbox/, and of the device a pair_device makes (SEC-08). */
+  readonly ids: Pick<IdSource, 'ulid' | 'device'>;
   readonly pages: HeraldPages;
   /** Already redacted (log.ts). */
   readonly log: (entry: HeraldLogEntry) => void;
@@ -76,7 +76,12 @@ const upgradeListener =
         const refusal = passed.ok
           ? stream.accept(
               { req, socket, head },
-              { device: passed.value.device, source: passed.value.gate.source },
+              {
+                device: passed.value.session.device,
+                source: passed.value.gate.source,
+                origin: passed.value.gate.origin,
+                opened_at: passed.value.session.opened_at,
+              },
             )
           : passed;
         if (refusal.ok) return;

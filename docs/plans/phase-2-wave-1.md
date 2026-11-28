@@ -69,7 +69,7 @@ Yêu cầu của chủ nhân (383) và ba ý đã chốt (383a)–(383c). Phần
 | Lệnh `herald pair --role`, `herald device`, `herald devices`, `herald revoke`; Sứ giả gác theo vai ở mọi request và lệnh | P2-01b, P2-01c |
 | Quest `read_only` | P2-01d |
 | Đăng ký passkey, kiểm chữ ký, dấu `confirmed` trên lệnh, Nhiếp chính đòi dấu đó với `lite` nhóm 2 và 3 | SEC-08 |
-| Ba kind `pair_device`, `set_device`, `revoke_device` (cấp và đổi vai từ thiết bị `full`), phần giao diện của `apps/lite` | SEC-08 |
+| Ba kind `pair_device`, `set_device`, `revoke_device` (cấp và đổi vai từ thiết bị `full`), phần giao diện của `apps/lite` | SEC-08 (thực tế SEC-08, 2026-11-28: `apps/lite` chưa có, phần giao diện và `navigator.credentials` chuyển sang P2-07 theo các thông điệp `enroll`, `register`, `challenge`, `confirm` của [ADR 0038](../adr/0038-passkey-signs-the-command.md); đăng ký passkey thành kind thứ tư `add_passkey`, vì chỉ Nhiếp chính và CLI ghi file thiết bị) |
 
 ## P2-01 — Sứ giả lõi: tổng quan và cách chia
 

@@ -15,6 +15,7 @@ export * from './mana/index.ts';
 export * from './memo/index.ts';
 export * from './metrics/index.ts';
 export * from './party/index.ts';
+export * from './passkey/index.ts';
 export * from './patrol/index.ts';
 export * from './protocol/index.ts';
 export * from './quest/index.ts';

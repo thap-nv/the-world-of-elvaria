@@ -39,7 +39,19 @@
   source, the device; a frame naming its own `source`, `id` or `device` is no command), the domain's `deviceMay` with
   the scope its world gives, then `inbox.write`. It answers `accepted` with the command id or `refused` with a code
   (`deviceMay`'s, or `invalid_message`, `too_many_commands`, `failed`); a frame with no ref to answer, or a binary one,
-  closes the stream (1008). A phone's command of group 2 or 3 is `passkey_required` until SEC-08.
+  closes the stream (1008).
+- Asks a phone for its passkey (SEC-08, ADR 0038, `src/command/submit.ts`, `passkey.ts`, `challenges.ts`): a command of
+  group 2 or 3 from `lite` without a signature gets `challenge` back (the domain's `commandChallenge` of the command
+  it sealed, and the device's live passkeys), held by device and ref for 5 minutes; `confirm` brings the signature,
+  which `checkConfirmation` and the store's `nodePasskeyCrypto` check against the device file read again before the
+  command, `confirmation` and all, goes to inbox/. A device with no live passkey gets `passkey_required`. `enroll`
+  gives a fresh 32-byte challenge to a device through the tunnel (`passkey_needs_tunnel` on loopback), for its first
+  passkey only within 5 minutes of its pairing (`enroll_closed`); `register` checks the browser's answer
+  (`checkRegistration`: ceremony, challenge, the tunnel's origin, credential id, key type) and submits the device's
+  own `add_passkey`, which a device holding a passkey must sign. A `pair_device` names a device id the Herald draws,
+  and its `accepted` carries the new device's pairing code, which joins the redactor's known values once sent.
+  Refusals of its own: `no_challenge`, `passkey_needs_tunnel`, `enroll_closed`; the passkey checks' are
+  `passkey_unknown`, `passkey_revoked`, `passkey_mismatch`, `passkey_invalid`.
 - Bounds what a stranger can cost (`src/limit/`): body size, open sockets, request time, wrong codes, the frame a client
   sends, streams per device and in all, bytes waiting on one stream, commands a minute.
 - Logs through its own redactor (ADR 0031 item 7): every code and session id it has seen is masked, and entries
@@ -50,19 +62,22 @@
 
 - Hold a string of its own: every word of its pages comes from the composition root (`HeraldPages`); no `i18n`.
 - Open the treasury, import the Steward or any work-engine package, or write a quest (ADR 0005, `boundaries.mjs`).
-- Write device files: `elvaria herald pair|device|revoke` do (ADR 0037).
+- Write device files: `elvaria herald pair|device|revoke` do (ADR 0037), and the Steward applying the device commands
+  (SEC-08); a passkey reaches a device file through the device's `add_passkey` only.
 - Apply a command, or read its result but from the two `command.*` lines: the Steward applies it and checks the
-  device again (ADR 0005). Passkeys are SEC-08.
+  device and the passkey signature again (ADR 0005).
+- Run the browser's half of WebAuthn (`navigator.credentials`): the client that `apps/lite` builds does (P2-07).
 
 ## Depends on
 
 - `@elvaria/domain` (`Device`, ids, `Result`, `Clock`, the protocol, `deviceMay`, the scope functions, `attentionOf`,
-  `reduce`), `@elvaria/store` (device files, inbox, `readKingdomSource`, `withLock`, atomic writes, `staysInside`),
+  `reduce`, the passkey checks), `@elvaria/store` (device files, inbox, `readKingdomSource`, `withLock`, atomic writes,
+  `staysInside`, `nodePasskeyCrypto`),
   `@elvaria/eventlog` (the log's reader, `createRedactor`, `redactDeep`).
 - `ws` (the WebSocket server; Node 24 has none on the server side): the one dependency outside the workspace that
   ADR 0031 allows.
 - `@elvaria/config`, `@elvaria/testkit`, `@types/ws` (dev only: tsconfig, throwaway folders, the event log's fake
-  secrets, the types of `ws`, whose client the specs use).
+  secrets, real passkeys (`testPasskey`), the types of `ws`, whose client the specs use).
 
 ## How to test
 

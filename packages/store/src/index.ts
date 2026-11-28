@@ -21,5 +21,6 @@ export { comparePath, fromPortable, inKingdom, staysInside, toPortable } from '.
 export { acquireLock, isLocked, withLock } from './io/lock.ts';
 export type { HeldLock, LockOptions } from './io/lock.ts';
 export { pathExists, readTextFile, writeFileAtomic } from './io/atomic.ts';
+export { nodePasskeyCrypto } from './io/passkey-crypto.ts';
 export { RM_RETRY } from './io/remove.ts';
 export * from './world/index.ts';

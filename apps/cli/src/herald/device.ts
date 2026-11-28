@@ -52,15 +52,12 @@ async function save(
   if (!label.ok) return label;
   const grant = await grantAfter(ctx, current, change);
   if (!grant.ok) return grant;
-  // Rebuilt from the file as it is under the lock: a revoke written meanwhile keeps its revoked_at.
-  const written = await ctx.store.devices.update(current.id, ({ version, id, created_at, revoked_at }) =>
-    ok(
-      deviceOf(
-        { version, id, label: label.value, created_at, ...(revoked_at === undefined ? {} : { revoked_at }) },
-        grant.value,
-      ),
-    ),
-  );
+  // Rebuilt from the file as it is under the lock: a revoke written meanwhile keeps its revoked_at, and the device's
+  // passkeys (SEC-08) stay with it.
+  const written = await ctx.store.devices.update(current.id, ({ role: _role, ...fields }) => {
+    const { territories: _territories, ...kept } = { territories: undefined, ...fields };
+    return ok(deviceOf({ ...kept, label: label.value }, grant.value));
+  });
   if (written.ok) return written;
   return err({ text: storeIssueLines(ctx.t, written.error).join('\n'), exit: EXIT.failed });
 }

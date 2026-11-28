@@ -1,7 +1,7 @@
 // `elvaria herald pair|devices|device|revoke` (P2-01b, ADR 0037) without a running Herald: the device files they
 // write (the CLI's exception to ADR 0005), the roles' rules they hold before writing, and the pairing file that keeps
 // a hash, never the code. No socket, no mana.
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { beforeAll, afterAll, describe, expect, it } from 'vitest';
@@ -118,6 +118,26 @@ describe('elvaria herald pair, devices, device, revoke', () => {
     expect(limited.code).toBe(2);
     expect(limited.text).toContain('The inquiry role needs at least one --territory.');
     expect((await deviceFile(id)).role).toBe('full');
+  });
+
+  it('keeps the passkeys a device registered when its role or label changes (SEC-08)', async () => {
+    const id = idIn((await herald('pair', '--role', 'full', '--label', 'Phone')).text);
+    const passkeys = [
+      {
+        id: 'cred-1',
+        public_key: 'MFkw',
+        algorithm: 'es256',
+        origin: 'https://keep.tail1234.ts.net',
+        sign_count: 4,
+        added_at: '2026-11-06T09:05:00+07:00',
+      },
+    ];
+    const file = path.join(kingdom, 'devices', `${id}.json`);
+    await writeFile(file, JSON.stringify({ ...(await deviceFile(id)), passkeys }));
+    expect(
+      (await herald('device', id, '--role', 'scoped', '--territory', 'north', '--label', 'Work')).code,
+    ).toBe(0);
+    expect(await deviceFile(id)).toMatchObject({ role: 'scoped', label: 'Work', passkeys });
   });
 
   it('names a device it does not know', async () => {

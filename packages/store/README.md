@@ -55,6 +55,10 @@
 - Lays out a territory's code graphs (PS-21): `kingdomLayout.graphs`, `graph(<territory>, <commit>)`, `graphSource`
   and `graphLock`, under `.state/graphs/<territory>/`.
 
+- Verifies passkey signatures for the device files' keys (SEC-08, ADR 0038): `nodePasskeyCrypto` is `node:crypto`
+  behind the domain's `PasskeyCrypto` port (SHA-256; ES256, RS256 and Ed25519 over an SPKI key, a key of another
+  type than its passkey says refused), the one adapter the Herald and the Steward both hand to `checkConfirmation`.
+
 ## Does not
 
 - Decide anything: who may write quests (only the Steward, ADR 0005), when a quest changes status, or what a
