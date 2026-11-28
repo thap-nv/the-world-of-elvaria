@@ -1,3 +1,5 @@
+export { askBard, chronicleIssueText } from './bard.ts';
+export type { BardAnswer, BardFailure } from './bard.ts';
 export {
   AMENDMENT_DECISION_JSON_SCHEMA,
   amendmentCheck,
