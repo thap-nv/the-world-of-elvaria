@@ -13,7 +13,7 @@ import { conformanceRequest, openWorkspace, prepareWorkspace } from './workspace
 import type { AgentRunner, RunResult, RunnerSignal, RunningSession } from '../runner/types.ts';
 import type { FakeScenario } from './scenarios.ts';
 import type { StripeColor } from './stripes.ts';
-import type { ConformanceTarget, LeftWorkspace } from './target.ts';
+import type { ConformanceCheck, ConformanceTarget, LeftWorkspace } from './target.ts';
 import type { Workspace } from './workspace.ts';
 
 export const DEFAULT_TIMEOUT_MS = 10_000;
@@ -138,6 +138,31 @@ async function follow(
 }
 
 /** Spawns `scenario` in a throwaway workspace and returns what the session yielded, once `steps.verify` holds it. */
+/**
+ * A check of the runner's tool gate, live too (SEC-01 `secret_place`, P2-01d `read_only_write`): skipped for a runner
+ * that declares none, else one session of `scenario` whose end `verify` reads while the workspace is still there.
+ */
+export function gatedCheck(
+  id: string,
+  scenario: FakeScenario,
+  verify: (played: Played, target: ConformanceTarget) => void,
+): ConformanceCheck {
+  return {
+    id,
+    live: true,
+    run: async (target) => {
+      const runner = await target.createRunner();
+      if (!runner.capabilities.tool_gate) return 'skipped';
+      await play(target, runner, scenario, {
+        verify: (played) => {
+          verify(played, target);
+        },
+      });
+      return 'passed';
+    },
+  };
+}
+
 export async function play(
   target: ConformanceTarget,
   runner: AgentRunner,

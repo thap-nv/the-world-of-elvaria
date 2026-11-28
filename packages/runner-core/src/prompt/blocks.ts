@@ -3,6 +3,7 @@
 import { PATCH_FILE } from '../plot/patch.ts';
 import { amendmentAnswerBlock } from './amendment-answer.ts';
 import { SHELL_TOOL, WRITE_TOOLS } from '../policy/constants.ts';
+import { REPORT_FILE } from '../policy/read-only.ts';
 import { checksAheadBlock, failedChecksBlock } from './checks.ts';
 import { memoryBlock } from './memory.ts';
 import { healBlock } from './heal.ts';
@@ -135,6 +136,10 @@ export function readOnlyBlock(
         : `They are generated. After you change what they are generated from, run their generator and commit what it writes with your work:\n\n${bullets(generators)}`,
   });
 }
+
+/** read-only-quest.md for a session fenced to its report (P2-01d, ToolPolicy.writable_paths); else empty. */
+export const readOnlyQuestBlock = (policy: Pick<ToolPolicy, 'writable_paths'>, t: PromptTemplates): string =>
+  policy.writable_paths === undefined ? '' : fill(t['read-only-quest'], { report: REPORT_FILE });
 
 /**
  * The territory's patch paths and the patch convention (P1-28), for a session that may edit files: without it a

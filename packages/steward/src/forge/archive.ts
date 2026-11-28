@@ -8,8 +8,8 @@
 import { err, ok } from '@elvaria/domain';
 import type { QuestId, Result } from '@elvaria/domain';
 
-import { releasePlot } from '../inbox/quest-commands.ts';
 import { adviseOnLanding } from '../memos/advisory.ts';
+import { releasePlot } from '../plot/release.ts';
 import { moveAndRing } from '../bell/move-and-ring.ts';
 import type { Context } from '../context.ts';
 

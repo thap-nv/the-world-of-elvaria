@@ -5,7 +5,11 @@
 // copied into the territory (ADR 0012); a draft stays a draft, sent by nobody but the owner, and reached `done`
 // through the seal its kind asks for; a plan's sub-quests open. Every delivery writes `.runs/<quest>-delivery.md`
 // and then stamps `deliverable.delivered_at` (with `path`, and `branch` for a worktree), so a crash in between
-// delivers again, finding what it already did.
+// delivers again, finding what it already did. (P2-01d) A read-only quest copies nothing into its territory, whatever
+// its plot: its report goes into the note, and its plot is given back once it is delivered, since its branch never
+// leaves the kingdom (forgeDue). A Steward stopped between the two leaves the plot to the owner's archive.
+import path from 'node:path';
+
 import {
   currentRun,
   err,
@@ -15,13 +19,15 @@ import {
   partyStatusOf,
   verdictIdOf,
 } from '@elvaria/domain';
-import { openJournal } from '@elvaria/eventlog';
-import { fromPortable, inKingdom, writeFileAtomic } from '@elvaria/store';
+import { openJournal, redact } from '@elvaria/eventlog';
+import { REPORT_FILE } from '@elvaria/runner-core';
+import { fromPortable, inKingdom, readTextFile, writeFileAtomic } from '@elvaria/store';
 import type { Deliverable, Quest, QuestId, Result, Territory, Verdict } from '@elvaria/domain';
 
 import { noticeQuest, ring } from '../context.ts';
 import { readHandover } from '../texts/files.ts';
 import { closeContract } from '../party/contract.ts';
+import { releasePlot } from '../plot/release.ts';
 import { copyIntoTerritory } from './copy.ts';
 import { deliveryNote, deliveryNoteOf } from './note.ts';
 import { openSubquests } from './subquests.ts';
@@ -32,6 +38,8 @@ import type { Subquests } from './subquests.ts';
 interface Shipped {
   readonly copied?: Copied;
   readonly subquests?: Subquests;
+  /** A read-only quest's report (P2-01d), masked; null when its session left none. */
+  readonly report?: string | null;
 }
 
 type Ship = (
@@ -58,6 +66,13 @@ const work: Ship = async (ctx, quest, territory) => {
 const subquests: Ship = async (ctx, quest) => {
   const opened = await openSubquests(ctx, quest, plotDirOf(ctx, quest.plot));
   return opened.ok ? shipped({ subquests: opened.value }) : opened;
+};
+
+/** A read-only quest's report, read before its plot goes back (P2-01d). Its own words, masked like a letter. */
+const report: Ship = async (ctx, quest) => {
+  const dir = plotDirOf(ctx, quest.plot);
+  const text = dir === undefined ? undefined : await readTextFile(path.join(dir, REPORT_FILE));
+  return shipped({ report: text === undefined ? null : redact(text, []) });
 };
 
 /** What each deliverable type does before the note. */
@@ -93,7 +108,8 @@ const messageOf = (error: unknown): string => (error instanceof Error ? error.me
 
 async function deliverQuest(ctx: Context, quest: Quest): Promise<Result<Quest, string>> {
   const territory = ctx.world.territories.get(quest.territory);
-  const done = await SHIP[quest.deliverable.type](ctx, quest, territory);
+  const ship = quest.read_only === true ? report : SHIP[quest.deliverable.type];
+  const done = await ship(ctx, quest, territory);
   if (!done.ok) return done;
   const note = deliveryNoteOf(quest);
   const party =
@@ -116,12 +132,17 @@ async function deliverQuest(ctx: Context, quest: Quest): Promise<Result<Quest, s
     actor: 'steward',
     before: { deliverable },
   });
-  if (moved.ok && done.value.subquests?.status === 'refused')
-    await refusedPlan(ctx, moved.value, done.value.subquests.reason);
+  if (moved.ok) await afterDelivery(ctx, moved.value, done.value);
+  return moved;
+}
+
+/** What a delivered quest asks next: the owner hears of a plan that opened nothing; a party's list; a plot back. */
+async function afterDelivery(ctx: Context, quest: Quest, done: Shipped): Promise<void> {
+  if (done.subquests?.status === 'refused') await refusedPlan(ctx, quest, done.subquests.reason);
   // A party's branches start from the contract's, and any plan's sub-quests from the plan's (fix/council-run-gaps (d)):
   // its list goes before any of their worktrees is made (P1-18), so no branch takes it to the default branch.
-  if (moved.ok && done.value.subquests?.status === 'opened') await closeContract(ctx, moved.value);
-  return moved;
+  if (done.subquests?.status === 'opened') await closeContract(ctx, quest);
+  if (quest.read_only === true) await releasePlot(ctx, quest);
 }
 
 /** A plan that opened nothing is delivered all the same; the owner hears it once, when it is (P1-14, §11). */

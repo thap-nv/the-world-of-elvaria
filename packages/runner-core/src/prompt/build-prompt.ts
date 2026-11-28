@@ -16,6 +16,7 @@ import {
   patchBlock,
   questBlock,
   readOnlyBlock,
+  readOnlyQuestBlock,
   scriptureBlock,
   shellBlock,
   skillsBlock,
@@ -36,7 +37,6 @@ import type { PromptObjection } from './objection.ts';
 import { planLinksBlock } from './plan-links.ts';
 import { composed } from './prompt-blocks.ts';
 import { protectedChangesBlock } from './protected.ts';
-import { readOnlyQuestBlock } from './read-only-quest.ts';
 import { PASS_RULES } from './pass-rules.ts';
 import { outOfScopeBlock } from './scope.ts';
 import { screensBlock } from './screens.ts';

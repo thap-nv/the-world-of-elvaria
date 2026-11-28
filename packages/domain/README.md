@@ -389,6 +389,12 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   and the territories it reaches (`commandGroupOf`, `commandScopeOf`); `deviceMay` checks a device's role against them
   and answers with a refusal code. `scopeState` and `scopeEvents` give a `scoped` or `inquiry` device the world of its
   territories, the lines by an allow list, and `resync` when a line held back moved what it sees.
+- Marks the quest of an inquiry device read-only (P2-01d, 383a): `readOnlyFor` (`src/device/may.ts`) reads the
+  device's role, `NewQuestContext.read_only` puts `quest.read_only` (optional, after v1) on the new quest, and no
+  payload can name it or an edit remove it. The quest schema holds such a quest to a report, run as a session, with
+  no secret and no seal (none of the delegation's seal fields either); `sealSpared` (`src/verify/protected.ts`)
+  keeps the rules that raise the seal by themselves off it, `forgeDue` never sends it to the forge and `src/dispatch/in-base.ts`
+  never looks for its branch. `QuestView.read_only` carries the mark to the clients.
 - Decides when the Steward's scheduled jobs run (`src/schedule/`, PS-03): `dueJobs` over `kingdom.schedule`, the
   kingdom's local day and time (`localClockOf`) and the day each job last ran: a daily job is due once its `at` has
   come on a day it has not run (`DAILY_JOBS`: `chronicle`, `triage`, `digest`), so a late start catches up and a clock set back

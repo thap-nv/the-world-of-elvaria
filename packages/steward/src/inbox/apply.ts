@@ -14,7 +14,7 @@ import { escalate } from '../memos/escalate.ts';
 import { STEWARD } from '../quest/record.ts';
 import type { Line } from '../quest/record.ts';
 import { release, suspend } from './character-commands.ts';
-import { deviceRefusal } from './device-check.ts';
+import { deviceCheck } from './device-check.ts';
 import { deviceCommand } from './device-commands.ts';
 import { reportEscape, resumeDelegation } from './delegation-commands.ts';
 import { enqueueBranch } from './guest-commands.ts';
@@ -115,13 +115,13 @@ function questlessCommand(ctx: Context, command: InboxCommand): Promise<Outcome>
 /**
  * What one command does; a command kind of a later task is refused with `unsupported`. A paired device's command
  * is first checked against its device's role (P2-01) and its passkey signature (SEC-08): a refusal names why
- * (unknown_device, role_forbids, passkey_required…).
+ * (unknown_device, role_forbids, passkey_required…); an inquiry device's create_quest makes a read-only quest (P2-01d).
  */
 export async function applyCommand(ctx: Context, command: InboxCommand): Promise<Outcome> {
-  const refusal = await deviceRefusal(ctx, command);
-  if (refusal !== undefined) return rejected(refusal);
+  const checked = await deviceCheck(ctx, command);
+  if (!checked.ok) return rejected(checked.error);
   if (LATER.has(command.kind)) return rejected('unsupported');
-  if (command.kind === 'create_quest') return createQuest(ctx, command);
+  if (command.kind === 'create_quest') return createQuest(ctx, command, checked.value.read_only);
   if (command.kind === 'wake') return wake(ctx, command.payload.tribe);
   if (command.kind === 'suspend') return suspend(ctx, command.payload.character, command.payload.reason);
   if (command.kind === 'release') return release(ctx, command.payload.character);
