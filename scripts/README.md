@@ -84,7 +84,9 @@
   `- Status:` line), `shellScriptProblems` (no `.sh`, `.ps1`, `.cmd`, or `.bat` files in the repo),
   `sizeProblems` (no `docs/**/*.md`, generated or not, over `DOC_MAX_KB` = 150 KB of UTF-8, P1-52; the root
   `CLAUDE.md`, which every session loads whole, not over `CLAUDE_MD_MAX_KB` = 17 KB),
-  `linkProblems` (`docs-links.mjs`), `termProblems` (glossary tables `quest_statuses` and `character_statuses`
+  `linkProblems` (`docs-links.mjs`), `pathProblems` (`docs-paths.mjs`: backticked file paths in README.md,
+  CLAUDE.md and rules must match a repo file exactly or by suffix, excluding runtime and kingdom paths),
+  `termProblems` (glossary tables `quest_statuses` and `character_statuses`
   match `QUEST_STATUSES` and `CHARACTER_STATUSES` of `@elvaria/domain` exactly, and `ritual_steps` and `events`
   include every `RITUAL_STEPS` and `EVENT_TYPES` value), `bannedIdentifierProblems` (`docs-identifiers.mjs`),
   and `dataIdProblems` (`docs-identifiers.mjs`). Called by `pnpm docs:check` in the root `package.json`,

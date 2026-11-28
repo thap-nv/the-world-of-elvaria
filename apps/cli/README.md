@@ -506,7 +506,7 @@ Specs run `runCli` on a fake machine (`src/__fixtures__/cli.ts`: fixed clock, ca
 paths with a space and a Vietnamese letter. Fake CLIs are npm-style `.cmd` shims on Windows and shebang scripts
 elsewhere; `cli.spec.ts` spawns the built bin as the owner would. Lines the Steward would have written are
 planted with `openEventLog` / `openJournal`: `src/quest/infirmary.spec.ts` (the infirmary reason of `quest show`,
-old lines included), `src/quest/last-run.spec.ts` (verdicts and `plot.restored` of the last run), `src/gauges.spec.ts` (the gauges, and `character list` and `doctor` showing them),
+old lines included), `src/quest/last-run.spec.ts` (verdicts and `plot.restored` of the last run), `src/mana/gauges.spec.ts` (the gauges, and `character list` and `doctor` showing them),
 `src/quest/stamina-view.spec.ts` and `src/quest/edit-tokens.spec.ts` (PS-28b: the session and notch lines of
 `src/__fixtures__/stamina.ts`, for the ceilings, the stamina bar and what a new token budget does).
 No spec reads a real credential or reaches a forge (PS-08): `src/__fixtures__/credential.ts` empties `credential.helper` in the
