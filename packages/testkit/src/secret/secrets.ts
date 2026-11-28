@@ -1,6 +1,7 @@
-// Thirteen kinds of secret: one per pattern of redact-patterns.json, plus a treasury value with no shape that
-// only the known-values list can catch. Every secret is put together at run time from pieces, so no
-// secret-shaped literal sits in the repo for a scanner (or GitHub push protection) to flag. All are fake.
+// Thirteen kinds of secret: one per pattern of the event log's redact-patterns.json, plus a treasury value with no
+// shape that only the known-values list can catch. Every secret is put together at run time from pieces, so no
+// secret-shaped literal sits in the repo for a scanner (or GitHub push protection) to flag. All are fake. Here since
+// P2-01c (R7): the event log checks its redactor with them, the Herald that none reaches a client.
 
 export interface SecretSample {
   /** A pattern id of redact-patterns.json, or `known` for a treasury value. */

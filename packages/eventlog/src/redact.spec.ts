@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { KNOWN_SECRET, SECRET_SAMPLES } from './__fixtures__/secrets.ts';
+import { KNOWN_SECRET, SECRET_SAMPLES } from '@elvaria/testkit';
 import { EventLogError } from './errors.ts';
 import patternFile from './redact-patterns.json' with { type: 'json' };
 import {
