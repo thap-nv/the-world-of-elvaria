@@ -16,7 +16,11 @@
 
 - Runs the Steward (implementation-plan §3.1): `createSteward(deps)` takes `.state/steward.lock` (one Steward per
   kingdom), rebuilds from the event log what it already answered, and ticks every `dispatch.tick_seconds`.
-  Ticks never overlap.
+  Ticks never overlap. (LL-04, `src/tick/lifecycle.ts`) Once it holds the lock and has read the log it writes
+  `steward.started`: its build (`deps.build`, the pinned commit) and how the Steward before ended, `first` (no
+  `steward.*` line yet), `clean` (a stop, with `down_minutes` since it) or `unclean` (a start with no stop: it died,
+  `down_minutes` since the last line of the log). `stop(reason)` writes `steward.stopped` as its last line, with
+  `reason` (`owner` by default, `signal` for a SIGTERM) and the sessions it killed.
 - One tick, in the order of §3.1: the inbox in id order (the owner first); the ends of the sessions it runs;
   sessions the files say run but it does not hold end, so no quest ever runs two sessions: at the first tick after
   start those the last Steward ran when it stopped or was killed count for nothing (P1-44, `reapLost` of
@@ -201,7 +205,9 @@
   when the territory has `commands.setup_when`: a quest that changed a file it names (the lockfile, a package.json)
   gets `commands.setup` again, with its secrets, so the hooks do not run on what the old files installed; a setup
   that fails commits nothing and is `breaker:setup` (its detail and `.runs/<quest>-setup.log`), and one the
-  Steward's stop cut short lets the commit go on as before.
+  Steward's stop cut short lets the commit go on as before. (LL-04, `src/plot/setup-line.ts`) A setup that ran there
+  writes `plot.setup` (`trigger: changed`, `pass`, `duration_ms` or `detail`, `log_path`); one not due or cut short
+  writes none.
 - Keeps the pid of every session it holds in `.state/sessions.json` (written before each tick ends, emptied at
   stop); a session that goes on in another process (a reply tried again, a reminder of the letter, P1-33) is
   written again with that process's pid and spawn time (`Sessions.respawned`), and the `quest.*` line that tells
@@ -256,6 +262,9 @@
   `set_device` changes a label, role or territories as `elvaria herald device`, `revoke_device` revokes a device or
   one passkey, `add_passkey` adds a passkey to the sending device (`passkey_exists`); passkeys and `revoked_at`
   survive every change. The owner's clients only (`owner_only` for the Chancellor and the temple).
+- (LL-04) The `command.applied` or `command.rejected` line of a command that names a quest the world holds carries
+  that quest in its envelope, applied or refused; a `quest.edited` line names in `fields` the top-level fields of
+  the quest file the edit changed (`updated_at` aside), never their values.
 - Applies the owner's commands: `create_quest` (an id derived from the command id, so a command applied twice
   never makes two quests), `confirm`, `cancel` (kills the session), `archive`, `retry`, `seal` and `return` (the owner's
   verdict, `verdicts/<quest>-<n>-user.json`, weighed three times; a return needs notes of 20 characters and takes
