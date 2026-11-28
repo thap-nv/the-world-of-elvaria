@@ -21,6 +21,7 @@
     "knip": "knip --no-progress --no-config-hints && knip --production --no-progress --treat-config-hints-as-errors",
     "layout": "node scripts/src-layout.mjs",
     "dup": "node scripts/shape-clones.mjs",
+    "coverage:unrun": "node scripts/unrun-lines.mjs",
     "schemas": "node scripts/gen-schemas.mjs",
     "docs:gen": "node scripts/docs-gen.mjs",
     "docs:check": "node scripts/docs-check.mjs",

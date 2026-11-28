@@ -67,6 +67,8 @@ pnpm knip                # file, export, dependency không ai dùng (knip.json �
 pnpm dup                 # khung chép (AH-13): cặp file từ 60 token giống khung (tên, chuỗi, số coi như nhau) ngoài shape-clones.json,
                          #   hay cặp trong danh sách lớn lên, thì đỏ; cặp mới thì gom về nhà chung (R7) hay ghi "kept" kèm lý do
 pnpm dup --prune         # hạ shape-clones.json về hôm nay sau khi gom (không bao giờ thêm); --stats in tỉ lệ token trong khung chép
+pnpm coverage:unrun --run <thư mục V8> [--run …] [--summary] [--out <file>]
+                         # báo cáo (AH-15), không là cổng: theo package, dòng test có chạy mà lần chạy thật không; cách thu ở mục dưới
 pnpm schemas             # sinh docs/schemas/*.schema.json từ zod; --check: so, không ghi, exit 1 khi lệch
 pnpm docs:gen            # sinh docs/glossary.md, events.md, dependency-graph.md, cli.md, bảng §2.5 và mục lục của kế hoạch triển khai; --check như trên
 pnpm docs:gen --kingdom <dir>   # thêm docs/tier-report.md (§3.12) và docs/metrics-report.md (§3.16.1) từ vương quốc đó; --check không kèm --kingdom (như trong pnpm check) không so hai file này
@@ -94,6 +96,32 @@ pnpm --filter @elvaria/hooks build && ELVARIA_LIVE=1 pnpm --filter @elvaria/runn
 **Audit phụ thuộc ở lượt merge** (SEC-04): `pnpm audit:prod` chạy `pnpm audit --prod --audit-level high`, cần mạng nên không vào `pnpm check` (check phải chạy offline). Phiên điều phối chạy nó trước mỗi lần merge có đổi `pnpm-lock.yaml`; lỗ hổng mức high trở lên trong dependency chạy thật thì dừng merge và báo chủ nhân.
 
 Mọi lệnh `elvaria` và tùy chọn: [docs/cli.md](../cli.md), sinh từ bảng lệnh. Chỉ `run`, `say`, `triage` và `tribe check` với CLI thật mở phiên tốn mana. Trên vương quốc đã ghim một bản (`elvaria upgrade`), `pnpm elvaria` chạy bằng bản ghim; thêm `--here` để chạy bằng mã của worktree đang sửa.
+
+### Báo cáo dòng không chạy / Unrun-lines report
+
+`pnpm coverage:unrun` (AH-15, [plans/architecture-health.md](../plans/architecture-health.md) V15, K12) liệt kê theo package những dòng mà bộ test có chạy tới nhưng các lần chạy thật không chạy tới. Báo cáo, không là cổng, không nằm trong `pnpm check`: đường xử lý lỗi hiếm vẫn là code cần giữ; một dòng chỉ test chạy tới là câu hỏi cho người đọc (lần chạy chưa đi đường đó, hay không còn gì gọi tới nó). Script không cần dependency mới và không đọc source map.
+
+- **Phía test**: `coverage/coverage-final.json` mà `vitest run --coverage` của từng package ghi (`pnpm test`, hay `pnpm --filter @elvaria/<key> test`), trên đúng commit mà lần chạy thật chạy. Một dòng được tính khi một câu lệnh bắt đầu ở dòng đó đã chạy. Vitest không ghi coverage khi có test đỏ: package đó hiện ở dòng "none for" của báo cáo; cần số mà một ca chập chờn đang đỏ thì `pnpm --filter @elvaria/<key> exec vitest run --coverage --coverage.reportOnFailure`.
+- **Phía chạy thật**: một hay nhiều thư mục `NODE_V8_COVERAGE` (đường dẫn tuyệt đối, mỗi `--run` một thư mục; nhiều thư mục thì gộp: một dòng đã chạy khi một tiến trình nào đó chạy nó). Node ghi một file `coverage-*.json` cho mỗi tiến trình lúc nó thoát êm, và tự chuyển biến này cho mọi tiến trình con, kể cả con có env tường minh (CLI giả, hook, check của Nhiếp chính). Node chạy `.ts` bằng type stripping nên offset của V8 là offset của file trên đĩa. Script chỉ giữ file mà đuôi đường dẫn `packages/…` hay `apps/…` có trong phía test (bản ở `<vương quốc>/.builds/<sha>/` cũng khớp), và bỏ `node_modules`, `dist/` (hook trong phiên chạy từ `dist/` nên những gì nó chạy không được tính cho `packages/hooks`; CLI nạp `src/` của hooks thì vẫn được tính), plot của quest (`.elvaria/worktrees/`) và module mà V8 chạy ở dạng khác file trên đĩa (vitest biến đổi). File mà bản của lần chạy khác bản của test hiện ở cột "Copy differs", không được so.
+
+Thu hai lần chạy mẫu, 0 mana, trên một vương quốc tạm (Git Bash; PowerShell đặt `$env:NODE_V8_COVERAGE = "<thư mục>"` trước lệnh `node` rồi `Remove-Item Env:NODE_V8_COVERAGE`). Gọi thẳng `node apps/cli/src/cli.ts` (mã của worktree này), không qua `pnpm elvaria`:
+
+```bash
+K="<tmp>/kingdom"; V="<tmp>/v8"; cli="node apps/cli/src/cli.ts"
+pnpm --filter @elvaria/hooks build      # bộ test hợp đồng cần dist/ của hook
+$cli init --kingdom "$K" --name Thu --treasury "<tmp>/treasury.json"    # tộc claude và gemini
+$cli tribe add codex --adapter codex_cli --kingdom "$K"
+$cli doctor --acknowledge-terms gemini --tool gemini=packages/runner-antigravity/fixtures/fake-agy.mjs --kingdom "$K"
+$cli sandbox generate --day busy --seed 42 --date 2026-11-06 --kingdom "$K"
+# (1) sandbox replay, tốc độ lớn để ngày giả phát trong một giây
+NODE_V8_COVERAGE="$V/replay" $cli sandbox replay "$K/events/sandbox/2026-11-06.jsonl" --speed 1000000 --kingdom "$K"
+# (2) bộ test hợp đồng với CLI giả, như lượt thử của elvaria upgrade; lặp cho gemini (fake-agy.mjs) và codex (fake-codex.mjs)
+NODE_V8_COVERAGE="$V/conformance" $cli tribe check claude --scenarios --tool packages/runner-claude/fixtures/fake-claude.mjs --kingdom "$K"
+pnpm test                                # phía test, cùng commit
+pnpm coverage:unrun --run "$V/replay" --run "$V/conformance" --out "<tmp>/unrun.md"
+```
+
+**(3) Một ngày vương quốc thật** (không tốn thêm mana, nhưng phải khởi động lại Nhiếp chính): dừng `elvaria run` lúc yên ([operating-a-kingdom.md](operating-a-kingdom.md) §5), chạy lại nó trong terminal có `NODE_V8_COVERAGE=<thư mục>`, để nó chạy một ngày, rồi dừng bằng **Ctrl+C**: Node chỉ ghi coverage khi tiến trình thoát êm, `taskkill /F` làm mất file của Nhiếp chính. Lối vào chạy lại bản ghim `<vương quốc>/.builds/<sha>/apps/cli/src/cli.ts` (`.state/build.json`, ô `current`) và biến đi theo. Phía test phải là commit `<sha>` đó: một worktree ở `<sha>`, `pnpm install`, `pnpm test`, rồi `pnpm coverage:unrun --run <thư mục>` từ worktree đó.
 
 ### Hook của repo / Repo hooks
 
