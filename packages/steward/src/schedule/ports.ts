@@ -113,3 +113,38 @@ export interface ChronicleRequest {
 export interface Chronicle {
   write(request: ChronicleRequest): Promise<string>;
 }
+
+/** (P2-06b) What the Bard's sessions spent, for `chronicle.written`: the mana estimate counts it (ADR 0009). */
+export interface PoetSpent {
+  readonly tribe: TribeId;
+  readonly model: string;
+  readonly tokens: number;
+  readonly session?: string;
+}
+
+/** (P2-06b) The day's prose, asked of the Bard poetCallOf chose, once the machine's part is written. */
+export interface PoetRequest {
+  readonly day: string;
+  readonly ledger: ChronicleLedger;
+  /** The chronicle the machine wrote, relative to the kingdom: the prose is appended to it. */
+  readonly file: string;
+  readonly bard: CharacterId;
+  /** Aborted when the Steward stops: the session ends and nothing is appended. */
+  readonly signal: AbortSignal;
+}
+
+export interface PoetResult {
+  /** Whether prose that passed checkChronicle was appended to the file. */
+  readonly prose: boolean;
+  /** Absent when no session ran (no runner for the Bard's tribe). */
+  readonly spent?: PoetSpent;
+}
+
+/**
+ * The Bard's port (P2-06b): apps/cli opens the session with no tool (askBard), redacts the prose, holds it against the
+ * ledger (checkChronicle), asks once more with the errors, and appends what passes to the chronicle; prose refused twice
+ * leaves the machine's part alone. It never throws for the model's sake: a failed session is `prose: false`.
+ */
+export interface Poet {
+  write(request: PoetRequest): Promise<PoetResult>;
+}

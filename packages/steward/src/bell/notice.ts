@@ -80,6 +80,11 @@ export type Notice =
       readonly must: number;
       readonly can_wait: number;
     }
+  /**
+   * (P2-06b) The day's chronicle is written, once a day after the Bard's prose (or without it): `file` relative to the
+   * kingdom. Nothing waits on the owner: the terminal only, no desktop notification.
+   */
+  | { readonly kind: 'chronicle'; readonly day: string; readonly file: string; readonly prose: boolean }
   | { readonly kind: 'awaiting_seal'; readonly quest: NoticeQuest }
   /**
    * The quest went to the infirmary: why in parts (P1-32), for a bell that speaks the owner's language, and the

@@ -8,7 +8,7 @@ import type { KingdomStore } from '@elvaria/store';
 import type { Forges } from './forge/forge.ts';
 import type { Bell } from './bell/notice.ts';
 import type { Plots } from './plot/plot.ts';
-import type { Chronicle, Digest, OnCallJob, ScheduledJob } from './schedule/ports.ts';
+import type { Chronicle, Digest, OnCallJob, Poet, ScheduledJob } from './schedule/ports.ts';
 import type { ScriptRunner } from './script/run-script.ts';
 
 export type { Bell, ManaGaugeNotice, Notice, NoticeQuest } from './bell/notice.ts';
@@ -24,6 +24,9 @@ export type {
   JobRun,
   JobView,
   OnCallJob,
+  Poet,
+  PoetRequest,
+  PoetResult,
   ScheduledJob,
   TempleView,
 } from './schedule/ports.ts';
@@ -78,6 +81,12 @@ export interface StewardDeps {
    * chronicle is written (a spec's Steward).
    */
   readonly chronicle?: Chronicle;
+  /**
+   * (P2-06b) The Bard's port: apps/cli asks the roster's first Bard for the day's prose once the machine's part is
+   * written, when poetCallOf says so. Given, the chronicle runs outside the tick, since the session takes minutes.
+   * Absent: the machine's part alone, in the tick.
+   */
+  readonly poet?: Poet;
   /** More jobs of kingdom.schedule, run by the Steward's scheduler (PS-03b's triage, PS-21c's docs graph). */
   readonly jobs?: readonly ScheduledJob[];
   /** Jobs with no hour, run outside the tick whenever they have work (PS-22b: an amendment's author). */
