@@ -8,6 +8,7 @@
 // `register`.
 import { z } from 'zod';
 
+import { BellEntrySchema } from '../bell/entry.ts';
 import { DeviceIdSchema, REGISTRY_ID_PATTERN, UlidSchema } from '../core/ids.ts';
 import { DateTimeSchema } from '../schema/common.ts';
 import { ConfirmationSchema, PasskeyIdSchema, RegistrationSchema } from '../schema/device/passkey.ts';
@@ -80,6 +81,12 @@ export const AttentionMessageSchema = z.strictObject({
   items: z.array(AttentionItemSchema),
 });
 
+/** P2-04b: recent bell history; clients append subsequent events with bellEntryOf. */
+export const BellMessageSchema = z.strictObject({
+  type: z.literal('bell'),
+  entries: z.array(BellEntrySchema),
+});
+
 /** (SEC-08) A passkey's signature on the command the herald challenged for `ref`. */
 export const ConfirmMessageSchema = z.strictObject({
   type: z.literal('confirm'),
@@ -104,6 +111,7 @@ export const ServerMessageSchema = z.discriminatedUnion('type', [
   AcceptedMessageSchema,
   RefusedMessageSchema,
   AttentionMessageSchema,
+  BellMessageSchema,
   ChallengeMessageSchema,
 ]);
 /** World and lite → herald. */
