@@ -60,6 +60,7 @@ describe('a fourth tribe from an adapter file alone', () => {
         '✓ rate_limit',
         '✓ forbidden_command',
         '✓ secret_place',
+        '✓ read_only_write',
         '✓ spawn_child',
         '✓ structured',
         '– image (skipped: the adapter does not declare it)',

@@ -74,6 +74,12 @@ export interface NewQuestContext {
    * the quests the Steward makes itself: no quest goes without the seal by delegation.
    */
   readonly seal?: SealPolicy;
+  /**
+   * (P2-01d, 383a) The command came from a paired device whose role is inquiry (readOnlyFor): the quest is made
+   * read-only, which no payload can ask for or refuse. Its schema rules refuse what does not fit: another deliverable
+   * than a report, a script, a secret, or the seal the command asks for. Absent: not read-only.
+   */
+  readonly read_only?: true;
 }
 
 type CreateQuest = CommandPayload<'create_quest'>;
@@ -201,7 +207,9 @@ export function questFromCommand(
   if (problem !== undefined) return err({ code: problem });
   // The assignee is not a field of the quest: the Steward gives it the new quest by the owner's reassign (§2.5).
   const { draft, question, party_role: partyRole, estimate, assignee: _, ...fields } = payload;
-  const delegated = delegatedOf(payload, kind, context);
+  const readOnly = context.read_only === true;
+  // A read-only quest is never delivered, so the delegation of the seal has nothing to spare it (P2-01d).
+  const delegated = !readOnly && delegatedOf(payload, kind, context);
   return parsed({
     version: 1,
     id: context.id,
@@ -215,8 +223,9 @@ export function questFromCommand(
     attempt_log: [],
     plot: { type: 'none' },
     deliverable: { type: kind.deliverable_type },
-    seal_required: payload.seal_required ?? (!delegated && sealDefaultOf(kind, context.party)),
+    seal_required: payload.seal_required ?? (!readOnly && !delegated && sealDefaultOf(kind, context.party)),
     ...(delegated ? { seal_delegated: true } : {}),
+    ...(readOnly ? { read_only: true } : {}),
     ...(question === undefined ? {} : { blocked: { question, asked_at: context.at } }),
     created_at: context.at,
     updated_at: context.at,

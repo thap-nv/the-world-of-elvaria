@@ -467,7 +467,7 @@
     {
       "a": "packages/domain/src/schema/memo/memo-triage.ts",
       "b": "packages/domain/src/schema/quest/quest-rules.ts",
-      "tokens": 76,
+      "tokens": 68,
       "status": "unreviewed"
     },
     {

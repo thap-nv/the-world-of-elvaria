@@ -253,7 +253,9 @@
 - Checks a command of source `herald` or `lite` against the device it names before anything else (P2-01, ADR 0037,
   `inbox/device-check.ts`): it reads `devices/<id>.json` and the memos the command names, and the domain's `deviceMay`
   refuses it with `unknown_device`, `device_revoked`, `role_forbids`, `outside_territories` or `passkey_required`;
-  `command.applied` and `command.rejected` name the device. Commands of other sources are not checked. (SEC-08, ADR 0038) A passkey signature on the command (`confirmation`) is checked again with the domain's `checkConfirmation`
+  `command.applied` and `command.rejected` name the device. Commands of other sources are not checked. (P2-01d,
+  383a) What the device file says also marks the quest of an inquiry device's `create_quest` read-only (`deviceCheck`,
+  the domain's `readOnlyFor`), never the payload; such a quest that asks for the seal is refused (`invalid_quest`). (SEC-08, ADR 0038) A passkey signature on the command (`confirmation`) is checked again with the domain's `checkConfirmation`
   and the store's `nodePasskeyCrypto`: one of another command, by a revoked or unknown passkey, or with a counter
   that did not move on is refused (`passkey_mismatch`, `passkey_revoked`, `passkey_unknown`, `passkey_invalid`),
   in every group; a good one writes its counter back to the device file.
@@ -462,7 +464,10 @@
   reaches `done` through the seal its kind asks for; a plan's `subquests.json` (quest-draft JSON at the root of
   its plot) becomes open child quests (`created_by: council`, ids derived from the plan and the ref), all or none:
   a list it cannot read, a draft the kingdom refuses, a question or a circle open none, and the owner hears it
-  once (`subquests_refused`, the bell, a warning in the log).
+  once (`subquests_refused`, the bell, a warning in the log). (P2-01d) A read-only quest copies nothing into its
+  territory, git or not: the note keeps its report (`elvaria-report.md`, masked, or says there is none) and asks no
+  merge, and its plot goes back right after the delivery (`src/plot/release.ts`, as at archive), since its branch
+  never goes to the forge (`forgeDue`).
 - Opens a party when its contract quest is delivered (implementation-plan §3.13, ADR 0020, P1-18, `src/party/`):
   the contract's list holds parts only (`party_role: part`, `contract`), and each opens in the contract's party,
   waiting for the contract, with the merge quest the Steward adds itself (domain's `mergeQuestOf`: a knight's

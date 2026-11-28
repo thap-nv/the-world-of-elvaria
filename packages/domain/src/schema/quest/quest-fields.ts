@@ -121,6 +121,15 @@ export const QuestFieldsSchema = z.strictObject({
       ),
     ),
   seal: SealSchema.optional(),
+  // P2-01d, (383a): optional and added after v1, so `version` stays 1 (ADR 0003); only an inquiry device's quest has it.
+  read_only: z
+    .literal(true)
+    .optional()
+    .meta(
+      describe(
+        "The quest asks a question and changes nothing (P2-01d, ADR 0037): the Steward sets it, never a command's payload, when it applies the create_quest of a paired device whose role is inquiry. Its kind delivers a report, it runs as a session, asks for no secret and never takes the royal seal; its session writes only its report and its handover letter, has no shell and no web; its branch never goes to the forge, and its plot is given back as soon as it is delivered. No edit removes it.",
+      ),
+    ),
   blocked: BlockedSchema.optional(),
   objection: ObjectionSchema.optional().meta(
     describe(

@@ -6,7 +6,7 @@ import { awaitsHeal, healCallOf, healDueIn } from '../breaker/heal.ts';
 import { aboveCeiling } from '../character/level.ts';
 import { err, ok } from '../core/result.ts';
 import { machineMergeDue, machineRun } from '../party/machine-merge.ts';
-import { mergedLater } from '../verify/protected.ts';
+import { sealSpared } from '../verify/protected.ts';
 import { closeRun, currentRun, entryOf } from './attempt-log.ts';
 import type { CharacterId } from '../core/ids.ts';
 import type { Result } from '../core/result.ts';
@@ -145,12 +145,12 @@ const askedAt = (question: string, at: string) => ({ question, asked_at: at });
  * character (owner, after P0-04); the machine never lowers seal_required again. A part or the acceptance tests of a
  * party do not (mergedLater, fix/claim-step): their work reaches the base only through the merge quest, which always
  * waits for the seal, so a seal on each would have the owner seal the same change twice, as PS-04 found for a
- * protected path (verify/protected.ts).
+ * protected path (verify/protected.ts). Nor does a read-only quest (sealSpared, P2-01d), which is never delivered.
  */
 const takenBy = (quest: Quest, by: { readonly assignee: CharacterId; readonly level: number }): Quest => ({
   ...quest,
   assignee: by.assignee,
-  seal_required: quest.seal_required || (aboveCeiling(by.level, quest.rank) && !mergedLater(quest)),
+  seal_required: quest.seal_required || (aboveCeiling(by.level, quest.rank) && !sealSpared(quest)),
 });
 
 /**

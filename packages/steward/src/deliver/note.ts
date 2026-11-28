@@ -4,7 +4,7 @@
 // fixed English, like the handover letter's; the rest comes from the kingdom's files, in the owner's language
 // already (the quest, the letter, the verdicts' notes), so the Steward needs no translation of its own.
 import { MACHINE_VERIFIER, USER_VERIFIER, isPartyPart } from '@elvaria/domain';
-import { PATCH_FILE } from '@elvaria/runner-core';
+import { PATCH_FILE, REPORT_FILE } from '@elvaria/runner-core';
 import type { PartyRole, PartyStatus, Quest, Territory, Verdict } from '@elvaria/domain';
 
 import { replacedDirOf } from './copy.ts';
@@ -27,6 +27,8 @@ export interface NoteInput {
   readonly patched?: readonly string[];
   /** Where the quest's party stands (partyStatusOf, P1-18); absent outside a party. */
   readonly party?: PartyStatus;
+  /** A read-only quest's report, masked (P2-01d); null when its session left none. */
+  readonly report?: string | null;
 }
 
 const code = (text: string): string => `\`${text}\``;
@@ -162,13 +164,30 @@ function partySection({ quest, party }: NoteInput): string[] {
 }
 
 /**
+ * A read-only quest's answer (P2-01d, 383a): its report, kept here because its plot goes back once it is delivered and
+ * its branch never leaves the kingdom.
+ */
+function reportSection({ quest, report }: NoteInput): string[] {
+  if (quest.read_only !== true) return [];
+  const text = report?.trim() ?? '';
+  return [
+    section(
+      'Report',
+      'The quest only asked a question: nothing went into the territory, nothing is pushed or merged, and its plot is given back.',
+      text === '' ? `None: the session left no ${code(REPORT_FILE)}.` : demoted(text),
+    ),
+  ];
+}
+
+/**
  * The owner merges a branch by hand (§9.1 item 11); a plan's branch only carries its list of sub-quests, and a
  * party's part (and the blind trial's acceptance part, P1-21) reaches the main branch through its merge quest (P1-18).
+ * A read-only quest's branch is merged nowhere (P2-01d).
  */
 function mergeSection({ quest, territory }: NoteInput): string[] {
   const branch = quest.plot.branch;
   if (quest.plot.type !== 'worktree' || branch === undefined || territory === undefined) return [];
-  if (quest.deliverable.type === 'subquests' || isPartyPart(quest)) return [];
+  if (quest.deliverable.type === 'subquests' || isPartyPart(quest) || quest.read_only === true) return [];
   const repo = territory.path;
   const push =
     territory.vcs.remote === undefined
@@ -204,6 +223,7 @@ export function deliveryNote(input: NoteInput): string {
     ...(subquests === undefined ? [] : [subquestsSection(subquests)]),
     ...(copied === undefined ? [] : [copiedSection(input, copied)]),
     ...(quest.deliverable.type === 'draft' ? [DRAFT] : []),
+    ...reportSection(input),
     ...partySection(input),
     ...mergeSection(input),
   ];

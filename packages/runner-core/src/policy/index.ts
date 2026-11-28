@@ -16,5 +16,6 @@ export {
   WRITE_TOOLS,
 } from './constants.ts';
 export { forbiddenChangesOf, forbiddenPathsOf } from './forbidden-changes.ts';
+export { REPORT_FILE } from './read-only.ts';
 export { toolOf, toolPolicyOf } from './tool-policy.ts';
 export type { ToolLaws, ToolPolicy, ToolPolicyInput } from './tool-policy.ts';

@@ -18,7 +18,7 @@ export const POLICY_FILE = 'policy.json';
 /**
  * `secrets` and `tools` (P1-10), `apprentice_models` (P1-17), `laws.read_only_paths` and `cli_protected_paths`
  * (P1-24), `laws.patch_paths` and `patch_file` (P1-28), `search_commands` (P1-53), `graph_commands` (PS-21), `dialect` (PS-23),
- * `images` (PS-11b), `secret_paths` (SEC-01) are optional fields added later: a v1 reader without them still reads the rest. Since P1-49 every file has `cli_protected_paths`, with git's own folder.
+ * `images` (PS-11b), `secret_paths` (SEC-01), `writable_paths` (P2-01d) are optional fields added later: a v1 reader without them still reads the rest. Since P1-49 every file has `cli_protected_paths`, with git's own folder.
  */
 export const POLICY_VERSION = 1;
 
@@ -79,6 +79,12 @@ export interface PolicyFile extends RunContext {
    * word of a shell line that names one, at any depth, unless the word stays inside the plot. Absent: no such fence.
    */
   readonly secret_paths?: readonly string[];
+  /**
+   * ToolPolicy.writable_paths (P2-01d): a read-only quest's session. The hook refuses a write tool on any path but these
+   * globs, from the root of the plot, and the quest's handover letter, and a shell line that writes a file. Absent: no
+   * such fence.
+   */
+  readonly writable_paths?: readonly string[];
 }
 
 /** What only the adapter knows, for the policy file. */
@@ -105,7 +111,7 @@ const ownProtectedOf = (extras: PolicyExtras): string[] =>
 
 type PolicyPart = Pick<
   ToolPolicy,
-  'tools' | 'laws' | 'search_commands' | 'graph_commands' | 'images' | 'secret_paths'
+  'tools' | 'laws' | 'search_commands' | 'graph_commands' | 'images' | 'secret_paths' | 'writable_paths'
 >;
 
 export const policyFileOf = (ctx: RunContext, policy: PolicyPart, extras: PolicyExtras = {}): PolicyFile => ({
@@ -127,6 +133,7 @@ export const policyFileOf = (ctx: RunContext, policy: PolicyPart, extras: Policy
   ...(extras.dialect === undefined ? {} : { dialect: extras.dialect }),
   ...(policy.images === undefined ? {} : { images: [...policy.images] }),
   ...(policy.secret_paths === undefined ? {} : { secret_paths: [...policy.secret_paths] }),
+  ...(policy.writable_paths === undefined ? {} : { writable_paths: [...policy.writable_paths] }),
 });
 
 /** Writes the run's policy file and returns its native path, for `hookCommand(policyFile)`. */

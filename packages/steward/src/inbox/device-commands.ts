@@ -1,5 +1,5 @@
 // The device commands (SEC-08, ADR 0037 item 2, ADR 0038): a full device pairs, changes and revokes devices from the
-// phone, as `elvaria herald pair|device|revoke` does on the machine, and any device adds its own passkey. deviceRefusal
+// phone, as `elvaria herald pair|device|revoke` does on the machine, and any device adds its own passkey. deviceCheck
 // has already held each to the sender's role and passkey; what the file becomes is the domain's (device/change.ts),
 // and the Steward writes it under the file's lock. The owner's clients only: neither the Chancellor nor the temple.
 import { changedDevice, pairedDevice, revokedDevice, withPasskey } from '@elvaria/domain';
@@ -64,7 +64,7 @@ function apply(ctx: Context, command: DeviceCommand): Promise<Outcome> {
     return update(ctx, command.payload.device, (current) =>
       revokedDevice(current, command.payload.passkey, command.ts),
     );
-  // add_passkey names no device: the key is the sender's own, and deviceRefusal read its file already.
+  // add_passkey names no device: the key is the sender's own, and deviceCheck read its file already.
   const { device } = command;
   if (device === undefined) return Promise.resolve(rejected('unknown_device'));
   return update(ctx, device, (current) => withPasskey(current, command.payload.passkey, command.ts));

@@ -4,7 +4,7 @@
 // through the JavaScript of its `exec` tool) and that the refusal reaches the result.
 import assert from 'node:assert/strict';
 
-import { play } from './play.ts';
+import { gatedCheck } from './play.ts';
 import { FAKE_SECRET_COMMANDS } from './scenarios.ts';
 import type { ConformanceCheck } from './target.ts';
 
@@ -26,23 +26,16 @@ const NAMED = [
   '.docker/config.json',
 ] as const;
 
-export const secretCheck: ConformanceCheck = {
-  id: 'secret_place',
-  live: true,
-  run: async (target) => {
-    const runner = await target.createRunner();
-    if (!runner.capabilities.tool_gate) return 'skipped';
-    await play(target, runner, 'secret_place', {
-      verify: ({ result }) => {
-        assert.equal(result.outcome, 'completed', 'a blocked command does not end the session');
-        (target.live === true ? NAMED.slice(0, 1) : NAMED).forEach((named, index) => {
-          assert.ok(
-            result.permission_denials.some((denial) => denial.detail.includes(named)),
-            `tool_gate declared but \`${FAKE_SECRET_COMMANDS[index] ?? named}\` was not refused`,
-          );
-        });
-      },
+export const secretCheck: ConformanceCheck = gatedCheck(
+  'secret_place',
+  'secret_place',
+  ({ result }, target) => {
+    assert.equal(result.outcome, 'completed', 'a blocked command does not end the session');
+    (target.live === true ? NAMED.slice(0, 1) : NAMED).forEach((named, index) => {
+      assert.ok(
+        result.permission_denials.some((denial) => denial.detail.includes(named)),
+        `tool_gate declared but \`${FAKE_SECRET_COMMANDS[index] ?? named}\` was not refused`,
+      );
     });
-    return 'passed';
   },
-};
+);

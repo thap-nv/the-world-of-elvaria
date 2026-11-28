@@ -3,6 +3,7 @@ export { runConformance } from './run.ts';
 export type { ConformanceReport } from './run.ts';
 export {
   FAKE_FORBIDDEN_COMMAND,
+  FAKE_READ_ONLY_FILE,
   FAKE_SCRATCH_COMMANDS,
   FAKE_SECRET_COMMANDS,
   FAKE_QUESTION,

@@ -95,6 +95,12 @@ const SCENARIOS = {
     for (const line of core.FAKE_SECRET_COMMANDS) shell(line);
     return finish();
   },
+  // P2-01d: a read-only quest's session saves a source file of its plot; Elvaria's write fence refuses it.
+  read_only_write: () => {
+    const file = path.join(process.cwd(), core.FAKE_READ_ONLY_FILE);
+    act('save', { file }, () => (writeFileSync(file, 'export {};\n'), 0));
+    return finish();
+  },
   scratch_commit: () => {
     for (const line of core.FAKE_SCRATCH_COMMANDS) shell(line);
     return finish();

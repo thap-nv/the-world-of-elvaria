@@ -5,14 +5,17 @@
 // program can still write `source: cli` (accepted in (365)); this check catches a Herald's mistake, not the OS user.
 // (SEC-08, ADR 0038) A passkey signature on the command is checked again too, against the device file's passkeys,
 // and its counter written back, so the same signature cannot pass a second time.
+// (P2-01d, 383a) What the device file says is also what makes an inquiry device's create_quest a read-only quest.
 import {
   checkConfirmation,
   commandGroupOf,
   commandRefsOf,
   commandScopeOf,
   deviceMay,
+  err,
   isDeviceSource,
   ok,
+  readOnlyFor,
   withSignCount,
 } from '@elvaria/domain';
 import type {
@@ -78,9 +81,19 @@ async function noteSignCount(ctx: Context, command: InboxCommand, use: PasskeyUs
     ctx.deps.log.warn(`steward: cannot note a passkey counter: ${describeIssue(written.error)}`);
 }
 
-/** The refusal code when a device's command may not be applied; undefined when it may, or when no device sent it. */
-export async function deviceRefusal(ctx: Context, command: InboxCommand): Promise<string | undefined> {
-  if (!isDeviceSource(command.source)) return undefined;
+/** What a command may do once its device let it through (P2-01d): make a read-only quest, for a create_quest. */
+export interface DeviceLet {
+  readonly read_only: boolean;
+}
+
+const NO_DEVICE: DeviceLet = { read_only: false };
+
+/**
+ * The refusal code when a device's command may not be applied; else what it may do: an inquiry device's create_quest
+ * makes a read-only quest (readOnlyFor, from the device file, never the payload). A command no device sent goes as it is.
+ */
+export async function deviceCheck(ctx: Context, command: InboxCommand): Promise<Result<DeviceLet, string>> {
+  if (!isDeviceSource(command.source)) return ok(NO_DEVICE);
   const memos = await memoQuests(ctx, command);
   const scope = commandScopeOf(command, {
     territoryOf: (quest) => ctx.world.quests.get(quest)?.territory,
@@ -98,7 +111,7 @@ export async function deviceRefusal(ctx: Context, command: InboxCommand): Promis
     deliverable: deliverableOf(ctx, command),
     quest: questOf(ctx, command),
   });
-  if (!may.ok) return may.error.code;
+  if (!may.ok) return err(may.error.code);
   if (confirmation?.ok === true) await noteSignCount(ctx, command, confirmation.value);
-  return undefined;
+  return ok({ read_only: readOnlyFor(device) });
 }

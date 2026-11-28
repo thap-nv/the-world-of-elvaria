@@ -13,7 +13,8 @@
   `rate_limit`, `forbidden_command`, `ask`, `scratch_commit`: a judge in its scratch plot that tries
   `git commit` then `git push`, P1-20, `spawn_child`, which runs the suite's spawn probe for real, P1-12e, and
   `structured`, a judge's verdict `FAKE_STRUCTURED_ANSWER` handed back as `RunResult.structured` when the request
-  has a schema, and `secret_place`, SEC-01, `FAKE_SECRET_COMMANDS`), chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
+  has a schema, `secret_place`, SEC-01, `FAKE_SECRET_COMMANDS`, and `read_only_write`, P2-01d, a write of
+  `FAKE_READ_ONLY_FILE` that its gate refuses by the policy's `writable_paths` through `writeRefusal`), chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
   It writes the letter, blocks the forbidden push and a line naming a secret place (`secret_paths`, `git credential`; raw, with no
   exemption for the plot) through the policy when it declares `tool_gate`, keeps a
   resumed session id, and records every request for the Steward's tests. Its `probe` answers one result, or one
@@ -39,6 +40,13 @@
   The Steward supplies the configured treasury file and every tribe's `tool.config_dir/**`, resolved and deduplicated
   with Windows case and separator normalization; explicit paths stay fenced even inside the plot. A fence on the
   command line, not a sandbox: a program the line starts reads what it likes (ADR 0007).
+  (P2-01d, 383a, `src/policy/read-only.ts`) `ToolPolicyInput.read_only` (the quest's mark) cuts every session of the
+  quest down, its judge and healer too (`readOnlyPolicyOf`): of its class's tools only `Read`, `Glob`, `Grep`, `Edit`
+  and `Write` stay, so no shell, no web, no apprentice and no patch paths; git's read-only `search_commands` stay for a
+  CLI without a search tool and the code graph goes. `writable_paths` = `REPORT_FILE` (`elvaria-report.md` at the root
+  of the plot) goes into `policy.json` for the hook's write fence, and the prompt says where the report goes
+  (`prompts/read-only-quest.md`). Codex keeps its `workspace-write` sandbox: a read-only one would refuse the report
+  and the letter too.
   `forbiddenPathsOf(territory)` is the dotenv files plus `laws.forbidden_paths`, and `forbiddenChangesOf(changed,
 globs)` the changed paths a glob matches at any depth as the hook's do: the Steward reads a plot's changes against
   them before it commits (P1-49), since a program a session's shell runs writes past the fence.
@@ -136,7 +144,9 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   through. `secret_place` (SEC-01, `src/conformance/secret-check.ts`) has a knight whose class allows `git status` run
   one naming a file of a CLI's folder (`~/.codex/config.toml`), then `git credential fill`: both must be refused and
   the session go on; with a real CLI only the first is asked, since Codex's model would not run a line naming
-  credentials or `~/.ssh` (cli-facts 2026-11-21 §3). `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests. The
+  credentials or `~/.ssh` (cli-facts 2026-11-21 §3). `read_only_write` (P2-01d, live, `src/conformance/read-only-check.ts`)
+  has a knight on a read-only quest write a source file of its plot: the file must not be there after the session, and
+  a refusal must name it. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests. The
   `capabilities` check also wants `capabilities.auth`, the sign-ins the adapter runs with (P1-19): a non-empty list
   of `login` / `api_key`. A check's workspace that still will not go after the retries of `rm` (a real agy held one
   for minutes on Windows, 2026-11-12) stays on disk: `play` tells `target.onLeftover` (a process warning without
@@ -375,7 +385,7 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   whatever the rules say (P1-24), then `GIT_PATHS` for every tribe (P1-49), so the hook refuses a write tool there
   first, and `elvaria_protected_paths` (P1-56): the part of it the adapter did not list, Elvaria's own rule, which the
   hook's refusal does not blame on the CLI; `laws.patch_paths` (only on a git territory) and, when there are some, `patch_file` (P1-28);
-  `search_commands` when the tool policy has them (P1-53); `secret_paths` (SEC-01).
+  `search_commands` when the tool policy has them (P1-53); `secret_paths` (SEC-01); `writable_paths` for a read-only quest (P2-01d).
   The `apprentice` prompt tells the assignee to leave the apprentice's `model` out for lookups, name a stronger
   one only for reasoning, and to stop and write the unfinished child work in the letter when an apprentice is
   cut at its turn limit or runs long.

@@ -5,9 +5,9 @@ import path from 'node:path';
 
 import { QUEST_ID_SHAPE } from '@elvaria/eventlog';
 
-import { brokenLaws, compileLaws } from './laws.ts';
+import { brokenLaws, compileLaws, compilePaths } from './laws.ts';
 import { readPolicy } from './policy.ts';
-import type { CompiledLaws } from './laws.ts';
+import type { CompiledLaws, CompiledPaths } from './laws.ts';
 import type { HookPolicy } from './policy.ts';
 import type { HookDialect } from './neutral/dialect.ts';
 
@@ -44,6 +44,11 @@ export interface HookContext {
   readonly graphCommands: readonly string[];
   /** Policy `images` (PS-11b): the screens of the review, the files outside the plot a read tool may open. */
   readonly images: readonly string[];
+  /**
+   * Policy `writable_paths` (P2-01d): a read-only quest's session writes only these paths of its plot and the quest's
+   * letter (write-fence.ts). Undefined: no such fence.
+   */
+  readonly writable: CompiledPaths | undefined;
   /** How the CLI's payload reads, when the adapter describes it (policy `dialect`, PS-23); undefined: a CLI by name. */
   readonly dialect: HookDialect | undefined;
   /** Context that was missing or malformed, for stderr; the call goes on with what is there. */
@@ -154,6 +159,7 @@ export function loadContext(env: HookEnv, argv: readonly string[]): HookContext 
     searchCommands: policy.search_commands ?? [],
     graphCommands: policy.graph_commands ?? [],
     images: policy.images ?? [],
+    writable: policy.writable_paths === undefined ? undefined : compilePaths(policy.writable_paths),
     dialect: policy.dialect,
     problems,
   };

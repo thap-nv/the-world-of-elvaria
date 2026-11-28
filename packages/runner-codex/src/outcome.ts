@@ -42,12 +42,20 @@ export interface Blocked extends PermissionDenial {
   readonly reason: string;
 }
 
-/** A refusal of the hook in one line of Codex's stderr; a refused shell line names its command. */
+/** How a refused apply_patch's command starts; its body follows on the next lines of stderr. */
+const PATCH_START = '*** Begin Patch';
+
+/**
+ * A refusal of the hook in one line of Codex's stderr; a refused shell line names its command. A refused patch names
+ * only its first line there, the rest of it on lines of their own (codex-cli 0.171.0-alpha.13.2, stream-read-only.stderr.txt,
+ * P2-01d's live run), so its denial keeps the hook's reason, which names the file it would write.
+ */
 export function blockedOf(line: string): Blocked | undefined {
   const match = BLOCKED.exec(line.trim());
   if (match === null) return undefined;
   const reason = (match[1] ?? '').trim();
   const command = match[2]?.trim();
+  if (command === PATCH_START) return { tool: 'Write', detail: reason, reason };
   return command === undefined || command === ''
     ? { tool: 'unknown', detail: reason, reason }
     : { tool: 'Bash', detail: command, reason };

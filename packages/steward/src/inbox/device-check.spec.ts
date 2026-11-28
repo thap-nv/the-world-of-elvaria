@@ -64,6 +64,16 @@ async function fromDevice(
   return id;
 }
 
+/** A research quest as a phone asks it: a report, the seal left to its kind (none for research). */
+function question(title: string): Record<string, unknown> {
+  const { seal_required: _seal, ...payload } = questPayload(title, {
+    kind: 'research',
+    class_required: 'scout',
+    tags: [],
+  });
+  return payload;
+}
+
 const answerOf = async (kingdom: Bench, id: string) => {
   const line = (await openEventLog(kingdom.root).read()).events.find(
     ({ type, data }) => type.startsWith('command.') && data.command_id === id,
@@ -132,13 +142,9 @@ describe('a command from a paired device (P2-01)', () => {
 
   it('applies what the role allows on its territories, and names the device on the line', async () => {
     const { kingdom, steward } = await open();
-    // A quest of `elvaria quest add` skips the seal (group 2); from the phone, that needs the passkey.
-    const report = questPayload('Asked', {
-      kind: 'research',
-      class_required: 'scout',
-      tags: [],
-      seal_required: true,
-    });
+    // A quest of `elvaria quest add` skips the seal (group 2); from the phone, that needs the passkey. An inquiry
+    // device's quest is read-only, which takes no seal (P2-01d): asking for one is refused with the quest.
+    const report = question('Asked');
     const ids = [
       await fromDevice(kingdom, 'herald', 'code', 'create_quest', questPayload('Scoped work')),
       await fromDevice(kingdom, 'lite', 'asks', 'create_quest', report),
@@ -146,6 +152,11 @@ describe('a command from a paired device (P2-01)', () => {
         ...report,
         title: 'Unsealed',
         seal_required: false,
+      }),
+      await fromDevice(kingdom, 'lite', 'asks', 'create_quest', {
+        ...report,
+        title: 'Sealed',
+        seal_required: true,
       }),
       await fromDevice(
         kingdom,
@@ -160,8 +171,47 @@ describe('a command from a paired device (P2-01)', () => {
       ['command.applied', undefined, DEVICES.code.id],
       ['command.applied', undefined, DEVICES.asks.id],
       ['command.rejected', 'passkey_required', DEVICES.asks.id],
+      ['command.rejected', 'invalid_quest', DEVICES.asks.id],
       ['command.applied', undefined, DEVICES.full.id],
     ]);
+  });
+
+  it('marks the quest of an inquiry device read-only, never the same command from a full device or the CLI (P2-01d)', async () => {
+    const { kingdom, steward } = await open();
+    await fromDevice(kingdom, 'herald', 'asks', 'create_quest', question('Asked'));
+    await fromDevice(kingdom, 'herald', 'full', 'create_quest', question('Asked in full'));
+    await kingdom.command('create_quest', question('Asked at the machine'));
+    await steward.tick();
+    const titles = ['Asked', 'Asked in full', 'Asked at the machine'];
+    const quests = await Promise.all(titles.map((title) => kingdom.quest(title)));
+    expect(quests.map(({ read_only: readOnly }) => readOnly)).toEqual([true, undefined, undefined]);
+    // The mark reaches the clients through the quest's view on the log (QuestView.read_only).
+    const created = (await openEventLog(kingdom.root).read()).events.find(
+      ({ type, quest }) => type === 'quest.created' && quest === quests[0]?.id,
+    );
+    expect(created?.data).toMatchObject({ quest: { read_only: true } });
+  });
+
+  it('lets an inquiry device cancel only its read-only quest, and answer none of the others (P2-01d)', async () => {
+    const { kingdom, steward } = await open();
+    await kingdom.command('create_quest', questPayload('Built'));
+    await fromDevice(kingdom, 'herald', 'asks', 'create_quest', question('Asked'));
+    await steward.tick();
+    const built = (await kingdom.quest('Built')).id;
+    const asked = (await kingdom.quest('Asked')).id;
+    const ids = [
+      await fromDevice(kingdom, 'herald', 'asks', 'answer', { quest: built, answer: 'Use the queue.' }),
+      await fromDevice(kingdom, 'herald', 'asks', 'cancel', { quest: built }),
+      await fromDevice(kingdom, 'herald', 'asks', 'cancel', { quest: asked }),
+    ];
+    await steward.tick();
+    expect(await Promise.all(ids.map((id) => answerOf(kingdom, id)))).toEqual([
+      ['command.rejected', 'role_forbids', DEVICES.asks.id],
+      ['command.rejected', 'role_forbids', DEVICES.asks.id],
+      ['command.applied', undefined, DEVICES.asks.id],
+    ]);
+    expect((await kingdom.quest('Asked')).status).toBe('archived');
+    expect((await kingdom.quest('Built')).status).not.toBe('archived');
   });
 
   it("leaves the CLI's commands as they were: no device, no check", async () => {

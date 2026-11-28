@@ -1,9 +1,6 @@
 // ToolPolicy = class tools + territory laws + role (implementation-plan §3.7, ADR 0007, 0008, 0013, 0017). One
 // shape for every tribe: the Claude adapter writes it into `--tools` and settings.json, the others translate the
 // rules; the laws go to the hook through policy.json, because a regex cannot be written as a permission rule.
-import path from 'node:path';
-import { homedir } from 'node:os';
-
 import {
   AGENT_TOOL,
   APPRENTICE_RULE,
@@ -24,6 +21,8 @@ import {
   WRITE_TOOLS,
 } from './constants.ts';
 import { forbiddenPathsOf } from './forbidden-changes.ts';
+import { questPolicyOf } from './read-only.ts';
+import { secretPathOf } from './secret-path.ts';
 import { checkPolicyOf, commandLinesOf, GRAPH_COMMANDS } from '@elvaria/domain';
 import type { Character, CharacterClass, Territory, TerritoryCheck } from '@elvaria/domain';
 
@@ -75,6 +74,12 @@ export interface ToolPolicy {
    * every tribe. Always set by toolPolicyOf; absent only in a policy built by hand, which then has no such fence.
    */
   readonly secret_paths?: readonly string[];
+  /**
+   * (P2-01d) The only paths of the plot a write tool may change, as globs from its root: with the quest's handover
+   * letter, all a read-only quest's session writes (read-only.ts). policy.json hands them to the hook of every tribe,
+   * which refuses any other write. Absent: no such fence.
+   */
+  readonly writable_paths?: readonly string[];
 }
 
 export interface ToolPolicyInput {
@@ -110,6 +115,8 @@ export interface ToolPolicyInput {
    * `deferred` territory it loses `commands.test` too, its class's rule for it included (judgesDeferredRun).
    */
   readonly narrow_checks?: readonly TerritoryCheck[] | undefined;
+  /** `quest.read_only` (P2-01d): every session of the quest gets its class's tools cut down (readOnlyPolicyOf). */
+  readonly read_only?: boolean | undefined;
 }
 
 /**
@@ -270,7 +277,7 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
   const graph = graphCommandsOf(tools, deniedTools, input);
   const images = verifier ? unique(input.images ?? []) : [];
   const suite = suiteRulesOf(input.territory, narrow);
-  return {
+  const policy: ToolPolicy = {
     tools,
     allow: unique([...granted, ...shell, ...generate]).filter((rule) => !suite.includes(rule)),
     deny: unique([...classDeny, ...fences]),
@@ -282,16 +289,5 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
     ...(graph.length === 0 ? {} : { graph_commands: graph }),
     ...(images.length === 0 ? {} : { images }),
   };
-}
-
-/** Resolve home and dot segments before the policy crosses into a CLI; Windows paths use one spelling. */
-function secretPathOf(raw: string): string {
-  const expanded = raw.replace(/^~(?=[\\/]|$)/, homedir());
-  const windows = path.sep === '\\' || /^[a-z]:[\\/]/i.test(expanded);
-  const api = windows ? path.win32 : path.posix;
-  const directory = /[\\/]\*\*$/.test(expanded);
-  const resolved = api.resolve(directory ? expanded.slice(0, -3) : expanded).replaceAll('\\', '/');
-  const normalized = windows ? resolved.toLowerCase() : resolved;
-  const literal = normalized.replace(/[[*?{}]/g, (char) => `[${char}]`);
-  return directory ? `${literal}/**` : literal;
+  return questPolicyOf(policy, input.read_only);
 }

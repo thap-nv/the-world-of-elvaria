@@ -31,6 +31,13 @@ const MERGED_LATER: ReadonlySet<PartyRole> = new Set(['part', 'acceptance']);
 export const mergedLater = (quest: Pick<Quest, 'party_role'>): boolean =>
   quest.party_role !== undefined && MERGED_LATER.has(quest.party_role);
 
+/**
+ * A quest no rule of its own makes wait for the seal: a place merged later (mergedLater), or (P2-01d) a read-only
+ * quest, whose branch is never delivered and whose schema refuses the seal. A protected path still marks it.
+ */
+export const sealSpared = (quest: Pick<Quest, 'party_role' | 'read_only'>): boolean =>
+  mergedLater(quest) || quest.read_only === true;
+
 /** What a submit that changed protected paths sets on a quest: the paths, and the seal but on a part of a party. */
 export type ProtectedMark = Pick<Quest, 'protected_changes'> & { readonly seal_required?: true };
 
@@ -41,11 +48,11 @@ export type ProtectedMark = Pick<Quest, 'protected_changes'> & { readonly seal_r
  * the owner one look.
  */
 export function protectedMarkOf(
-  quest: Pick<Quest, 'protected_changes' | 'party_role'>,
+  quest: Pick<Quest, 'protected_changes' | 'party_role' | 'read_only'>,
   changed: readonly string[],
 ): ProtectedMark | undefined {
   if (changed.length === 0) return undefined;
   const gathered = [...new Set([...(quest.protected_changes ?? []), ...changed])];
-  if (mergedLater(quest)) return { protected_changes: gathered };
+  if (sealSpared(quest)) return { protected_changes: gathered };
   return { seal_required: true, protected_changes: gathered };
 }

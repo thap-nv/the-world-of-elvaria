@@ -159,4 +159,26 @@ describe('the delivery note', () => {
     ).toContain('Nothing: `dc1-se-team` is not there.');
     expect(render({ quest: quest({ plot: { type: 'none' } }) })).toContain('- Plot: none');
   });
+
+  it("keeps a read-only quest's report, or says there is none, and asks no merge of it (P2-01d)", () => {
+    const asked = quest({
+      kind: 'research',
+      class_required: 'scout',
+      deliverable: { type: 'report' },
+      read_only: true,
+    });
+    const note = render({ quest: asked, report: '# Queues\n\nTwo queues, one idle.\n' });
+    expect(note).toContain(
+      '## Report\n\nThe quest only asked a question: nothing went into the territory, nothing is pushed or merged, and its plot is given back.\n\n### Queues\n\nTwo queues, one idle.\n',
+    );
+    expect(note.indexOf('## Handover letter')).toBeLessThan(note.indexOf('## Report'));
+    expect(note).not.toContain('## Merge by hand');
+    expect(render({ quest: asked, report: null })).toContain(
+      'None: the session left no `elvaria-report.md`.',
+    );
+    // A report kind that is not read-only is the work on its branch, merged by hand as before.
+    const surveyed = render({ quest: quest({ kind: 'research', deliverable: { type: 'report' } }) });
+    expect(surveyed).not.toContain('## Report');
+    expect(surveyed).toContain('## Merge by hand');
+  });
 });

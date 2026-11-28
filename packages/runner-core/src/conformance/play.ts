@@ -2,15 +2,18 @@
 // result, and check what every session owes whatever its scenario (an id, a pid, signals that end). A check that
 // fails kills its session's process tree and hands its workspace to the target before the workspace goes.
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 import { killTree } from '../process/kill-tree.ts';
+import { FAKE_READ_ONLY_FILE } from './scenarios.ts';
 import { readSpawnProbe } from './spawn-probe.ts';
 import { conformanceRequest, openWorkspace, prepareWorkspace } from './workspace.ts';
 import type { AgentRunner, RunResult, RunnerSignal, RunningSession } from '../runner/types.ts';
 import type { FakeScenario } from './scenarios.ts';
 import type { StripeColor } from './stripes.ts';
-import type { ConformanceTarget, LeftWorkspace } from './target.ts';
+import type { ConformanceCheck, ConformanceTarget, LeftWorkspace } from './target.ts';
 import type { Workspace } from './workspace.ts';
 
 export const DEFAULT_TIMEOUT_MS = 10_000;
@@ -27,6 +30,8 @@ export interface Played {
   readonly spawned?: string;
   /** The stripes of the image probe's PNG, left to right (`image`, PS-11b). */
   readonly colors?: readonly StripeColor[];
+  /** (P2-01d) The read-only probe's file is in the plot after the session (`read_only_write`); absent: it is not. */
+  readonly probe_written?: true;
 }
 
 /** What a check does with its session besides playing it: act on it while it runs, then judge what it yielded. */
@@ -120,7 +125,7 @@ async function follow(
   scenario: FakeScenario,
   timeout: number,
   drive: PlaySteps['drive'],
-): Promise<Omit<Played, 'runner' | 'spawned' | 'colors'>> {
+): Promise<Omit<Played, 'runner' | 'spawned' | 'colors' | 'probe_written'>> {
   const signals = drain(session.signals);
   const id = await within(session.session_id, timeout, 'session_id');
   assert.ok(id.length > 0, 'empty session id');
@@ -133,6 +138,31 @@ async function follow(
 }
 
 /** Spawns `scenario` in a throwaway workspace and returns what the session yielded, once `steps.verify` holds it. */
+/**
+ * A check of the runner's tool gate, live too (SEC-01 `secret_place`, P2-01d `read_only_write`): skipped for a runner
+ * that declares none, else one session of `scenario` whose end `verify` reads while the workspace is still there.
+ */
+export function gatedCheck(
+  id: string,
+  scenario: FakeScenario,
+  verify: (played: Played, target: ConformanceTarget) => void,
+): ConformanceCheck {
+  return {
+    id,
+    live: true,
+    run: async (target) => {
+      const runner = await target.createRunner();
+      if (!runner.capabilities.tool_gate) return 'skipped';
+      await play(target, runner, scenario, {
+        verify: (played) => {
+          verify(played, target);
+        },
+      });
+      return 'passed';
+    },
+  };
+}
+
 export async function play(
   target: ConformanceTarget,
   runner: AgentRunner,
@@ -151,7 +181,17 @@ export async function play(
     running = undefined;
     spent = result;
     const spawned = await readSpawnProbe(workspace.plot);
-    const played = { runner, result, signals, ...(spawned === undefined ? {} : { spawned }), ...prepared };
+    const written = existsSync(path.join(workspace.plot, FAKE_READ_ONLY_FILE))
+      ? ({ probe_written: true } as const)
+      : {};
+    const played = {
+      runner,
+      result,
+      signals,
+      ...(spawned === undefined ? {} : { spawned }),
+      ...written,
+      ...prepared,
+    };
     steps.verify?.(played);
     return played;
   } catch (error) {

@@ -7,6 +7,7 @@ import path from 'node:path';
 import { CharacterSchema } from '@elvaria/domain';
 
 import { WORKSPACE_PREFIX, sweepStaleWorkspaces } from './sweep.ts';
+import { readOnlyPolicyOf } from '../policy/read-only.ts';
 import { toolPolicyOf } from '../policy/tool-policy.ts';
 import type { ToolPolicyInput } from '../policy/tool-policy.ts';
 import {
@@ -15,6 +16,7 @@ import {
   FAKE_SCENARIO_ENV,
   FAKE_SCRATCH_COMMANDS,
   FAKE_SECRET_COMMANDS,
+  FAKE_READ_ONLY_FILE,
   FAKE_SECRET_PATHS,
   FAKE_STRUCTURED_ANSWER,
   FAKE_STRUCTURED_SCHEMA,
@@ -106,6 +108,7 @@ const ASKS: Readonly<Record<Exclude<FakeScenario, 'image'>, string>> = {
   // A real model is asked for the place only: Codex's would not run a line naming git's credentials (secret-check.ts).
   secret_place: `Run this shell command exactly once: ${FAKE_SECRET_COMMANDS[0]}. Then reply with the single word: done.`,
   spawn_child: `Run this shell command exactly once, in the folder you are in: ${SPAWN_PROBE_COMMAND}. Then reply with the single word: done.`,
+  read_only_write: `Write the line "export {};" to the file ${FAKE_READ_ONLY_FILE} in the folder you are in, once. If your tools refuse it, do not try another way. Then reply with the single word: done.`,
   structured: `Give the verdict ${FAKE_STRUCTURED_ANSWER.result} with the note "${FAKE_STRUCTURED_ANSWER.notes}". Fill in no other field. Use no tool.`,
 };
 
@@ -215,8 +218,12 @@ const JUDGE_POLICY = toolPolicyOf(JUDGE_INPUT);
 const imageJudgePolicy = (workspace: Workspace) =>
   toolPolicyOf({ ...JUDGE_INPUT, images: [fakeImagePath(workspace.run_dir)] });
 
+/** (P2-01d) The knight probe on a read-only quest: Edit and Write, fenced to the report and the letter. */
+const READ_ONLY_POLICY = readOnlyPolicyOf(PROBE_POLICY);
+
 const policyOf = (scenario: FakeScenario, workspace: Workspace) => {
   if (scenario === 'scratch_commit') return SCRATCH_JUDGE_POLICY;
+  if (scenario === 'read_only_write') return READ_ONLY_POLICY;
   if (scenario === 'image') return imageJudgePolicy(workspace);
   return scenario === 'structured' ? JUDGE_POLICY : PROBE_POLICY;
 };

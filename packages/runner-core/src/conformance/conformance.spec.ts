@@ -49,6 +49,7 @@ describe('the conformance suite', () => {
       'hang',
       'forbidden_command',
       'secret_place',
+      'read_only_write',
       'spawn_child',
       'structured',
       'image',
@@ -63,6 +64,7 @@ describe('the conformance suite', () => {
       { id: 'rate_limit', outcome: 'skipped', tokens: 0 },
       { id: 'forbidden_command', outcome: 'skipped', tokens: 0 },
       { id: 'secret_place', outcome: 'skipped', tokens: 0 },
+      { id: 'read_only_write', outcome: 'skipped', tokens: 0 },
       { id: 'structured', outcome: 'skipped', tokens: 0 },
       { id: 'image', outcome: 'skipped', tokens: 0 },
       { id: 'scratch_commit', outcome: 'skipped', tokens: 0 },
@@ -148,6 +150,7 @@ describe('the conformance suite', () => {
       'rate_limit',
       'forbidden_command',
       'secret_place',
+      'read_only_write',
       'spawn_child',
       'structured',
       'scratch_commit',
@@ -159,6 +162,10 @@ describe('the conformance suite', () => {
     );
     expect(reports.find(({ id }) => id === 'secret_place')?.problem).toContain(
       '`git status --short -- ~/.codex/config.toml` was not refused',
+    );
+    // A "read-only" session whose gate never refused the write (P2-01d).
+    expect(reports.find(({ id }) => id === 'read_only_write')?.problem).toContain(
+      'the write of probe-source.ts was not refused',
     );
     // A session that never runs the probe (P1-12e).
     expect(reports.find(({ id }) => id === 'spawn_child')?.problem).toContain(

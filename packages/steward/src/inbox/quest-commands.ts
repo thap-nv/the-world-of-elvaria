@@ -32,7 +32,7 @@ import type {
 import { closeTaken } from '../memos/close.ts';
 import { moveAndRing } from '../bell/move-and-ring.ts';
 import { OWNER, actorOfCommand, step } from '../quest/record.ts';
-import { releaseScratch } from '../review/scratch.ts';
+import { releasePlot } from '../plot/release.ts';
 import { openAssignee } from '../sessions/open.ts';
 import { modelsOf } from '../tick/world.ts';
 import type { Context } from '../context.ts';
@@ -78,11 +78,16 @@ export function questIdOfCommand(
  * `create_quest`. With an assignee (P1-29), the domain has checked it before the quest exists, and the new quest
  * goes to it by the owner's reassign (§2.5 `open.reassign`), so only it takes the quest, its level aside. The memos
  * it is made from (PS-03b) close as handled by it once it is open; those of a draft wait for the owner's confirm.
+ * `readOnly`: an inquiry device sent it (P2-01d, deviceCheck), so the quest only asks a question.
  */
-export async function createQuest(ctx: Context, command: InboxCommandOf<'create_quest'>): Promise<Outcome> {
+export async function createQuest(
+  ctx: Context,
+  command: InboxCommandOf<'create_quest'>,
+  readOnly = false,
+): Promise<Outcome> {
   const id = questIdOfCommand(command, ctx.world.kingdom.tz) ?? ctx.deps.ids.quest();
   const known = ctx.world.quests.get(id);
-  const made = known === undefined ? await newQuest(ctx, command, id) : ok(known);
+  const made = known === undefined ? await newQuest(ctx, command, id, readOnly) : ok(known);
   if (!made.ok) return made.error;
   if (made.value.status !== 'draft')
     await closeTaken(ctx, command.payload.memos, made.value.id, actorOfCommand(command));
@@ -94,6 +99,7 @@ async function newQuest(
   ctx: Context,
   command: InboxCommandOf<'create_quest'>,
   id: QuestId,
+  readOnly: boolean,
 ): Promise<Result<Quest, Extract<Outcome, { status: 'rejected' }>>> {
   const made = questFromCommand(command.payload, {
     id,
@@ -108,6 +114,8 @@ async function newQuest(
     // PS-08b: the owner's and the Chancellor's quests may be spared the seal by the kingdom's delegation, unless the
     // breaker suspended it on their territory (PS-08g).
     seal: sealPolicyOf(ctx.world.kingdom, ctx.delegation.suspensions),
+    // P2-01d: from the device file the command names, never from its payload.
+    ...(readOnly ? { read_only: true } : {}),
   });
   if (!made.ok) return err(rejected(made.error.code));
   const type = made.value.status === 'draft' ? 'quest.drafted' : 'quest.created';
@@ -151,33 +159,6 @@ const ARCHIVE_EVENT: Partial<Record<Quest['status'], 'discard' | 'reject'>> = {
   draft: 'discard',
   awaiting_seal: 'reject',
 };
-
-const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
-
-/**
- * An archived quest gives its plot back (§2.5 `done.archive`: the worktree goes at archive, never sooner; its branch
- * stays). A worktree with uncommitted work is refused and stays for the owner (no `--force`, §3.3).
- */
-export async function releasePlot(ctx: Context, quest: Quest): Promise<void> {
-  // A judge's scratch plot that a stopped Steward left behind goes with the quest's own (ADR 0022, P1-20).
-  await releaseScratch(ctx, quest.id);
-  try {
-    const released = await ctx.deps.plots.release(quest.plot);
-    if (!released.ok) {
-      const { reason, detail } = released.error;
-      ctx.deps.log.warn(`steward: ${quest.id}: the plot stays (${reason}): ${detail}`);
-      return;
-    }
-    for (const failure of released.value.forget_failures)
-      ctx.deps.log.warn(`steward: ${quest.id}: a tribe's CLI kept data about the plot: ${failure}`);
-    // Git and the tribes are done with the plot; only the folder stays, for the owner (P1-11).
-    const { leftover } = released.value;
-    if (leftover !== undefined)
-      ctx.deps.log.warn(`steward: ${quest.id}: the plot's folder stays, remove it by hand: ${leftover}`);
-  } catch (error) {
-    ctx.deps.log.warn(`steward: ${quest.id}: the plot stays: ${messageOf(error)}`);
-  }
-}
 
 export async function archive(ctx: Context, quest: Quest): Promise<Outcome> {
   const type: Extract<QuestEventType, 'discard' | 'reject' | 'archive'> =

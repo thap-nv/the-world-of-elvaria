@@ -20,6 +20,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { viewImage } from './fake-codex-image.mjs';
+import { patchProbe } from './fake-codex-read-only.mjs';
 import { noteArgv, signedIn } from './fake-codex-home.mjs';
 import { schemaRefusal, strictAnswer } from './fake-codex-schema.mjs';
 import { appServer, declaredHooks } from './fake-codex-server.mjs';
@@ -250,6 +251,11 @@ const SCENARIOS = {
   },
   // SEC-01: a command naming a file of a CLI's folder, then git's credential helper.
   secret_place: () => SCENARIOS.commands(core.FAKE_SECRET_COMMANDS),
+  // P2-01d: a read-only quest's knight adds a source file to its plot.
+  read_only_write: () => {
+    patchProbe({ core, runHook, base });
+    return SCENARIOS.commands([]);
+  },
   // The suite's spawn probe (P1-12e).
   spawn_child: () => SCENARIOS.commands([core.SPAWN_PROBE_COMMAND]),
   // A judge's verdict under a schema with optional keys (fix/codex-output-schema).

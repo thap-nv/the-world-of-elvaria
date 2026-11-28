@@ -7,7 +7,7 @@
   `hookCommand(policyFile?)` gives the composition root that `command` + `args` (exec form, cli-facts §1.5).
 - Reads the session from env `ELVARIA_KINGDOM, ELVARIA_QUEST, ELVARIA_ATTEMPT, ELVARIA_CHARACTER, ELVARIA_ROLE,
 ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the same fields plus `laws` and the optional `secrets`, `tools`,
-  `apprentice_models`, `cli_protected_paths`, `elvaria_protected_paths`, `patch_file`, `search_commands`) for a
+  `apprentice_models`, `cli_protected_paths`, `elvaria_protected_paths`, `patch_file`, `search_commands`, `writable_paths`) for a
   CLI that does not hand its env to hooks; env wins. Malformed ids are left out and reported on stderr.
 - Turns the 12 Claude Code events Elvaria registers into lines (§3.10): `SessionStart` → `agent.session.start`
   (the model from the context when the payload has none, as under `-p`), `PostToolUse`/`PostToolUseFailure` →
@@ -43,6 +43,12 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   When the path is one of `laws.patch_paths` and the policy names a `patch_file` (P1-28), the reason says to write
   the change as a git patch to that file at the root of the plot, which the Steward applies when the session
   completes, with no "do not try another way" after it.
+- Fences the writes of a read-only quest's sessions in `PreToolUse` (P2-01d, 383a, `src/write-fence.ts`), in every
+  dialect after its own rules: when `policy.json` names `writable_paths` (globs from the root of the plot; runner-core
+  writes `elvaria-report.md`), a write tool may change only those and the quest's handover letter, and a shell line
+  that writes a file itself (a redirection) is refused the same way. A write that names no file, or a path the hook
+  cannot place inside the plot, is refused too; the reason names the report and the letter. A policy without the
+  field fences nothing, as before.
 - Denies every sub-agent but the apprentice in `PreToolUse` on the `Agent` tool (§3.12, ADR 0017), laws or not,
   and an apprentice asked to run on a `model` outside the policy's `apprentice_models` (the models up to the
   character's own, which the adapter writes; P1-17). Every denial logs `agent.tool.blocked`, with `agent_type`
@@ -131,6 +137,8 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   values come from the hook's own env, which the CLI inherited from the runner. A name without a value is said
   on stderr and only the patterns of `redact-patterns.json` mask it.
 - Check the class's tools for Claude: `--tools` does that; the policy's `tools` is read by the agy and Codex branches.
+- Sandbox a read-only quest: the write fence sees only the CLI's tools and the shell line, as the laws do; a program
+  a session runs could still write, which is why a read-only quest's session keeps no shell but git's read-only search commands (runner-core).
 - Handle Gemini CLI payloads: that branch comes with its adapter (P1-12c).
 
 ## Depends on

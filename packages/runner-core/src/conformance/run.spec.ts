@@ -31,6 +31,7 @@ describe('runConformance', () => {
       ['rate_limit', 'failed', 300],
       ['forbidden_command', 'failed', 300],
       ['secret_place', 'failed', 300],
+      ['read_only_write', 'failed', 300],
       ['spawn_child', 'failed', 300],
       ['structured', 'failed', 300],
       ['image', 'skipped', 0],
@@ -38,6 +39,6 @@ describe('runConformance', () => {
       ['ask', 'failed', 300],
     ]);
     // The target hears of each session too, once.
-    expect(told).toHaveLength(10);
+    expect(told).toHaveLength(11);
   });
 });

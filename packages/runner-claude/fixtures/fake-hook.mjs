@@ -1,7 +1,7 @@
 // A stand-in for Elvaria's hook in the adapter's specs, which may not import @elvaria/hooks (§1.3). It does the two
 // things the runner depends on, the way the real hook does them (packages/hooks, P1-08): SessionStart writes
 // `agent.session.start` to the quest's journal, and PreToolUse refuses a shell command that a law of the run's
-// policy.json forbids, answering with JSON on stdout and exit 0. Run as `node fake-hook.mjs --policy <file>`, plus
+// policy.json forbids, or (P2-01d) a write outside a read-only quest's writable paths, answering with JSON on stdout and exit 0. Run as `node fake-hook.mjs --policy <file>`, plus
 // `--event PreToolUse` on that handler (settings.ts, P1-36).
 import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -66,7 +66,23 @@ function namesSecret(command, globs = []) {
   });
 }
 
-function preToolUse(payload, laws, secrets) {
+/**
+ * (P2-01d) A read-only quest's write fence: a Write or Edit of a file that is not one of `writable_paths` from the
+ * session's folder. Coarser than the real hook, which also opens the quest's letter and reads globs.
+ */
+function writeFenced(payload, writable) {
+  const file = payload.tool_input?.file_path;
+  if (writable === undefined || !['Write', 'Edit'].includes(payload.tool_name) || typeof file !== 'string')
+    return false;
+  const relative = path.relative(payload.cwd ?? process.cwd(), file).replaceAll('\\', '/');
+  return !writable.includes(relative);
+}
+
+function preToolUse(payload, laws, secrets, writable) {
+  if (writeFenced(payload, writable)) {
+    deny(`Elvaria: ${payload.tool_input.file_path} is not yours to write: this quest only asks a question.`);
+    return;
+  }
   const command = payload.tool_input?.command;
   if (payload.tool_name !== 'Bash' || typeof command !== 'string') return;
   if (namesSecret(command, secrets)) {
@@ -105,5 +121,6 @@ if (payload === undefined) {
 } else {
   const policy = policyOf(process.argv);
   if (payload.hook_event_name === 'SessionStart') sessionStart(payload, process.env);
-  if (payload.hook_event_name === 'PreToolUse') preToolUse(payload, policy.laws, policy.secret_paths);
+  if (payload.hook_event_name === 'PreToolUse')
+    preToolUse(payload, policy.laws, policy.secret_paths, policy.writable_paths);
 }

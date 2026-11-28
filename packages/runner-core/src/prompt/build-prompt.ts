@@ -16,6 +16,7 @@ import {
   patchBlock,
   questBlock,
   readOnlyBlock,
+  readOnlyQuestBlock,
   scriptureBlock,
   shellBlock,
   skillsBlock,
@@ -36,6 +37,7 @@ import type { PromptObjection } from './objection.ts';
 import { planLinksBlock } from './plan-links.ts';
 import { composed } from './prompt-blocks.ts';
 import { protectedChangesBlock } from './protected.ts';
+import { PASS_RULES } from './pass-rules.ts';
 import { outOfScopeBlock } from './scope.ts';
 import { screensBlock } from './screens.ts';
 import { fenced, fill, joinBlocks, sectionsOf } from './templates.ts';
@@ -46,6 +48,7 @@ import type { NamedBlock, PromptWithBlocks } from './prompt-blocks.ts';
 import type { PromptTemplates } from './templates.ts';
 import type {
   Character,
+  CharacterClass,
   PlanLink,
   Quest,
   Registry,
@@ -171,24 +174,14 @@ const systemOf = (
 
 export type PromptInput = AssigneePromptInput | VerifierPromptInput;
 
-/**
- * What each pass rule means for the verifier; the rule is part of the ritual schema, not registry data. A red check
- * decides, so a judge that hunts its cause spends a session on the assignee's next attempt (a real kingdom's
- * scripture, fix/lesson-step-0).
- */
-const PASS_RULES: Readonly<Record<Ritual['pass_rule'], string>> = {
-  all_checks_and_agent:
-    "A failing check fails the quest whatever you find, even when you would pass the work: quote its failing lines in your notes and stop there, since finding the cause is the assignee's next attempt. When every check passes, your judgement decides.",
-  checks_only: 'The checks alone decide this ritual; record what you see.',
-  agent_only: 'No machine check applies to this kind of work; your judgement decides.',
-};
-
 function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): PromptWithBlocks {
   const { quest, character, registry } = input;
   const characterClass = entryOf(registry.classes, character.class, 'class');
   const { territory, cli_search } = input;
   const graph = input.graph !== undefined;
-  const policy = toolPolicyOf({ role: 'assignee', characterClass, character, territory, cli_search, graph });
+  // (P2-01d) A read-only quest's prompt names the tools its session gets: no shell, its report and letter alone.
+  const asked = { territory, cli_search, graph, read_only: quest.read_only };
+  const policy = toolPolicyOf({ role: 'assignee', characterClass, character, ...asked });
   const role = fill(t.assignee, {
     character: character.name,
     class: characterClass.name_en,
@@ -198,7 +191,7 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): PromptW
     language: LANGUAGE_NAMES[input.locale],
     apprentice: policy.apprentice === null ? '' : t.apprentice,
     shell: shellBlock(policy, t, input.shell, input.cli_read),
-    read_only: readOnlyBlock(policy, input.territory, t),
+    read_only: joinBlocks([readOnlyBlock(policy, input.territory, t), readOnlyQuestBlock(policy, t)]),
     patch: patchBlock(policy, t),
     handover_template: fenced(fill(t.handover, { quest_id: quest.id }), 'markdown'),
   });
@@ -232,6 +225,20 @@ function stepsOf(ritual: Ritual, t: PromptTemplates): string {
     .join('\n\n');
 }
 
+/** The judge's tools, as the Steward's request gives them; (P2-01d) those of a read-only quest's judge are cut down. */
+const judgePolicyOf = (input: VerifierPromptInput, characterClass: CharacterClass, scratch: boolean) =>
+  toolPolicyOf({
+    role: 'verifier',
+    characterClass,
+    character: input.character,
+    territory: input.territory,
+    scratch,
+    cli_search: input.cli_search,
+    graph: input.graph !== undefined,
+    narrow_checks: input.narrow_checks,
+    read_only: input.quest.read_only,
+  });
+
 function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptWithBlocks {
   const { quest, character, registry } = input;
   const characterClass = entryOf(registry.classes, character.class, 'class');
@@ -244,16 +251,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
   const rerunRule = sectionsOf(t['rerun-rules']).get(input.narrow_checks === undefined ? 'full' : narrowRule);
   if (plotRule === undefined || rerunRule === undefined)
     throw new Error('prompts/plot-rules.md or rerun-rules.md lacks a section');
-  const policy = toolPolicyOf({
-    role: 'verifier',
-    characterClass,
-    character,
-    territory: input.territory,
-    scratch,
-    cli_search: input.cli_search,
-    graph: input.graph !== undefined,
-    narrow_checks: input.narrow_checks,
-  });
+  const policy = judgePolicyOf(input, characterClass, scratch);
   const role = fill(t.verifier, {
     character: character.name,
     class: characterClass.name_en,

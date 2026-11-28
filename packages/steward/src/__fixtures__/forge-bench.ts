@@ -17,7 +17,7 @@ import type { Forges } from '../forge/forge.ts';
 import type { Steward, StewardDeps } from '../types.ts';
 import type { Leaves } from './deliver.ts';
 import type { FakeForge } from './forge.ts';
-import type { Bench } from './kingdom.ts';
+import type { Bench, BenchOptions } from './kingdom.ts';
 
 export const FORGE_REMOTE = 'https://github.com/elvaria-specs/kingdom-repo.git';
 
@@ -31,6 +31,8 @@ export interface ForgeBenchOptions {
   /** (PS-09) Fields over the territory (shared_paths, commands.generate…), and the repo's first files besides README. */
   readonly territory?: Readonly<Record<string, unknown>>;
   readonly files?: Readonly<Record<string, string>>;
+  /** (P2-01d) The kingdom's cast and what its sessions play; the bench's own by default. */
+  readonly bench?: Pick<BenchOptions, 'cast' | 'plays'>;
 }
 
 export interface ForgeBench {
@@ -79,7 +81,7 @@ export async function forgeBench(options: ForgeBenchOptions = {}): Promise<Forge
   git(remote, 'init', '-q', '--bare', '-b', 'main');
   git(repo, 'remote', 'add', 'origin', remote);
   git(repo, 'push', '-q', 'origin', 'main');
-  const kingdom = await bench();
+  const kingdom = await bench(options.bench);
   const vcs = { type: 'git', default_branch: 'main', remote: FORGE_REMOTE };
   await onRepo(kingdom, repo, [], {
     vcs,
