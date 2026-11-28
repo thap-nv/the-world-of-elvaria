@@ -75,6 +75,9 @@ export const kingdomLayout = {
   device: (id: DeviceId): string => `devices/${id}.json`,
   /** The digest of a local day `yyyy-mm-dd` (PS-03): apps/cli writes it when the Steward says so. */
   digest: (day: string): string => `digest/${day}.md`,
+  /** The chronicle of a local day (P2-06) and its ledger beside it: apps/cli writes both when the Steward says so. */
+  chronicle: (day: string): string => `chronicle/${day}.md`,
+  chronicleLedger: (day: string): string => `chronicle/${day}.json`,
   inboxCommand: (name: string): string => `${INBOX_DIR}/${name}.json`,
   inboxDone: (name: string): string => `${INBOX_DONE_DIR}/${name}.json`,
   /** Raw output, generated settings and check logs of one attempt; `attempt_log[].run_dir` points here. */

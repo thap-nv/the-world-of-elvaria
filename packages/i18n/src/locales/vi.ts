@@ -2,6 +2,7 @@
 // A new namespace is a file in vi/ and en/ and one line here and in en.ts; `pnpm i18n:check` holds the rest.
 import bell from './vi/bell.json' with { type: 'json' };
 import character from './vi/character.json' with { type: 'json' };
+import chronicle from './vi/chronicle.json' with { type: 'json' };
 import cli from './vi/cli.json' with { type: 'json' };
 import cliAmend from './vi/cli-amend.json' with { type: 'json' };
 import cliAnswer from './vi/cli-answer.json' with { type: 'json' };
@@ -50,6 +51,7 @@ import tribeLook from './vi/tribe-look.json' with { type: 'json' };
 export const VI = {
   bell,
   character,
+  chronicle,
   cli,
   'cli.amend': cliAmend,
   'cli.answer': cliAnswer,

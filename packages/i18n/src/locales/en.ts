@@ -2,6 +2,7 @@
 import type { Translation } from './namespace.ts';
 import bell from './en/bell.json' with { type: 'json' };
 import character from './en/character.json' with { type: 'json' };
+import chronicle from './en/chronicle.json' with { type: 'json' };
 import cli from './en/cli.json' with { type: 'json' };
 import cliAmend from './en/cli-amend.json' with { type: 'json' };
 import cliAnswer from './en/cli-answer.json' with { type: 'json' };
@@ -51,6 +52,7 @@ import type { VI } from './vi.ts';
 export const EN = {
   bell,
   character,
+  chronicle,
   cli,
   'cli.amend': cliAmend,
   'cli.answer': cliAnswer,
