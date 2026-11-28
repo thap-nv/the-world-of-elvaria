@@ -27,6 +27,7 @@ import { checkDelivery } from './check-delivery.ts';
 import { checkGraph } from './check-graph.ts';
 import { checkHerald } from './check-herald.ts';
 import { checkBell } from './check-bell.ts';
+import { bellRegistered } from '../bell/registration.ts';
 import { checkJudges } from './check-judges.ts';
 import { checkGit, checkRegistry, checkTerritories } from './check-kingdom.ts';
 import { checkMana } from './check-mana.ts';
@@ -180,7 +181,12 @@ async function runDoctor(input: CommandInput, cli: CliContext): Promise<ExitCode
     ...(await checkTerritoryTrials(ctx)),
     ...(await checkDelivery(ctx)),
     ...checkHerald(ctx.t, ctx.kingdom.herald),
-    ...checkBell(ctx.t, ctx.kingdom.bell.desktop, ctx.io.platform),
+    ...checkBell(
+      ctx.t,
+      ctx.kingdom.bell.desktop,
+      ctx.io.platform,
+      ctx.kingdom.bell.desktop && (await bellRegistered(ctx.io)),
+    ),
     ...(await checkGraph(ctx, options.pin)),
     ...(await checkJudges(ctx)),
     ...(await checkScripture(ctx)),

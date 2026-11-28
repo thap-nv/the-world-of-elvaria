@@ -65,6 +65,15 @@ describe('node dist/cli.js', { timeout: CALLS_PER_SPEC * CALL_MS }, () => {
   });
   afterAll(() => dir.remove());
 
+  it('lists bell install and uninstall in the built CLI help', async () => {
+    for (const action of ['install', 'uninstall']) {
+      const help = await elvaria(env, 'bell', action, '--help', '--locale', 'en');
+      expect(help).toMatchObject({ code: 0, stderr: '' });
+      expect(help.stdout).toContain(`bell ${action}`);
+      expect(help.stdout).toContain('Windows notification');
+    }
+  });
+
   it('founds a kingdom and makes it ready', async () => {
     const init = await elvaria(env, 'init', '--name', 'Bình Minh', '--tz', 'Asia/Ho_Chi_Minh');
     expect(init).toMatchObject({ code: 0, stderr: '' });

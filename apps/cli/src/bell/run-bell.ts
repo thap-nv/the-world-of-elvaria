@@ -11,13 +11,18 @@ import type { KingdomContext } from '../kingdom-context.ts';
 /** What the bell reads of the kingdom's context: its terminal, its language and kingdom.bell. */
 type BellContext = Pick<KingdomContext, 'io' | 't'> & { readonly kingdom: Pick<Kingdom, 'bell'> };
 
-export function runBell({ io, t, kingdom }: BellContext, console: Bell, desktopBellFlag = false): Bell {
+export function runBell(
+  { io, t, kingdom }: BellContext,
+  console: Bell,
+  desktopBellFlag = false,
+  registered = false,
+): Bell {
   const warn = (message: string): void => {
     io.err(t('cli.run.warning', { message }));
   };
   const desktop =
     kingdom.bell.desktop && (io.interactive === true || desktopBellFlag)
-      ? [desktopBell({ t, notify: toastProcess(io), platform: io.platform, warn })]
+      ? [desktopBell({ t, notify: toastProcess(io, undefined, registered), platform: io.platform, warn })]
       : [];
   return fanOut([console, ...desktop], (error) => {
     warn(t('bell.failed', { message: error instanceof Error ? error.message : String(error) }));

@@ -48,6 +48,8 @@ const ringsOnDesktop = (notice: Notice): notice is DesktopNotice => DESKTOP_RING
 export interface Toast {
   readonly title: string;
   readonly message: string;
+  readonly icon?: string;
+  readonly appID?: string;
 }
 
 function lineOf(t: Translate, notice: DesktopNotice): string {
