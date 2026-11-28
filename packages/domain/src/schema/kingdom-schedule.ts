@@ -19,12 +19,27 @@ const dailyJob = (enabled: boolean, at: string) =>
 
 export const ScheduleSchema = z
   .strictObject({
-    // P2-06 (W15): on by default, since the machine's chronicle runs no model.
-    chronicle: dailyJob(true, SCHEDULE_DEFAULTS.chronicle_at).meta(
-      describe(
-        "The chronicle (P2-06): at `at` the Steward reads the day's ledger from the event log (quests done, returned, sealed, sent to the infirmary, delivered and merged; verdicts; levels; pools asleep and awake) and writes chronicle/YYYY-MM-DD.json and chronicle/YYYY-MM-DD.md, its counts and lists in the owner's language; a file already there is kept. No model, no mana; once a day.",
+    // P2-06 (W15): on by default, since the machine's chronicle runs no model. P2-06b (W10): `prose` added after v1
+    // with a default, so a kingdom.json written before it stays version 1; on by default, as the owner chose.
+    chronicle: z
+      .strictObject({
+        enabled: z.boolean().default(true),
+        at: TimeOfDaySchema.default(SCHEDULE_DEFAULTS.chronicle_at),
+        prose: z
+          .boolean()
+          .default(true)
+          .meta(
+            describe(
+              "The Bard's prose (P2-06b). On, it SPENDS MANA: once a day, after the machine's part, one session with no tool of the roster's first character of class `bard`, on its own tribe and model (about 10 000 tokens: the day's ledger cut at 12 000 characters, prose under 600 words). Prose that names a quest the ledger lacks or a character idle that day is refused, tried once more with the errors, then dropped: the machine's part stands. No Bard, its pool closed, its tribe held, or a day with nothing in it: no model. On by default.",
+            ),
+          ),
+      })
+      .prefault({})
+      .meta(
+        describe(
+          "The chronicle (P2-06): at `at` the Steward reads the day's ledger from the event log (quests done, returned, sealed, sent to the infirmary, delivered and merged; verdicts; levels; pools asleep and awake) and writes chronicle/YYYY-MM-DD.json and chronicle/YYYY-MM-DD.md, its counts and lists in the owner's language; a file already there is kept. The machine's part runs no model; once a day, then the Bard's `prose`.",
+        ),
       ),
-    ),
     // PS-03b; optional with defaults, as digest.
     triage: dailyJob(true, SCHEDULE_DEFAULTS.triage_at).meta(
       describe(
@@ -73,5 +88,5 @@ export const ScheduleSchema = z
   })
   .meta({
     $comment:
-      'Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03), the triage (PS-03b) and the chronicle (P2-06) have a runner and are on by default; the patrol (PS-26) has one and is off by default, since it runs every check of each territory it watches; the Temple (PS-12d) spends mana and is off by default.',
+      "Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03), the triage (PS-03b) and the chronicle (P2-06) have a runner and are on by default, the chronicle with the Bard's prose, which spends mana (P2-06b); the patrol (PS-26) has one and is off by default, since it runs every check of each territory it watches; the Temple (PS-12d) spends mana and is off by default.",
   });

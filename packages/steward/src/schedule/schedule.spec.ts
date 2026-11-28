@@ -27,7 +27,7 @@ async function open(jobs: readonly ScheduledJob[], digest?: Digest, options: Ben
   const triage = { enabled: true, at: '07:30' };
   await current.store.kingdom.write({
     ...settings.value,
-    schedule: { ...settings.value.schedule, chronicle: daily, triage, digest: daily },
+    schedule: { ...settings.value.schedule, chronicle: { ...daily, prose: false }, triage, digest: daily },
   });
   running = current.steward({ jobs, ...(digest === undefined ? {} : { digest }) });
   expect(await running.start({ loop: false })).toEqual({ ok: true });

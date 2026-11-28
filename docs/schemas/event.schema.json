@@ -6379,7 +6379,7 @@
       "then": {
         "properties": {
           "data": {
-            "description": "The Steward wrote the day's chronicle (P2-06): chronicle/<day>.md in the owner's language, from the day's ledger saved as chronicle/<day>.json. The machine's part runs no model.",
+            "description": "The Steward wrote the day's chronicle (P2-06): chronicle/<day>.md in the owner's language, from the day's ledger saved as chronicle/<day>.json. The machine's part runs no model. With the Bard's session (P2-06b) the line names its tribe, model and tokens: the mana estimate counts them against the pool of `model` at the line's time, as a session of a quest, from the Steward's next start.",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -6407,6 +6407,26 @@
               "prose": {
                 "description": "Whether the chronicle holds the Bard's prose (P2-06b) after the machine's part; false: the machine's part alone.",
                 "type": "boolean"
+              },
+              "tribe": {
+                "description": "The Bard's tribe; absent when no session ran.",
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "model": {
+                "description": "The model the Bard's session ran on; absent when none ran.",
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9.-]*$"
+              },
+              "tokens": {
+                "description": "What the Bard's sessions spent, the retry's included, also when the prose was refused.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "session": {
+                "description": "The id of the Bard's last session.",
+                "type": "string",
+                "minLength": 1
               }
             }
           }

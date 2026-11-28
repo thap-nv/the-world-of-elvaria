@@ -288,12 +288,12 @@
       "default": {}
     },
     "schedule": {
-      "$comment": "Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03), the triage (PS-03b) and the chronicle (P2-06) have a runner and are on by default; the patrol (PS-26) has one and is off by default, since it runs every check of each territory it watches; the Temple (PS-12d) spends mana and is off by default.",
+      "$comment": "Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03), the triage (PS-03b) and the chronicle (P2-06) have a runner and are on by default, the chronicle with the Bard's prose, which spends mana (P2-06b); the patrol (PS-26) has one and is off by default, since it runs every check of each territory it watches; the Temple (PS-12d) spends mana and is off by default.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "chronicle": {
-          "description": "The chronicle (P2-06): at `at` the Steward reads the day's ledger from the event log (quests done, returned, sealed, sent to the infirmary, delivered and merged; verdicts; levels; pools asleep and awake) and writes chronicle/YYYY-MM-DD.json and chronicle/YYYY-MM-DD.md, its counts and lists in the owner's language; a file already there is kept. No model, no mana; once a day.",
+          "description": "The chronicle (P2-06): at `at` the Steward reads the day's ledger from the event log (quests done, returned, sealed, sent to the infirmary, delivered and merged; verdicts; levels; pools asleep and awake) and writes chronicle/YYYY-MM-DD.json and chronicle/YYYY-MM-DD.md, its counts and lists in the owner's language; a file already there is kept. The machine's part runs no model; once a day, then the Bard's `prose`.",
           "type": "object",
           "additionalProperties": false,
           "properties": {
@@ -305,6 +305,11 @@
               "type": "string",
               "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
               "default": "21:00"
+            },
+            "prose": {
+              "description": "The Bard's prose (P2-06b). On, it SPENDS MANA: once a day, after the machine's part, one session with no tool of the roster's first character of class `bard`, on its own tribe and model (about 10 000 tokens: the day's ledger cut at 12 000 characters, prose under 600 words). Prose that names a quest the ledger lacks or a character idle that day is refused, tried once more with the errors, then dropped: the machine's part stands. No Bard, its pool closed, its tribe held, or a day with nothing in it: no model. On by default.",
+              "type": "boolean",
+              "default": true
             }
           },
           "default": {}
@@ -972,7 +977,8 @@
       "schedule": {
         "chronicle": {
           "enabled": true,
-          "at": "21:00"
+          "at": "21:00",
+          "prose": true
         },
         "triage": {
           "enabled": true,
@@ -1116,7 +1122,8 @@
       "schedule": {
         "chronicle": {
           "enabled": true,
-          "at": "21:00"
+          "at": "21:00",
+          "prose": true
         },
         "triage": {
           "enabled": true,
