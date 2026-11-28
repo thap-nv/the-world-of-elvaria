@@ -111,4 +111,15 @@ describe('the end of a run', () => {
     });
     expect(blockedOf('Reading additional input from stdin...')).toBeUndefined();
   });
+
+  it("keeps the hook's reason for a refused patch, whose body Codex puts on the lines after (P2-01d)", () => {
+    const lines = readFileSync(path.join(FIXTURES, 'stream-read-only.stderr.txt'), 'utf8').split('\n');
+    const blocked = lines.map(blockedOf);
+    expect(blocked[0]).toMatchObject({ tool: 'Write' });
+    expect(blocked[0]?.detail).toMatch(/^Elvaria rule: probe-source\.ts is not yours to write: /);
+    expect(blocked[0]?.detail).not.toContain('Begin Patch');
+    expect(blocked[0]?.reason).toBe(blocked[0]?.detail);
+    // The patch's own lines are no refusal of their own.
+    expect(blocked.slice(1)).toEqual([undefined, undefined, undefined, undefined]);
+  });
 });

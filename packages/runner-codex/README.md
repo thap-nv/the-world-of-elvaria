@@ -60,7 +60,9 @@ image_generation -m <model> -c … --dangerously-bypass-hook-trust [--output-sch
   cap); `turn.failed` gives its message as a `text` signal (`codex turn failed: <message>`, which the Chancellor
   reports as its `cli_error` line); `turn.completed.usage` gives the tokens (input past the cache in full, cache reads at a tenth through
   runner-core's `countedTokens`). The hook's refusals have no stream line: they are read from stderr (`Command
-blocked by PreToolUse hook: <reason>. Command: <command>`) into `tool_blocked` signals and `permission_denials`.
+blocked by PreToolUse hook: <reason>. Command: <command>`) into `tool_blocked` signals and `permission_denials`;
+  a refused `apply_patch` names only `*** Begin Patch` there, its body on the next lines, so its denial keeps the
+  reason, which names the file (P2-01d, codex-cli 0.171.0-alpha.13.2, `fixtures/stream-read-only.stderr.txt`).
   Outcome: a kill → `killed`, the action cap → `max_turns`, a completed turn with exit 0 → `completed`, anything
   else → `error`; a usage-limit message (`You've hit your usage limit`, `usage_limit_reached`…) adds
   `rate_limited` and a `rate_limit` signal. A structured answer is the JSON object of the last message, without
