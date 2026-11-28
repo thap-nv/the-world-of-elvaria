@@ -46,6 +46,8 @@ Task `PS-…` của chặng tự cường xen vào giai đoạn 2 (đã có dòn
 
 (Chủ nhân chốt 2026-11-21, §11, W1–W15) Bốn việc của đợt 1 (P2-01, P2-03, P2-04, P2-06) có mục chi tiết ở [phase-2-wave-1.md](phase-2-wave-1.md) và chia thành task con: P2-01, P2-01b, P2-01c, P2-01d; P2-03; P2-04, P2-04b; P2-06, P2-06b.
 
+(Chủ nhân chốt 2026-11-28, §11, X1–X14) Ba task PS của đợt 3–4 (PS-10, PS-13, PS-18) có mục chi tiết ở [phase-2-wave-3.md](phase-2-wave-3.md) và chia thành task con: PS-13, PS-13b, PS-13c; PS-18, PS-18b. PS-12 ở đợt 3 của §4 đã xong.
+
 (Chủ nhân chốt 2026-11-12) **Tộc là danh sách mở.** Mọi màn của giai đoạn 2 vẽ tộc từ `kingdom.tribes[]` và `tribeLookOf` (PS-24 của giai đoạn 1.5): huy hiệu, khung chân dung, bảng màu, số thanh mana và chú giải theo số tộc đang có. Thiết kế v0.2 có hai màu tộc và hai thanh mana; P2-02 nhập nó rồi mở ra cho số tộc bất kỳ, P2-04 và P2-07 không mặc định hai tộc.
 
 ## 4. Thứ tự đề xuất

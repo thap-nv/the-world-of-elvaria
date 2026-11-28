@@ -10,8 +10,7 @@ import type { MessageKey } from '@elvaria/i18n';
 import { textOption } from '../args.ts';
 import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
-import { QUEST_STATUS_LABEL } from '../labels.ts';
-import { readQuest } from './references.ts';
+import { questUnless } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -23,21 +22,15 @@ const REFUSAL: Readonly<Record<HoldError['code'], MessageKey>> = {
 };
 
 /** The quest named on the command line, if `refusal` lets the owner act on it now. */
-async function heldQuestFor(
+const heldQuestFor = (
   input: CommandInput,
   ctx: KingdomContext,
   refusal: (quest: Quest) => HoldError | undefined,
-): Promise<Quest | undefined> {
-  const quest = await readQuest(ctx, input.positionals[0] ?? '');
-  if (Array.isArray(quest)) {
-    quest.forEach(ctx.io.err);
-    return undefined;
-  }
-  const refused = refusal(quest);
-  if (refused === undefined) return quest;
-  ctx.io.err(ctx.t(REFUSAL[refused.code], { id: quest.id, status: ctx.t(QUEST_STATUS_LABEL[quest.status]) }));
-  return undefined;
-}
+): Promise<Quest | undefined> =>
+  questUnless(input, ctx, (quest) => {
+    const refused = refusal(quest);
+    return refused === undefined ? undefined : REFUSAL[refused.code];
+  });
 
 async function runHold(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
