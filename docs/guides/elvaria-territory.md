@@ -6,7 +6,7 @@ Ngày 2026-11-12, PS-05 ([kế hoạch giai đoạn 1.5](../plans/phase-1.5.md) 
 
 Lệnh `pnpm check:changed --only <nhóm>` dành cho `checks[].narrow` của lãnh thổ. Nhiếp chính truyền commit gốc qua `ELVARIA_CHECK_BASE`: script diff trực tiếp với commit đó, gồm thay đổi đã commit, chưa commit và file chưa được theo dõi mà git không bỏ qua. Không tính lại merge-base với `origin/main`, để quest dựng trên một quest khác chỉ kiểm phần mình đổi.
 
-Các nhóm: `test`, `typecheck`, `docs` (gồm `docs:check`, `docs:gen --check`), `schemas`, `boundaries`, `layout`, `knip`, `dup`, `i18n`, `lint`, `format`. Mỗi lần `--only` chỉ chạy nhóm được chọn; tên sai trả mã 2. `--dry-run` in lệnh mà không chạy; `--help` mô tả giao diện và mã thoát.
+Các nhóm: `test`, `typecheck`, `docs` (gồm `docs:check`, `docs:gen --check`), `schemas`, `boundaries`, `layout`, `knip`, `dup`, `i18n`, `lint`, `format`. Mỗi lần `--only` chỉ chạy nhóm được chọn; tên sai trả mã 2. `--only typecheck` kiểm tra kiểu của package đổi và mọi package phụ thuộc nó, gộp một lệnh filter và loại package gốc; đổi domain chạy `pnpm typecheck` đầy đủ, đổi script chạy `tsc` của gốc. `--dry-run` in lệnh mà không chạy; `--help` mô tả giao diện và mã thoát.
 
 Khi có `ELVARIA_CHECK_BASE` hoặc `--only`, script bật kiểm hẹp: thêm ESLint cho file mã đổi và Prettier `--check` cho file đổi còn tồn tại, chia lô để tránh dòng lệnh quá dài trên Windows; file đã xóa không được truyền cho hai công cụ. Prettier bỏ qua định dạng không hỗ trợ. Đường dẫn không có luật tác động tương ứng được in ra và trả **mã 3**, kể cả với `--only` hoặc `--dry-run`; Nhiếp chính coi là đỏ, cần chạy đủ bộ. Lỗi check trả mã 1; lỗi đối số trả mã 2.
 
