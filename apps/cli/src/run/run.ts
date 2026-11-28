@@ -15,8 +15,10 @@ import { runBell } from '../bell/run-bell.ts';
 import { bellRegistered } from '../bell/registration.ts';
 import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
+import { PINNED_MARK } from '../upgrade/pin.ts';
 import { upgradeOffer } from '../upgrade/offer.ts';
 import { runningLine } from '../upgrade/running.ts';
+import { stopReasonOf } from '../process/stop-signal.ts';
 import { consoleBell } from './bell.ts';
 import { crewOf } from './crew.ts';
 import { fileChronicle } from '../chronicle/chronicle-file.ts';
@@ -88,6 +90,8 @@ function stewardOf(
     poet: filePoet(ctx, crew.runners),
     // A newer build than the pinned one, read as the digest is made (PS-08d).
     upgradeOffer: () => upgradeOffer(io, store.root),
+    // The pinned build this Steward runs, named by its steward.started line (LL-04); none from a source tree.
+    ...(io.env[PINNED_MARK] === undefined ? {} : { build: io.env[PINNED_MARK] }),
     // The Chancellor's triage of the memos waiting, before the digest, outside the tick (PS-03b).
     jobs: [triageJob(ctx, crew.runners)],
     // An amendment's author, whenever a quest waits on one (PS-22b); the Temple, whenever it is due (PS-12f).
@@ -125,9 +129,9 @@ async function runSteward(input: CommandInput, cli: CliContext): Promise<ExitCod
   }
   io.out(runningLine(t));
   io.out(t('cli.run.started', { kingdom: store.root, seconds: ctx.kingdom.dispatch.tick_seconds }));
-  await io.untilStopped();
+  const signal = await io.untilStopped();
   io.out(t('cli.run.stopping'));
-  await steward.stop();
+  await steward.stop(stopReasonOf(signal));
   io.out(t('cli.run.stopped'));
   return EXIT.ok;
 }

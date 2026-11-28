@@ -12,6 +12,7 @@ import { answerQuest, decideAmendment } from '../memos/amendment.ts';
 import { decideMemo } from '../memos/decide.ts';
 import { escalate } from '../memos/escalate.ts';
 import { STEWARD } from '../quest/record.ts';
+import type { Line } from '../quest/record.ts';
 import { release, suspend } from './character-commands.ts';
 import { deviceRefusal } from './device-check.ts';
 import { deviceCommand } from './device-commands.ts';
@@ -48,7 +49,8 @@ const LATER: ReadonlySet<InboxCommand['kind']> = new Set([
 ]);
 
 // The optional quest of decide_memo and escalate_memo is the one that does the work, not the one they act on: neither
-// comes here, nor decide_amendment, which names its memo only.
+// comes here, nor decide_amendment, which names its memo only. (LL-04) The answer line names it all the same: the
+// quest the command names, as the world holds it once the command is applied; a quest it does not hold is left out.
 const questOf = (ctx: Context, command: InboxCommand): Quest | undefined =>
   'quest' in command.payload && command.payload.quest !== undefined
     ? ctx.world.quests.get(command.payload.quest)
@@ -136,12 +138,27 @@ export async function applyCommand(ctx: Context, command: InboxCommand): Promise
   return quest === undefined ? rejected('unknown_quest') : onQuest(ctx, command, quest);
 }
 
+/** The quest and the territory a command's line is about: the outcome's, else (LL-04) the quest the command names. */
+function placeOf(
+  ctx: Context,
+  outcome: Exclude<Outcome, { status: 'waiting' }>,
+  command: InboxCommand | undefined,
+): Pick<Line, 'quest' | 'territory'> {
+  const applied = outcome.status === 'applied' ? outcome : undefined;
+  const quest = applied?.quest ?? (command === undefined ? undefined : questOf(ctx, command));
+  return {
+    ...(quest === undefined ? {} : { quest }),
+    ...(applied?.territory === undefined ? {} : { territory: applied.territory }),
+  };
+}
+
 /**
  * The command's line. `kind` (PS-01b) lets the metrics ledger count the owner's steps from the log alone, and
  * `source` (PS-03b) tells the Chancellor's triage, and (PS-12c) the temple, from them; a file no command could be read
  * from has neither. A
  * `deliver` names its quest on the line (PS-08c), so the log alone says the quest's delivery was asked again, or
- * (CM-08) its territory, so the log alone says the owner sent the territory's train off.
+ * (CM-08) its territory, so the log alone says the owner sent the territory's train off. (LL-04) Every command that
+ * names a quest the world holds puts it on its line, applied or rejected: the log alone ties a retry or an edit to it.
  */
 async function answered(
   ctx: Context,
@@ -158,15 +175,7 @@ async function answered(
     // (P2-01, threat model N10) the paired device a Herald's or phone's command came from, so the log names it.
     ...(command?.device === undefined ? {} : { device: command.device }),
   };
-  const quest = outcome.status === 'applied' ? outcome.quest : undefined;
-  const territory = outcome.status === 'applied' ? outcome.territory : undefined;
-  await ctx.record.note({
-    type,
-    actor: STEWARD,
-    data,
-    ...(quest === undefined ? {} : { quest }),
-    ...(territory === undefined ? {} : { territory }),
-  });
+  await ctx.record.note({ type, actor: STEWARD, data, ...placeOf(ctx, outcome, command) });
   if (outcome.status === 'applied') ctx.counts.applied += 1;
   else ctx.counts.rejected += 1;
 }

@@ -221,7 +221,11 @@ describe("an assignee's session that cannot open", () => {
     await stopping;
     running = undefined;
     expect(await kingdom.quest('Stopped')).toMatchObject({ status: 'open', assignee: null, attempts: 0 });
-    expect((await typesOf(kingdom)).slice(-2)).toEqual(['quest.claimed', 'quest.released']);
+    const ownLine = (type: string) => type.startsWith('steward.');
+    expect((await typesOf(kingdom)).filter((type) => !ownLine(type)).slice(-2)).toEqual([
+      'quest.claimed',
+      'quest.released',
+    ]);
     expect(infirmaries(kingdom)).toEqual([]);
   });
 });

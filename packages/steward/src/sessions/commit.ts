@@ -14,6 +14,7 @@ import { inKingdom, writeFileAtomic } from '@elvaria/store';
 import type { Quest, QuestId, Territory } from '@elvaria/domain';
 import type { CommitOutcome } from '@elvaria/runner-core';
 
+import { noteSetup } from '../plot/setup-line.ts';
 import { pathsSaid } from '../quest/infirmary.ts';
 import { questSecretsOf } from './secrets.ts';
 import type { Context } from '../context.ts';
@@ -79,7 +80,8 @@ export async function protectedChangesIn(ctx: Context, quest: Quest): Promise<st
  * (fix/plot-setup-on-lockfile) commands.setup again before the commit when it is due in the plot (Plots.refreshSetup:
  * the work changed a file of commands.setup_when since setup last succeeded there), with the quest's secrets as at
  * prepare (P1-30). A setup that fails is the refusal (breaker:setup), nothing staged; one the Steward's stop cut short
- * is not, and the commit goes on as it would have. A territory without setup_when reads no treasury here.
+ * is not, and the commit goes on as it would have. A territory without setup_when reads no treasury here. A setup
+ * that ran is told by a plot.setup line (LL-04).
  */
 async function setupRefusal(ctx: Context, quest: Quest, territory: Territory | undefined) {
   const when = territory?.commands.setup_when ?? [];
@@ -88,6 +90,7 @@ async function setupRefusal(ctx: Context, quest: Quest, territory: Territory | u
   const secrets = await questSecretsOf(ctx, quest, territory);
   const given = Object.keys(secrets).length === 0 ? {} : { secrets };
   const ran = await ctx.deps.plots.refreshSetup(quest, territory, { ...given, signal: ctx.stopping });
+  await noteSetup(ctx, quest, ran);
   if (ran.ok || ctx.stopping.aborted) return undefined;
   const setup = { detail: ran.error.detail, log: ran.error.log_path ?? setupLogOf(quest.id) };
   const said = `commands.setup failed before the commit (${setup.detail}); its log: ${setup.log}`;

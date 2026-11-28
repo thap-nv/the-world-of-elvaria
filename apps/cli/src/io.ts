@@ -26,8 +26,11 @@ export interface CliIo {
   readonly clock: Clock;
   /** Waits `ms` milliseconds: a sandbox replay paces its lines with it; tests pass one that returns at once. */
   readonly sleep: (ms: number) => Promise<void>;
-  /** Resolves when the owner stops a long-running command (Ctrl+C, SIGTERM): `elvaria run` then stops the Steward. */
-  readonly untilStopped: () => Promise<void>;
+  /**
+   * Resolves when the owner stops a long-running command (Ctrl+C, SIGTERM): `elvaria run` then stops the Steward. The
+   * terminal's io resolves with the StopSignal, which the Steward's stop line names (LL-04); a test's with nothing.
+   */
+  readonly untilStopped: () => Promise<unknown>;
   readonly random: RandomSource;
   /** HTTP to a forge (PS-08: `doctor` asks GitHub whether the owner's credential may push); tests pass a fake. */
   readonly fetch: Fetch;

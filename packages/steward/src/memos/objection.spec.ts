@@ -53,8 +53,13 @@ const OBJECTION =
   '- objection: Ghi chú sai: orders.spec.ts đã xanh ở commit 1a2b3c4. refs: src/api/orders.spec.ts';
 const AGAIN = '- objection: Vẫn sai: test giảm giá đã có từ lượt trước. refs: src/api/orders.spec.ts';
 
+// Two memos of one tick share filed_at, and their ids are random: the one sent to the judge first, as the Steward
+// routes them (the order of ids changed once the start wrote a line of its own, LL-04).
+const routeOrder = (memo: Memo): string => (memo.to.route === 'judge' ? '0' : '1');
 const memosOf = async (kingdom: Bench): Promise<Memo[]> =>
-  (await kingdom.store.memos.list()).items.toSorted((a, b) => a.filed_at.localeCompare(b.filed_at));
+  (await kingdom.store.memos.list()).items.toSorted(
+    (a, b) => a.filed_at.localeCompare(b.filed_at) || routeOrder(a).localeCompare(routeOrder(b)),
+  );
 const linesOf = async (kingdom: Bench, type: string): Promise<Event[]> =>
   (await openEventLog(kingdom.root).read()).events.filter((event) => event.type === type);
 const verdictOf = async (kingdom: Bench, id: string): Promise<Verdict | undefined> => {

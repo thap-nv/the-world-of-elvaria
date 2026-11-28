@@ -30,6 +30,7 @@ export * from './event/heal-data.ts';
 export * from './event/event.ts';
 export * from './event/load-trace.ts';
 export * from './event/schedule-data.ts';
+export * from './event/steward-data.ts';
 export * from './event/temple-data.ts';
 export * from './event/state-data.ts';
 export * from './event/upgrade-data.ts';

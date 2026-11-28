@@ -336,7 +336,9 @@ kinds, window)` returns each time the kingdom's machinery slowed or spoiled work
   `sequence` (`same` values, `within_seconds` or `after_minutes`, `unless`), with conditions `in`, `gte`, `exists` on
   one coded field. `parseDisruptionKinds` reads that file apart from `parseRegistry` and refuses repeated ids and
   event types outside the catalog. The test suite of plans/learning-loop.md (30 cases, `src/disruption/__fixtures__/`)
-  runs against the default file of `@elvaria/registry-default`.
+  runs against the default file of `@elvaria/registry-default`. (LL-04) The default kinds read the Steward's own lines
+  (`steward_died`, `stopped_with_sessions`), `plot.setup` (`plot_setup_failed`) and the quest of a retry command
+  (`retry_dropped_assignee`): 13 cases with their cause, 21 with a symptom.
 - Keeps the metrics ledger, read side (`src/metrics/`, implementation-plan §3.16.1, ADR 0027, PS-01): `metricsOf(input,
 window)` over quests, verdicts, the event log and the handled inbox commands counts the runs of a window, the
   rework (every character session beyond one assignee and one verifier per quest, `reworkOf`) with its cause, the

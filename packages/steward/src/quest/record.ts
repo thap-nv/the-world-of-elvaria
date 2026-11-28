@@ -2,6 +2,8 @@
 // transition() or transitionCharacter(), is written to its file, then told in one event line carrying the view
 // after it (implementation-plan §2.3, P0-09), so reduce(log) rebuilds what the files say. Files first: a line
 // lost in a crash costs nothing once the next line of that quest arrives; a line without its file would lie.
+import { isDeepStrictEqual } from 'node:util';
+
 import {
   EVENT_VERSION,
   EventSchema,
@@ -129,8 +131,11 @@ export interface RecorderDeps {
 const reasonOf = (error: unknown): string =>
   typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : 'refused';
 
+/** What a line needs to be written: no world, so a Steward that has not loaded one yet writes its start (LL-04). */
+export type LineDeps = Pick<RecorderDeps, 'events' | 'ids' | 'store' | 'onEvent'>;
+
 /** Redacted (ADR 0013), checked by the event schema, appended to the log and to the quest's journal. */
-async function append(deps: RecorderDeps, line: Line, ts: string): Promise<void> {
+export async function appendLine(deps: LineDeps, line: Line, ts: string): Promise<void> {
   const run = line.quest === undefined ? 0 : currentRun(line.quest);
   const draft = {
     v: EVENT_VERSION,
@@ -198,7 +203,11 @@ async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, st
   const type = lineTypeOf(event, found, after.value);
   const session = 'session_id' in event ? event.session_id : undefined;
   const data = moveDataOf(type, event, after.value, moved.value, request);
-  await append(deps, { type, actor: actorOf(request.actor, found), data, quest: after.value, session }, at);
+  await appendLine(
+    deps,
+    { type, actor: actorOf(request.actor, found), data, quest: after.value, session },
+    at,
+  );
   return ok(after.value);
 }
 
@@ -228,8 +237,25 @@ async function change(
   const saved = await save(deps, undefined, [after.value]);
   if (!saved.ok) return saved;
   const data = { ...line.data, character: characterViewOf(after.value) };
-  await append(deps, { type, actor, data, ...(line.quest === undefined ? {} : { quest: line.quest }) }, at);
+  await appendLine(
+    deps,
+    { type, actor, data, ...(line.quest === undefined ? {} : { quest: line.quest }) },
+    at,
+  );
   return ok(after.value);
+}
+
+/**
+ * (LL-04) The top-level fields of the quest file an edit changed, in the file's order, then those it dropped, updated_at
+ * aside: what the line's view cannot say, as it shows the quest after the edit only. A quest the world lacked: all.
+ */
+function editedFieldsOf(before: Quest | undefined, after: Quest): string[] {
+  const was: Readonly<Record<string, unknown>> = before ?? {};
+  const now: Readonly<Record<string, unknown>> = after;
+  const gone = Object.keys(was).filter((field) => !Object.hasOwn(now, field));
+  return [...Object.keys(now), ...gone].filter(
+    (field) => field !== 'updated_at' && !isDeepStrictEqual(was[field], now[field]),
+  );
 }
 
 export function createRecorder(deps: RecorderDeps): Recorder {
@@ -238,12 +264,14 @@ export function createRecorder(deps: RecorderDeps): Recorder {
     move: (request) => move(deps, request),
     put: async (quest, type, actor) => {
       const at = deps.stamp();
+      const before = deps.world.quests.get(quest.id);
       const saved = await save(deps, quest, []);
       if (!saved.ok) return saved;
-      await append(deps, { type, actor, data: { quest: questViewOf(quest) }, quest }, at);
+      const fields = type === 'quest.edited' ? { fields: editedFieldsOf(before, quest) } : {};
+      await appendLine(deps, { type, actor, data: { quest: questViewOf(quest), ...fields }, quest }, at);
       return ok(quest);
     },
     change: (id, type, edit, actor = STEWARD, line = {}) => change(deps, { id, type, edit, actor, line }),
-    note: (line) => append(deps, line, deps.stamp()),
+    note: (line) => appendLine(deps, line, deps.stamp()),
   };
 }

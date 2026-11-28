@@ -1,6 +1,6 @@
 // What the Steward is given and what it gives back (implementation-plan §3.1). It sees only AgentRunner and its
 // capabilities, never a CLI (ADR 0006, 0021): apps/cli, the composition root, injects the runners of the tribes.
-import type { Clock, IdSource, ToolFound, TribeId, UpgradeOffer } from '@elvaria/domain';
+import type { Clock, IdSource, StewardStopReason, ToolFound, TribeId, UpgradeOffer } from '@elvaria/domain';
 import type { EventLog } from '@elvaria/eventlog';
 import type { AgentRunner, CodeGraphs, PromptTemplates, Treasury } from '@elvaria/runner-core';
 import type { KingdomStore } from '@elvaria/store';
@@ -109,6 +109,11 @@ export interface StewardDeps {
    * (.state/build.json) and asks the repo it came from. Absent, or undefined: no `upgrade_available` item.
    */
   readonly upgradeOffer?: () => Promise<UpgradeOffer | undefined>;
+  /**
+   * (LL-04) The commit of the pinned build this Steward runs, which its steward.started line names; apps/cli gives the
+   * mark the pinned launcher sets. Absent: a source tree, and the line says null.
+   */
+  readonly build?: string;
 }
 
 export interface TickReport {
@@ -125,8 +130,11 @@ export interface Steward {
   start(options?: {
     readonly loop?: boolean;
   }): Promise<{ readonly ok: true } | { readonly ok: false; readonly error: StartError }>;
-  /** Stops ticking, kills the sessions it runs (the next start finds their quests and retries them), releases the lock. */
-  stop(): Promise<void>;
+  /**
+   * Stops ticking, kills the sessions it runs (the next start finds their quests and retries them), writes its
+   * steward.stopped line with `reason` (the owner's by default, LL-04), releases the lock.
+   */
+  stop(reason?: StewardStopReason): Promise<void>;
   /** One tick (§3.1); ticks never overlap. */
   tick(): Promise<TickReport>;
   /** Sessions still running: what a test waits on. */

@@ -136,19 +136,62 @@ const SPECS: readonly CaseSpec[] = [
       q({ type: 'agent.session.end', at: 1, session: SESSION, data: { outcome: 'killed' } }),
     ],
   },
-  // A symptom; the cause is free text, a guess from the clock, or a field the log lacks.
   {
     id: 'L01',
-    about: 'a retry opened the quest to the whole class (the command names no quest)',
+    about: 'a retry opened the quest to the whole class',
     scored: 'partial',
-    level: 'partial',
+    level: 'full',
     kinds: ['retry_dropped_assignee'],
+    cause: 'retry_dropped_assignee',
     lines: [
       infirmary('breaker:no_progress'),
-      { type: 'command.applied', data: { command_id: '01JD0000000000000000000099', kind: 'retry' } },
-      q({ type: 'quest.released', data: questView('open', { assignee: null }) }),
+      q({ type: 'quest.released', at: 600, data: questView('open', { assignee: null }) }),
+      q({
+        type: 'command.applied',
+        at: 600,
+        data: { command_id: '01JD0000000000000000000099', kind: 'retry' },
+      }),
     ],
   },
+  {
+    id: 'L25',
+    about: 'the Steward stopped halfway',
+    scored: 'none',
+    level: 'full',
+    kinds: ['stopped_with_sessions'],
+    cause: 'stopped_with_sessions',
+    lines: [
+      q({ type: 'agent.session.end', session: SESSION, data: { outcome: 'killed' } }),
+      { type: 'steward.stopped', data: { reason: 'owner', sessions: 1 } },
+    ],
+  },
+  {
+    id: 'L35',
+    about: 'the Steward died halfway',
+    scored: 'none',
+    level: 'full',
+    kinds: ['steward_died'],
+    cause: 'steward_died',
+    lines: [
+      { type: 'steward.started', at: 0, data: { build: null, previous: 'first' } },
+      q({ type: 'quest.started', data: questView('working') }),
+      { type: 'steward.started', at: 3600, data: { build: null, previous: 'unclean', down_minutes: 59 } },
+    ],
+  },
+  {
+    id: 'lockfile',
+    about: 'setup ran again after the lockfile changed, and failed',
+    scored: 'none',
+    level: 'full',
+    kinds: ['plot_setup_failed', 'setup_failed'],
+    cause: 'plot_setup_failed',
+    lines: [
+      q({ type: 'plot.setup', data: { trigger: 'first', pass: true, log_path: 'a.log' } }),
+      q({ type: 'plot.setup', data: { trigger: 'changed', pass: false, log_path: 'a.log' } }),
+      infirmary('breaker:setup'),
+    ],
+  },
+  // A symptom; the cause is free text, a guess from the clock, or a field the log lacks.
   {
     id: 'L03',
     about: 'a tribe check failed on a busy file (text only)',
@@ -232,16 +275,6 @@ const SPECS: readonly CaseSpec[] = [
   ]),
   unseen('L09', "a tribe's CLI replaced under the pinned build", 'none', [
     q({ type: 'quest.claimed', data: questView('claimed') }),
-  ]),
-  unseen('L25', 'the Steward stopped halfway', 'none', [
-    q({ type: 'agent.session.end', session: SESSION, data: { outcome: 'killed' } }),
-  ]),
-  unseen('L35', 'the Steward died halfway', 'none', [
-    q({ type: 'quest.started', data: questView('working') }),
-  ]),
-  unseen('lockfile', 'setup did not run again after the lockfile changed', 'none', [
-    { type: 'patrol.ran', data: { territory: TERRITORY, setup: { pass: true }, checks: [] } },
-    ...redRun(),
   ]),
 ];
 

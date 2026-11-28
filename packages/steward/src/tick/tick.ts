@@ -1,7 +1,7 @@
 // One tick of the Steward (implementation-plan §3.1), and what the log already knows before the first one. Apart from
 // steward.ts since PS-03, which adds the scheduled jobs to both: they run at the end of the tick (§3.16.3).
 import { baseRedOf, planTick, sealPolicyOf, unclaimableOf } from '@elvaria/domain';
-import type { BackgroundWork, Instant, KingdomSnapshot, ZonedTime } from '@elvaria/domain';
+import type { BackgroundWork, Event, Instant, KingdomSnapshot, ZonedTime } from '@elvaria/domain';
 
 import { wantedIn } from '../background/background.ts';
 import { mergedOf, recoverForge, settledOf, waitsOf } from '../forge/book.ts';
@@ -42,8 +42,9 @@ const reportOf = (counts: Counts): TickReport => ({
  * What the log already knows: the commands answered, the notices in force (§3.1), the pools asleep and what tribe
  * checks spent (§3.5, run (221) (b)), the stalled reviews the owner retried (P1-44), and (PS-08g) the territories
  * whose delegation of the seal is suspended; (P2-04) the quests waiting for a judge and the tribes held by their CLI.
+ * Returns the lines, which the start reads once more for its own line (LL-04).
  */
-export async function recover(deps: StewardDeps, state: State): Promise<void> {
+export async function recover(deps: StewardDeps, state: State): Promise<readonly Event[]> {
   const log = await deps.events.read();
   for (const issue of log.issues) deps.log.warn(`steward: event log: ${issue.code} in ${issue.file}`);
   for (const event of log.events) {
@@ -66,6 +67,7 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
   recoverPatrol(state.patrol, log.events);
   recoverDelegation(state.delegation, log.events);
   recoverStreak(state.streak, log.events);
+  return log.events;
 }
 
 /**
