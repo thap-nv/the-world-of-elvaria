@@ -12,6 +12,8 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 |---|---|
 | `elvaria init` | Lập một vương quốc mới: thư mục, registry mặc định và hai tộc. |
 | `elvaria doctor` | Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc (và trên Windows, PowerShell có chạy script không, cho tộc mà phiên chạy lệnh trong nó), các lãnh thổ và chương trình mà lệnh của chúng gọi, kho bảo vật, phiên còn sót. |
+| `elvaria bell install` | Đăng ký tên và logo Elvaria cho thông báo Windows. |
+| `elvaria bell uninstall` | Gỡ đăng ký thông báo Elvaria trên Windows. |
 | `elvaria tribe list` | Liệt kê các tộc: adapter, bật hay tắt, CLI đã ghim và kiểu đăng nhập, hạng tối đa và vùng canh tộc được nhận, năng lực adapter khai. |
 | `elvaria tribe add <id>` | Thêm một tộc: một adapter (có sẵn, hoặc file adapters/<name>.mjs trong vương quốc) và tài khoản của chính bạn. Tộc mới tắt; nhân vật cũ không đổi. |
 | `elvaria tribe check <id>` | Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu đăng nhập; bật tộc khi qua. Với CLI thật, bộ này chạy một việc nhỏ, một lệnh push bị cấm, một lần kill và một lần thăm dò, tốn chút mana: nó in số token của từng phép và tổng, và ghi tổng vào nhật ký cho ước lượng mana. Khi qua thì nó ghim đường dẫn và phiên bản của CLI đó cho riêng tộc này. |
@@ -107,6 +109,18 @@ Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc (v
 | `--pin` | Ghim lại phiên bản và đường dẫn CLI vừa tìm thấy khi chúng khác bản đã ghim, cho mọi tộc như vậy. Lệnh này không kiểm gì: Nhiếp chính giữ một tộc tới khi elvaria tribe check qua trên bản mới, và lệnh đó ghim riêng một tộc khi qua. |
 | `--enable <tribe>` | Kiểm một tộc đang tắt như mọi tộc đang bật và chỉ bật nó trong kingdom.json (enabled: true) khi không có lỗi nào. Tộc có adapter là file của bạn thì bật bằng elvaria tribe check. |
 | `--acknowledge-terms <tribe>` | Ghi nhận bạn đã đọc và chấp nhận điều khoản của nhà cung cấp cho tộc này (ADR 0018). |
+
+## `elvaria bell install`
+
+Đăng ký tên và logo Elvaria cho thông báo Windows.
+
+Không có tham số riêng, chỉ các tùy chọn chung.
+
+## `elvaria bell uninstall`
+
+Gỡ đăng ký thông báo Elvaria trên Windows.
+
+Không có tham số riêng, chỉ các tùy chọn chung.
 
 ## `elvaria tribe list`
 

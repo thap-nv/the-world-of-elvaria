@@ -3,6 +3,7 @@
 // the message as arguments; it passes them the env of the process it runs in, which is why that process is not the
 // Steward's (desktop.ts). Other systems show nothing: the bell's side says so once and stays quiet.
 import type { Toast } from './toast.ts';
+import { bellIcon } from './identity.ts';
 
 /** The systems a toast shows on. */
 const DESKTOP_PLATFORMS = ['win32', 'darwin'] as const;
@@ -25,8 +26,16 @@ export function toastArg(arg: string | undefined): Toast | undefined {
   try {
     const parsed: unknown = JSON.parse(arg ?? '');
     if (typeof parsed !== 'object' || parsed === null) return undefined;
-    const { title, message } = parsed as Record<string, unknown>;
-    return typeof title === 'string' && typeof message === 'string' ? { title, message } : undefined;
+    const { title, message, icon, appID } = parsed as Record<string, unknown>;
+    if (typeof title !== 'string' || typeof message !== 'string') return undefined;
+    if (icon !== undefined && typeof icon !== 'string') return undefined;
+    if (appID !== undefined && appID !== 'Elvaria') return undefined;
+    return {
+      title,
+      message,
+      ...(icon === undefined ? {} : { icon }),
+      ...(appID === undefined ? {} : { appID }),
+    };
   } catch {
     return undefined;
   }
@@ -44,9 +53,13 @@ export function showToast(
   if (!isDesktopPlatform(platform)) return Promise.resolve({ ok: false, why: platform });
   return new Promise((resolve) => {
     try {
-      // Only the title and the message: no appID (an unregistered one makes Windows drop the toast), no sound,
-      // no action, so the program exits once the toast is handed to the system.
-      notifiers[platform]().notify({ title: toast.title, message: toast.message }, (error) => {
+      // Windows 11 kept an unregistered appID in the measured trial (626); older builds may drop it.
+      // The caller supplies appID only after a startup probe. No sound or action keeps this process short.
+      const windows =
+        platform === 'win32'
+          ? { icon: toast.icon ?? bellIcon(), ...(toast.appID === undefined ? {} : { appID: toast.appID }) }
+          : {};
+      notifiers[platform]().notify({ title: toast.title, message: toast.message, ...windows }, (error) => {
         resolve(error === null ? { ok: true } : { ok: false, why: error.message });
       });
     } catch (error) {

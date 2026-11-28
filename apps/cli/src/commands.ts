@@ -1,4 +1,5 @@
 // Every command of `elvaria`, in the order help lists them. Later tasks add theirs here.
+import { BELL_INSTALL, BELL_UNINSTALL } from './bell/install.ts';
 import { CHARACTER_ADD } from './character/add.ts';
 import { CHARACTER_LEVEL } from './character/level.ts';
 import { CHARACTER_LIST } from './character/list.ts';
@@ -60,6 +61,8 @@ import type { CommandSpec } from './command-table/command.ts';
 export const COMMANDS: readonly CommandSpec[] = [
   INIT,
   DOCTOR,
+  BELL_INSTALL,
+  BELL_UNINSTALL,
   TRIBE_LIST,
   TRIBE_ADD,
   TRIBE_CHECK,
