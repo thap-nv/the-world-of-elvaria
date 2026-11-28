@@ -61,7 +61,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria triage` | Tể tướng phân loại các thư gửi tới mình đang chờ: một lần gọi model cho cả lô (tối đa 20 thư, cũ nhất trước). Trong phạm vi ủy quyền (kingdom.delegation), Nhiếp chính áp quyết định mà không cần bạn; thư còn lại tới bạn kèm lời khuyên, trong bản tấu. kingdom.schedule.triage chạy việc này mỗi ngày trước bản tấu. |
 | `elvaria run` | Chạy Nhiếp chính: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C). |
 | `elvaria herald` | Chạy Sứ giả: máy chủ của thế giới trên 127.0.0.1 (cổng kingdom.herald.port), chỉ trả lời trình duyệt đã ghép đôi (elvaria herald pair). Chạy tới khi Ctrl+C. 0 mana. |
-| `elvaria herald pair` | Ghép đôi một trình duyệt hay điện thoại: tạo thiết bị mới (devices/<id>.json) với vai và lãnh thổ được cấp, rồi in đường dẫn có mã dùng một lần, hạn 5 phút. Mở đường dẫn trên thiết bị đó khi elvaria herald đang chạy. 0 mana. |
+| `elvaria herald pair` | Ghép đôi một trình duyệt hay điện thoại: tạo thiết bị mới (devices/<id>.json) với vai và lãnh thổ được cấp, rồi in đường dẫn có mã dùng một lần, hạn 5 phút. Mở đường dẫn trên thiết bị đó khi elvaria herald đang chạy. --device <id> ghép lại một thiết bị đã có (trình duyệt mất cookie), giữ id, vai và lãnh thổ. 0 mana. |
 | `elvaria herald devices` | Các thiết bị đã ghép đôi: vai, lãnh thổ được cấp, ngày tạo, lần Sứ giả thấy cuối, ngày thu hồi. |
 | `elvaria herald device <id>` | Xem một thiết bị, hay đổi vai, lãnh thổ được cấp hoặc nhãn của nó. Sứ giả đọc lại file thiết bị ở mỗi request, Nhiếp chính ở mỗi lệnh: thay đổi có hiệu lực ngay. |
 | `elvaria herald revoke [<id>]` | Thu hồi một thiết bị, hay mọi thiết bị với --all: Sứ giả kết thúc phiên của nó ở request kế tiếp, Nhiếp chính từ chối lệnh của nó. File thiết bị còn lại để log vẫn nêu được tên. |
@@ -565,13 +565,14 @@ Chạy Sứ giả: máy chủ của thế giới trên 127.0.0.1 (cổng kingdom
 
 ## `elvaria herald pair`
 
-Ghép đôi một trình duyệt hay điện thoại: tạo thiết bị mới (devices/<id>.json) với vai và lãnh thổ được cấp, rồi in đường dẫn có mã dùng một lần, hạn 5 phút. Mở đường dẫn trên thiết bị đó khi elvaria herald đang chạy. 0 mana.
+Ghép đôi một trình duyệt hay điện thoại: tạo thiết bị mới (devices/<id>.json) với vai và lãnh thổ được cấp, rồi in đường dẫn có mã dùng một lần, hạn 5 phút. Mở đường dẫn trên thiết bị đó khi elvaria herald đang chạy. --device <id> ghép lại một thiết bị đã có (trình duyệt mất cookie), giữ id, vai và lãnh thổ. 0 mana.
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
-| `--role <full\|scoped\|inquiry>` | Vai: full (mọi việc chủ nhân làm), scoped (việc của các lãnh thổ được cấp) hay inquiry (hỏi đáp trên các lãnh thổ được cấp). (bắt buộc) |
+| `--role <full\|scoped\|inquiry>` | Vai: full (mọi việc chủ nhân làm), scoped (việc của các lãnh thổ được cấp) hay inquiry (hỏi đáp trên các lãnh thổ được cấp). |
 | `--territory <id>` | Lãnh thổ được cấp, lặp lại được; scoped và inquiry cần ít nhất một, full không nhận. |
-| `--label <name>` | Tên của thiết bị, tới 64 ký tự (ví dụ «Điện thoại cá nhân»). (bắt buộc) |
+| `--label <name>` | Tên của thiết bị, tới 64 ký tự (ví dụ «Điện thoại cá nhân»). |
+| `--device <id>` | Ghép lại thiết bị đã có này thay vì tạo thiết bị mới; không đi cùng --role, --label, --territory. Không có nó thì --role và --label là bắt buộc. |
 
 ## `elvaria herald devices`
 
