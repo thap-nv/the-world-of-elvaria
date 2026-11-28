@@ -38,8 +38,9 @@
     {
       "a": "apps/cli/src/quest/hold.ts",
       "b": "apps/cli/src/quest/lifecycle.ts",
-      "tokens": 336,
-      "status": "unreviewed"
+      "tokens": 256,
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "packages/runner-antigravity/src/runner.ts",
@@ -50,7 +51,7 @@
     {
       "a": "apps/cli/src/character/suspend.ts",
       "b": "apps/cli/src/quest/lifecycle.ts",
-      "tokens": 291,
+      "tokens": 248,
       "status": "unreviewed"
     },
     {
@@ -62,13 +63,13 @@
     {
       "a": "apps/cli/src/character/suspend.ts",
       "b": "apps/cli/src/quest/hold.ts",
-      "tokens": 247,
+      "tokens": 196,
       "status": "unreviewed"
     },
     {
       "a": "apps/cli/src/quest/hold.ts",
       "b": "apps/cli/src/quest/owner-verdict.ts",
-      "tokens": 231,
+      "tokens": 233,
       "status": "kept",
       "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
@@ -87,8 +88,9 @@
     {
       "a": "apps/cli/src/quest/deliver.ts",
       "b": "apps/cli/src/quest/lifecycle.ts",
-      "tokens": 199,
-      "status": "unreviewed"
+      "tokens": 182,
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "apps/cli/src/quest/lifecycle.ts",
@@ -153,7 +155,7 @@
     {
       "a": "apps/cli/src/quest/lifecycle.ts",
       "b": "apps/cli/src/quest/owner-verdict.ts",
-      "tokens": 163,
+      "tokens": 164,
       "status": "kept",
       "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
@@ -179,20 +181,16 @@
     {
       "a": "apps/cli/src/quest/escaped.ts",
       "b": "apps/cli/src/quest/lifecycle.ts",
-      "tokens": 144,
-      "status": "unreviewed"
+      "tokens": 108,
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "apps/cli/src/quest/edit.ts",
       "b": "apps/cli/src/quest/escaped.ts",
-      "tokens": 86,
-      "status": "unreviewed"
-    },
-    {
-      "a": "apps/cli/src/quest/edit.ts",
-      "b": "apps/cli/src/quest/lifecycle.ts",
-      "tokens": 87,
-      "status": "unreviewed"
+      "tokens": 63,
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "packages/domain/src/schema/memo/memo-triage.ts",
@@ -305,8 +303,9 @@
     {
       "a": "apps/cli/src/character/suspend.ts",
       "b": "apps/cli/src/quest/edit.ts",
-      "tokens": 103,
-      "status": "unreviewed"
+      "tokens": 116,
+      "status": "kept",
+      "reason": "AH-14a: the skeleton of a command on one named entity (open the kingdom, read it through namedCharacter or namedQuest, both namedBy, refuse it by its state, send its own inbox command, the CommandSpec literal); suspending a character and acting on a quest check and send different things, so a change to one never forces the other."
     },
     {
       "a": "apps/cli/src/territory/delegation.ts",
@@ -331,12 +330,6 @@
       "a": "apps/cli/src/character/add.ts",
       "b": "apps/cli/src/quest/add.ts",
       "tokens": 105,
-      "status": "unreviewed"
-    },
-    {
-      "a": "apps/cli/src/memo/show.ts",
-      "b": "apps/cli/src/quest/show.ts",
-      "tokens": 104,
       "status": "unreviewed"
     },
     {
@@ -382,22 +375,11 @@
       "status": "unreviewed"
     },
     {
-      "a": "apps/cli/src/memo/show.ts",
-      "b": "apps/cli/src/quest/edit.ts",
-      "tokens": 89,
-      "status": "unreviewed"
-    },
-    {
       "a": "apps/cli/src/quest/edit.ts",
       "b": "apps/cli/src/quest/show.ts",
-      "tokens": 89,
-      "status": "unreviewed"
-    },
-    {
-      "a": "apps/cli/src/memo/show.ts",
-      "b": "apps/cli/src/quest/escaped.ts",
-      "tokens": 88,
-      "status": "unreviewed"
+      "tokens": 66,
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "apps/cli/src/quest/assignee.ts",
@@ -408,49 +390,14 @@
     {
       "a": "apps/cli/src/quest/escaped.ts",
       "b": "apps/cli/src/quest/show.ts",
-      "tokens": 88,
-      "status": "unreviewed"
+      "tokens": 65,
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "apps/cli/src/character/read.ts",
       "b": "apps/cli/src/quest/references.ts",
-      "tokens": 87,
-      "status": "unreviewed"
-    },
-    {
-      "a": "apps/cli/src/memo/show.ts",
-      "b": "apps/cli/src/quest/lifecycle.ts",
-      "tokens": 87,
-      "status": "unreviewed"
-    },
-    {
-      "a": "apps/cli/src/quest/lifecycle.ts",
-      "b": "apps/cli/src/quest/show.ts",
-      "tokens": 87,
-      "status": "unreviewed"
-    },
-    {
-      "a": "apps/cli/src/memo/show.ts",
-      "b": "apps/cli/src/quest/deliver.ts",
-      "tokens": 85,
-      "status": "unreviewed"
-    },
-    {
-      "a": "apps/cli/src/quest/deliver.ts",
-      "b": "apps/cli/src/quest/edit.ts",
-      "tokens": 85,
-      "status": "unreviewed"
-    },
-    {
-      "a": "apps/cli/src/quest/deliver.ts",
-      "b": "apps/cli/src/quest/escaped.ts",
-      "tokens": 85,
-      "status": "unreviewed"
-    },
-    {
-      "a": "apps/cli/src/quest/deliver.ts",
-      "b": "apps/cli/src/quest/show.ts",
-      "tokens": 85,
+      "tokens": 77,
       "status": "unreviewed"
     },
     {
@@ -462,14 +409,16 @@
     {
       "a": "apps/cli/src/quest/deliver.ts",
       "b": "apps/cli/src/quest/hold.ts",
-      "tokens": 82,
-      "status": "unreviewed"
+      "tokens": 132,
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "apps/cli/src/quest/deliver.ts",
       "b": "apps/cli/src/quest/reassign.ts",
-      "tokens": 82,
-      "status": "unreviewed"
+      "tokens": 133,
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "packages/eventlog/src/redact.ts",
@@ -678,8 +627,9 @@
     {
       "a": "apps/cli/src/quest/escaped.ts",
       "b": "apps/cli/src/quest/hold.ts",
-      "tokens": 63,
-      "status": "unreviewed"
+      "tokens": 113,
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "apps/cli/src/quest/escaped.ts",
@@ -981,6 +931,20 @@
       "tokens": 82,
       "status": "kept",
       "reason": "CM-08: `territory deliver` takes the skeleton every `elvaria territory <verb>` (and `quest <verb>`) command shares (open the kingdom, read what `<id>` names, refuse what cannot take the verb, send the inbox command, the CommandSpec), as its kept siblings of CM-01 and CM-07; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/character/suspend.ts",
+      "b": "apps/cli/src/quest/escaped.ts",
+      "tokens": 113,
+      "status": "kept",
+      "reason": "AH-14a: the skeleton of a command on one named entity (open the kingdom, read it through namedCharacter or namedQuest, both namedBy, refuse it by its state, send its own inbox command, the CommandSpec literal); suspending a character and acting on a quest check and send different things, so a change to one never forces the other."
+    },
+    {
+      "a": "apps/cli/src/character/suspend.ts",
+      "b": "apps/cli/src/quest/show.ts",
+      "tokens": 65,
+      "status": "kept",
+      "reason": "AH-14a: the skeleton of a command on one named entity (open the kingdom, read it through namedCharacter or namedQuest, both namedBy, refuse it by its state, send its own inbox command, the CommandSpec literal); suspending a character and acting on a quest check and send different things, so a change to one never forces the other."
     }
   ]
 }

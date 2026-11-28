@@ -7,9 +7,8 @@ import type { Quest, QuestEventType } from '@elvaria/domain';
 import { textOption } from '../args.ts';
 import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
-import { QUEST_STATUS_LABEL } from '../labels.ts';
 import { assigneeFor, ceilingLines, classNames, giveQuestTo } from './assignee.ts';
-import { readQuest } from './references.ts';
+import { questUnless } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -22,21 +21,13 @@ export function ownerMay(quest: Quest, event: QuestEventType): boolean {
 }
 
 /** The quest named on the command line, if the owner may cause `event` on it now. */
-export async function questFor(
+export const questFor = (
   input: CommandInput,
   ctx: KingdomContext,
   event: (quest: Quest) => QuestEventType,
   refused: MessageKey,
-): Promise<Quest | undefined> {
-  const quest = await readQuest(ctx, input.positionals[0] ?? '');
-  if (Array.isArray(quest)) {
-    quest.forEach(ctx.io.err);
-    return undefined;
-  }
-  if (ownerMay(quest, event(quest))) return quest;
-  ctx.io.err(ctx.t(refused, { id: quest.id, status: ctx.t(QUEST_STATUS_LABEL[quest.status]) }));
-  return undefined;
-}
+): Promise<Quest | undefined> =>
+  questUnless(input, ctx, (quest) => (ownerMay(quest, event(quest)) ? undefined : refused));
 
 async function runConfirm(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
@@ -162,16 +153,10 @@ async function runRetry(input: CommandInput, cli: CliContext): Promise<ExitCode>
 async function runSubmit(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
-  const quest = await readQuest(ctx, input.positionals[0] ?? '');
-  if (Array.isArray(quest)) {
-    quest.forEach(ctx.io.err);
-    return EXIT.failed;
-  }
-  if (quest.status !== 'infirmary') {
-    const status = ctx.t(QUEST_STATUS_LABEL[quest.status]);
-    ctx.io.err(ctx.t('cli.quest.submit.refused', { id: quest.id, status }));
-    return EXIT.failed;
-  }
+  const quest = await questUnless(input, ctx, ({ status }) =>
+    status === 'infirmary' ? undefined : 'cli.quest.submit.refused',
+  );
+  if (quest === undefined) return EXIT.failed;
   if (!ownerMay(quest, 'submit')) {
     ctx.io.err(ctx.t('cli.quest.submit.no_work', { id: quest.id }));
     return EXIT.failed;

@@ -7,25 +7,17 @@ import { forgeDue } from '@elvaria/domain';
 
 import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
-import { QUEST_STATUS_LABEL } from '../labels.ts';
-import { readQuest } from './references.ts';
+import { questUnless } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
 async function runDeliver(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
-  const quest = await readQuest(ctx, input.positionals[0] ?? '');
-  if (Array.isArray(quest)) {
-    quest.forEach(ctx.io.err);
-    return EXIT.failed;
-  }
-  if (quest.status !== 'done') {
-    ctx.io.err(
-      ctx.t('cli.quest.deliver.not_done', { id: quest.id, status: ctx.t(QUEST_STATUS_LABEL[quest.status]) }),
-    );
-    return EXIT.failed;
-  }
+  const quest = await questUnless(input, ctx, ({ status }) =>
+    status === 'done' ? undefined : 'cli.quest.deliver.not_done',
+  );
+  if (quest === undefined) return EXIT.failed;
   const territory = await ctx.store.territories.read(quest.territory);
   if (!forgeDue(quest, territory.ok ? territory.value : undefined)) {
     ctx.io.err(ctx.t('cli.quest.deliver.no_forge', { id: quest.id, territory: quest.territory }));

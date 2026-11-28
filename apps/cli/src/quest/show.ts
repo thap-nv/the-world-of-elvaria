@@ -23,7 +23,7 @@ import { lastRunLines } from './last-run.ts';
 import { kindName } from './list.ts';
 import { partyFields } from './party.ts';
 import { planViewOf } from './plan-view.ts';
-import { readQuest } from './references.ts';
+import { namedQuest } from './references.ts';
 import { baseWaitsOf } from './base-wait.ts';
 import { scopeWaitText, scopeWaitsOf } from './scope.ts';
 import { sealText } from './seal-view.ts';
@@ -128,11 +128,8 @@ function deliveryFields(ctx: KingdomContext, quest: Quest): [MessageKey, string]
 async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
-  const quest = await readQuest(ctx, input.positionals[0] ?? '');
-  if (Array.isArray(quest)) {
-    quest.forEach(ctx.io.err);
-    return EXIT.failed;
-  }
+  const quest = await namedQuest(input, ctx);
+  if (quest === undefined) return EXIT.failed;
   const registry = await ctx.store.loadRegistry();
   // Where its party stands is read from every quest (P1-21 (c)); a file that cannot be read counts as none.
   const { items } = await ctx.store.quests.list();

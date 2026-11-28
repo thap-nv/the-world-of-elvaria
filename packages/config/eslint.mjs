@@ -10,6 +10,7 @@ import tseslint from 'typescript-eslint';
 
 import { NOT_RUNTIME, boundaryConfigs, pureDomainConfig } from './eslint-boundaries.mjs';
 import { cliOutputConfig } from './eslint-i18n.mjs';
+import { sharedShapeConfigs } from './eslint-shapes.mjs';
 import { testTimeConfig } from './eslint-test-time.mjs';
 
 const TESTS = ['**/*.spec.ts'];
@@ -106,6 +107,7 @@ export function elvaria({ root }) {
     { name: 'elvaria/adapters', files: ADAPTERS, rules: { 'no-restricted-syntax': ['error', NO_ENUM] } },
     ...boundaryConfigs(),
     pureDomainConfig([NO_ENUM, NO_CLASS]),
+    ...sharedShapeConfigs([NO_ENUM, NO_CLASS]),
     NAMED_NUMBERS,
     cliOutputConfig(),
     {
