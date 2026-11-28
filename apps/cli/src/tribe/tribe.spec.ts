@@ -80,13 +80,9 @@ describe('elvaria tribe', () => {
       expect(await refused(1, 'claude', '--adapter', 'claude_code')).toBe(
         'The kingdom already has a tribe claude.',
       );
-      expect(await refused(1, 'codex', '--adapter', 'codex_exec')).toContain(
-        'There is no built-in adapter codex_exec',
-      );
+      expect(await refused(1, 'codex', '--adapter', 'codex_exec')).toContain('no built-in adapter codex');
       expect(await refused(1, 'mine', '--adapter', 'adapters/mine.mjs')).toContain('does not exist');
-      expect(await refused(2, 'Lantern', '--adapter', LANTERN_ADAPTER)).toContain(
-        'Lantern is not a tribe id',
-      );
+      expect(await refused(2, 'Lantern', '--adapter', LANTERN_ADAPTER)).toContain('not a tribe id');
       expect(await refused(2, 'x', '--adapter', '../x.mjs')).toContain('is not valid');
       expect(await refused(2, 'x', '--adapter', LANTERN_ADAPTER, '--max-concurrent', '0')).toContain(
         'is not valid',
@@ -174,6 +170,7 @@ describe('elvaria tribe', () => {
         '✓ rate_limit',
         '– forbidden_command (skipped: the adapter does not declare it)',
         '– secret_place (skipped: the adapter does not declare it)',
+        '– read_only_write (skipped: the adapter does not declare it)',
         '✓ spawn_child',
         '– structured (skipped: the adapter does not declare it)',
         '– image (skipped: the adapter does not declare it)',
@@ -200,6 +197,7 @@ describe('elvaria tribe', () => {
         '✓ hang',
         '– forbidden_command (skipped: the adapter does not declare it)',
         '– secret_place (skipped: the adapter does not declare it)',
+        '– read_only_write (skipped: the adapter does not declare it)',
         '✓ spawn_child · 900 tokens',
         '– structured (skipped: the adapter does not declare it)',
         '– image (skipped: the adapter does not declare it)',
