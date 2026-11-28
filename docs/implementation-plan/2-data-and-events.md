@@ -44,7 +44,7 @@ Một phần của [kế hoạch triển khai](../implementation-plan.md), tách
   world/map.json             # giai đoạn 3
   .runs/<quest>-<n>/         # stdout/stderr thô của CLI (đã che secret), settings.json sinh ra, prompt đã dựng, checks/*.log
   adapters/<name>.mjs        # adapter tộc do người dùng viết (tùy chọn, §3.14)
-  .state/                    # steward.lock, cursors, unclaimable.json, snapshot world state (pool mana ngủ: dựng lại từ event log, không có file riêng, chốt sau P1-05); build.json: bản ghim {current, previous} (PS-04b)
+  .state/                    # steward.lock, cursors, snapshot world state (thông báo unclaimable và pool mana ngủ: dựng lại từ event log, không có file riêng; bỏ qua unclaimable.json cũ); build.json: bản ghim {current, previous} (PS-04b); bell/elvaria-bell.png: bản sao do elvaria bell install tạo (626)
   .builds/<sha>/             # bản ghim và bản trước: worktree tách rời của repo Elvaria, đã cài; chỉ `elvaria upgrade` tạo và xóa (§3.16.4, PS-04b)
   .backup/
 ```

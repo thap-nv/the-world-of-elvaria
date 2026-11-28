@@ -443,6 +443,12 @@ delivery`), with no event; `deferred` is refused unless the territory delivers b
   `node src/bell/show-toast.(ts|js) <toast as JSON>` for each, without a shell and with the minimal env, and does not
   wait for it; that process (`src/bell/platform.ts`) hands the toast to node-notifier's Windows toaster (SnoreToast)
   or macOS Notification Center (terminal-notifier). Linux and the rest: one warning line, then quiet.
+  On Windows, every toast uses `assets/bell/elvaria-bell.png` (a placeholder logo). `bell install` copies it to
+  `<kingdom>/.state/bell/elvaria-bell.png` and registers `HKCU\Software\Classes\AppUserModelId\Elvaria`
+  with `DisplayName` and `IconUri`, without admin rights or a Start-menu shortcut. `run` probes the registration
+  once at startup and sends `appID: Elvaria` only when registered; restart it after installing or uninstalling.
+  `bell uninstall` removes the key and copy. Both commands do nothing on other platforms; `doctor` suggests
+  `elvaria bell install` when the Windows name is missing and the desktop bell is on.
 
 ## Does not
 
@@ -508,6 +514,7 @@ checks. `src/quest/deliver.spec.ts` plants done quests and territories and reads
 No spec shows a real toast (P2-03): `src/bell/platform.spec.ts` passes fake notifiers for Windows and macOS,
 `src/bell/desktop.spec.ts` a fake spawn (and runs `show-toast` only with an argument that is not a toast), and
 `src/bell/run-bell.spec.ts` stands Linux in for a machine with the desktop bell.
+`src/bell/install.spec.ts` uses a fake process runner for registry commands and checks the durable PNG copy.
 `fixtures/lantern-adapter.mjs` is an owner adapter file that imports nothing, for `fixtures/fake-lantern.mjs`, a
 fake CLI with no tool gate: `src/tribe/tribe.spec.ts` adds, pins, checks and disables it; `src/tribe/round.spec.ts`
 runs the Steward (`elvaria run`) with it until a rank D quest is done, while a rank C quest stays open (P1-19);

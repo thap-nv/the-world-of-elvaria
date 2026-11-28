@@ -1,13 +1,31 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { CharacterIdSchema } from '@elvaria/domain';
+import { CharacterIdSchema, EVENT_VERSION, EventSchema } from '@elvaria/domain';
+import { openEventLog } from '@elvaria/eventlog';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { foundKingdom, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import { OTHER_QUEST_ID, QUEST_ID, plantQuests, questFixture } from '../__fixtures__/quest.ts';
 import type { TempDir } from '../__fixtures__/cli.ts';
+
+let serial = 0;
+async function plantNotices(kingdom: string, notes: Record<string, unknown>): Promise<void> {
+  const events = Object.entries(notes).map(([quest, data]) => {
+    serial += 1;
+    return EventSchema.parse({
+      v: EVENT_VERSION,
+      id: `01JCF8X4Z6Q3W9N2M5R7T8V${String(serial).padStart(3, '0')}`,
+      ts: '2026-11-06T08:40:00+07:00',
+      type: 'quest.unclaimable',
+      actor: { kind: 'steward' },
+      quest,
+      data,
+    });
+  });
+  await openEventLog(kingdom).append(events);
+}
 
 describe('elvaria quest list and show', () => {
   let dir: TempDir;
@@ -129,11 +147,7 @@ describe('elvaria quest list and show', () => {
       },
       [OTHER_QUEST_ID]: { reason: 'no_class', rank: 'D', class: 'knight' },
     };
-    await mkdir(path.join(kingdom, '.state'), { recursive: true });
-    await writeFile(
-      path.join(kingdom, '.state', 'unclaimable.json'),
-      JSON.stringify({ version: 1, quests: notes }),
-    );
+    await plantNotices(kingdom, notes);
     await plantQuests(
       kingdom,
       questFixture('open', QUEST_ID, { rank: 'A' }),
@@ -174,9 +188,8 @@ describe('elvaria quest list and show', () => {
     const brom = await store.characters.read(CharacterIdSchema.parse('brom'));
     if (!brom.ok) throw new Error('fixture');
     await store.characters.write({ ...brom.value, status: 'suspended' });
-    await mkdir(path.join(kingdom, '.state'), { recursive: true });
     const quests = { [QUEST_ID]: { reason: 'no_class', rank: 'D', class: 'knight' } };
-    await writeFile(path.join(kingdom, '.state', 'unclaimable.json'), JSON.stringify({ version: 1, quests }));
+    await plantNotices(kingdom, quests);
     await plantQuests(kingdom, questFixture('open'));
     const io = testIo();
     expect(await run(io, 'quest', 'show', QUEST_ID, '--kingdom', kingdom, '--locale', locale)).toBe(0);
@@ -185,11 +198,7 @@ describe('elvaria quest list and show', () => {
 
   it("says when the quest's party bars every character of its class, and how to get past it (P1-37 (ii))", async () => {
     const notes = { [QUEST_ID]: { reason: 'party_bars', rank: 'C', class: 'knight' } };
-    await mkdir(path.join(kingdom, '.state'), { recursive: true });
-    await writeFile(
-      path.join(kingdom, '.state', 'unclaimable.json'),
-      JSON.stringify({ version: 1, quests: notes }),
-    );
+    await plantNotices(kingdom, notes);
     await plantQuests(kingdom, questFixture('open', QUEST_ID, { rank: 'C' }));
     const show = testIo();
     expect(await run(show, 'quest', 'show', QUEST_ID, '--kingdom', kingdom, '--locale', 'en')).toBe(0);
@@ -201,6 +210,25 @@ describe('elvaria quest list and show', () => {
         `Cancel: elvaria quest cancel ${QUEST_ID}`,
       ]),
     );
+  });
+
+  it('clears a logged notice for list and show, ignores an old file, and filters closed quests', async () => {
+    await plantQuests(kingdom, questFixture('open'), questFixture('done', OTHER_QUEST_ID));
+    const note = { reason: 'no_class', rank: 'D', class: 'knight' };
+    const quests = { [QUEST_ID]: note, [OTHER_QUEST_ID]: note };
+    await plantNotices(kingdom, quests);
+    const before = testIo();
+    expect(await list(before, '--locale', 'en')).toBe(0);
+    expect(before.printed.out.join('\n')).toContain('1 quests nobody can take');
+    await mkdir(path.join(kingdom, '.state'), { recursive: true });
+    await writeFile(path.join(kingdom, '.state', 'unclaimable.json'), JSON.stringify({ version: 1, quests }));
+    await plantNotices(kingdom, { [QUEST_ID]: { reason: null, rank: 'D', class: 'knight' } });
+    const after = testIo();
+    expect(await list(after, '--locale', 'en')).toBe(0);
+    expect(after.printed.out.join('\n')).not.toContain('nobody can take');
+    const show = testIo();
+    expect(await run(show, 'quest', 'show', QUEST_ID, '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    expect(show.printed.out.join('\n')).not.toContain('No Knight can take it');
   });
 
   it('shows kinds by id when the registry does not load, and names a missing quest', async () => {
