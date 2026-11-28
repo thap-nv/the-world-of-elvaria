@@ -22,6 +22,7 @@ import type { Sessions } from '../sessions/running.ts';
 import type { VersionBook } from './tribe-versions.ts';
 import type { JudgeWaitBook } from '../waits/judge-waits.ts';
 import type { Reported } from '../waits/unclaimable.ts';
+import type { WaitState } from '../waits/waits.ts';
 
 export interface Held {
   readonly lock: HeldLock;
@@ -51,6 +52,8 @@ export interface State {
    * (judge-waits.ts, P2-04), and what the bell told of them: rebuilt from it at start.
    */
   readonly judgeWaits: JudgeWaitBook;
+  /** What ready work waits for (waits.ts, LL-03): the waits with a line rebuilt from the log at start. */
+  readonly waits: WaitState;
   /** Sessions already given their soft-ceiling reminder (sessions/wrap-up.ts): once per session. */
   readonly wrapped: Set<string>;
   /** What the last `agent.session.usage` line of each held session said (sessions/usage.ts, PS-28). */

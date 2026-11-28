@@ -34,9 +34,12 @@ export function startDataOf(events: readonly Event[], now: Instant, build: strin
 
 const stampOf = (deps: StewardDeps, held: Held): string => held.zone.format(deps.clock.now());
 
-export async function noteStart(deps: StewardDeps, held: Held, events: readonly Event[]): Promise<void> {
-  const data = startDataOf(events, deps.clock.now(), deps.build);
-  await appendLine(deps, { type: 'steward.started', actor: STEWARD, data }, stampOf(deps, held));
+/** Returns the instant of the line: the waits the last Steward left open that no longer hold end then (LL-03). */
+export async function noteStart(deps: StewardDeps, held: Held, events: readonly Event[]): Promise<Instant> {
+  const now = deps.clock.now();
+  const data = startDataOf(events, now, deps.build);
+  await appendLine(deps, { type: 'steward.started', actor: STEWARD, data }, held.zone.format(now));
+  return now;
 }
 
 /** `sessions`: those running when the stop began, which it killed. */

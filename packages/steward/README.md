@@ -6,7 +6,7 @@
   `context.ts` (what every step of a tick works with) and `types.ts`; `tick/` the loop, the tick, its steps, the
   state kept between ticks, the world a tick sees, the restart and the tribes' CLI versions; `quest/` the pen
   (`record.ts`, the only writer of quest and character files) and the infirmary's causes; `bell/` the notices and
-  `move-and-ring.ts`; `waits/` the quests nobody can claim or judge; `background/` the work outside the tick and
+  `move-and-ring.ts`; `waits/` the quests nobody can claim or judge and the waits of ready work; `background/` the work outside the tick and
   the code graphs; `plot/` the Steward's view of a plot and `folder-plots.ts`; `texts/` the kingdom's text files a
   session is built from; `delegation/seal.ts` the delegation of the seal; `review/verdicts.ts` what a verdict does; `heal/` a healer's session.
 - Records runner-reported `turns` alongside tokens in each session's attempt entry, leaving missing turns absent.
@@ -148,6 +148,14 @@
   or after a judge's session, not when a wait pauses and comes back as it was (its checks run again after a
   restart). A new Steward rebuilds both from the log (`recoverJudgeWaits`). Who judges, and when, is unchanged: the
   judge opens once a gauge reopens (ADR 0008).
+- Writes the waits of ready work by their edges (LL-03, `src/waits/waits.ts`): each tick, after the plan and before
+  it is carried out, the domain's `tickWaitsOf` names what the plan leaves waiting and why (`base_red`, `scope_held`,
+  `mana`, `tribe_held`, `room_full`); a wait that lasted 2 minutes gets a `wait.started` line (`since` its first
+  sight, the holder as it was then), and once it is gone a `wait.ended` line with that line's id and the minutes, so
+  work queuing as it should writes nothing. The book is in memory, no `.state/` file: the waits with a line are
+  rebuilt from the log at start (`openWaitsOf`), and the first tick ends those that no longer hold at the time of
+  `steward.started` (`noteStart` returns it). No bell; the plan, `quest.unclaimable` and `quest.judge_wait` are as
+  they were. `Recorder.note` returns the line it wrote, so a later line can name it.
 - Sets aside checks that failed because of their environment (P1-54, `src/review/environment.ts`): a failing check
   whose log shows a line of the territory's `environment_errors` (Docker not running, a container gone) gets no
   judge, so its assignee keeps its level and no flake quest opens; the bell says so once per run (`environment`
@@ -811,7 +819,10 @@ the clock goes back and forth or a new Steward starts the same day; it lists the
 memos in their groups with their commands; no runner is asked; a port that throws warns once and tries again at the
 next start. `judge-waits.spec.ts` (PS-03): a quest whose only judge's account is spent rings `judge_mana` once, also
 across a restart (P2-04), is in the digest with the pool asleep, and is judged by that judge once the window resets;
-`unjudgeable.spec.ts` the same for a quest no judge may take. `digest-attention.spec.ts` (P2-04): the digest lists
+`unjudgeable.spec.ts` the same for a quest no judge may take. `waits/waits.spec.ts` (LL-03), with a quest whose
+only knight's tribe is held by its CLI: under 2 minutes no line; at 2 minutes one `wait.started` with `since` its
+first tick; once let go one `wait.ended` with that id and the minutes, the quest claimed and never told unclaimable;
+a new Steward ends at its start a wait that no longer holds, and keeps one that still does. `digest-attention.spec.ts` (P2-04): the digest lists
 what the domain's `attentionOf` lists from the same files and log. `schedule.spec.ts` (PS-03):
 jobs outside the tick run one at a time without holding it, write `schedule.ran` when they end, stop unrecorded with
 the Steward and run again at the next start, and warn when they throw.

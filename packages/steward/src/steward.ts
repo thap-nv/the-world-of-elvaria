@@ -32,6 +32,7 @@ import { noteStart, noteStop } from './tick/lifecycle.ts';
 import { recover, tickOf } from './tick/tick.ts';
 import { createVersionBook } from './tick/tribe-versions.ts';
 import { createJudgeWaitBook } from './waits/judge-waits.ts';
+import { createWaitState, recoverWaits } from './waits/waits.ts';
 import { limitsOf } from './tick/world.ts';
 import type { StewardJob } from './schedule/scheduler.ts';
 import type { Held, State } from './tick/steward-state.ts';
@@ -73,7 +74,8 @@ async function begin(deps: StewardDeps, state: State): Promise<Result<Held, Star
   state.held = held;
   state.stopping = new AbortController();
   const events = await recover(deps, state);
-  await noteStart(deps, held, events);
+  // LL-03: a wait the last Steward left open ends at this start if the first tick no longer finds it.
+  recoverWaits(state.waits, events, await noteStart(deps, held, events));
   return ok(held);
 }
 
@@ -124,6 +126,7 @@ const stateOf = (deps: StewardDeps, ended: () => void): State => ({
   wrapped: new Set(),
   notches: new Map(),
   judgeWaits: createJudgeWaitBook(),
+  waits: createWaitState(),
   promptSizes: new Map(),
   claimPromptSizes: new Map(),
   versions: createVersionBook(),

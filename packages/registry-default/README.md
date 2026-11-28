@@ -6,7 +6,7 @@
   11 kinds, 12 classes (the last, `healer`, `is_healer`, HL-03, ADR 0034), 12 rituals, 6 catalog scripts, 8 tags, 4 memo kinds (`proposal`, routed to the Chancellor,
   PS-02; `objection`, routed to a second judge, PS-22; `amendment`, routed to the quest's author, PS-22b; `advisory`,
   routed to the quests at work, the one the Steward writes as a quest reaches its base branch, PS-09c; `memos.json`,
-  ADR 0024), 17 disruption kinds (`disruptions.json`, LL-01, ADR 0036: what `disruptionsOf` reads from the event
+  ADR 0024), 21 disruption kinds (`disruptions.json`, LL-01, ADR 0036: what `disruptionsOf` reads from the event
   log, read apart from the six files of `parseRegistry` so a broken file drops only that reading), and one prompt
   per class. The package root is laid
   out like that folder.

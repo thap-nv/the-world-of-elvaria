@@ -27,6 +27,7 @@ import { noteWrapUps } from '../sessions/wrap-up.ts';
 import { carryOut } from './steps.ts';
 import { recoverVersions, versionStep } from './tribe-versions.ts';
 import { noteUnclaimable } from '../waits/unclaimable.ts';
+import { noteWaits } from '../waits/waits.ts';
 import { loadWorld, modelsOf, snapshotOf } from './world.ts';
 import type { Context, Counts } from '../context.ts';
 import type { Held, State } from './steward-state.ts';
@@ -125,16 +126,19 @@ function backgroundOf(state: State): BackgroundWork {
  * The plan of the snapshot at `now`, its notices first: a quest someone can take now has its notice withdrawn before
  * the claim that follows (§3.1); then the plan carried out, and (PS-09d) a red territory whose default branch moved
  * patrolled again, outside the tick; (CM-03) so is a green narrow one, once its queue is quiet and a slot free.
+ * (LL-03) The waits of ready work the plan leaves are written by their edges before it is carried out.
  */
 async function planAndAct(
   ctx: Context,
   state: State,
   snapshot: KingdomSnapshot,
   now: Instant,
+  zone: ZonedTime,
 ): Promise<void> {
   const plan = planTick(snapshot, now);
   await noteUnclaimable(ctx, state.reported, plan.unclaimable);
   await noteJudgeWaits(ctx, state.judgeWaits, plan);
+  await noteWaits(ctx, state.waits, { snapshot, plan, now, zone });
   await carryOut(ctx, plan);
   patrolMoved(ctx, snapshot.base_red ?? []);
   await patrolMerged(ctx, snapshot);
@@ -209,7 +213,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   const readings = heldReadingsOf(ctx, now);
   await noteWrapUps(ctx, state.wrapped, readings);
   await noteStamina(ctx, state.notches, readings);
-  await planAndAct(ctx, state, await snapshotFor(ctx, state, held.zone), now);
+  await planAndAct(ctx, state, await snapshotFor(ctx, state, held.zone), now, held.zone);
   // The pids of the sessions opened or ended in this tick are on disk before the next one (sessions/pids.ts).
   await sessions.saved();
   await state.scheduler.step(ctx, held.zone, { tribes_held: state.versions.holds });

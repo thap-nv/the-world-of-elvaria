@@ -164,6 +164,12 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   keeps the scoped quests after it in the claims of that tick (`claims` of `src/dispatch/tick-steps.ts`).
   `scopeHolderOf` names whom a quest waits for. The merge quest takes its parts' scopes together, the acceptance part
   and the follow-ups the scope of the quest they come from.
+- Names what ready work waits for (`src/wait/`, LL-03, plans/learning-loop.md §4.1): `tickWaitsOf(snapshot, plan, now)`
+  reads planTick's snapshot and plan, which it never changes, and returns each wait with its territory, its
+  quest or guest entry (`pr`), its reason (`base_red`, `scope_held`, `mana`, `tribe_held`, `room_full`) and what holds
+  it; a quest nobody can take stays `quest.unclaimable`'s and a judge's wait `quest.judge_wait`'s. `waitStepOf` keeps
+  the edges between ticks (a wait seen for `WAIT_MIN_MINUTES` gets its `wait.started`, one gone its `wait.ended` with
+  the minutes since it was first seen), `openWaitsOf` rebuilds from the log the waits with a line.
 - Decides the council (`src/council/`, implementation-plan §3.16.6, ADR 0028, PS-06): `councilDue` (a session
   draft from `kingdom.dispatch.council.from_rank`, or `from_areas` tags over as many areas: territories, and within
   one the groups of scope globs that meet, shared paths aside); `templateIssuesOf` (the
@@ -338,7 +344,8 @@ kinds, window)` returns each time the kingdom's machinery slowed or spoiled work
   event types outside the catalog. The test suite of plans/learning-loop.md (30 cases, `src/disruption/__fixtures__/`)
   runs against the default file of `@elvaria/registry-default`. (LL-04) The default kinds read the Steward's own lines
   (`steward_died`, `stopped_with_sessions`), `plot.setup` (`plot_setup_failed`) and the quest of a retry command
-  (`retry_dropped_assignee`): 13 cases with their cause, 21 with a symptom.
+  (`retry_dropped_assignee`): 13 cases with their cause, 21 with a symptom. (LL-03) `long_wait` reads a `wait.ended`
+  of 10 minutes or more, its cause the wait's reason: 15 cases with their cause, 22 with a symptom.
 - Keeps the metrics ledger, read side (`src/metrics/`, implementation-plan §3.16.1, ADR 0027, PS-01): `metricsOf(input,
 window)` over quests, verdicts, the event log and the handled inbox commands counts the runs of a window, the
   rework (every character session beyond one assignee and one verifier per quest, `reworkOf`) with its cause, the
