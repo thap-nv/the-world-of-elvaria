@@ -416,7 +416,9 @@ delivery`), with no event; `deferred` is refused unless the territory delivers b
   127.0.0.1 (port `kingdom.herald.port`, 0 picks a free one) with the kingdom's origins, the clock and randomness of
   the machine, its page texts in the owner's language (`src/herald/pages.ts`: `cli.herald.page.*`, a device's
   refusals from `device.refusal.*`) and its redacted log as lines, until Ctrl+C or a stop signal, then closes it; a
-  port in use prints the system's code (`EADDRINUSE`) and exits 1. `herald pair --role full|scoped|inquiry --label
+  port in use prints the system's code (`EADDRINUSE`) and exits 1. (P2-01c) It hands the Herald the kingdom and
+  `ctx.ids`, so the Herald streams the world at `/ws` and writes the commands of paired devices to `inbox/`; each
+  stream opened or closed and each command accepted or refused is a log line (`cli.herald.log.*`). `herald pair --role full|scoped|inquiry --label
 <name> [--territory <id>]…` writes a new `devices/<id>.json` (id `ids.device()`; full carries no territory,
   scoped and inquiry at least one, each attached) and a one-time code with `issuePairingCode` (only its hash lands in
   `.state/herald-pairing.json`), and prints the code once as `<origin>/pair?code=…` for loopback and each origin of

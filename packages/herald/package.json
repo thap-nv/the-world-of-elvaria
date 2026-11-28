@@ -2,7 +2,7 @@
   "name": "@elvaria/herald",
   "version": "0.0.0",
   "private": true,
-  "description": "The Herald: a loopback HTTP server that pairs devices with one-time codes and gates every request by a session cookie.",
+  "description": "The Herald: a loopback HTTP server that pairs devices with one-time codes, gates every request by a session cookie, streams the world over a WebSocket and writes commands to inbox/.",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
@@ -14,12 +14,14 @@
   "dependencies": {
     "@elvaria/domain": "workspace:*",
     "@elvaria/eventlog": "workspace:*",
-    "@elvaria/store": "workspace:*"
+    "@elvaria/store": "workspace:*",
+    "ws": "^8.23.0"
   },
   "devDependencies": {
     "@elvaria/config": "workspace:*",
     "@elvaria/testkit": "workspace:*",
     "@types/node": "^24.19.2",
+    "@types/ws": "^8.18.2",
     "@vitest/coverage-v8": "^5.1.0",
     "typescript": "~5.9.3",
     "vitest": "^5.1.0"

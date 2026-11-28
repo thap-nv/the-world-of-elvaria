@@ -1,12 +1,16 @@
 // `elvaria herald` end to end (P2-01b): the CLI starts the Herald on port 0 over a kingdom founded by `init`, a browser
 // is paired with the link `herald pair` prints, and `herald revoke` ends its session at the next request. Real sockets
-// on loopback, no mana. A port in use is the system's code and exit 1, on every OS.
+// on loopback, no mana. A port in use is the system's code and exit 1, on every OS. (P2-01c) The paired browser opens
+// a world stream at /ws, gets the snapshot, sends a command into inbox/, and the revoke closes its stream.
+import { readFile } from 'node:fs/promises';
 import { request } from 'node:http';
 import { createServer } from 'node:net';
 import type { IncomingHttpHeaders } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { WebSocket } from 'ws';
 
 import { foundKingdom, printed, run, tempDir, testIo } from '../__fixtures__/cli.ts';
 import type { TempDir, TestIo } from '../__fixtures__/cli.ts';
@@ -48,6 +52,49 @@ function send(
     req.on('error', reject);
     req.end(init.body);
   });
+}
+
+type Message = Readonly<Record<string, unknown>> & { readonly type: string };
+
+/** A world stream of the session `cookie`: the first message of a type, a frame to send, and how it closed. */
+function worldStream(origin: string, cookie: string) {
+  const socket = new WebSocket(`${origin.replace('http:', 'ws:')}/ws`, {
+    origin,
+    headers: { Cookie: cookie },
+  });
+  const messages: Message[] = [];
+  let waiting: (() => void)[] = [];
+  socket.on('message', (data: Buffer) => {
+    messages.push(JSON.parse(data.toString('utf8')) as Message);
+    const now = waiting;
+    waiting = [];
+    now.forEach((look) => {
+      look();
+    });
+  });
+  const first = (type: string) =>
+    new Promise<Message>((resolve) => {
+      const look = () => {
+        const found = messages.find((message) => message.type === type);
+        if (found === undefined) waiting.push(look);
+        else resolve(found);
+      };
+      look();
+    });
+  const closed = new Promise<number>((resolve) => socket.on('close', resolve));
+  const opened = new Promise<void>((resolve) =>
+    socket.once('open', () => {
+      resolve();
+    }),
+  );
+  return {
+    first,
+    closed,
+    opened,
+    send: (value: unknown) => {
+      socket.send(JSON.stringify(value));
+    },
+  };
 }
 
 /** An io whose owner presses Ctrl+C only when the test says, and which says when the Herald listens. */
@@ -117,6 +164,19 @@ describe('elvaria herald', () => {
     expect(home.status).toBe(200);
     expect(home.body).toContain('Trình duyệt này là thiết bị «Laptop», vai Toàn quyền.');
 
+    const stream = worldStream(herald.origin, cookie);
+    await stream.opened;
+    expect((await stream.first('snapshot')).state).toMatchObject({ quests: {}, sandbox: false });
+    stream.send({ type: 'command', ref: 'w1', kind: 'wake', payload: { tribe: 'claude' } });
+    const accepted = await stream.first('accepted');
+    const written = await readFile(
+      path.join(kingdom, 'inbox', `${String(accepted.command_id)}.json`),
+      'utf8',
+    );
+    expect(JSON.parse(written)).toMatchObject({ kind: 'wake', source: 'herald' });
+    stream.send({ type: 'command', ref: 'w2', kind: 'no_such_kind', payload: {} });
+    expect(await stream.first('refused')).toEqual({ type: 'refused', ref: 'w2', reason: 'invalid_message' });
+
     const id = /dev_\d{8}_[0-9a-z]{6}/.exec(paired.text)?.[0] ?? '';
     const listed = testIo();
     expect(await run(listed, 'herald', 'devices', '--kingdom', kingdom)).toBe(0);
@@ -128,12 +188,17 @@ describe('elvaria herald', () => {
     const after = await send(herald.origin, '/', { headers: { Cookie: cookie } });
     expect(after.status).toBe(401);
     expect(after.body).toContain('Thiết bị này đã bị thu hồi.');
+    expect(await stream.closed).toBe(4401);
 
     herald.stop();
     expect(await herald.exit).toBe(0);
     const log = printed(herald.io);
     expect(log).toContain(`Đã ghép đôi thiết bị ${id}.`);
     expect(log).toContain('Sứ giả đã dừng.');
+    expect(log).toContain(`Thiết bị ${id} mở luồng thế giới.`);
+    expect(log).toContain(`Thiết bị ${id} gửi lệnh wake: đã vào inbox/.`);
+    expect(log).toContain(`Thiết bị ${id} gửi lệnh no_such_kind: từ chối (invalid_message).`);
+    expect(log).toContain(`Thiết bị ${id} đóng luồng thế giới.`);
     expect(log).not.toContain(paired.code);
     expect(log).not.toContain(cookie.slice('elvaria_session='.length));
   });

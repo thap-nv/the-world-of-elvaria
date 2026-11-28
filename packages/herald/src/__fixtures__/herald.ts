@@ -4,8 +4,8 @@
 import { request as httpRequest } from 'node:http';
 import { randomBytes } from 'node:crypto';
 
-import { DeviceIdSchema, InstantSchema } from '@elvaria/domain';
-import type { Clock, Device, Instant } from '@elvaria/domain';
+import { DeviceIdSchema, InstantSchema, KingdomSchema, createIdSource } from '@elvaria/domain';
+import type { Clock, Device, IdSource, Instant, Kingdom } from '@elvaria/domain';
 import { openKingdom } from '@elvaria/store';
 import type { KingdomStore } from '@elvaria/store';
 import { tempDir } from '@elvaria/testkit';
@@ -49,6 +49,35 @@ export const PAGES: HeraldPages = {
   ) as Record<HeraldRefusal, string>,
 };
 
+/** A kingdom as `elvaria init` writes it; the Herald reads only its name, zone and tribes. */
+export const KINGDOM: Kingdom = KingdomSchema.parse({
+  version: 1,
+  name: 'Bình Minh',
+  created_at: '2026-11-01T08:00:00+07:00',
+  tz: 'Asia/Ho_Chi_Minh',
+  owner: { profession: 'developer', locale: 'en' },
+  paths: { treasury: 'C:/Users/owner/.elvaria/treasury.json' },
+  tribes: [{ id: 'claude', adapter: 'claude_code', enabled: true, max_concurrent: 2 }],
+  mana: {},
+  breakers: {},
+  schedule: {},
+  dispatch: {},
+  bell: {},
+  tunnel: {},
+  theme: 'fantasy',
+  ui: {},
+});
+
+/** The ids the Herald draws for the commands it writes. */
+export function idsOf(clock: Clock): IdSource {
+  const ids = createIdSource({ clock, random, tz: KINGDOM.tz });
+  if (!ids.ok) throw new Error('the fixture kingdom has an unknown zone');
+  return ids.value;
+}
+
+/** How often the test Heralds read the log: a pulse a test can wait for without a real sleep in the spec. */
+export const PULSE_MS = 20;
+
 export const deviceId = (suffix: string) => DeviceIdSchema.parse(`dev_20261127_${suffix}`);
 
 export const fullDevice = (suffix = 'aaaaaa', label = 'Phone <one>'): Device => ({
@@ -70,13 +99,21 @@ export interface Harness {
   stop(): Promise<void>;
 }
 
-export async function harness(overrides: Partial<HeraldOptions> = {}): Promise<Harness> {
+/** A Herald over a new kingdom; `seed` writes its files before the Herald first reads them. */
+export async function harness(
+  overrides: Partial<HeraldOptions> = {},
+  seed: (store: KingdomStore) => Promise<void> = async () => undefined,
+): Promise<Harness> {
   const dir = await tempDir('herald');
   const store = openKingdom(dir.root);
+  await seed(store);
   const clock = movableClock();
   const logged: HeraldLogEntry[] = [];
   const started = await startHerald({
     store,
+    kingdom: KINGDOM,
+    ids: idsOf(clock),
+    intervalMs: PULSE_MS,
     port: 0,
     origins: ['https://elvaria.example.ts.net'],
     clock,

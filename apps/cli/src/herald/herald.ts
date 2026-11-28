@@ -1,5 +1,6 @@
 // `elvaria herald [--port <n>]` (P2-01b, ADR 0031): runs the Herald on 127.0.0.1 until Ctrl+C or a stop signal, the
-// way `elvaria run` runs the Steward, then closes it and drops every open socket. 0 mana. A port in use is the
+// way `elvaria run` runs the Steward, then closes it and drops every open socket. 0 mana. (P2-01c) It streams the world
+// at `/ws` and writes the commands of paired devices to inbox/, for a running Steward to apply. A port in use is the
 // system's code and exit 1 on Windows and macOS alike, never a stack trace. No static folder yet: the lite build that
 // `/` will serve is P2-07, so `/` shows which device the browser is.
 import { startHerald } from '@elvaria/herald';
@@ -32,6 +33,8 @@ async function runHerald(input: CommandInput, cli: CliContext): Promise<ExitCode
   }
   const started = await startHerald({
     store: ctx.store,
+    kingdom,
+    ids: ctx.ids,
     port,
     origins: kingdom.herald.origins,
     clock: io.clock,

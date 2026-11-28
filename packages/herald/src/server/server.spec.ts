@@ -17,6 +17,8 @@ import {
   format,
   fullDevice,
   harness,
+  idsOf,
+  KINGDOM,
   movableClock,
   PAGES,
   postCode,
@@ -171,6 +173,8 @@ describe('startHerald on a port in use', () => {
     const port = (taken.address() as { port: number }).port;
     const started = await startHerald({
       store: openKingdom('unused kingdom'),
+      kingdom: KINGDOM,
+      ids: idsOf(movableClock()),
       port,
       origins: [],
       clock: movableClock(),
