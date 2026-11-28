@@ -7,7 +7,17 @@
 import path from 'node:path';
 
 import { SEARCH_TOOLS } from './constants.ts';
-import type { ToolPolicy } from './tool-policy.ts';
+
+/**
+ * The fields of a session's ToolPolicy the cut reads. tool-policy.ts imports this file, so this one names the shape
+ * instead of importing ToolPolicy back (no-circular counts type imports too).
+ */
+interface Cuttable {
+  readonly tools: readonly string[];
+  readonly allow: readonly string[];
+  readonly laws: { readonly patch_paths: readonly string[] };
+  readonly graph_commands?: readonly string[];
+}
 
 /** Where a read-only quest's session writes its findings: one Markdown file at the root of its plot. */
 export const REPORT_FILE = 'elvaria-report.md';
@@ -23,7 +33,7 @@ const ruleTool = (rule: string): string => rule.split('(', 1)[0] ?? rule;
  * tool); the code graph goes, as for every class that has no shell (asksGraph). Deny rules stay as they are: a tool
  * left out of `tools` does not exist for Claude Code, and the hook's class gate refuses it for the other tribes.
  */
-export function readOnlyPolicyOf(policy: ToolPolicy): ToolPolicy {
+export function readOnlyPolicyOf<P extends Cuttable>(policy: P) {
   const tools = policy.tools.filter((tool) => READ_ONLY_TOOLS.includes(tool));
   const { graph_commands: _graph, ...rest } = policy;
   return {
@@ -37,14 +47,17 @@ export function readOnlyPolicyOf(policy: ToolPolicy): ToolPolicy {
 }
 
 /** `policy` as every session of the quest gets it: cut down when the quest is read-only (toolPolicyOf). */
-export const questPolicyOf = (policy: ToolPolicy, readOnly: boolean | undefined): ToolPolicy =>
+export const questPolicyOf = <P extends Cuttable>(policy: P, readOnly: boolean | undefined) =>
   readOnly === true ? readOnlyPolicyOf(policy) : policy;
 
 /**
  * Why a write tool may not change `file`, a path relative to the plot, under `policy` (FakeRunner's stand-in for the
  * hook's write fence, hooks/src/write-fence.ts); undefined when it may, or when the policy has no such fence.
  */
-export function writeRefusal(policy: Pick<ToolPolicy, 'writable_paths'>, file: string): string | undefined {
+export function writeRefusal(
+  policy: { readonly writable_paths?: readonly string[] | undefined },
+  file: string,
+): string | undefined {
   const writable = policy.writable_paths;
   if (writable === undefined) return undefined;
   const relative = path.posix.normalize(file.replaceAll('\\', '/'));
