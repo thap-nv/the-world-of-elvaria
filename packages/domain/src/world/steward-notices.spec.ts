@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { CLASSES, KINGDOM, Q1, Q2, Q3, Q4, inReview, quest } from '../dispatch/__fixtures__/snapshot.ts';
 import { QUEST_CHANGE } from '../schema/event/__fixtures__/valid-data.ts';
 import { EventSchema } from '../schema/event/event.ts';
-import { TERRITORIES } from './__fixtures__/examples.ts';
+import { CAMPAIGNS, TERRITORIES } from './__fixtures__/examples.ts';
 import { attentionOf, judgingClassesOf, stewardNoticesOf, worldStateWithManaOf } from './steward-notices.ts';
 import type { Instant } from '../core/clock.ts';
 import type { QuestId } from '../core/ids.ts';
@@ -133,6 +133,13 @@ describe('worldStateWithManaOf', () => {
     expect(state.pools.find(({ tribe }) => tribe === 'gemini')?.asleep).toBe(true);
     expect(state.pools.find(({ tribe }) => tribe === 'claude')?.asleep).toBe(false);
     expect(Object.keys(state.quests).toSorted()).toEqual([Q1, Q2, Q3, Q4, Q5].toSorted());
+    expect(state.campaigns).toEqual([]);
+  });
+
+  it('keeps the campaigns it is given, for the Herald’s snapshot (P2-01c)', () => {
+    const state = worldStateWithManaOf({ ...SOURCE, campaigns: CAMPAIGNS }, []);
+    expect(state.campaigns.map(({ id }) => id)).toEqual(CAMPAIGNS.map(({ id }) => id));
+    expect(state.campaigns.length).toBeGreaterThan(0);
   });
 });
 

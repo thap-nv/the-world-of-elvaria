@@ -58,13 +58,14 @@ const MANA_LINES: ReadonlySet<string> = new Set(['mana.level', 'mana.exhausted',
 
 /**
  * The world state of the files, with mana as the log says it: the readings and the pools asleep live in the Steward's
- * memory and in the log, not in a file (worldStateOf alone sees every pool awake).
+ * memory and in the log, not in a file (worldStateOf alone sees every pool awake). The campaigns given are kept: the
+ * Herald's snapshot shows them (P2-01c); the attention queue reads none.
  */
 export function worldStateWithManaOf(
-  files: Omit<WorldSource, 'campaigns'>,
+  files: Omit<WorldSource, 'campaigns'> & Partial<Pick<WorldSource, 'campaigns'>>,
   events: readonly Event[],
 ): WorldState {
-  const state = worldStateOf({ ...files, campaigns: [] });
+  const state = worldStateOf({ campaigns: [], ...files });
   return reduce(
     state,
     events.filter((event) => MANA_LINES.has(event.type)),
