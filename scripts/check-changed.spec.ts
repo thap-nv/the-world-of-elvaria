@@ -32,6 +32,7 @@ describe('plan', () => {
   it('runs the tests of the package and of every package that depends on it, in one pnpm run', () => {
     expect(lines(['packages/store/src/a.ts', 'packages/runner-core/src/b.ts', 'docs/cli.md'])).toEqual([
       '--filter ...@elvaria/store --filter ...@elvaria/runner-core --filter !the-world-of-elvaria test',
+      '--filter ...@elvaria/store --filter ...@elvaria/runner-core --filter !the-world-of-elvaria typecheck',
       'boundaries',
       'layout',
       'knip',
@@ -54,6 +55,7 @@ describe('plan', () => {
   it('runs one package test for another package, keyed by its folder', () => {
     expect(lines(['packages/runner-core/src/a.ts', 'packages/runner-core/src/b.ts'])).toEqual([
       '--filter ...@elvaria/runner-core --filter !the-world-of-elvaria test',
+      '--filter ...@elvaria/runner-core --filter !the-world-of-elvaria typecheck',
       'boundaries',
       'layout',
       'knip',
@@ -61,6 +63,7 @@ describe('plan', () => {
     ]);
     expect(lines(['apps/cli/src/cli.ts'])).toEqual([
       '--filter ...@elvaria/cli --filter !the-world-of-elvaria test',
+      '--filter ...@elvaria/cli --filter !the-world-of-elvaria typecheck',
       'boundaries',
       'layout',
       'knip',
@@ -99,6 +102,7 @@ describe('plan', () => {
   it('checks docs and generated output for i18n', () => {
     expect(lines(['packages/i18n/src/glossary.json'])).toEqual([
       '--filter ...@elvaria/i18n --filter !the-world-of-elvaria test',
+      '--filter ...@elvaria/i18n --filter !the-world-of-elvaria typecheck',
       'boundaries',
       'docs:gen --check',
       'docs:check',
@@ -117,6 +121,7 @@ describe('plan', () => {
   it('checks the boundaries when a workspace manifest or the boundary table moves', () => {
     expect(lines(['packages/store/package.json'])).toEqual([
       '--filter ...@elvaria/store --filter !the-world-of-elvaria test',
+      '--filter ...@elvaria/store --filter !the-world-of-elvaria typecheck',
       'boundaries',
       'docs:gen --check',
       'layout',
@@ -130,6 +135,7 @@ describe('plan', () => {
     expect(lines(['packages/domain/src/quest/a.ts'])).toContain('boundaries');
     expect(lines(['packages/store/src/a.ts', 'packages/steward/src/b.ts', 'apps/cli/src/c.ts'])).toEqual([
       '--filter ...@elvaria/store --filter ...@elvaria/steward --filter ...@elvaria/cli --filter !the-world-of-elvaria test',
+      '--filter ...@elvaria/store --filter ...@elvaria/steward --filter ...@elvaria/cli --filter !the-world-of-elvaria typecheck',
       'boundaries',
       'layout',
       'knip',
@@ -157,6 +163,7 @@ describe('plan', () => {
     expect(lines(['package.json'])).toEqual(['knip']);
     expect(lines(['packages/store/src/io/atomic.ts'])).toEqual([
       '--filter ...@elvaria/store --filter !the-world-of-elvaria test',
+      '--filter ...@elvaria/store --filter !the-world-of-elvaria typecheck',
       'boundaries',
       'layout',
       'knip',

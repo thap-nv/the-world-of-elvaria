@@ -50,7 +50,13 @@ export const RULES = [
   { pattern: /^packages\/domain\/(?!README\.md$)/, run: [['test'], ['typecheck']] },
   // `...` selects the package and every package that depends on it (settlement (382)): a runner-core change once
   // broke apps/cli specs that only the full check ran
-  { pattern: /^(?:packages|apps)\/([^/]+)\/(?!README\.md$)/, run: [['--filter', '...@elvaria/$1', 'test']] },
+  {
+    pattern: /^(?:packages|apps)\/([^/]+)\/(?!README\.md$)/,
+    run: [
+      ['--filter', '...@elvaria/$1', 'test'],
+      ['--filter', '...@elvaria/$1', 'typecheck'],
+    ],
+  },
   // any workspace code: an import cycle inside one package (`no-circular`) moves no manifest, so only a code rule
   // catches it before the merge (CM-04, fixed by 4cfbdb89; settlement (480), R1)
   { pattern: /^(?:packages|apps)\/[^/]+\/(?!README\.md$)/, run: [['boundaries']] },
@@ -99,7 +105,11 @@ export const SUBSUMES = [
     by: ['test'],
     covers: (c) => (c[0] === '--filter' && c.at(-1) === 'test') || c.join(' ') === 'exec vitest run',
   },
-  { by: ['typecheck'], covers: (c) => c.join(' ') === 'exec tsc -p tsconfig.json' },
+  {
+    by: ['typecheck'],
+    covers: (c) =>
+      (c[0] === '--filter' && c.at(-1) === 'typecheck') || c.join(' ') === 'exec tsc -p tsconfig.json',
+  },
 ];
 
 /**
@@ -147,24 +157,26 @@ export function plan(paths) {
     }
     if (!hit) unmatched.push(path);
   }
-  const all = mergeFilters([...wanted.values()]);
+  const selected = [...wanted.values()];
+  const all = ['test', 'typecheck'].reduce((commands, script) => mergeFilters(commands, script), selected);
   const commands = all.filter((c) => !SUBSUMES.some((s) => wanted.has(s.by.join(' ')) && s.covers(c)));
   return { commands, unmatched };
 }
 
 /**
- * The package tests as one `pnpm --filter … --filter … test`, where the first of them stood: two changed packages
+ * Each package script as one `pnpm --filter … --filter … <script>`, where the first of them stood: two changed packages
  * often share dependents, and one pnpm run selects each package once. The root package is left out (ROOT_PACKAGE).
  * @param {Command[]} commands
+ * @param {string} script
  * @returns {Command[]}
  */
-function mergeFilters(commands) {
-  const isFilterTest = (/** @type {Command} */ c) => c[0] === '--filter' && c.at(-1) === 'test';
-  const filters = commands.filter(isFilterTest).flatMap((c) => c.slice(0, -1));
-  const at = commands.findIndex(isFilterTest);
+function mergeFilters(commands, script) {
+  const isFilter = (/** @type {Command} */ c) => c[0] === '--filter' && c.at(-1) === script;
+  const filters = commands.filter(isFilter).flatMap((c) => c.slice(0, -1));
+  const at = commands.findIndex(isFilter);
   if (at < 0) return commands;
-  const rest = commands.filter((c) => !isFilterTest(c));
-  return [...rest.slice(0, at), [...filters, '--filter', `!${ROOT_PACKAGE}`, 'test'], ...rest.slice(at)];
+  const rest = commands.filter((c) => !isFilter(c));
+  return [...rest.slice(0, at), [...filters, '--filter', `!${ROOT_PACKAGE}`, script], ...rest.slice(at)];
 }
 
 /**

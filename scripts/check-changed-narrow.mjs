@@ -49,7 +49,8 @@ export const FULL_COMMANDS = {
 export function groupOf(command) {
   if (command[1] === 'eslint') return 'lint';
   if (command[1] === 'prettier') return 'format';
-  if (command[0] === '--filter' || command[1] === 'vitest') return 'test';
+  if (command[0] === '--filter') return command.at(-1) === 'typecheck' ? 'typecheck' : 'test';
+  if (command[1] === 'vitest') return 'test';
   if (command[1] === 'tsc') return 'typecheck';
   return command[0]?.split(':')[0];
 }
