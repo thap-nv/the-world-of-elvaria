@@ -2,7 +2,14 @@
 // P1-29, lessons of 2026-11-12), checked here by the same rule the Steward applies (namedAssignee): a wrong name is
 // refused at the terminal, not a tick later.
 import { aboveCeiling, namedAssignee, rankCeilingOf } from '@elvaria/domain';
-import type { Character, NamedAssigneeProblem, Quest, Rank } from '@elvaria/domain';
+import type {
+  Character,
+  CharacterId,
+  InboxCommandInput,
+  NamedAssigneeProblem,
+  Quest,
+  Rank,
+} from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
 
 import { readCharacter } from '../character/read.ts';
@@ -60,24 +67,37 @@ export function ceilingLines(ctx: KingdomContext, character: Character, rank: Ra
 }
 
 /**
- * Sends the `reassign` command that gives `quest` to the character `to` names (§2.5), once checked; then says when
- * the quest will wait for the seal. `sent` is the line that says the command went.
+ * Sends the command `build` writes for the character `to` names, once checked; then says when the quest will wait
+ * for the seal. Every command that hands a quest to a named character goes through here (`quest confirm --to`,
+ * `reassign --to`, `retry --to`), so they check and answer alike (AH-14a). `sent` is the line that says it went.
  */
-export async function giveQuestTo(
+export async function sendForCharacter(
   ctx: KingdomContext,
   quest: Quest,
   to: string,
   sent: MessageKey,
+  build: (character: CharacterId) => InboxCommandInput,
 ): Promise<ExitCode> {
-  // A session-tier quest (the only kind reassign takes) always names its class.
+  // A session-tier quest (the only kind these commands take) always names its class.
   const character = await assigneeFor(ctx, to, quest.class_required);
   if (Array.isArray(character)) {
     character.forEach(ctx.io.err);
     return EXIT.failed;
   }
-  const payload = { quest: quest.id, character: character.id };
-  const command = { ...commandHeader(ctx), kind: 'reassign', payload } as const;
-  const code = await sendCommand(ctx, command, sent, { id: quest.id, character: character.id });
+  const code = await sendCommand(ctx, build(character.id), sent, { id: quest.id, character: character.id });
   if (code === EXIT.ok) ceilingLines(ctx, character, quest.rank).forEach(ctx.io.out);
   return code;
 }
+
+/** Sends the `reassign` command that gives `quest` to the character `to` names (§2.5). */
+export const giveQuestTo = (
+  ctx: KingdomContext,
+  quest: Quest,
+  to: string,
+  sent: MessageKey,
+): Promise<ExitCode> =>
+  sendForCharacter(ctx, quest, to, sent, (character) => ({
+    ...commandHeader(ctx),
+    kind: 'reassign',
+    payload: { quest: quest.id, character },
+  }));

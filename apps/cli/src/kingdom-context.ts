@@ -72,3 +72,19 @@ export async function openKingdomContext(
     format,
   };
 }
+
+/**
+ * What the command line names first (`<noun> <verb> <id> …`) as `read` finds it in the kingdom, or undefined once the
+ * lines that say why it cannot be read are printed. The one rule for every command on a named quest or character
+ * (namedQuest, namedCharacter): an unknown id reads the same whichever command it was given to (AH-14a, R7).
+ */
+export async function namedBy<T extends object>(
+  input: CommandInput,
+  ctx: KingdomContext,
+  read: (ctx: KingdomContext, id: string) => Promise<T | string[]>,
+): Promise<T | undefined> {
+  const found = await read(ctx, input.positionals[0] ?? '');
+  if (!Array.isArray(found)) return found;
+  found.forEach(ctx.io.err);
+  return undefined;
+}

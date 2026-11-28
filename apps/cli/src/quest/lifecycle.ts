@@ -7,9 +7,8 @@ import type { Quest, QuestEventType } from '@elvaria/domain';
 import { textOption } from '../args.ts';
 import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
-import { QUEST_STATUS_LABEL } from '../labels.ts';
-import { assigneeFor, ceilingLines, classNames, giveQuestTo } from './assignee.ts';
-import { readQuest } from './references.ts';
+import { classNames, giveQuestTo, sendForCharacter } from './assignee.ts';
+import { questUnless } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -22,21 +21,13 @@ export function ownerMay(quest: Quest, event: QuestEventType): boolean {
 }
 
 /** The quest named on the command line, if the owner may cause `event` on it now. */
-export async function questFor(
+export const questFor = (
   input: CommandInput,
   ctx: KingdomContext,
   event: (quest: Quest) => QuestEventType,
   refused: MessageKey,
-): Promise<Quest | undefined> {
-  const quest = await readQuest(ctx, input.positionals[0] ?? '');
-  if (Array.isArray(quest)) {
-    quest.forEach(ctx.io.err);
-    return undefined;
-  }
-  if (ownerMay(quest, event(quest))) return quest;
-  ctx.io.err(ctx.t(refused, { id: quest.id, status: ctx.t(QUEST_STATUS_LABEL[quest.status]) }));
-  return undefined;
-}
+): Promise<Quest | undefined> =>
+  questUnless(input, ctx, (quest) => (ownerMay(quest, event(quest)) ? undefined : refused));
 
 async function runConfirm(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
@@ -53,18 +44,12 @@ async function runConfirm(input: CommandInput, cli: CliContext): Promise<ExitCod
  * `confirm --to`: the draft opens for the character named, in the one command, so no tick between a confirm and a
  * reassign can give it to another (q_20261120_tpzvk5). The CLI checks the character first, as `reassign --to` does.
  */
-async function confirmFor(ctx: KingdomContext, quest: Quest, to: string): Promise<ExitCode> {
-  const character = await assigneeFor(ctx, to, quest.class_required);
-  if (Array.isArray(character)) {
-    character.forEach(ctx.io.err);
-    return EXIT.failed;
-  }
-  const payload = { quest: quest.id, assignee: character.id };
-  const command = { ...commandHeader(ctx), kind: 'confirm', payload } as const;
-  const params = { id: quest.id, character: character.id };
-  const code = await sendCommand(ctx, command, 'cli.quest.confirm.sent_to', params);
-  if (code === EXIT.ok) ceilingLines(ctx, character, quest.rank).forEach(ctx.io.out);
-  return code;
+function confirmFor(ctx: KingdomContext, quest: Quest, to: string): Promise<ExitCode> {
+  return sendForCharacter(ctx, quest, to, 'cli.quest.confirm.sent_to', (assignee) => ({
+    ...commandHeader(ctx),
+    kind: 'confirm',
+    payload: { quest: quest.id, assignee },
+  }));
 }
 
 /**
@@ -162,16 +147,10 @@ async function runRetry(input: CommandInput, cli: CliContext): Promise<ExitCode>
 async function runSubmit(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
-  const quest = await readQuest(ctx, input.positionals[0] ?? '');
-  if (Array.isArray(quest)) {
-    quest.forEach(ctx.io.err);
-    return EXIT.failed;
-  }
-  if (quest.status !== 'infirmary') {
-    const status = ctx.t(QUEST_STATUS_LABEL[quest.status]);
-    ctx.io.err(ctx.t('cli.quest.submit.refused', { id: quest.id, status }));
-    return EXIT.failed;
-  }
+  const quest = await questUnless(input, ctx, ({ status }) =>
+    status === 'infirmary' ? undefined : 'cli.quest.submit.refused',
+  );
+  if (quest === undefined) return EXIT.failed;
   if (!ownerMay(quest, 'submit')) {
     ctx.io.err(ctx.t('cli.quest.submit.no_work', { id: quest.id }));
     return EXIT.failed;

@@ -11,7 +11,7 @@ import { openEventLog } from '@elvaria/eventlog';
 import { textOption } from '../args.ts';
 import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
-import { readQuest } from './references.ts';
+import { namedQuest } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
 
@@ -23,11 +23,8 @@ const REFUSAL: Readonly<Record<EscapeError['code'], MessageKey>> = {
 async function runEscaped(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
-  const quest = await readQuest(ctx, input.positionals[0] ?? '');
-  if (Array.isArray(quest)) {
-    quest.forEach(ctx.io.err);
-    return EXIT.failed;
-  }
+  const quest = await namedQuest(input, ctx);
+  if (quest === undefined) return EXIT.failed;
   const note = textOption(input, 'note');
   const line = escapeOf((await openEventLog(ctx.store.root).read()).events, quest.id, note);
   if (!line.ok) {
