@@ -100,7 +100,7 @@ everywhere, and `src/secrets.spec.ts` runs it with Elvaria's real hook from sour
 any file of the kingdom. `fixtures/fake-hook.mjs` stands in for the built hook elsewhere. Both fakes read stdin
 as the real hook does (`fixtures/read-stdin.mjs`, P1-36); `src/fixtures-stdin.spec.ts` sends a prompt larger than
 any pipe buffer to a fake CLI whose stdin a preload made non-blocking; `ELVARIA_SESSION_SPEC_REPEATS=<n>` runs it
-and the first case of `src/session.spec.ts` n more times (50 runs passed on macOS CI in PR #82). `src/live.spec.ts` runs the
+and the first case of `src/session/session.spec.ts` n more times (50 runs passed on macOS CI in PR #82). `src/live.spec.ts` runs the
 conformance suite's live checks with the real CLI and the real hook, the Stop gate, a commit without
 attribution, the apprentice (the cheapest model, a stronger one refused, cut at `maxTurns`) and Grep refused
 outside the plot; `ELVARIA_CLAUDE` points them at another `claude`.

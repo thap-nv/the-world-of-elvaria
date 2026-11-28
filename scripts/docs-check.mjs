@@ -7,6 +7,7 @@ import { GLOSSARY, bannedWords, glossaryTable, idsOf } from '@elvaria/i18n';
 
 import { bannedIdentifierProblems, dataIdProblems } from './docs-identifiers.mjs';
 import { linkProblems } from './docs-links.mjs';
+import { pathProblems } from './docs-paths.mjs';
 import { gitRepo } from './docs-repo.mjs';
 
 /** @typedef {import('./docs-repo.mjs').Repo} Repo */
@@ -201,6 +202,7 @@ export function checkRepo(files, read, glossary = GLOSSARY) {
     ...shellScriptProblems(files),
     ...sizeProblems(files, read),
     ...linkProblems(files, read),
+    ...pathProblems(files, read),
     ...termProblems(glossary),
     ...files.flatMap((file) => bannedIdentifierProblems(file, text(file), banned)),
     ...files.flatMap((file) => dataIdProblems(file, text(file))),
