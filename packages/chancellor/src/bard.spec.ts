@@ -65,7 +65,7 @@ describe('askBard (P2-06b)', () => {
     const { runner, asked } = ask([{ text: '  Brom finished the login page.  ' }], choice);
     expect(await asked).toEqual({
       ok: true,
-      value: { text: 'Brom finished the login page.', session_ids: ['chancellor-1'], tokens: ANSWER_TOKENS },
+      value: { reply: 'Brom finished the login page.', session_ids: ['chancellor-1'], tokens: ANSWER_TOKENS },
     });
     expect(runner.requests).toHaveLength(1);
     const [request] = runner.requests;

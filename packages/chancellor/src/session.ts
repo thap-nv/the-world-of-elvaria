@@ -184,3 +184,42 @@ export const sessionIdsOf = (result: RunResult): string[] => [
   result.session_id,
   ...(result.sequels ?? []).map(({ session_id }) => session_id),
 ];
+
+/** What a session spent: its tokens, its retry's included, and the ids of both. */
+export interface Spent {
+  readonly tokens: number;
+  readonly session_ids: readonly string[];
+}
+
+/** Why there is no reply to use, and what the session spent all the same (0 when it said nothing). */
+export interface SpokenFailure extends Spent {
+  readonly failure: ChancellorFailure;
+}
+
+/**
+ * A session the caller opened, in `role` and within `budget`, with no tool whatever its class allows (its deny list
+ * stays): the Temple's Monk (PS-12f) and the chronicle's Bard (P2-06b) read their prompt only.
+ */
+export const withoutTools = (
+  session: ChancellorSession,
+  role: NonNullable<ChancellorSession['role']>,
+  budget: Budget,
+): ChancellorSession => ({
+  ...session,
+  characterClass: { ...session.characterClass, tools: { ...session.characterClass.tools, allow: [] } },
+  role,
+  budget,
+});
+
+/** One session and its reply, with what it spent; a reply that fails its check is `invalid_reply`, its tokens kept. */
+export async function speak<T>(
+  session: ChancellorSession,
+  asking: Asking<T>,
+): Promise<Result<Spent & { readonly reply: T }, SpokenFailure>> {
+  const heard = await hear(session, asking);
+  if (!heard.ok) return err({ failure: heard.error, tokens: 0, session_ids: [] });
+  const { reply, result } = heard.value;
+  const spent = { tokens: result.usage.tokens, session_ids: sessionIdsOf(result) };
+  if (!reply.ok) return err({ failure: { code: 'invalid_reply', issues: reply.issues }, ...spent });
+  return ok({ reply: reply.value, ...spent });
+}

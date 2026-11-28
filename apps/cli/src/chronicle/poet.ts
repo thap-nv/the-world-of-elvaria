@@ -78,7 +78,7 @@ async function tale(
       }
       return { issues: [] };
     }
-    const text = redactor(answer.value.text);
+    const text = redactor(answer.value.reply);
     issues = checkChronicle(text, base.ledger, roster).map(chronicleIssueText);
     if (issues.length === 0) return { text, issues };
   }
