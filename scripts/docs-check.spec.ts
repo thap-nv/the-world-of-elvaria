@@ -42,6 +42,9 @@ const check = (extra: Record<string, string> = {}) => {
 };
 
 describe('checkRepo', () => {
+  it('reports stale backticked paths through the documentation check', () => {
+    expect(check({ 'CLAUDE.md': '`src/gone.ts`' })).toEqual(['CLAUDE.md:1: missing file src/gone.ts']);
+  });
   it('finds nothing in a repo that keeps every rule', () => {
     expect(check()).toEqual([]);
   });
