@@ -129,6 +129,13 @@ function suspensionLine(t: Translate, notice: Extract<Notice, { kind: 'delegatio
   return t('cli.run.notice.delegation_suspended', { territory, quest, cause: suspensionCause(t, notice) });
 }
 
+/** The day's digest (PS-03), and (P2-06b) its chronicle, once a day, after the Bard's prose or without it. */
+function dailyLine(t: Translate, notice: Extract<Notice, { kind: 'digest' | 'chronicle' }>): string {
+  if (notice.kind === 'digest') return t('cli.run.notice.digest', notice);
+  const key = notice.prose ? 'cli.run.notice.chronicle_prose' : 'cli.run.notice.chronicle';
+  return t(key, { day: notice.day, file: notice.file });
+}
+
 export function lineOf(t: Translate, notice: Notice): string {
   if (notice.kind === 'suspended') {
     const { character, count } = notice;
@@ -136,7 +143,7 @@ export function lineOf(t: Translate, notice: Notice): string {
   }
   if (notice.kind === 'mana_asleep' || notice.kind === 'mana_awake' || notice.kind === 'mana_warning')
     return manaLine(t, notice);
-  if (notice.kind === 'digest') return t('cli.run.notice.digest', notice);
+  if (notice.kind === 'digest' || notice.kind === 'chronicle') return dailyLine(t, notice);
   if (notice.kind === 'tribe_held') return tribeLine(t, notice);
   if (notice.kind === 'base_red') return baseRedLine(t, notice);
   if (notice.kind === 'delegation_suspended') return suspensionLine(t, notice);

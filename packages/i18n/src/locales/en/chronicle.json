@@ -30,6 +30,10 @@
     "chronicle.what.level_up": "Level up",
     "chronicle.what.level_down": "Level down",
     "chronicle.what.pool_asleep": "Pool asleep",
-    "chronicle.what.pool_awake": "Pool awake"
+    "chronicle.what.pool_awake": "Pool awake",
+    "chronicle.prose.heading": "## The Bard’s tale",
+    "chronicle.prose.note": "{name} the Bard wrote this part from the ledger above; the machine checked every quest and character it names.",
+    "chronicle.prose.refused": "Chronicle {day}: {name}’s prose was refused twice ({issues}); the machine’s part stands.",
+    "chronicle.prose.failed": "Chronicle {day}: {name}’s session gave no prose ({problem}); the machine’s part stands. Its run folder: {run_dir}"
   }
 }

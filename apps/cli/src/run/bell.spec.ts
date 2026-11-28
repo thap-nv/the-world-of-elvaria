@@ -86,6 +86,20 @@ describe('the console bell on the judges’ mana and the digest', () => {
       'Bản tấu 2026-11-06: 2 việc phải quyết để việc chạy tiếp, 1 việc chờ được. Đọc ở digest/2026-11-06.md.',
     );
   });
+
+  // P2-06b: once a day, with the Bard's tale or the machine's part alone.
+  it('says the chronicle is written, and whether the Bard’s tale is in it', () => {
+    const notice: Notice = {
+      kind: 'chronicle',
+      day: '2026-11-06',
+      file: 'chronicle/2026-11-06.md',
+      prose: true,
+    };
+    expect(lineOf(vi, notice)).toBe('Biên niên sử 2026-11-06, có lời Nhà thơ: chronicle/2026-11-06.md.');
+    expect(lineOf(en, { ...notice, prose: false })).toBe(
+      'Chronicle 2026-11-06: the machine’s part, in chronicle/2026-11-06.md.',
+    );
+  });
 });
 
 describe('the console bell on a tribe held by its CLI (A1b of the lessons of 2026-11-13)', () => {

@@ -52,6 +52,8 @@
     "cli.run.tribe_idle": "Tộc {tribe}: adapter {adapter} chưa có runner, nên tộc này không nhận nhiệm vụ.",
     "cli.run.tribe_broken": "Tộc {tribe}: adapter file {adapter} không nạp được, nên tộc này không nhận nhiệm vụ:",
     "cli.run.tribe_ready": "Tộc {tribe}: adapter {adapter} sẵn sàng.",
-    "cli.run.warning": "Nhiếp chính: {message}"
+    "cli.run.warning": "Nhiếp chính: {message}",
+    "cli.run.notice.chronicle": "Biên niên sử {day}: phần của máy, ở {file}.",
+    "cli.run.notice.chronicle_prose": "Biên niên sử {day}, có lời Nhà thơ: {file}."
   }
 }
