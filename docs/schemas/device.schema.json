@@ -37,9 +37,68 @@
           "format": "date-time"
         },
         "revoked_at": {
-          "description": "Set once by `elvaria herald revoke`: from then on the Herald ends its session and the Steward refuses its commands (device_revoked). The file stays, so the log still names the device.",
+          "description": "Set once by `elvaria herald revoke` or a `revoke_device` command: from then on the Herald ends its session and the Steward refuses its commands (device_revoked). The file stays, so the log still names the device.",
           "type": "string",
           "format": "date-time"
+        },
+        "passkeys": {
+          "description": "The WebAuthn keys the device registered through the tunnel (add_passkey). A command of group 2 or 3 from the phone carries the signature of one that is not revoked.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "public_key",
+              "algorithm",
+              "origin",
+              "sign_count",
+              "added_at"
+            ],
+            "properties": {
+              "id": {
+                "description": "The credential id (`PublicKeyCredential.rawId`).",
+                "type": "string",
+                "pattern": "^[\\w-]+$",
+                "minLength": 1,
+                "maxLength": 1364
+              },
+              "public_key": {
+                "description": "The public key as SPKI DER (`AuthenticatorAttestationResponse.getPublicKey()`).",
+                "type": "string",
+                "pattern": "^[\\w-]+$",
+                "minLength": 1,
+                "maxLength": 1024
+              },
+              "algorithm": {
+                "enum": [
+                  "es256",
+                  "rs256",
+                  "ed25519"
+                ]
+              },
+              "origin": {
+                "description": "The origin it was registered through: an assertion must come from it, and its host is the relying party id.",
+                "type": "string",
+                "pattern": "^https://[\\da-z.-]+(?::\\d{1,5})?$"
+              },
+              "sign_count": {
+                "description": "The authenticator's signature counter last seen; 0 for an authenticator that keeps none (a synced passkey). A signature whose counter does not move past it is refused.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "added_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "revoked_at": {
+                "description": "Set by `revoke_device` naming this passkey: from then on a signature by it is refused.",
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
         }
       }
     },
@@ -90,9 +149,68 @@
           "format": "date-time"
         },
         "revoked_at": {
-          "description": "Set once by `elvaria herald revoke`: from then on the Herald ends its session and the Steward refuses its commands (device_revoked). The file stays, so the log still names the device.",
+          "description": "Set once by `elvaria herald revoke` or a `revoke_device` command: from then on the Herald ends its session and the Steward refuses its commands (device_revoked). The file stays, so the log still names the device.",
           "type": "string",
           "format": "date-time"
+        },
+        "passkeys": {
+          "description": "The WebAuthn keys the device registered through the tunnel (add_passkey). A command of group 2 or 3 from the phone carries the signature of one that is not revoked.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "public_key",
+              "algorithm",
+              "origin",
+              "sign_count",
+              "added_at"
+            ],
+            "properties": {
+              "id": {
+                "description": "The credential id (`PublicKeyCredential.rawId`).",
+                "type": "string",
+                "pattern": "^[\\w-]+$",
+                "minLength": 1,
+                "maxLength": 1364
+              },
+              "public_key": {
+                "description": "The public key as SPKI DER (`AuthenticatorAttestationResponse.getPublicKey()`).",
+                "type": "string",
+                "pattern": "^[\\w-]+$",
+                "minLength": 1,
+                "maxLength": 1024
+              },
+              "algorithm": {
+                "enum": [
+                  "es256",
+                  "rs256",
+                  "ed25519"
+                ]
+              },
+              "origin": {
+                "description": "The origin it was registered through: an assertion must come from it, and its host is the relying party id.",
+                "type": "string",
+                "pattern": "^https://[\\da-z.-]+(?::\\d{1,5})?$"
+              },
+              "sign_count": {
+                "description": "The authenticator's signature counter last seen; 0 for an authenticator that keeps none (a synced passkey). A signature whose counter does not move past it is refused.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "added_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "revoked_at": {
+                "description": "Set by `revoke_device` naming this passkey: from then on a signature by it is refused.",
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
         }
       }
     },
@@ -143,9 +261,68 @@
           "format": "date-time"
         },
         "revoked_at": {
-          "description": "Set once by `elvaria herald revoke`: from then on the Herald ends its session and the Steward refuses its commands (device_revoked). The file stays, so the log still names the device.",
+          "description": "Set once by `elvaria herald revoke` or a `revoke_device` command: from then on the Herald ends its session and the Steward refuses its commands (device_revoked). The file stays, so the log still names the device.",
           "type": "string",
           "format": "date-time"
+        },
+        "passkeys": {
+          "description": "The WebAuthn keys the device registered through the tunnel (add_passkey). A command of group 2 or 3 from the phone carries the signature of one that is not revoked.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "public_key",
+              "algorithm",
+              "origin",
+              "sign_count",
+              "added_at"
+            ],
+            "properties": {
+              "id": {
+                "description": "The credential id (`PublicKeyCredential.rawId`).",
+                "type": "string",
+                "pattern": "^[\\w-]+$",
+                "minLength": 1,
+                "maxLength": 1364
+              },
+              "public_key": {
+                "description": "The public key as SPKI DER (`AuthenticatorAttestationResponse.getPublicKey()`).",
+                "type": "string",
+                "pattern": "^[\\w-]+$",
+                "minLength": 1,
+                "maxLength": 1024
+              },
+              "algorithm": {
+                "enum": [
+                  "es256",
+                  "rs256",
+                  "ed25519"
+                ]
+              },
+              "origin": {
+                "description": "The origin it was registered through: an assertion must come from it, and its host is the relying party id.",
+                "type": "string",
+                "pattern": "^https://[\\da-z.-]+(?::\\d{1,5})?$"
+              },
+              "sign_count": {
+                "description": "The authenticator's signature counter last seen; 0 for an authenticator that keeps none (a synced passkey). A signature whose counter does not move past it is refused.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "added_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "revoked_at": {
+                "description": "Set by `revoke_device` naming this passkey: from then on a signature by it is refused.",
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
         }
       }
     }
@@ -166,7 +343,17 @@
       "territories": [
         "dc1-se-team"
       ],
-      "created_at": "2026-11-26T09:20:03+07:00"
+      "created_at": "2026-11-26T09:20:03+07:00",
+      "passkeys": [
+        {
+          "id": "Pz3Vr0bq2y8xWQ4k1nB7tg",
+          "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE3k8ZJxv5c0pJ1TQ2yq9wJ0b4mVQ8f7pWc6X2nT3sR5uL1hG9dK0aY4eB2iC8oN6vF1zM7jS3wE5rU9tP0qA",
+          "algorithm": "es256",
+          "origin": "https://keep.tail1234.ts.net",
+          "sign_count": 0,
+          "added_at": "2026-11-28T09:02:11+07:00"
+        }
+      ]
     },
     {
       "version": 1,

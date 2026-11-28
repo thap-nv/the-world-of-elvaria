@@ -135,6 +135,13 @@
               "used_in": "`elvaria herald pair` (P2-01b)"
             },
             {
+              "vi": "Passkey",
+              "en": "Passkey",
+              "id": ["passkey"],
+              "definition": "Khóa WebAuthn mà thiết bị đăng ký qua đường hầm; lệnh nhóm 2 và 3 từ điện thoại phải mang chữ ký của nó trên mã băm của id, `kind` và `payload` của chính lệnh đó (ADR 0031, ADR 0038).",
+              "used_in": "`passkeys` của `devices/<id>.json`, `InboxCommand.confirmation`, lệnh `add_passkey`, `packages/domain/src/passkey` (SEC-08)"
+            },
+            {
               "vi": "Hệ thống",
               "en": "System",
               "id": ["system"],
@@ -1990,6 +1997,30 @@
               "id": ["temple_report"],
               "icon": "—",
               "remark": "chỉ việc của Đền ghi (nguồn `monk`, PS-12c): các thao tác `add`, `retire`, `merge` trên từng dòng kinh và các thư của Thầy tu; Nhiếp chính kiểm từng thao tác bằng hàm thuần rồi mới ghi, từ chối cả tờ trình (`replaces_scripture`) khi nó thêm quá 3 dòng hay lấy đi quá nửa số dòng của Thầy tu trong một file; ghi `lesson.added`, `lesson.retired`, `lesson.refused`"
+            },
+            {
+              "vi": "Ghép thiết bị",
+              "id": ["pair_device"],
+              "icon": "—",
+              "remark": "(SEC-08) thiết bị `full` tạo thiết bị mới từ điện thoại như `elvaria herald pair`: Sứ giả chọn id, Nhiếp chính ghi `devices/<id>.json`, Sứ giả trả mã ghép đôi cho thiết bị đã hỏi; nhóm 3 (cần passkey qua đường hầm); `device_exists`, `unknown_territory`, `bad_grant`"
+            },
+            {
+              "vi": "Đổi thiết bị",
+              "id": ["set_device"],
+              "icon": "—",
+              "remark": "(SEC-08) đổi tên, vai hay lãnh thổ của một thiết bị như `elvaria herald device`; giữ passkey và `revoked_at`; nhóm 3; `unknown_device`, `device_revoked`, `unknown_territory`, `bad_grant`"
+            },
+            {
+              "vi": "Thu hồi thiết bị",
+              "id": ["revoke_device"],
+              "icon": "—",
+              "remark": "(SEC-08) thu hồi một thiết bị như `elvaria herald revoke`, hay chỉ một passkey của nó (`passkey`, khóa bảo mật bị mất); nhóm 3; `unknown_device`, `passkey_unknown`"
+            },
+            {
+              "vi": "Thêm passkey",
+              "id": ["add_passkey"],
+              "icon": "—",
+              "remark": "(SEC-08) thiết bị thêm passkey cho chính nó; Sứ giả kiểm lượt đăng ký WebAuthn trước khi ghi lệnh. Mọi vai đều gửi được; passkey đầu không cần chữ ký (Sứ giả chỉ nhận trong 5 phút sau khi ghép đôi), passkey sau cần chữ ký của một passkey còn hiệu lực; `passkey_exists`"
             }
           ]
         },

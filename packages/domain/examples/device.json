@@ -12,7 +12,17 @@
     "label": "Phone at the office",
     "role": "scoped",
     "territories": ["dc1-se-team"],
-    "created_at": "2026-11-26T09:20:03+07:00"
+    "created_at": "2026-11-26T09:20:03+07:00",
+    "passkeys": [
+      {
+        "id": "Pz3Vr0bq2y8xWQ4k1nB7tg",
+        "public_key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE3k8ZJxv5c0pJ1TQ2yq9wJ0b4mVQ8f7pWc6X2nT3sR5uL1hG9dK0aY4eB2iC8oN6vF1zM7jS3wE5rU9tP0qA",
+        "algorithm": "es256",
+        "origin": "https://keep.tail1234.ts.net",
+        "sign_count": 0,
+        "added_at": "2026-11-28T09:02:11+07:00"
+      }
+    ]
   },
   {
     "version": 1,

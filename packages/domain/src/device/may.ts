@@ -7,7 +7,10 @@ import type { Result } from '../core/result.ts';
 import type { COMMAND_SOURCES, InboxCommand, InboxCommandKind } from '../schema/command/inbox-command.ts';
 import type { DELIVERABLE_TYPES } from '../schema/common.ts';
 import type { Device } from '../schema/device/device.ts';
-import { TRUSTED_GROUP } from './groups.ts';
+import type { Passkey } from '../schema/device/passkey.ts';
+import { PASSKEY_REFUSALS } from '../passkey/ceremony.ts';
+import type { PasskeyRefusal } from '../passkey/ceremony.ts';
+import { HEAVY_GROUP, TRUSTED_GROUP } from './groups.ts';
 import type { CommandGroup } from './groups.ts';
 import type { CommandScope } from './scopes.ts';
 
@@ -30,8 +33,10 @@ export const DEVICE_REFUSALS = [
   'role_forbids',
   /** The command reaches a territory the device was not given, or the whole kingdom. */
   'outside_territories',
-  /** A phone's command of group 2 or 3 without the passkey's signature on it (W8; SEC-08 adds the signature). */
+  /** A phone's command of group 2 or 3 without a passkey's signature on it (W8, SEC-08). */
   'passkey_required',
+  /** (SEC-08) The signature it carries does not confirm it (checkConfirmation). */
+  ...PASSKEY_REFUSALS,
 ] as const;
 export type DeviceRefusalCode = (typeof DEVICE_REFUSALS)[number];
 export interface DeviceRefusal {
@@ -56,8 +61,8 @@ export interface DeviceAsk {
   readonly kind: InboxCommandKind;
   readonly group: CommandGroup;
   readonly scope: CommandScope;
-  /** Set by SEC-08 once the passkey signed this very command; nothing sets it before. */
-  readonly confirmed?: boolean;
+  /** (SEC-08) What checkConfirmation said of the passkey signature the command carries; undefined when it carries none. */
+  readonly confirmation?: Result<unknown, PasskeyRefusal> | undefined;
   /** create_quest: the `deliverable_type` of its quest kind in the registry; undefined when the kind is unknown. */
   readonly deliverable?: (typeof DELIVERABLE_TYPES)[number] | undefined;
   /** The quest the command acts on, when the caller knows it; `read_only` comes with P2-01d. */
@@ -65,6 +70,23 @@ export interface DeviceAsk {
 }
 
 const refuse = (code: DeviceRefusalCode): Result<never, DeviceRefusal> => err({ code });
+
+/**
+ * (SEC-08) Kinds a device sends about itself: every role may, since a scoped device needs a passkey for its own seals,
+ * and the first passkey of a device needs no signature (the Herald takes it only from a fresh pairing, ADR 0038).
+ */
+export const SELF_KINDS: readonly InboxCommandKind[] = ['add_passkey'];
+const isSelfKind = (kind: InboxCommandKind): boolean => SELF_KINDS.includes(kind);
+
+/** The passkeys of a device that may still sign. */
+export const livePasskeys = (device: Device): readonly Passkey[] =>
+  (device.passkeys ?? []).filter(({ revoked_at }) => revoked_at === undefined);
+
+/** A phone's command of group 2 or 3 needs a passkey's signature; a device's first passkey cannot have one. */
+const needsPasskey = (ask: DeviceAsk, device: Device): boolean =>
+  ask.source === 'lite' &&
+  ask.group >= HEAVY_GROUP &&
+  !(isSelfKind(ask.kind) && livePasskeys(device).length === 0);
 
 function inquiryAllows(ask: DeviceAsk): boolean {
   const need = INQUIRY_KINDS[ask.kind];
@@ -88,9 +110,11 @@ export function deviceMay(ask: DeviceAsk): Result<Device, DeviceRefusal> {
   const { device } = ask;
   if (device === undefined) return refuse('unknown_device');
   if (device.revoked_at !== undefined) return refuse('device_revoked');
-  const role = roleRefusal(ask, device);
+  const role = isSelfKind(ask.kind) ? undefined : roleRefusal(ask, device);
   if (role !== undefined) return refuse(role);
+  // A signature that is there and wrong is refused even where none is asked: it is no slip of the client.
+  if (ask.confirmation?.ok === false) return refuse(ask.confirmation.error.code);
   // On loopback the passkey is not asked (ADR 0031 item 6): only local programs reach it.
-  if (ask.source === 'lite' && ask.group > 1 && ask.confirmed !== true) return refuse('passkey_required');
+  if (needsPasskey(ask, device) && ask.confirmation?.ok !== true) return refuse('passkey_required');
   return ok(device);
 }

@@ -202,4 +202,41 @@ export const CASES: Record<InboxCommandKind, { valid: object; invalid: object; i
     invalid: { territory: 'do-an', pr: 0 },
     issue: 'payload.pr: Too small: expected number to be >=1',
   },
+  pair_device: {
+    valid: { device: 'dev_20261128_4k2pqz', label: 'Tablet', role: 'scoped', territories: ['do-an'] },
+    invalid: { device: 'dev_20261128_4k2pqz', label: 'Tablet', role: 'admin' },
+    issue: 'payload.role: Invalid option: expected one of "full"|"scoped"|"inquiry"',
+  },
+  set_device: {
+    valid: { device: 'dev_20261128_4k2pqz', role: 'full' },
+    invalid: { device: 'dev_20261128_4k2pqz', territories: [] },
+    issue: 'payload.territories: Too small: expected array to have >=1 items',
+  },
+  revoke_device: {
+    valid: { device: 'dev_20261128_4k2pqz', passkey: 'cred-1_A' },
+    invalid: { device: 'dev_20261128_4k2pqz', passkey: 'not base64url' },
+    issue: 'payload.passkey: Invalid string: must match pattern /^[\\w-]+$/',
+  },
+  add_passkey: {
+    valid: {
+      passkey: {
+        id: 'cred-1_A',
+        public_key: 'MFkwEwYHKoZIzj0CAQ',
+        algorithm: 'es256',
+        origin: 'https://keep.tail1234.ts.net',
+        sign_count: 0,
+      },
+    },
+    invalid: {
+      passkey: {
+        id: 'cred-1_A',
+        public_key: 'MFkwEwYHKoZIzj0CAQ',
+        algorithm: 'es256',
+        origin: 'http://127.0.0.1:7411',
+        sign_count: 0,
+      },
+    },
+    issue:
+      'payload.passkey.origin: Invalid string: must match pattern /^https:\\/\\/[\\da-z.-]+(?::\\d{1,5})?$/',
+  },
 };

@@ -121,6 +121,8 @@ export async function answerCommand(
     const ref = refOf(text);
     return ref === undefined ? undefined : refused(ref, 'invalid_message' satisfies CommandRefusal);
   }
+  // The passkey messages of SEC-08 are not answered yet.
+  if (decoded.value.type !== 'command') return refused(decoded.value.ref, 'invalid_message');
   const { ref, kind } = decoded.value;
   const now = deps.clock.now();
   if (!deps.rate.take(sender.device, now))

@@ -6,6 +6,8 @@ export * from './command/inbox-command.ts';
 export * from './command/memo-payloads.ts';
 export * from './command/payloads.ts';
 export * from './device/device.ts';
+export * from './device/passkey.ts';
+export * from './command/device-payloads.ts';
 export * from './common.ts';
 export * from './contracts.ts';
 export * from './amendments.ts';

@@ -78,6 +78,11 @@ export const COMMAND_SCOPES: ScopeTable = {
   resume_delegation: onTerritory,
   temple_report: kingdom,
   enqueue_branch: onTerritory,
+  // (SEC-08) A device belongs to no territory; add_passkey is about its sender only, whatever its role (SELF_KINDS).
+  pair_device: kingdom,
+  set_device: kingdom,
+  revoke_device: kingdom,
+  add_passkey: kingdom,
 };
 
 function refsOf<K extends InboxCommandKind>(kind: K, payload: CommandPayload<K>): CommandRefs {

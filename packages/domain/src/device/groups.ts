@@ -73,6 +73,12 @@ export const COMMAND_GROUPS: GroupTable = {
   temple_report: 3,
   // A guest entry of the merge queue is merged by the Steward once green: a delivery.
   enqueue_branch: 2,
+  // (SEC-08) Devices and their keys are the trusted configuration itself. A device's own add_passkey is group 3 too:
+  // its first passkey needs no signature, its later ones the signature of one before (SELF_KINDS, may.ts).
+  pair_device: 3,
+  set_device: 3,
+  revoke_device: 3,
+  add_passkey: 3,
 };
 
 /** The group of one command; a kind's payload rule sees exactly that kind's payload. */
