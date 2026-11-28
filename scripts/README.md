@@ -209,6 +209,16 @@
   grew, is red; one that shrank or went is red until `--prune`; `--stats` prints the share of tokens in a clone. A
   listed pair is `unreviewed` or `kept` with a reason, and the spec fails a branch that adds or raises an unreviewed
   one. Reads files only; writes `shape-clones.json` with `--prune`.
+- `unrun-lines.mjs` (`unrun-lines.spec.ts`) and `unrun-v8.mjs` (`unrun-v8.spec.ts`): the `pnpm coverage:unrun`
+  report (AH-15; plans/architecture-health.md V15, K12), not a gate and not in `pnpm check`. By workspace, the lines
+  the tests run that real runs did not: the tests' side is each workspace's `coverage/coverage-final.json` (written
+  by its `vitest run --coverage`, so `pnpm test` first, on the commit the runs ran), a line counting when a statement
+  starting on it ran; the runs' side is one or more `--run <dir>` folders of raw `NODE_V8_COVERAGE` output, merged.
+  `unrun-v8.mjs` maps each script to its repo path by the `packages/…` or `apps/…` tail the tests know (so a copy in
+  a kingdom's `.builds/<sha>/` maps too; `dist/`, fixtures and `node_modules` drop out) and flags the characters
+  it ran, innermost V8 range first; type stripping keeps the offsets of the `.ts` on disk, so no source map is read.
+  A file whose run copy differs from the tests' is listed and not compared. Prints Markdown (a table, then the lines
+  of each file unless `--summary`), or writes it to `--out <file>`. Reads files only, besides `--out`.
 
 ## Does not
 
