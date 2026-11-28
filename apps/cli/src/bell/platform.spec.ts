@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { isDesktopPlatform, showToast, toastArg } from './platform.ts';
 import type { Notifier, Notifiers } from './platform.ts';
 import type { Toast } from './toast.ts';
+import { bellIcon } from './identity.ts';
 
 const toast: Toast = { title: 'Elvaria · Waiting for your seal', message: 'q_1 «Say "hi"\nnow»' };
 
@@ -28,13 +29,27 @@ describe('showing a toast', () => {
   it('on Windows, hands the title and the message to the toast notifier as they are', async () => {
     const { notifiers, shown } = fakeNotifiers();
     expect(await showToast(toast, 'win32', notifiers)).toEqual({ ok: true });
-    expect(shown).toEqual([{ by: 'toaster', toast }]);
+    expect(shown).toEqual([{ by: 'toaster', toast: { ...toast, icon: bellIcon() } }]);
   });
 
   it('on macOS, hands them to Notification Center', async () => {
     const { notifiers, shown } = fakeNotifiers();
     expect(await showToast(toast, 'darwin', notifiers)).toEqual({ ok: true });
     expect(shown).toEqual([{ by: 'center', toast }]);
+  });
+
+  it('passes Windows identity only when supplied and leaves macOS unchanged', async () => {
+    const identity = { ...toast, icon: 'C:\\Kingdom of Agents\\logo.png', appID: 'Elvaria' };
+    const { notifiers, shown } = fakeNotifiers();
+    expect(toastArg(JSON.stringify(identity))).toEqual(identity);
+    await showToast(identity, 'win32', notifiers);
+    await showToast(identity, 'darwin', notifiers);
+    expect(shown).toEqual([
+      { by: 'toaster', toast: identity },
+      { by: 'center', toast },
+    ]);
+    expect(toastArg(JSON.stringify({ ...toast, icon: 1 }))).toBeUndefined();
+    expect(toastArg(JSON.stringify({ ...toast, appID: 'SnoreToast' }))).toBeUndefined();
   });
 
   it('shows nothing on another system, and says which', async () => {

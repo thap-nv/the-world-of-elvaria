@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import { runProcess } from '../process/run-process.ts';
 import { desktopBell, toastProcess } from './desktop.ts';
+import { bellIcon } from './identity.ts';
 import type { ProcessOptions, ProcessOutcome } from '../process/run-process.ts';
 import type { Notify } from './desktop.ts';
 import type { Notice } from '@elvaria/steward';
@@ -62,7 +63,7 @@ describe("the toast's process", () => {
     const [run] = started;
     expect(run?.file).toBe('C:\\node\\node.exe');
     expect(run?.args[0]).toMatch(/[\\/]bell[\\/]show-toast\.ts$/u);
-    expect(JSON.parse(run?.args[1] ?? '')).toEqual(shown);
+    expect(JSON.parse(run?.args[1] ?? '')).toEqual({ ...shown, icon: bellIcon() });
     // No secret of the owner's shell reaches node-notifier's bundled programs.
     expect(run?.options.env).toEqual({ PATH: '/usr/bin', HOME: '/home/owner' });
   });
@@ -72,6 +73,18 @@ describe("the toast's process", () => {
     const notify = toastProcess({ platform: 'darwin', env, nodePath: '/usr/local/bin/node' }, spawn);
     expect(await notify?.(shown)).toBe('You need macOS 10.14 or above');
   });
+
+  it.each(['win32', 'darwin'] as const)(
+    'sends the registered identity only on Windows (%s)',
+    async (platform) => {
+      const { spawn, started } = fakeSpawn({ code: 0, stdout: '', stderr: '' });
+      const notify = toastProcess({ platform, env, nodePath: '/node' }, spawn, true);
+      await notify?.(shown);
+      expect(JSON.parse(started[0]?.args[1] ?? '')).toEqual(
+        platform === 'win32' ? { ...shown, icon: bellIcon(), appID: 'Elvaria' } : shown,
+      );
+    },
+  );
 
   it('is none on Linux and the rest', () => {
     expect(toastProcess({ platform: 'linux', env, nodePath: '/usr/bin/node' })).toBeUndefined();

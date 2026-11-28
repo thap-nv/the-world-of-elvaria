@@ -12,6 +12,7 @@ import type { CodeGraphs } from '@elvaria/runner-core';
 import type { Forges, Steward } from '@elvaria/steward';
 
 import { runBell } from '../bell/run-bell.ts';
+import { bellRegistered } from '../bell/registration.ts';
 import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { upgradeOffer } from '../upgrade/offer.ts';
@@ -56,6 +57,7 @@ function stewardOf(
   crew: Crew,
   { graphs, forges }: Found,
   desktopBell: boolean,
+  registered: boolean,
 ): Steward {
   const { io, t, store } = ctx;
   return createSteward({
@@ -75,7 +77,7 @@ function stewardOf(
     // Catalog scripts run on the node found for Elvaria, with the same minimal env and no secret (§3.12).
     scripts: nodeScriptRunner(io.nodePath),
     // The console bell, and the desktop one beside it (P2-03).
-    bell: runBell(ctx, consoleBell(t, io), desktopBell),
+    bell: runBell(ctx, consoleBell(t, io), desktopBell, registered),
     // The digest, once a day at kingdom.schedule.digest.at, in the owner's language (PS-03).
     digest: fileDigest(t, store.root, ctx.kingdom.name),
     // A newer build than the pinned one, read as the digest is made (PS-08d).
@@ -104,7 +106,8 @@ async function runSteward(input: CommandInput, cli: CliContext): Promise<ExitCod
   const crew = await crewOf({ kingdom: ctx.kingdom, root: store.root }, io);
   reportCrew(ctx, crew);
   const found = { graphs: await graphsOf(ctx.kingdom, store.root, io), forges: await forgesOf(io) };
-  const steward = stewardOf(ctx, crew, found, input.values['desktop-bell'] === true);
+  const registered = ctx.kingdom.bell.desktop && (await bellRegistered(io));
+  const steward = stewardOf(ctx, crew, found, input.values['desktop-bell'] === true, registered);
   const started = await steward.start();
   if (!started.ok) {
     const line =

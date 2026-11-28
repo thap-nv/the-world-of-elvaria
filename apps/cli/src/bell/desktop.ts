@@ -14,6 +14,7 @@ import { minimalEnv } from '../process/minimal-env.ts';
 import { runProcess } from '../process/run-process.ts';
 import { isDesktopPlatform } from './platform.ts';
 import { toastOf } from './toast.ts';
+import { BELL_APP_ID, bellIcon } from './identity.ts';
 import type { CliIo } from '../io.ts';
 import type { Toast } from './toast.ts';
 
@@ -31,11 +32,17 @@ const TOAST_TIMEOUT_MS = 60_000;
 type ToastIo = Pick<CliIo, 'platform' | 'env' | 'nodePath'>;
 
 /** How this machine shows a toast, or undefined when it shows none (Linux and the rest). */
-export function toastProcess(io: ToastIo, spawn: typeof runProcess = runProcess): Notify | undefined {
+export function toastProcess(
+  io: ToastIo,
+  spawn: typeof runProcess = runProcess,
+  registered = false,
+): Notify | undefined {
   if (!isDesktopPlatform(io.platform)) return undefined;
   const env = minimalEnv(io.env);
   return async (toast) => {
-    const args = [SHOW_TOAST, JSON.stringify(toast)];
+    const windows =
+      io.platform === 'win32' ? { icon: bellIcon(), ...(registered ? { appID: BELL_APP_ID } : {}) } : {};
+    const args = [SHOW_TOAST, JSON.stringify({ title: toast.title, message: toast.message, ...windows })];
     const { code, stderr } = await spawn(io.nodePath, args, { env, timeoutMs: TOAST_TIMEOUT_MS });
     return code === 0 ? undefined : stderr.trim();
   };

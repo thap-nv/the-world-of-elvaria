@@ -7,11 +7,21 @@ describe('checkBell', () => {
   const t = translator('en');
 
   it('describes Windows toasts and their source without ringing', () => {
-    expect(checkBell(t, true, 'win32')).toEqual([
+    expect(checkBell(t, true, 'win32', true)).toEqual([
       {
         level: 'ok',
         text: 'Desktop bell on: toasts on Windows while elvaria run runs on a terminal, or with --desktop-bell.',
-        details: ['Windows shows the notification source as SnoreToast.'],
+        details: ['The Elvaria notification name is registered on Windows.'],
+      },
+    ]);
+  });
+
+  it('warns with the install command when the Windows name is not registered', () => {
+    expect(checkBell(t, true, 'win32', false)).toEqual([
+      {
+        level: 'warn',
+        text: 'Desktop bell on: toasts on Windows while elvaria run runs on a terminal, or with --desktop-bell.',
+        details: ['The Elvaria notification name is not registered; run elvaria bell install.'],
       },
     ]);
   });
