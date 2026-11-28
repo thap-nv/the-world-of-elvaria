@@ -7,7 +7,7 @@ import { openWaitsOf, waitStepOf } from './wait-book.ts';
 import type { Instant } from '../core/clock.ts';
 import type { QuestId, TerritoryId, Ulid } from '../core/ids.ts';
 import type { OpenWait, WaitBook } from './wait-book.ts';
-import type { Wait } from './tick-waits.ts';
+import type { Wait } from './wait.ts';
 
 /** Seconds after the fixture's 09:00. */
 const t = (seconds: number): Instant => Date.parse(stamp(seconds)) as Instant;

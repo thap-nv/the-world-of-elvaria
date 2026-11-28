@@ -15,22 +15,12 @@ import { isHeld } from '../quest/hold.ts';
 import { versionHoldsOf } from '../tribe/version-hold.ts';
 import { roomWaitsOf } from './room-waits.ts';
 import type { Instant } from '../core/clock.ts';
-import type { QuestId, TerritoryId } from '../core/ids.ts';
 import type { KingdomSnapshot, TickPlan } from '../dispatch/plan-tick.ts';
 import type { Roster } from '../dispatch/roster.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { WaitHolder, WaitReason } from '../schema/event/wait-data.ts';
 import type { Quest } from '../schema/quest/quest.ts';
-
-export interface Wait {
-  readonly reason: WaitReason;
-  readonly territory: TerritoryId;
-  /** The quest that waits; absent for a guest entry. */
-  readonly quest?: QuestId;
-  /** The guest entry of the merge queue (CM-07) that waits. */
-  readonly pr?: number;
-  readonly holder: WaitHolder;
-}
+import type { Wait } from './wait.ts';
 
 const questWait = (quest: Quest, reason: WaitReason, holder: WaitHolder): Wait => ({
   reason,

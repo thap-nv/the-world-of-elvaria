@@ -12,7 +12,7 @@ import type { CharacterId } from '../core/ids.ts';
 import type { KingdomSnapshot, TickPlan } from '../dispatch/plan-tick.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Quest } from '../schema/quest/quest.ts';
-import type { Wait } from './tick-waits.ts';
+import type { Wait } from './wait.ts';
 
 /** The ready open quests and the done ones, as tickWaitsOf read them. */
 export interface RoomQuests {

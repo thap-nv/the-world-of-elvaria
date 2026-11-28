@@ -8,7 +8,7 @@ import { MS_PER_MINUTE, WAIT_MIN_MINUTES } from './constants.ts';
 import type { Instant } from '../core/clock.ts';
 import type { Ulid } from '../core/ids.ts';
 import type { Event } from '../schema/event/event.ts';
-import type { Wait } from './tick-waits.ts';
+import type { Wait } from './wait.ts';
 
 /** A wait and when the Steward first saw it. */
 export interface SeenWait {
