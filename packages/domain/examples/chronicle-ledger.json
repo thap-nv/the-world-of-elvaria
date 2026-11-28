@@ -1,0 +1,73 @@
+[
+  {
+    "version": 1,
+    "day": "2026-11-06",
+    "tz": "Asia/Ho_Chi_Minh",
+    "entries": [
+      {
+        "at": "2026-11-06T10:12:00+07:00",
+        "kind": "verdict_pass",
+        "quest": "q_20261106_7k3m2a",
+        "title": "Add retry to the sync job",
+        "territory": "dc1-se-team",
+        "character": { "id": "thorn", "name": "Thorn" },
+        "by": { "id": "lyra", "name": "Lyra" }
+      },
+      {
+        "at": "2026-11-06T10:20:00+07:00",
+        "kind": "quest_done",
+        "quest": "q_20261106_7k3m2a",
+        "title": "Add retry to the sync job",
+        "territory": "dc1-se-team",
+        "character": { "id": "thorn", "name": "Thorn" }
+      },
+      {
+        "at": "2026-11-06T13:40:00+07:00",
+        "kind": "pool_asleep",
+        "tribe": "claude",
+        "pool": "claude"
+      }
+    ],
+    "counts": {
+      "quest_done": 1,
+      "quest_returned": 0,
+      "quest_sealed": 0,
+      "quest_infirmary": 0,
+      "quest_delivered": 0,
+      "quest_merged": 0,
+      "verdict_pass": 1,
+      "verdict_fail": 0,
+      "level_up": 0,
+      "level_down": 0,
+      "pool_asleep": 1,
+      "pool_awake": 0
+    },
+    "quests": 1,
+    "characters": [
+      { "id": "thorn", "name": "Thorn" },
+      { "id": "lyra", "name": "Lyra" }
+    ]
+  },
+  {
+    "version": 1,
+    "day": "2026-11-07",
+    "tz": "Asia/Ho_Chi_Minh",
+    "entries": [],
+    "counts": {
+      "quest_done": 0,
+      "quest_returned": 0,
+      "quest_sealed": 0,
+      "quest_infirmary": 0,
+      "quest_delivered": 0,
+      "quest_merged": 0,
+      "verdict_pass": 0,
+      "verdict_fail": 0,
+      "level_up": 0,
+      "level_down": 0,
+      "pool_asleep": 0,
+      "pool_awake": 0
+    },
+    "quests": 0,
+    "characters": []
+  }
+]

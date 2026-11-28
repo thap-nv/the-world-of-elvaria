@@ -5,7 +5,7 @@
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
   `tribe list|add|check|disable|look`, `territory add|list|check|graph|delivery`, `character add|list|suspend|release|level|model`, `say`,
   `quest add|list|show|confirm|cancel|archive|edit|retry|reassign|deliver`,
-  `seal`, `return`, `answer`, `memo list|show|decide`, `triage`, `run`, `wake`, `digest`, `metrics`,
+  `seal`, `return`, `answer`, `memo list|show|decide`, `triage`, `run`, `wake`, `digest`, `chronicle`, `metrics`,
   `sandbox generate|replay`, `migrate`, `upgrade`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
   `docs/cli.md` that `pnpm docs:gen` renders from it (`scripts/docs-cli.mjs`).
 - Prints everything through `t()` of `@elvaria/i18n`, in `kingdom.owner.locale` unless `--locale vi|en` is given;
@@ -244,6 +244,10 @@ show` prints the brief apart from the rest of the description and, while the pla
   drafts and blocked quests, followed by the attention queue from the snapshot files and event log.
   Refreshes every 5 seconds by default; the interval must be a positive integer in seconds.
   Non-TTY output prints once. Ctrl+C clears the timer and removes the signal listener; no raw terminal mode is used.
+- `chronicle [--day]` (P2-06, `src/chronicle/`): the chronicle of a local day: the Steward's `chronicle/<day>.md` when it
+  wrote one, otherwise built on the spot from the files and the log with the same ledger (`dayLedgerOf` of the
+  domain) and words (`chronicleMarkdown`, namespace `chronicle`), redacted, and written nowhere. `run` gives the Steward
+  the `Chronicle` port (`fileChronicle`), which writes `chronicle/<day>.json` and `.md` once, redacted (ADR 0013).
 - `digest` (PS-03, `src/digest/`): the digest as it stands, from the files, the open memos, the verdicts, the
   registry and the event log, read by the store's `readKingdomSource` like the Herald's (P2-01c) (`attentionOf` of
   the domain, P2-04: the list the Steward's digest and the herald build from them too), worded by `digestMarkdown` and printed; writes nothing and spends no mana. The quests waiting for

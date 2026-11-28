@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://elvaria.dev/schemas/chronicle-ledger/v1",
+  "title": "Chronicle ledger",
+  "description": "chronicle/YYYY-MM-DD.json in a kingdom: the facts of one local day, read from the event log by dayLedgerOf (P2-06). The Steward writes it once, with chronicle/YYYY-MM-DD.md, at kingdom.schedule.chronicle.at; the chronicle's prose is checked against it (checkChronicle).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "day",
+    "tz",
+    "entries",
+    "counts",
+    "quests",
+    "characters"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "day": {
+      "description": "The kingdom's local day, yyyy-mm-dd.",
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "tz": {
+      "description": "kingdom.tz, whose day the entries fall on.",
+      "type": "string",
+      "minLength": 1
+    },
+    "entries": {
+      "description": "In log order.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "at",
+          "kind"
+        ],
+        "properties": {
+          "at": {
+            "description": "The event's time, as the log wrote it.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "kind": {
+            "enum": [
+              "quest_done",
+              "quest_returned",
+              "quest_sealed",
+              "quest_infirmary",
+              "quest_delivered",
+              "quest_merged",
+              "verdict_pass",
+              "verdict_fail",
+              "level_up",
+              "level_down",
+              "pool_asleep",
+              "pool_awake"
+            ]
+          },
+          "quest": {
+            "type": "string",
+            "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+          },
+          "title": {
+            "description": "The quest's title as the log last showed it.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "territory": {
+            "type": "string",
+            "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+            "not": {
+              "enum": [
+                "global"
+              ]
+            }
+          },
+          "character": {
+            "description": "The quest's assignee, or the character whose level moved.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                "not": {
+                  "enum": [
+                    "user",
+                    "machine",
+                    "temple"
+                  ]
+                }
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 24
+              }
+            }
+          },
+          "by": {
+            "description": "The character who acted, when another than `character`: a verdict's judge.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                "not": {
+                  "enum": [
+                    "user",
+                    "machine",
+                    "temple"
+                  ]
+                }
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 24
+              }
+            }
+          },
+          "tribe": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "pool": {
+            "type": "string",
+            "minLength": 1
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "counts": {
+      "description": "Entries of each kind.",
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "quest_done",
+          "quest_returned",
+          "quest_sealed",
+          "quest_infirmary",
+          "quest_delivered",
+          "quest_merged",
+          "verdict_pass",
+          "verdict_fail",
+          "level_up",
+          "level_down",
+          "pool_asleep",
+          "pool_awake"
+        ]
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "required": [
+        "quest_done",
+        "quest_returned",
+        "quest_sealed",
+        "quest_infirmary",
+        "quest_delivered",
+        "quest_merged",
+        "verdict_pass",
+        "verdict_fail",
+        "level_up",
+        "level_down",
+        "pool_asleep",
+        "pool_awake"
+      ]
+    },
+    "quests": {
+      "description": "Distinct quests named by the entries.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "characters": {
+      "description": "The characters the entries name, in order of first mention: the only ones the chronicle may tell of that day.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+            "not": {
+              "enum": [
+                "user",
+                "machine",
+                "temple"
+              ]
+            }
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "version": 1,
+      "day": "2026-11-06",
+      "tz": "Asia/Ho_Chi_Minh",
+      "entries": [
+        {
+          "at": "2026-11-06T10:12:00+07:00",
+          "kind": "verdict_pass",
+          "quest": "q_20261106_7k3m2a",
+          "title": "Add retry to the sync job",
+          "territory": "dc1-se-team",
+          "character": {
+            "id": "thorn",
+            "name": "Thorn"
+          },
+          "by": {
+            "id": "lyra",
+            "name": "Lyra"
+          }
+        },
+        {
+          "at": "2026-11-06T10:20:00+07:00",
+          "kind": "quest_done",
+          "quest": "q_20261106_7k3m2a",
+          "title": "Add retry to the sync job",
+          "territory": "dc1-se-team",
+          "character": {
+            "id": "thorn",
+            "name": "Thorn"
+          }
+        },
+        {
+          "at": "2026-11-06T13:40:00+07:00",
+          "kind": "pool_asleep",
+          "tribe": "claude",
+          "pool": "claude"
+        }
+      ],
+      "counts": {
+        "quest_done": 1,
+        "quest_returned": 0,
+        "quest_sealed": 0,
+        "quest_infirmary": 0,
+        "quest_delivered": 0,
+        "quest_merged": 0,
+        "verdict_pass": 1,
+        "verdict_fail": 0,
+        "level_up": 0,
+        "level_down": 0,
+        "pool_asleep": 1,
+        "pool_awake": 0
+      },
+      "quests": 1,
+      "characters": [
+        {
+          "id": "thorn",
+          "name": "Thorn"
+        },
+        {
+          "id": "lyra",
+          "name": "Lyra"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "day": "2026-11-07",
+      "tz": "Asia/Ho_Chi_Minh",
+      "entries": [],
+      "counts": {
+        "quest_done": 0,
+        "quest_returned": 0,
+        "quest_sealed": 0,
+        "quest_infirmary": 0,
+        "quest_delivered": 0,
+        "quest_merged": 0,
+        "verdict_pass": 0,
+        "verdict_fail": 0,
+        "level_up": 0,
+        "level_down": 0,
+        "pool_asleep": 0,
+        "pool_awake": 0
+      },
+      "quests": 0,
+      "characters": []
+    }
+  ]
+}

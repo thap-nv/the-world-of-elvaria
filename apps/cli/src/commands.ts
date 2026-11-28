@@ -5,6 +5,7 @@ import { CHARACTER_LEVEL } from './character/level.ts';
 import { CHARACTER_LIST } from './character/list.ts';
 import { CHARACTER_MODEL } from './character/model.ts';
 import { CHARACTER_RELEASE, CHARACTER_SUSPEND } from './character/suspend.ts';
+import { CHRONICLE } from './chronicle/chronicle.ts';
 import { DIGEST } from './digest/digest.ts';
 import { DOCTOR } from './doctor/doctor.ts';
 import { HERALD } from './herald/herald.ts';
@@ -118,6 +119,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   HERALD_REVOKE,
   WAKE,
   DIGEST,
+  CHRONICLE,
   WATCH,
   METRICS,
   SANDBOX_GENERATE,

@@ -2,6 +2,7 @@ export * from './constants.ts';
 export * from './breaker/index.ts';
 export * from './character/index.ts';
 export * from './check-ledger/index.ts';
+export * from './chronicle/index.ts';
 export * from './core/index.ts';
 export * from './council/index.ts';
 export * from './delegation/index.ts';

@@ -19,7 +19,12 @@ const dailyJob = (enabled: boolean, at: string) =>
 
 export const ScheduleSchema = z
   .strictObject({
-    chronicle: dailyJob(false, SCHEDULE_DEFAULTS.chronicle_at),
+    // P2-06 (W15): on by default, since the machine's chronicle runs no model.
+    chronicle: dailyJob(true, SCHEDULE_DEFAULTS.chronicle_at).meta(
+      describe(
+        "The chronicle (P2-06): at `at` the Steward reads the day's ledger from the event log (quests done, returned, sealed, sent to the infirmary, delivered and merged; verdicts; levels; pools asleep and awake) and writes chronicle/YYYY-MM-DD.json and chronicle/YYYY-MM-DD.md, its counts and lists in the owner's language; a file already there is kept. No model, no mana; once a day.",
+      ),
+    ),
     // PS-03b; optional with defaults, as digest.
     triage: dailyJob(true, SCHEDULE_DEFAULTS.triage_at).meta(
       describe(
@@ -68,5 +73,5 @@ export const ScheduleSchema = z
   })
   .meta({
     $comment:
-      'Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03) and the triage (PS-03b) have a runner and are on by default; the patrol (PS-26) has one and is off by default, since it runs every check of each territory it watches; chronicle and temple have none yet, so they default to disabled.',
+      'Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03), the triage (PS-03b) and the chronicle (P2-06) have a runner and are on by default; the patrol (PS-26) has one and is off by default, since it runs every check of each territory it watches; the Temple (PS-12d) spends mana and is off by default.',
   });

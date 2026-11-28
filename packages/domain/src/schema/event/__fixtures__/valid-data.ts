@@ -241,6 +241,7 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   },
   'schedule.ran': { job: 'digest', day: '2026-11-06' },
   'digest.written': { day: '2026-11-06', file: 'digest/2026-11-06.md', must: 2, can_wait: 0 },
+  'chronicle.written': { day: '2026-11-06', file: 'chronicle/2026-11-06.md', quests: 3, prose: false },
   'upgrade.started': { ref: 'main', to: SHA_NEW, from: SHA_OLD },
   'upgrade.switched': { from: null, to: SHA_NEW },
   'upgrade.rolled_back': { from: SHA_NEW, to: SHA_OLD },

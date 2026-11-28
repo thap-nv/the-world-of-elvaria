@@ -18,6 +18,7 @@ import { createGraphBuilds } from './background/graph-builds.ts';
 import { loop, wake } from './tick/loop.ts';
 import { createJudgeLocks } from './review/exclusive.ts';
 import { createManaBook } from './mana/book.ts';
+import { chronicleJob } from './schedule/chronicle.ts';
 import { digestJob } from './schedule/digest.ts';
 import { createPatrolBook } from './patrol/book.ts';
 import { createDelegationBook } from './delegation/book.ts';
@@ -75,11 +76,12 @@ async function begin(deps: StewardDeps, state: State): Promise<Result<Held, Star
 }
 
 /**
- * The digest when the composition root gives its port, the patrol when its plots can patrol (PS-26), then the jobs it
- * injects, which ignore the tick (PS-03).
+ * The digest and (P2-06) the chronicle when the composition root gives their ports, the patrol when its plots can
+ * patrol (PS-26), then the jobs it injects, which ignore the tick (PS-03).
  */
 const jobsOf = (deps: StewardDeps): StewardJob[] => [
   ...(deps.digest === undefined ? [] : [digestJob(deps.digest)]),
+  ...(deps.chronicle === undefined ? [] : [chronicleJob(deps.chronicle)]),
   ...(deps.plots.patrol === undefined ? [] : [patrolJob()]),
   ...(deps.jobs ?? []).map((job): StewardJob => ({
     id: job.id,

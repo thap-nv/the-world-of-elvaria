@@ -8,7 +8,7 @@ import type { KingdomStore } from '@elvaria/store';
 import type { Forges } from './forge/forge.ts';
 import type { Bell } from './bell/notice.ts';
 import type { Plots } from './plot/plot.ts';
-import type { Digest, OnCallJob, ScheduledJob } from './schedule/ports.ts';
+import type { Chronicle, Digest, OnCallJob, ScheduledJob } from './schedule/ports.ts';
 import type { ScriptRunner } from './script/run-script.ts';
 
 export type { Bell, ManaGaugeNotice, Notice, NoticeQuest } from './bell/notice.ts';
@@ -16,6 +16,8 @@ export type { Bell, ManaGaugeNotice, Notice, NoticeQuest } from './bell/notice.t
 // plot/plot.ts.
 export type { Plots, PreparedPlot, ResolvedCheck } from './plot/plot.ts';
 export type {
+  Chronicle,
+  ChronicleRequest,
   Digest,
   DigestRequest,
   JobMode,
@@ -71,6 +73,11 @@ export interface StewardDeps {
    * digest is written (a spec's Steward).
    */
   readonly digest?: Digest;
+  /**
+   * The chronicle's port (P2-06): apps/cli writes `chronicle/<day>.json` and `.md` in the owner's language. Absent: no
+   * chronicle is written (a spec's Steward).
+   */
+  readonly chronicle?: Chronicle;
   /** More jobs of kingdom.schedule, run by the Steward's scheduler (PS-03b's triage, PS-21c's docs graph). */
   readonly jobs?: readonly ScheduledJob[];
   /** Jobs with no hour, run outside the tick whenever they have work (PS-22b: an amendment's author). */

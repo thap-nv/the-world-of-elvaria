@@ -38,7 +38,7 @@ import {
   DelegationSuspendedDataSchema,
   QuestEscapedDataSchema,
 } from './delegation-data.ts';
-import { DigestWrittenDataSchema, ScheduleRanDataSchema } from './schedule-data.ts';
+import { SCHEDULE_EVENT_DATA } from './schedule-data.ts';
 import { PatrolRanDataSchema } from './patrol-data.ts';
 import {
   UpgradeFailedDataSchema,
@@ -257,8 +257,7 @@ export const EVENT_DATA_SCHEMAS = {
   'lesson.retired': LessonRetiredDataSchema,
   'lesson.refused': LessonRefusedDataSchema,
   'temple.ran': TempleRanDataSchema,
-  'schedule.ran': ScheduleRanDataSchema,
-  'digest.written': DigestWrittenDataSchema,
+  ...SCHEDULE_EVENT_DATA,
   'upgrade.started': UpgradeStartedDataSchema,
   'upgrade.switched': UpgradeSwitchedDataSchema,
   'upgrade.rolled_back': UpgradeRolledBackDataSchema,

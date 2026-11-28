@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-100 type trong danh mục v1, 88 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+100 type trong danh mục v1, 89 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -153,7 +153,7 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 
 | Type | `data` |
 |---|---|
-| `chronicle.written` | object mở, chưa có schema |
+| `chronicle.written` | `day`: string (khớp `^\d{4}-\d{2}-\d{2}$`) — The kingdom's local day, yyyy-mm-dd (kingdom.tz).<br>`file`: string (khớp `^chronicle/\d{4}-\d{2}-\d{2}\.md$`) — The chronicle, relative to the kingdom; its ledger is the .json beside it.<br>`quests`: integer ≥ 0 — Distinct quests the day’s ledger names.<br>`prose`: boolean — Whether the chronicle holds the Bard's prose (P2-06b) after the machine's part; false: the machine's part alone. |
 
 ## `schedule` · 1 type
 

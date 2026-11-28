@@ -127,7 +127,10 @@
   log (P2-04: what `elvaria digest` and the herald list from them too), with the branches its forge book found with
   nothing to push and a newer build (`deps.upgradeOffer`) as the only notices of its own; the
   `Digest` port of the composition root words it and writes `digest/<day>.md`, then one `digest.written` line and
-  one bell (`digest`). No model, no mana.
+  one bell (`digest`). No model, no mana. (P2-06) The chronicle (`chronicleJob`, given `StewardDeps.chronicle`) runs
+  in the tick at `schedule.chronicle.at`: the domain's `dayLedgerOf` over the whole log, the files naming what the log
+  names by id alone; the `Chronicle` port writes `chronicle/<day>.json` and `.md`, then one `chronicle.written` line
+  (`prose: false`). No model, no mana, no bell.
 - Tells a submitted quest that waits for a judge (`src/waits/judge-waits.ts`): none in the roster (`unjudgeable`,
   P1-15: `different_model` and no judge of the kind outside its doers on another model; PS-11: `vision` when the
   quest's ritual asks for eyes), or every judge held by its mana (`judge_mana`, PS-03, (d) of P1-50, with the pools

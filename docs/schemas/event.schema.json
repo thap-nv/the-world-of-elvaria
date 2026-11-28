@@ -6372,6 +6372,51 @@
       "if": {
         "properties": {
           "type": {
+            "const": "chronicle.written"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The Steward wrote the day's chronicle (P2-06): chronicle/<day>.md in the owner's language, from the day's ledger saved as chronicle/<day>.json. The machine's part runs no model.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "day",
+              "file",
+              "quests",
+              "prose"
+            ],
+            "properties": {
+              "day": {
+                "description": "The kingdom's local day, yyyy-mm-dd (kingdom.tz).",
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "file": {
+                "description": "The chronicle, relative to the kingdom; its ledger is the .json beside it.",
+                "type": "string",
+                "pattern": "^chronicle/\\d{4}-\\d{2}-\\d{2}\\.md$"
+              },
+              "quests": {
+                "description": "Distinct quests the day’s ledger names.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "prose": {
+                "description": "Whether the chronicle holds the Bard's prose (P2-06b) after the machine's part; false: the machine's part alone.",
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "const": "upgrade.started"
           }
         }
