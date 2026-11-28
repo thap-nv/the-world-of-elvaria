@@ -1,6 +1,6 @@
 # Đợt 3–4 của giai đoạn 2 — PS-10, PS-13, PS-18: kế hoạch chi tiết
 
-Ngày: 2026-11-28 · Trạng thái: **chủ nhân đã chốt** X1–X14 ngày 2026-11-28 (mục "Quyết định" cuối file; [§11, 2026-11-28](../implementation-plan/11-2026-11-28.md), dòng "docs/plan-phase-2-wave-3"): X4 và X7 khác khuyến nghị, các mục còn lại theo khuyến nghị. Phiên kế hoạch chỉ viết tài liệu: không sửa code, không mở task, không đổi ô Trạng thái ở §8. Chủ nhân chọn ba task này trong phiên (hộp hỏi đáp, 2026-11-28); PS-14, PS-15 (cần PS-13) và PS-16, PS-17, PS-19, PS-20 (giai đoạn sau) chưa có mục chi tiết. Bất biến đã chốt mà kế hoạch này giữ: [ADR 0024](../adr/0024-typed-letters-through-the-steward.md) (thư có kiểu, không ai nhắn vào phiên đang chạy), [ADR 0020](../adr/0020-class-skill-scripture-tags-and-parties.md) (bí kíp không gắn vào nhân vật), [ADR 0025](../adr/0025-persona-is-display-only.md) (tính cách chỉ để hiển thị), [ADR 0005](../adr/0005-single-writer-steward-inbox.md), [ADR 0016](../adr/0016-registry-data-not-code.md), [ADR 0021](../adr/0021-tribe-contract.md), luật thư mục R1–R8 ([§4.2](../implementation-plan/4-code-quality.md)) và ba tầng tách biệt.
+Ngày: 2026-11-28 · Trạng thái: **chủ nhân đã chốt** X1–X14 ngày 2026-11-28 (mục "Quyết định" cuối file; [§11, 2026-11-28](../implementation-plan/11-2026-11-28.md), dòng "docs/plan-phase-2-wave-3"): X4 và X7 khác khuyến nghị, các mục còn lại theo khuyến nghị. X15–X17 bổ sung cùng ngày, X18 còn mở. Phiên kế hoạch chỉ viết tài liệu: không sửa code, không mở task, không đổi ô Trạng thái ở §8. Chủ nhân chọn ba task này trong phiên (hộp hỏi đáp, 2026-11-28); PS-14, PS-15 (cần PS-13) và PS-16, PS-17, PS-19, PS-20 (giai đoạn sau) chưa có mục chi tiết. Bất biến đã chốt mà kế hoạch này giữ: [ADR 0024](../adr/0024-typed-letters-through-the-steward.md) (thư có kiểu, không ai nhắn vào phiên đang chạy), [ADR 0020](../adr/0020-class-skill-scripture-tags-and-parties.md) (bí kíp không gắn vào nhân vật), [ADR 0025](../adr/0025-persona-is-display-only.md) (tính cách chỉ để hiển thị), [ADR 0005](../adr/0005-single-writer-steward-inbox.md), [ADR 0016](../adr/0016-registry-data-not-code.md), [ADR 0021](../adr/0021-tribe-contract.md), luật thư mục R1–R8 ([§4.2](../implementation-plan/4-code-quality.md)) và ba tầng tách biệt.
 
 Việc vào đợt nào và mở khi nào do phiên điều phối xếp; file này chỉ ghi phụ thuộc. [phase-2.md](phase-2.md) §4 xếp PS-10, PS-13 vào đợt 3 (cùng P2-07) và PS-18 vào đợt 4; PS-12 ở cùng dòng đó đã xong.
 
@@ -130,14 +130,14 @@ Năng lực tùy chọn `skills` trong `AdapterCapabilities` theo mẫu `vision`
 - **Mục tiêu**: mỗi nhân vật có thể mang một tính cách mà chủ nhân thấy (lệnh `character`, biên niên sử, trạng thái thế giới cho giao diện về sau), còn mọi quyết định, mọi prompt làm việc và prompt người chấm giữ nguyên từng byte.
 - **Đọc trước khi sửa**: ADR 0025, 0008, 0014; `packages/domain/src/schema/**` (ADR 0003); `packages/domain/src/verify/**` (ADR 0008: task chỉ đổi kiểu của tham số, commit nói rõ).
 - **Thêm**:
-  - Schema: `character.persona` tùy chọn, thêm sau v1 (`version` giữ 1): `tone` (id trong bảng tính cách), `address` (cách gọi chủ nhân, một dòng, tối đa 40 ký tự), `verbosity` (`terse`, `plain`, `chatty`), `quirks` (tối đa ba dòng, mỗi dòng tối đa 80 ký tự). `CharacterView.persona` để khách vẽ được; task xét có tăng `WORLD_STATE_VERSION` không.
-  - Bảng tính cách (X6): dữ liệu theo theme trong `domain`, cạnh bể ngoại hình, có schema zod. Tám giọng của ADR 0025 với id `gruff`, `sweet`, `stern`, `calm`, `hot_tempered`, `terse`, `funny`, `cold`. Mỗi mục: tên `vi` và `en`, cách gọi chủ nhân mặc định theo ngôn ngữ, `verbosity` mặc định, một câu tả giọng cho Nhà thơ. Chữ tiếng Việt của bảng do chủ nhân duyệt (X12).
+  - Schema: `character.persona` tùy chọn, thêm sau v1 (`version` giữ 1): `tone` (id trong bảng tính cách), `address` (cách gọi chủ nhân, một dòng, tối đa 40 ký tự) và cách tự xưng đi cặp với nó (X15; tên trường do task chốt theo glossary), `verbosity` (`terse`, `plain`, `chatty`), `quirks` (tối đa ba dòng, mỗi dòng tối đa 80 ký tự). `CharacterView.persona` để khách vẽ được; task xét có tăng `WORLD_STATE_VERSION` không.
+  - Bảng tính cách (X6): dữ liệu theo theme trong `domain`, cạnh bể ngoại hình, có schema zod. Tám giọng của ADR 0025 với id `gruff`, `sweet`, `stern`, `calm`, `hot_tempered`, `terse`, `funny`, `cold`. Mỗi mục: tên `vi` và `en`, cặp xưng hô mặc định theo ngôn ngữ (tự xưng và gọi chủ nhân), `verbosity` mặc định, một câu tả giọng cho Nhà thơ. Câu tả giọng tả hành vi (câu dài hay ngắn, mở bằng gì, bỏ gì), không tả bằng tính từ (X15). Chữ tiếng Việt của bảng do chủ nhân duyệt (X12).
   - `personaOf(character, theme)` thuần: tính cách đã điền mặc định từ bảng, hay `null`.
   - CLI: `character add --persona <tone>|none` và `--address <chữ>`. Không nêu cờ thì nhân vật mới rút ngẫu nhiên một giọng từ bảng bằng `RandomSource` (X7, chủ nhân chốt); `--persona none` để không có tính cách (lựa chọn của phiên kế hoạch, cho người muốn tắt). Nhân vật đã có của vương quốc đang chạy không đổi cho tới khi chủ nhân gọi `set_persona`. Lệnh xem nhân vật hiện tính cách. Chuỗi cả `vi` và `en`.
   - Inbox (X7): kind `set_persona { character, persona | null }`; Nhiếp chính ghi file và phát dòng nhân vật. Thêm dòng vào `COMMAND_GROUPS` (nhóm 1) và `COMMAND_SCOPES` (`kingdom`); lệnh `elvaria character persona <id>`.
   - Bất biến bằng kiểu: `CharacterAtWork = Omit<Character, 'persona'>` trong `domain`. `KingdomSnapshot.characters`, ứng viên của `selectVerifier` và `selectAssignee`, và nhân vật trong đầu vào của mọi hàm dựng prompt trừ biên niên sử dùng kiểu này: đọc `persona` ở đó là lỗi `tsc`. Người gọi không đổi, vì một `Character` gán được vào kiểu hẹp hơn.
   - Bất biến bằng test: (1) `runner-core` chạy lại mọi ca snapshot hiện có với nhân vật mang đủ tính cách: 27 file ngoài `chronicle.txt` không đổi một byte; (2) test tính chất trong `domain`: `planTick`, `selectVerifier`, `selectAssignee` cho cùng kết quả khi thêm tính cách ngẫu nhiên vào mọi nhân vật.
-  - Biên niên sử (X5): `buildChroniclePrompt` nhận thêm bảng giọng của các nhân vật vừa có mặt trong bảng sự kiện của ngày vừa có tính cách (tên, giọng, cách gọi chủ nhân, độ dài lời, nét riêng), đưa vào `chronicle-context.md` như dữ liệu có khung, cắt theo một trần ký tự có tên. `chronicle.md` thêm luật: được trích một câu ngắn của nhân vật theo giọng đó; dữ kiện vẫn chỉ lấy từ bảng sự kiện; tin xấu nói thẳng (ADR 0025). Không nhân vật nào có tính cách thì prompt giữ nguyên (`chronicle.txt` không đổi); thêm snapshot `chronicle-personas.txt`. `checkChronicle` giữ nguyên.
+  - Biên niên sử (X5): `buildChroniclePrompt` nhận thêm bảng giọng của các nhân vật vừa có mặt trong bảng sự kiện của ngày vừa có tính cách (tên, giọng, cách gọi chủ nhân, độ dài lời, nét riêng), đưa vào `chronicle-context.md` như dữ liệu có khung, cắt theo một trần ký tự có tên. `chronicle.md` thêm luật: được trích một câu ngắn của nhân vật theo giọng đó; dữ kiện vẫn chỉ lấy từ bảng sự kiện; tin xấu nói thẳng (ADR 0025). Giọng chỉ đi qua cặp xưng hô, độ dài câu và nhiều nhất một nét riêng trong mỗi câu trích; không thêm ẩn dụ hay trạng từ đệm (X15, điều 9 và 19 tới 21 của [bản gọn](../reference/viet-tieng-viet-gon.md)). Không nhân vật nào có tính cách thì prompt giữ nguyên (`chronicle.txt` không đổi); thêm snapshot `chronicle-personas.txt`. `checkChronicle` giữ nguyên.
   - `address` và `quirks` là chữ chủ nhân viết: qua `redact` khi ghi, như tên nhân vật.
   - Glossary thêm `persona`, rồi `pnpm docs:gen`. ADR 0025 sửa tại chỗ theo X5.
 - **Không làm**: khối "khi nói với chủ nhân" (PS-18b); lời thoại do model viết cho chuông, bản tấu hay câu hỏi (mỗi dòng một lượt gọi; X5); `moodOf`, `bondOf`, truyền kỳ (PS-19); bảng nhân vật trên giao diện (P2-02, P2-07 đọc `CharacterView.persona`); tính cách tự hình thành theo thời gian.
@@ -149,8 +149,39 @@ Năng lực tùy chọn `skills` trong `AdapterCapabilities` theo mẫu `vision`
 
 Một khối mới trong `PROMPT_BLOCK_IDS`, dựng từ `personaOf`, tối đa khoảng 600 ký tự, chỉ có trong prompt của phiên chat triệu hồi: cách gọi, giọng, độ dài lời, nét riêng, và câu "tin xấu nói thẳng; giọng không vào code, commit, tài liệu giao hay thư bàn giao". Hợp đồng của phiên chat chờ spike P2-05 và §10 câu 1, nên mục này chưa viết được chi tiết.
 
+## PS-15a — Chữ tiếng Việt của máy: soát chuỗi `vi` và lint
+
+(Bổ sung 2026-11-28, chủ nhân đồng ý trong phiên sau khi xem skill "viet-tieng-viet"; X16.)
+
+- **Mục tiêu**: chủ nhân nói tiếng Việt đọc bản tấu, chuông và kết quả lệnh thì hiểu ngay việc gì đã xảy ra và mình cần làm gì. Phần lớn chữ chủ nhân đọc mỗi ngày là chuỗi máy (1 886 chuỗi ở `packages/i18n/src/locales/vi/`), nên sửa một lần là mọi bản tấu về sau đều đổi, và không tốn mana khi chạy.
+- **Điều khảo sát cho thấy** (ở `a4d08ab2`): không chuỗi nào dính các cụm sáo đã thử; có 7 gạch en, 3 gạch em, 15 dấu ba chấm liền và 4 mũi tên. Xưng hô lẫn lộn: bản tấu có "chờ bạn" ở một chuỗi và "chủ nhân nên xem lại" ở chuỗi kế. Có chuỗi mang chữ nội bộ ("K3/K7 của plans/recheck.md", "check mang sang trên cùng cây").
+- **Đọc trước khi sửa**: [viet-tieng-viet-gon.md](../reference/viet-tieng-viet-gon.md); ADR 0014; [glossary.md](../glossary.md) (task không đổi tên hiển thị của thuật ngữ).
+- **Thêm**:
+  - Chốt một cách máy gọi chủ nhân (X18) rồi sửa mọi chuỗi `vi` theo đó.
+  - Soát bằng mắt theo bản gọn, theo thứ tự `cli-digest`, `bell`, `cli-quest-infirmary-reason`, `cli-doctor`, `cli-error`, rồi các namespace còn lại. Hai phép thử cho từng chuỗi: người ngoài nghề có hiểu không; chuỗi của một việc chờ chủ nhân có nói chủ nhân cần làm gì không. Chữ nội bộ (mã mục của kế hoạch, đường dẫn tài liệu, tên hàm) rời khỏi chuỗi hiển thị.
+  - Lint trong `pnpm i18n:check` cho chuỗi `vi`: ký tự của điều 23 và 24 (gạch dài, nháy cong, ba chấm liền, mũi tên, "&"), từ xưng hô lạc khỏi cách đã chốt, và danh sách cụm của điều 10 tới 21. Chuỗi cần giữ một cụm thì khai trong một file ngoại lệ kèm lý do (mẫu `shape-clones.json`). Danh sách mẫu nằm ở một file dữ liệu để PS-15 dùng lại (X17), không chép hai nơi.
+  - Chuỗi `en` chỉ đổi khi chuỗi `vi` tương ứng đổi nghĩa; placeholder hai bên giữ khớp (`i18n:check` sẵn có).
+  - Spec và snapshot của `apps/cli` có chuỗi `vi` sửa theo.
+- **Không làm**: đổi tên hiển thị của thuật ngữ trong glossary; chuỗi `en`; prompt (tiếng Anh); chữ do model viết (mục dưới); dấu «…» quanh tên nhiệm vụ (quy ước hiển thị sẵn có).
+- **Test**: spec của lint có chuỗi tốt và chuỗi xấu cho từng luật; `pnpm i18n:check` đỏ khi thêm một chuỗi `vi` có gạch dài hay từ xưng hô lạc; file ngoại lệ không có dòng thừa. 0 mana.
+- **Xong khi**: `pnpm check` xanh; dòng §11 của task có bảng trước và sau của mười chuỗi bản tấu để chủ nhân duyệt giọng.
+- **Cỡ**: M. Phiên chật thì cắt sau năm namespace đầu và lint, phần còn lại thành một task sau. **Model gợi ý**: Opus 5.5, effort high, phiên Claude Code có skill `viet-tieng-viet` ở chế độ Sửa. **Mana**: 0.
+
+## Skill viết tiếng Việt: dùng ở đâu
+
+(Bổ sung 2026-11-28; X17.) Bản đầy đủ của skill dài khoảng 39 KB, vượt trần mặc định của một bí kíp (dòng 63), và front matter của nó theo chuẩn Agent Skills (`name`, `description`), khác hợp đồng `skill` v1. [viet-tieng-viet-gon.md](../reference/viet-tieng-viet-gon.md) là bản "viết" gọn: 6 229 ký tự, khoảng 1 560 token theo X9, bỏ hai chế độ Sửa và Góp ý.
+
+| Loại chữ | Đường áp dụng | Task |
+|---|---|---|
+| Chuỗi máy (bản tấu, chuông, CLI) | Soát chuỗi `vi`, lint trong `i18n:check` | PS-15a |
+| Biên niên sử | Luật gọn trong prompt của Nhà thơ khi ngôn ngữ của chủ nhân là `vi`; máy kiểm thêm các mẫu của lint, trượt thì viết lại một lần (cơ chế của P2-06b) | PS-15 |
+| Tài liệu giao ra | Bản gọn là nguồn của `registry/style/vi.json` và fixture VI của `style-lint`, và là bí kíp mặc định mang tag `docs` | PS-15 |
+| Câu hỏi và thư bàn giao | Chủ nhân chép 10 tới 15 dòng của bản gọn vào `decree.md` của vương quốc; không cần code | làm được ngay |
+| Lời theo giọng nhân vật | Điều 9 và 19 tới 21 của bản gọn là rào cho bảng giọng (X15) | PS-18 |
+
 ## Phụ thuộc giữa các task
 
+- PS-15a đứng riêng, không cần PS-13; nên xong trước PS-15 để PS-15 dùng lại danh sách mẫu. Nó chạm mọi file locale `vi`: task nào thêm chuỗi `vi` trong lúc PS-15a mở thì nhánh merge sau chạy lại lint.
 - PS-10 đứng riêng. PS-13 đứng riêng; PS-13b → PS-13c; PS-13 → PS-13c. PS-14 và PS-15 cần PS-13, không cần PS-13b hay PS-13c.
 - PS-18 cần P2-06b (đã xong). PS-18b cần P2-10.
 - PS-10 và PS-13 cùng chạm `packages/runner-core/src/prompt/__snapshots__/assignee-*.txt` (PS-10 đổi luật trong `assignee.md`, PS-13 thêm một file): nhánh merge sau dựng lại snapshot.
@@ -182,3 +213,10 @@ Chủ nhân chốt ngày 2026-11-28, trong phiên kế hoạch, qua hộp hỏi 
 - **X12 · Bảng tám giọng mặc định**: task PS-18 đề xuất chữ tiếng Việt (tên giọng, cách gọi chủ nhân), chủ nhân duyệt trong PR của task. Đóng câu (PS-18) của §10.
 - **X13 · Hai điều kiện xong của dòng §8 PS-18 đổi chỗ**: một sang PS-18b, một thành quan sát ghi §11 (mục PS-18).
 - **X14 · Spike PS-13b** do một phiên Claude Code của chủ nhân làm (**tốn mana**); trần: tối đa sáu phiên ngắn cho mỗi CLI trên model rẻ nhất của tộc, phần nào có lệnh 0 mana thì dùng lệnh đó.
+
+**Bổ sung sau khi chốt (2026-11-28, chủ nhân đồng ý trong phiên, sau khi xem skill "viet-tieng-viet"):**
+
+- **X15 · Xưng hô của tính cách là một cặp** (tự xưng và gọi chủ nhân). Câu tả giọng của bảng tả hành vi, không tả bằng tính từ. Trong biên niên sử, giọng chỉ đi qua cặp xưng hô, độ dài câu và nhiều nhất một nét riêng mỗi câu trích.
+- **X16 · Task mới PS-15a**: soát chuỗi `vi` của máy và thêm lint; 0 mana, không cần PS-13.
+- **X17 · Bản gọn của skill** ([viet-tieng-viet-gon.md](../reference/viet-tieng-viet-gon.md)) là nguồn đề xuất cho `style/vi.json`, fixture VI và bí kíp mặc định của PS-15. Danh sách mẫu của lint ở PS-15a là một file dữ liệu mà PS-15 dùng lại.
+- **X18 · Còn mở, chốt khi mở PS-15a: máy gọi chủ nhân là gì trong chuỗi `vi`.** Khuyến nghị: "ngài" khi nói với chủ nhân và "chủ nhân" khi nhắc ở ngôi thứ ba; bỏ "bạn".
