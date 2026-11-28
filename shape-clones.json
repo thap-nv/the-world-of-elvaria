@@ -69,7 +69,8 @@
       "a": "apps/cli/src/quest/hold.ts",
       "b": "apps/cli/src/quest/owner-verdict.ts",
       "tokens": 231,
-      "status": "unreviewed"
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "packages/eventlog/src/migrations/run.ts",
@@ -93,7 +94,8 @@
       "a": "apps/cli/src/quest/lifecycle.ts",
       "b": "apps/cli/src/quest/reassign.ts",
       "tokens": 198,
-      "status": "unreviewed"
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "packages/steward/src/review/prompt-size.ts",
@@ -152,7 +154,8 @@
       "a": "apps/cli/src/quest/lifecycle.ts",
       "b": "apps/cli/src/quest/owner-verdict.ts",
       "tokens": 163,
-      "status": "unreviewed"
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "apps/cli/src/run/antigravity.ts",
@@ -164,7 +167,8 @@
       "a": "apps/cli/src/quest/hold.ts",
       "b": "apps/cli/src/quest/reassign.ts",
       "tokens": 156,
-      "status": "unreviewed"
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "apps/cli/src/metrics/view-delegation.ts",
@@ -484,7 +488,8 @@
       "a": "apps/cli/src/quest/owner-verdict.ts",
       "b": "apps/cli/src/quest/reassign.ts",
       "tokens": 79,
-      "status": "unreviewed"
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "packages/domain/src/schema/memo/memo-triage.ts",
@@ -600,7 +605,8 @@
       "a": "apps/cli/src/quest/add.ts",
       "b": "apps/cli/src/quest/list.ts",
       "tokens": 66,
-      "status": "unreviewed"
+      "status": "kept",
+      "reason": "AH-14a: the tail of two unrelated commands, a line printed once the work is done and a CommandSpec literal with options of their own; quest add creates a quest and quest list reads them, so a change to one never forces the other."
     },
     {
       "a": "apps/cli/src/say/hearing.ts",
@@ -679,7 +685,8 @@
       "a": "apps/cli/src/quest/escaped.ts",
       "b": "apps/cli/src/quest/reassign.ts",
       "tokens": 63,
-      "status": "unreviewed"
+      "status": "kept",
+      "reason": "AH-14a: only the skeleton every quest command shares is left (open the kingdom, read the quest its <id> names and refuse it where it stands, build its own inbox command, sendCommand, the CommandSpec literal); each step is a shared call already and each command picks its own checks and payload, so changing one never forces the other."
     },
     {
       "a": "apps/cli/src/sandbox/replay.ts",
