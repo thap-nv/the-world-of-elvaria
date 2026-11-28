@@ -33,6 +33,7 @@ describe('snapshotOf and readSnapshot', () => {
   });
 
   it.each([
+    ['before pools kept model caps', { ...snapshotOf(STATE, LAST), version: 3 }, 3],
     ['before pools kept their sleep reset', { ...snapshotOf(STATE, LAST), version: 2 }, 2],
     [
       'another version',
