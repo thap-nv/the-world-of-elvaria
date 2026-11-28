@@ -50,6 +50,9 @@ describe('pathProblems', () => {
       'events',
       'temple',
       'chronicle',
+      '~',
+      'infra',
+      'apps/api',
     ]
       .map((prefix) => `\`${prefix}/missing.json\``)
       .join('\n');
