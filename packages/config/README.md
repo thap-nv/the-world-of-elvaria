@@ -18,6 +18,10 @@
 - Keeps temporary spec folders in `@elvaria/testkit`: `elvaria/no-mkdtemp` rejects direct fs imports of
   `mkdtemp`/`mkdtempSync` and calls through fs namespace or default imports. Only this rule excludes `.claude/**`
   because character sessions cannot read those protected hook specs.
+- Keeps a shape gathered into one home there (R7 of implementation-plan §4.2, AH-14): `eslint-shapes.mjs` lists,
+  per gathered shape, a `no-restricted-syntax` selector for its hand copy and the file that is its home, and
+  `sharedShapeConfigs` refuses the copy everywhere else in shipped `apps/cli` code (AH-14a: reading the quest or
+  character the command line names goes through `namedBy`).
 - Caps a function's `complexity` at 15 in every linted file (AH-02, K9 of docs/plans/architecture-health.md). The
   23 older functions above it sit in the same `eslint-suppressions.json`; `SUPPRESSIBLE_RULES` in
   `suppressions.mjs` lets that rule hold any source file, and a rule the list held nowhere on `main` enters with
@@ -43,7 +47,8 @@ pnpm boundaries                       # depcruise over the real repo
 
 `depcruise.spec.ts` runs the rules on `__fixtures__/repo`, a fake repo with a planted violation for every graph and
 runtime rule and for two of the per-workspace boundary rules;
-`eslint-boundaries.spec.ts`, `eslint-i18n.spec.ts` and `eslint-test-time.spec.ts` run the ESLint rules on sample code;
+`eslint-boundaries.spec.ts`, `eslint-i18n.spec.ts`, `eslint-shapes.spec.ts` and `eslint-test-time.spec.ts` run the
+ESLint rules on sample code;
 `suppressions.spec.ts` checks the repo's `eslint-suppressions.json` against the one where the branch left `main`
 (skipped when git has no `main`, as in a shallow CI checkout, or when the file is newer than that point).
 Adding a workspace: add it to `WORKSPACES` (every planned one is listed already), then create `packages/<key>`

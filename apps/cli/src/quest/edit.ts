@@ -12,7 +12,7 @@ import { EXIT } from '../command-table/command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { atPct, figureOf } from './ceiling.ts';
 import { SESSION_ROLE, tokenLines } from './edit-tokens.ts';
-import { questsMissing, readQuest } from './references.ts';
+import { namedQuest, questsMissing } from './references.ts';
 import { readScope } from './scope.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command-table/command.ts';
@@ -110,11 +110,8 @@ function minuteLines(ctx: KingdomContext, quest: Quest, minutes: number): string
 async function runQuestEdit(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
-  const quest = await readQuest(ctx, input.positionals[0] ?? '');
-  if (Array.isArray(quest)) {
-    quest.forEach(ctx.io.err);
-    return EXIT.failed;
-  }
+  const quest = await namedQuest(input, ctx);
+  if (quest === undefined) return EXIT.failed;
   const { changes, dependsOn, problems } = readChanges(input, ctx);
   if (Object.keys(changes).length === 0 && problems.length === 0) {
     ctx.io.err(ctx.t('cli.quest.edit.nothing'));

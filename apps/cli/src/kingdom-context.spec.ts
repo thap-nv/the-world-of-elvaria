@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -51,5 +51,45 @@ describe('opening a kingdom', () => {
     const flag = testIo();
     await run(flag, 'quest', 'list', '--kingdom', kingdom, '--locale', 'vi');
     expect(printed(flag)).toBe('Chưa có nhiệm vụ nào.');
+  });
+});
+
+// namedBy (AH-14a): what the command line names first is read one way for every command on a character or a quest.
+describe('what the command line names', () => {
+  let dir: TempDir;
+  let kingdom: string;
+  beforeEach(async () => {
+    dir = await tempDir();
+    kingdom = await foundKingdom(dir.root);
+  });
+  afterEach(() => dir.remove());
+
+  const errors = async (...args: string[]) => {
+    const io = testIo();
+    expect(await run(io, ...args, '--kingdom', kingdom, '--locale', 'en')).toBe(1);
+    return io.printed.err;
+  };
+
+  it.each([
+    { verb: 'suspend', rest: [] },
+    { verb: 'release', rest: [] },
+    { verb: 'level', rest: ['3'] },
+  ])('character $verb refuses an unknown one alike', async ({ verb, rest }) => {
+    expect(await errors('character', verb, 'nobody', ...rest)).toEqual([
+      'There is no character nobody. See: elvaria character list',
+    ]);
+  });
+
+  it('prints why a file it names cannot be read, for a character as for a quest', async () => {
+    await mkdir(path.join(kingdom, 'characters', 'kael'), { recursive: true });
+    await writeFile(path.join(kingdom, 'characters', 'kael', 'character.json'), '{ not json');
+    await mkdir(path.join(kingdom, 'quests'), { recursive: true });
+    await writeFile(path.join(kingdom, 'quests', 'q_20261106_7k3m2a.json'), '{ not json');
+    expect(await errors('character', 'suspend', 'kael')).toEqual([
+      'characters/kael/character.json is not valid JSON.',
+    ]);
+    expect(await errors('quest', 'show', 'q_20261106_7k3m2a')).toEqual([
+      'quests/q_20261106_7k3m2a.json is not valid JSON.',
+    ]);
   });
 });
