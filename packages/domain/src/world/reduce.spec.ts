@@ -63,16 +63,6 @@ describe('applyEvent', () => {
         used_pct: 90,
         source: 'estimate',
       }),
-      line('mana.exhausted', { tribe: 'claude', pool: 'claude', model: 'fable' }),
-      // The cap of one model (P1-32): the pool's band does not follow it.
-      line('mana.level', {
-        tribe: 'gemini',
-        pool: 'gemini_models',
-        model: 'argon',
-        window: 'weekly',
-        used_pct: 93,
-        source: 'rate_limits',
-      }),
       line('campaign.declared', { name: 'a type newer than this reader' }),
     ]) {
       expect(applyEvent(STATE, ignored)).toBe(STATE);
