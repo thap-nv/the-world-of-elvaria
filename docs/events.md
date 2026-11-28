@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-103 type trong danh mục v1, 92 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+105 type trong danh mục v1, 94 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -248,3 +248,10 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 |---|---|
 | `steward.started` | `build`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) hoặc null — The pinned build this Steward runs (`.builds/<sha>/`); null when it runs from a source tree.<br>`previous`: một trong `first`, `clean`, `unclean`<br>`down_minutes` (tùy chọn): integer ≥ 0 — With previous clean: whole minutes since its steward.stopped; unclean: since the last line of the log before this start, the most the kingdom can have been down. Absent with first. |
 | `steward.stopped` | `reason`: một trong `owner`, `signal`<br>`sessions`: integer ≥ 0 — Sessions still running when the stop began: the stop killed them, and their runs are lost. |
+
+## `wait` · 2 type
+
+| Type | `data` |
+|---|---|
+| `wait.started` | `reason`: một trong `base_red`, `scope_held`, `mana`, `tribe_held`, `room_full`<br>`since`: string (date-time) — When the Steward first saw the wait: 2 minutes before the line or more.<br>`pr` (tùy chọn): integer ≥ 1 — A guest entry of the merge queue (CM-07) that waits, on the territory of the line.<br>`holder`: object { territory?, quest?, gauges?, tribes?, running? } — What holds the work, as the Steward saw it when it wrote the line. |
+| `wait.ended` | `started`: string (khớp `^[0-9A-HJKMNP-TV-Z]{26}$`) — The id of the wait.started line it ends.<br>`reason`: một trong `base_red`, `scope_held`, `mana`, `tribe_held`, `room_full`<br>`minutes`: integer ≥ 0 — Whole minutes from `since` of the wait.started line to the end of the wait.<br>`pr` (tùy chọn): integer ≥ 1 — A guest entry of the merge queue (CM-07) that waits, on the territory of the line. |

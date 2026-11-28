@@ -2716,6 +2716,11 @@
               "meaning": "Nhiếp chính tự ghi (LL-04): `steward.started` khi đã giữ khóa và đọc sổ, trước nhịp đầu: `build` đang chạy (`null` khi chạy từ cây mã), `previous` (`first`: chưa có dòng `steward.*` nào; `clean`: dòng cuối là một lần dừng, kèm `down_minutes` từ lúc đó; `unclean`: dòng cuối là một lần khởi động, tức Nhiếp chính trước đã chết, `down_minutes` tính từ dòng cuối của sổ); `steward.stopped` là dòng cuối của một lần dừng: `reason` (`owner`: Ctrl+C; `signal`: SIGTERM, chỉ có trên macOS) và `sessions` đang chạy mà lần dừng giết"
             },
             {
+              "group": "Khoảng chờ",
+              "types": ["wait.started", "wait.ended"],
+              "meaning": "Nhiếp chính ghi theo cạnh (LL-03): `wait.started` khi việc đã sẵn sàng chờ máy từ 2 phút trở lên vì cùng một lý do (`reason`: `base_red` nhánh mặc định đỏ, `scope_held` vùng file do quest khác giữ, `mana` mọi người có thể nhận đều đóng mana, `tribe_held` tộc của họ bị giữ vì phiên bản CLI, `room_full` hết chỗ cho việc máy), kèm `since` (lúc thấy lần đầu), `holder` (cái đang giữ) và `pr` khi là mục khách của hàng đợi merge; `wait.ended` khi hết chờ, mang id dòng `wait.started` (`started`) và số phút. Chờ ngắn hơn 2 phút không ghi; chờ người chấm vẫn là `quest.judge_wait`, quest không ai nhận được vẫn là `quest.unclaimable`"
+            },
+            {
               "group": "Dành sẵn",
               "types": ["campaign.*", "battle.*", "incident.*", "party.*", "skill.*"],
               "meaning": "giai đoạn 5; đội và bí kíp"

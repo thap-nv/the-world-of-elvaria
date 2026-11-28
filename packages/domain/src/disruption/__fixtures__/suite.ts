@@ -3,7 +3,7 @@
 // `level` is what disruptionsOf with the default registry reads today, which a task that adds an event or a field
 // raises in the same commit. `cause` is the kind whose match names the cause; without it the case shows a symptom
 // at most.
-import { linesOf, QUEST, questView, SESSION, TERRITORY } from './lines.ts';
+import { evidenceOf, linesOf, QUEST, questView, SESSION, TERRITORY } from './lines.ts';
 import type { LineSpec } from './lines.ts';
 import type { Event } from '../../schema/event/event.ts';
 
@@ -191,6 +191,44 @@ const SPECS: readonly CaseSpec[] = [
       infirmary('breaker:setup'),
     ],
   },
+  {
+    id: 'L43',
+    about: 'the merge queue stood still for 48 minutes behind a red default branch',
+    scored: 'partial',
+    level: 'full',
+    kinds: ['guest_waited', 'long_wait'],
+    cause: 'long_wait',
+    lines: [
+      { type: 'delivery.enqueued', at: 0, data: { territory: TERRITORY, pr: 7 } },
+      { type: 'patrol.ran', at: 600, data: { territory: TERRITORY, setup: null, checks: [] } },
+      { type: 'wait.started', at: 720, territory: TERRITORY, data: { reason: 'base_red', pr: 7 } },
+      {
+        type: 'wait.ended',
+        at: 2850,
+        territory: TERRITORY,
+        data: { started: evidenceOf(2), reason: 'base_red', minutes: 47, pr: 7 },
+      },
+      { type: 'delivery.guest_merged', at: 2857, data: { territory: TERRITORY, pr: 7 } },
+    ],
+  },
+  {
+    id: 'L09',
+    about: "a tribe's CLI replaced under the pinned build held the quests of its characters",
+    scored: 'none',
+    level: 'full',
+    kinds: ['long_wait'],
+    cause: 'long_wait',
+    lines: [
+      { type: 'tribe.held', at: 0, data: { tribe: 'gemini', hold: { version: '1.5.7', checked: '1.5.6' } } },
+      q({ type: 'wait.started', at: 120, data: { reason: 'tribe_held', holder: { tribes: ['gemini'] } } }),
+      { type: 'tribe.held', at: 2400, data: { tribe: 'gemini', hold: null } },
+      q({
+        type: 'wait.ended',
+        at: 2405,
+        data: { started: evidenceOf(1), reason: 'tribe_held', minutes: 40 },
+      }),
+    ],
+  },
   // A symptom; the cause is free text, a guess from the clock, or a field the log lacks.
   {
     id: 'L03',
@@ -223,18 +261,6 @@ const SPECS: readonly CaseSpec[] = [
     level: 'partial',
     kinds: ['delivery_refused'],
     lines: [{ type: 'delivery.failed', quest: QUEST, data: { stage: 'checks', reason: 'checks_red' } }],
-  },
-  {
-    id: 'L43',
-    about: 'the merge queue stood still for 48 minutes',
-    scored: 'partial',
-    level: 'partial',
-    kinds: ['guest_waited'],
-    lines: [
-      { type: 'delivery.enqueued', at: 0, data: { territory: TERRITORY, pr: 7 } },
-      { type: 'patrol.ran', at: 600, data: { territory: TERRITORY, setup: null, checks: [] } },
-      { type: 'delivery.guest_merged', at: 2857, data: { territory: TERRITORY, pr: 7 } },
-    ],
   },
   {
     id: 'L44',
@@ -272,9 +298,6 @@ const SPECS: readonly CaseSpec[] = [
   unseen('L04', 'a plot left behind', 'none', [q({ type: 'quest.archived', data: questView('archived') })]),
   unseen('L08', 'another plot left behind', 'none', [
     q({ type: 'quest.archived', data: questView('archived') }),
-  ]),
-  unseen('L09', "a tribe's CLI replaced under the pinned build", 'none', [
-    q({ type: 'quest.claimed', data: questView('claimed') }),
   ]),
 ];
 

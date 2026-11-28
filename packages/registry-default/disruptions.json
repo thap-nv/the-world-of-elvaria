@@ -211,6 +211,16 @@
       "type": "plot.setup",
       "where": [{ "path": "data.pass", "in": [false] }],
       "cause": "data.trigger"
+    },
+    {
+      "id": "long_wait",
+      "name_vi": "Việc chờ máy lâu",
+      "name_en": "Work waited long",
+      "description": "Ready work waited 10 minutes or more for the machinery, not for a free character: a red default branch, files another quest holds, closed mana, a tribe held by its CLI's version, or no slot for machine work (LL-03).",
+      "shape": "event",
+      "type": "wait.ended",
+      "where": [{ "path": "data.minutes", "gte": 10 }],
+      "cause": "data.reason"
     }
   ]
 }

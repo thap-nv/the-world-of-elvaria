@@ -269,4 +269,10 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'chancellor.answered': { tribe: 'claude', model: 'claude-opus-4-7', matter: 'triage', tokens: 48_310 },
   'steward.started': { build: SHA_NEW, previous: 'unclean', down_minutes: 42 },
   'steward.stopped': { reason: 'owner', sessions: 2 },
+  'wait.started': {
+    reason: 'mana',
+    since: '2026-11-28T09:00:00+07:00',
+    holder: { gauges: [{ tribe: 'claude', pool: 'opus', resets_at: '2026-11-28T11:00:00+07:00' }] },
+  },
+  'wait.ended': { started: '01JCFBPS12DQ004WSTA0000A01', reason: 'base_red', minutes: 47, pr: 7 },
 };
